@@ -10,16 +10,13 @@ runs a simulation. Functions in the class are divided based on time periods;
 year, month, day"""
 
 from SimController import SimController
-from Weather import Weather
 
-"""Execution of the program begins here."""
-if __name__ == '__main__':
+def main():
+    print('MASM: Modular Agricultural Systems Modeling Environment')
     
-    SimWeather = Weather(20)
-    print(SimWeather.getTemperature())
-    SimWeather.setTemperature(50)
-    print(SimWeather.getTemperature())
-
+    'A new simulation object is created'
+    simulation = SimController()
+    simulation.setDuration(4) # set the length of the simulation
 
     """
     1) READ INPUT DATA AND STORE IN OBJECTS 2) SET MODEL PARAMETERS?
@@ -77,8 +74,10 @@ if __name__ == '__main__':
     """
 
     '3) BEGIN SIMULATION CYCLE'
-    'A new simulation object is created and run; add parameters (objects above) other then year which are specific to simulation'
-    simulation = SimController(4)
     simulation.runSimulation()  # insert functions within time sequences to acquire desired output
 
     '4) PRINT OUTPUT- MASM OUTPUT FORMAT'
+
+"""Execution of the program begins here."""
+if __name__ == '__main__':
+    main()

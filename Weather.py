@@ -10,8 +10,8 @@ represents the weather for a simulation."""
 
 class Weather:
 
-    def __init__(self, temperature):
-        self.temperature = temperature
+    def __init__(self):
+        print("WEATHER REACHED")
     
     def getTemperature(self):
         return self.temperature

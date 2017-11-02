@@ -5,6 +5,18 @@ Created by the USDA-ARS at Madison, Wisconsin
 Kristan, Kass, Jit
 '''
 
+'''Import all the required Data Structures'''
+from Crop import Crops
+from Herd import Herd
+from Manure import Manure
+from Soil import Soil
+from Weather import Weather
+from Feed import Feed
+from FieldOperations import FieldOperations
+from Housing import Housing
+from Output import Output
+
+
 """This class represents a Simulation Controller object. An instance of this 
 object represents one simulation."""
 
@@ -15,14 +27,24 @@ class SimController:
     currYear = 1
     currMonth = 1
     currDay = 0
-
+    
     'Constructor of a Simulation Controller Object'
-
-    def __init__(self, duration):
+    def __init__(self):
+        self.crop = Crops()
+        self.herd = Herd()
+        self.manure = Manure()
+        self.soil = Soil()
+        self.weather = Weather()
+        self.feed = Feed()
+        self.fieldOperations = FieldOperations()
+        self.housing = Housing()
+        self.output = Output()
+        
+    
+    def setDuration(self, duration):
         self.duration = duration
 
     'This function marks the start of a new year.'
-
     def annualSimStart(self):
         print("Annual simulation starting: " + str(currYear))
 
