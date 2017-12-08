@@ -13,6 +13,7 @@
 from pathlib import Path
 
 from MASM.data import State, Config, Time, Weather
+from MASM.errors import MASMfileError
 from MASM.outputs import OutputHandler
 from MASM.inputs import read_MASM_file
 
@@ -45,7 +46,11 @@ def MASM_Simulate(MASMfile: Path):
     #
     # Reads the specified MASM file
     #
-    read_MASM_file(MASMfile, state, config, weather, output_handler)
+    try:
+        read_MASM_file(MASMfile, state, config, weather, output_handler)
+    except MASMfileError as e:
+        print(e.msg)
+        return None
     
     #
     # Single cycle Simulation, no repetitions
@@ -149,6 +154,4 @@ def initialize_globals():
     weather = Weather()
     time = Time()
     output_handler = OutputHandler()
-
-
     

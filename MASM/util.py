@@ -10,7 +10,6 @@
 ################################################################################
 
 from pathlib import Path
-from MASM.errors import InputParsingError
         
 #-------------------------------------------------------------------------------
 # Function: toPath
@@ -31,14 +30,20 @@ def get_fName(fPath: Path):
 #           Parses all elements of a list of strings to integers
 #-------------------------------------------------------------------------------
 def to_ints(l:list):
-    return [int(_) for _ in l]
+    try:
+        return [int(_) for _ in l]
+    except Exception:
+        return None
 
 #-------------------------------------------------------------------------------
 # Function: to_floats
 #           Parses all elements of a list of strings to floating points
 #-------------------------------------------------------------------------------
 def to_floats(l:list):
-    return [float(_) for _ in l]
+    try:
+        return [float(_) for _ in l]
+    except Exception:
+        return None
 
 #-------------------------------------------------------------------------------
 # Function: to_bools
@@ -46,9 +51,9 @@ def to_floats(l:list):
 #-------------------------------------------------------------------------------
 def to_bools(l:list):
     for i in l:
-        if not (int(i) != 0 or int(i) != 1):
-            raise InputParsingError()
-        
+        if (i != '0' and i != '1'):
+            return None
+    
     return [int(_) == 1 for _ in l]
 
 #-------------------------------------------------------------------------------

@@ -33,8 +33,8 @@ def MASM_prompt_input():
 
     while(True):
         try:            
-            #userInput = input("\nEnter MASM Input: ")
-            userInput = "Sample.MASM"
+            userInput = input("\nEnter MASM Input: ")
+            #userInput = "Sample.MASM"
             
             #
             # Handle MASM file input

@@ -1,7 +1,0 @@
-# MASM .gitignore
-
-# ignore text files
-*.txt
-
-# ignore python compiled files
-*.pyc

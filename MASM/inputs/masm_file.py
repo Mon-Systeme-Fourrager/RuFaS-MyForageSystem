@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 from MASM import util
-from MASM.errors import InputParsingError, MASMfileError
+from MASM.errors import MASMfileError, SectionError, ParsingError, LengthMismatchError
 from MASM.data import *
 from MASM.outputs import OutputHandler
 
@@ -35,15 +35,14 @@ def read_MASM_file(fPath:Path, s:State, c:Config, w:Weather, o:OutputHandler):
     
     try:
         fContents = interpret_MASM_file(fPath)
-        
+
         read_config(fContents, c)
         read_farm(fContents, s, c)
         #read_weather(fContents, c, w)
         read_output_options(fContents, o, c)
-        
-    except MASMfileError as e:
+    except (SectionError, ParsingError, LengthMismatchError) as e:
         print(e.msg)
-        sys.exit()
+        raise MASMfileError(c.MASM_fName)
 
 #-------------------------------------------------------------------------------
 # Function: interpret_MASM_file
@@ -90,7 +89,7 @@ def interpret_MASM_file(fPath:Path):
 #             fContents - list containing sections through which to search
 #             c:Config - used to get MASM file name to print error message
 #
-# Raises: MASMfileError when the section has no data in it
+# Raises: SectionError when the section has no data in it
 #
 # Returns: A 2D list corresponding to the section retrieved, with each element
 #          corresponding to the lines in the section. Each line, initially a
@@ -104,10 +103,10 @@ def get_section_data(sectionName, fContents, c:Config):
         if section[0] == sectionName:
             # At least 2 elements, section label and 1 data line
             if len(section) < 2:
-                raise MASMfileError("MASM FILE ERROR: " + sectionName + 
-                                 " section in " + c.fName + " contains no data")
+                break
             else:
                 return [line.rsplit() for line in section[1::]]
+    raise SectionError(c.MASM_fName, sectionName)
 
 #-------------------------------------------------------------------------------
 # Function: read_config
@@ -117,6 +116,8 @@ def read_config(fContents, c:Config):
     lines = get_section_data("CONFIG", fContents, c)
         
     data = util.to_ints(lines[0])
+    if data is None:
+        raise ParsingError(c.MASM_fName, "CONFIG", 1, "Integers")
     c.iterations = data[0]
     c.iterate = data[0] > 1
     c.years = data[1]
@@ -133,14 +134,12 @@ def read_output_options(fContents, o:OutputHandler, c:Config):
     #
     # Specify active output reports
     #
-    try:
-        data = util.to_bools(lines[0])
-    except InputParsingError:
-        raise MASMfileError("MASM FILE ERROR: Cannot parse input at line 1 of "
-                         + "@OUTPUT section")
+    data = util.to_bools(lines[0])
+    if data is None:
+        raise ParsingError(c.MASM_fName, "OUTPUT", 1, "Booleans (0 or 1)")
     if len(data) != numOutputFiles:
-        raise MASMfileError("MASM FILE ERROR: Line 1 of @OUTPUT section must "
-                         + "contain " + str(numOutputFiles) + " values")
+        raise LengthMismatchError(c.MASM_fName, "OUTPUT", 1, numOutputFiles)
+    
     for i in range(numOutputFiles):
         o.outputList[i].active = data[i]
     
@@ -149,8 +148,8 @@ def read_output_options(fContents, o:OutputHandler, c:Config):
     #
     data = lines[1]
     if len(data) != numOutputFiles:
-        raise MASMfileError("MASM FILE ERROR: Line 2 of @OUTPUT section must "
-                         + "contain " + str(numOutputFiles) + " values")
+        raise LengthMismatchError(c.MASM_fName, "OUTPUT", 2, numOutputFiles)
+    
     for i in range(numOutputFiles):
         if data[i] != '0':
             o.outputList[i].set_fName(data[i])
