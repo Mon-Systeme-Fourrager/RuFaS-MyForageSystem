@@ -26,25 +26,27 @@ from MASM.errors import UserInputError
 #-------------------------------------------------------------------------------
 def MASM_prompt_input():
     
-    print("")
-    print("Single Simulation:\n\tEnter a MASM file name")
-    print("Batch Simulation:\n\tEnter a directory containing MASM files")
-    print("Exit MASM:\n\tEnter \'Q\' or \'q\'")
-
     while(True):
-        try:            
+        try:
+            print("\nSingle Simulation:\n\t" +
+                  "Enter JSON or MASM file name\n" +
+                  "Batch Simulation:\n\t" +
+                  "Enter a directory containing JSON and/or MASM files\n\t" +
+                  "Exit MASM:\n\t" +
+                  "Enter \'Q\' or \'q\'")
+            
             userInput = input("\nEnter MASM Input: ")
             #userInput = "Sample.MASM"
             
             #
             # Handle MASM file input
             #
-            if userInput.endswith(".MASM"):
+            if userInput.endswith(".MASM") or userInput.endswith(".json"):
                 fPath = util.to_path(userInput)
                 if not fPath.is_file():
-                    raise UserInputError("Specified MASM file does not exist")
+                    raise UserInputError("Specified file does not exist")
                 else:
-                    print("MASM file Detected...")
+                    print(fPath.suffix + " file Detected...")
                     return [fPath]
             
             #

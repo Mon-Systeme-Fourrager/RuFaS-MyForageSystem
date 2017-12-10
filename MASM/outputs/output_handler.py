@@ -20,10 +20,12 @@ class OutputHandler():
     
     def __init__(self):
     
-        self.outputList = [AnimalMilk(),
-                           CarbonLoss(),
-                           NitrogenLoss(),
-                           PhosphorusLoss()]
+        self.outputObjects = {'animal_milk': AnimalMilk(),
+                              'forage': Forage(),
+                              'grain': Grain(),
+                              'carbon_loss': CarbonLoss(),
+                              'nitrogen_loss': NitrogenLoss(),
+                              'phosphorus_loss': PhosphorusLoss()}
         
     #---------------------------------------------------------------------------
     # Function: write_annual_reports
@@ -32,10 +34,10 @@ class OutputHandler():
     #---------------------------------------------------------------------------
     def write_annual_reports(self, y):
 
-        for outputObject in self.outputList:
-            if outputObject.active:
-                with outputObject.path.open('a+') as f:
-                    f.write(outputObject.compile_annual_report(y))
+        for key, value in self.outputObjects.items():
+            if value.active:
+                with value.path.open('a+') as f:
+                    f.write(value.compile_annual_report(y))
         
     #---------------------------------------------------------------------------
     # Function: update_fNames
@@ -45,9 +47,9 @@ class OutputHandler():
     #---------------------------------------------------------------------------
     def update_fNames(self, i):
         
-        for outputObject in self.outputList:
-            if outputObject.active:
-                outputObject.update_fName(i)
+        for key, value in self.outputObjects.items():
+            if value.active:
+                value.update_fName(i)
             
     #---------------------------------------------------------------------------
     # Function: annual_flush
@@ -55,9 +57,9 @@ class OutputHandler():
     #---------------------------------------------------------------------------
     def annual_flush(self):
         
-        for outputObject in self.outputList:
-            if outputObject.active:
-                outputObject.annual_flush()
+        for key, value in self.outputObjects.items():
+            if value.active:
+                value.annual_flush()
 
 #-------------------------------------------------------------------------------
 # Class: OutputObject
@@ -105,6 +107,8 @@ class OutputObject():
 
     
 from .animal_milk import AnimalMilk
+from .forage import Forage
+from .grain import Grain
 from .carbon_loss import CarbonLoss
 from .nitrogen_loss import NitrogenLoss
 from .phosphorus_loss import PhosphorusLoss

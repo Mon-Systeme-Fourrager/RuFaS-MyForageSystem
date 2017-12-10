@@ -15,7 +15,7 @@ from pathlib import Path
 from MASM.data import State, Config, Time, Weather
 from MASM.errors import MASMfileError
 from MASM.outputs import OutputHandler
-from MASM.inputs import read_MASM_file
+from MASM.inputs import read_json_file, read_MASM_file
 
 # Import all 'main' simulation routines
 
@@ -35,7 +35,7 @@ output_handler = None
 #
 # Parameters: MASMfile - the MASM file to be used as the simulation input
 #------------------------------------------------------------------------------- 
-def MASM_Simulate(MASMfile: Path):
+def MASM_Simulate(input_fPath: Path):
     
     #
     # Instantiates global variables for this simulation
@@ -44,13 +44,21 @@ def MASM_Simulate(MASMfile: Path):
     initialize_globals()
     
     #
-    # Reads the specified MASM file
+    # Reads the specified input file
     #
-    try:
-        read_MASM_file(MASMfile, state, config, weather, output_handler)
-    except MASMfileError as e:
-        print(e.msg)
-        return None
+    if input_fPath.suffix == '.json':
+
+        read_json_file(input_fPath, state, config, weather, output_handler)
+
+    elif input_fPath.suffix == '.MASM':
+        try:
+            read_MASM_file(input_fPath, state, config, weather, output_handler)
+        except MASMfileError as e:
+            print(e.msg)
+            return
+    else:
+        # should not be reached
+        pass
     
     #
     # Single cycle Simulation, no repetitions
