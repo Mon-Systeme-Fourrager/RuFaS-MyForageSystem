@@ -9,13 +9,13 @@
 #
 ################################################################################
 
-from .output_handler import OutputObject
+from .output_handler import ReportHandler
 
 #-------------------------------------------------------------------------------
 # Class: SampleOutput1
 #        
 #-------------------------------------------------------------------------------
-class Forage(OutputObject):
+class Forage(ReportHandler):
     
     def __init__(self):
              
@@ -46,7 +46,7 @@ class Forage(OutputObject):
     #---------------------------------------------------------------------------
     def compile_annual_report(self, t):
 
-        rpt = self.outputName + " Report for year: {}\n".format(t.y)
+        rpt = self.reportName + " Report for year: {}\n".format(t.y)
         
         return rpt
     

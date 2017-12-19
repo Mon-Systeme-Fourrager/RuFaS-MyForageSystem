@@ -12,15 +12,15 @@
 
 from pathlib import Path
 
-from MASM.data import State, Config, Time, Weather
-from MASM.errors import MASMfileError
+from MASM.classes import State, Config, Time, Weather
 from MASM.outputs import OutputHandler
-from MASM.inputs import read_json_file, read_MASM_file
+from MASM.inputs import read_json_file
+from MASM.errors import InvalidJSONfileError
 
 # Import all 'main' simulation routines
 
 #
-# Define Global Variables
+# Define Module Global Variables
 #
 state = None
 config = None
@@ -30,12 +30,14 @@ output_handler = None
 
 #-------------------------------------------------------------------------------
 # Function: MASM_Simulate
-#           Executes the simulation using the MASM file specified
+#           Executes the simulation using the json file at the path specified
 #           Deals with simulation iterations as specified
+#           Skips over the simulation (immediately returns) when an error in
+#           the input json file is detected
 #
-# Parameters: MASMfile - the MASM file to be used as the simulation input
+# Parameters: input_fPath - path to the input json file
 #------------------------------------------------------------------------------- 
-def MASM_Simulate(input_fPath: Path):
+def MASM_Simulate(input_fPath:Path):
     
     #
     # Instantiates global variables for this simulation
@@ -44,44 +46,31 @@ def MASM_Simulate(input_fPath: Path):
     initialize_globals()
     
     #
-    # Reads the specified input file
+    # Reads the json input file
     #
-    if input_fPath.suffix == '.json':
-
+    try:
         read_json_file(input_fPath, state, config, weather, output_handler)
-
-    elif input_fPath.suffix == '.MASM':
-        try:
-            read_MASM_file(input_fPath, state, config, weather, output_handler)
-        except MASMfileError as e:
-            print(e.msg)
-            return
-    else:
-        # should not be reached
-        pass
+    except InvalidJSONfileError as e:
+        print(e.msg)
+        return
     
     #
-    # Single cycle Simulation, no repetitions
+    # Simulation Loop
     #
-    if not config.iterate:        
+    while not end_iterations():
+        
+        print("Simulating: {} Iteration: {}".format(config.fName, time.i))
+        
+        if config.iterate:
+            output_handler.update_fNames(time.i)
+            config.modify_parameters(time.i)
+
         while not end_simulation():
             annual_simulation()
- 
-    #
-    # Multiple repetitions of the simulation specified
-    #               
-    else:
-        while not end_iterations():
-            output_handler.update_fNames(time.i)
-            
-            while not end_simulation():
-                annual_simulation()
-            
-            #
-            # Repetition Routines
-            #
-            config.modify_parameters(time.i)
-            time.advance_iteration()
+        
+        time.advance_iteration()
+        
+    print("Simulation Successful: {}\n".format(config.fName))
 
 #------------------------------------------------------------------------------- 
 # Function: daily_simulation
@@ -124,9 +113,6 @@ def annual_simulation():
     #
     # Annual Routines
     #
-    print("Simulating: " + config.MASM_fName
-          + " Year: " + str(time.y) + " Iteration: " + str(time.i))
-    
     output_handler.write_annual_reports(time)
     output_handler.annual_flush()
     state.annual_reset()

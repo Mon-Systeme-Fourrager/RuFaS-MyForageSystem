@@ -1,0 +1,41 @@
+
+{
+
+    "config":
+    {
+        "iterations": 2,
+        "years": 7
+    },
+
+    "weather": null,
+
+    "output":
+    {
+        "forage":
+        {
+            "active": false,
+            "file_name": null
+        },
+        "grain":
+        {
+            "active": false,
+            "file_name": null
+        },
+        "carbon_loss":
+        {
+            "active": true,
+            "file_name": null
+        },
+        "nitrogen_loss":
+        {
+            "active": true,
+            "file_name": "Custom_Nitrogen_Loss.txt"
+        }
+    },
+
+    "farm":
+    {
+
+    }
+
+}

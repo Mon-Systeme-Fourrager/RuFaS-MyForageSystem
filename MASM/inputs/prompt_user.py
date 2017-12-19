@@ -11,64 +11,62 @@
 
 import sys
 from pathlib import Path
-from glob import glob
-
-import MASM.util as util
 from MASM.errors import UserInputError
 
 #-------------------------------------------------------------------------------
 # Function: MASM_prompt_input
-#           Prompts the user for an input file name that could either be a MASM
-#           file for a single simulation mode or a MASMBATCH file for a batch
-#           simulation mode
+#           Prompts the user for an input file name that could either be a json
+#           file for a single simulation mode or a directory containing json
+#           files for a batch simulation
 #           Loops back to the prompt until the user inputs a valid file name or
 #           chooses to quit the program
 #-------------------------------------------------------------------------------
 def MASM_prompt_input():
     
+    print("\nSingle Simulation:\n\t" +
+          "Enter a json file name\n" +
+          "Batch Simulation:\n\t" +
+          "Enter a directory containing json files\n" +
+          "Exit MASM:\n\t" +
+          "Enter \'Q\' or \'q\'")
+
     while(True):
         try:
-            print("\nSingle Simulation:\n\t" +
-                  "Enter JSON or MASM file name\n" +
-                  "Batch Simulation:\n\t" +
-                  "Enter a directory containing JSON and/or MASM files\n\t" +
-                  "Exit MASM:\n\t" +
-                  "Enter \'Q\' or \'q\'")
-            
             userInput = input("\nEnter MASM Input: ")
             #userInput = "Sample.MASM"
-            
-            #
-            # Handle MASM file input
-            #
-            if userInput.endswith(".MASM") or userInput.endswith(".json"):
-                fPath = util.to_path(userInput)
-                if not fPath.is_file():
-                    raise UserInputError("Specified file does not exist")
-                else:
-                    print(fPath.suffix + " file Detected...")
-                    return [fPath]
-            
-            #
-            # Handle directory of MASM files input
-            #
-            elif util.to_path(userInput).is_dir():
-                # Grab all MASM files in dir
-                fPathList = glob(str(util.to_path(userInput)) + "/*.MASM")
-                # Handle no MASM files in dir
-                if len(fPathList) < 1:
-                    raise UserInputError("Directory contains no MASM files")
-                else:
-                    print(str(len(fPathList)) + " MASM files detected...")
-                    return [Path(_) for _ in fPathList]
 
             #
             # Handle user exiting program
             #
-            elif userInput.upper() == 'Q':
+            if userInput.upper() == 'Q':
                 print("Exiting MASM...")
                 sys.exit()
+                
+            inputPath = Path(userInput)
+
+            #
+            # Handle json file input
+            #
+            if inputPath.suffix == '.json':
+                if not inputPath.is_file():
+                    raise UserInputError("Specified file does not exist")
+                else:
+                    print("json file Detected...\n")
+                    return [inputPath]
             
+            #
+            # Handle directory of MASM files input
+            #
+            elif inputPath.is_dir():
+                # Grab all json files in dir
+                pathList = list(inputPath.glob('*.json'))
+                # Handle no json files in dir
+                if len(pathList) < 1:
+                    raise UserInputError("Directory contains no json files")
+                else:
+                    print(str(len(pathList)) + " json files detected...\n")
+                    return pathList
+
             #
             # Handle bad inputs
             #

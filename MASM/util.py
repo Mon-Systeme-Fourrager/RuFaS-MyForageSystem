@@ -2,28 +2,12 @@
 #
 # MASM: Modular Agricultural Systems Modeling Environment
 #
-# Util.py
+# Util.py - Contains various utility and helper functions
 #
 # Authors: Kass Chupongstimun
 #          Jit Patil
 #
 ################################################################################
-
-from pathlib import Path
-        
-#-------------------------------------------------------------------------------
-# Function: toPath
-#           Converts a given file name string to the appropriate path object
-#-------------------------------------------------------------------------------
-def to_path(fName):
-    return Path("../Inputs/" + fName)
-
-#-------------------------------------------------------------------------------
-# Function: get_fName
-#           Converts a given file name string to the appropriate path object
-#-------------------------------------------------------------------------------
-def get_fName(fPath: Path):
-    return str(fPath)[str(fPath).rfind('/') + 1::]
 
 #-------------------------------------------------------------------------------
 # Function: to_ints

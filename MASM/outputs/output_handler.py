@@ -2,7 +2,7 @@
 #
 # MASM: Modular Agricultural Systems Modeling Environment
 #
-# Output.py
+# output_handler.py
 #
 # Authors: Kass Chupongstimun
 #          Jit Patil
@@ -17,64 +17,64 @@ from pathlib import Path
 #        Information is flushed at the beginning of every year
 #-------------------------------------------------------------------------------
 class OutputHandler():
-    
+
     def __init__(self):
-    
-        self.outputObjects = {'animal_milk': AnimalMilk(),
-                              'forage': Forage(),
-                              'grain': Grain(),
-                              'carbon_loss': CarbonLoss(),
-                              'nitrogen_loss': NitrogenLoss(),
-                              'phosphorus_loss': PhosphorusLoss()}
-        
+
+        self.report_handlers = {'animal_milk': AnimalMilk(),
+                                'forage': Forage(),
+                                'grain': Grain(),
+                                'carbon_loss': CarbonLoss(),
+                                'nitrogen_loss': NitrogenLoss(),
+                                'phosphorus_loss': PhosphorusLoss()}
+
     #---------------------------------------------------------------------------
     # Function: write_annual_reports
-    #           
+    #
     # Parameters: y - year of the report to be appended
     #---------------------------------------------------------------------------
     def write_annual_reports(self, y):
 
-        for key, value in self.outputObjects.items():
-            if value.active:
-                with value.path.open('a+') as f:
-                    f.write(value.compile_annual_report(y))
-        
+        for _, handler in self.report_handlers.items():
+            if handler.active:
+                with handler.path.open('a+') as f:
+                    f.write(handler.compile_annual_report(y))
+
     #---------------------------------------------------------------------------
     # Function: update_fNames
-    #           Adds a suffix of "_Rep_i_" to the end of the output file name
-    #           where r is the iteration number
+    #           Adds a suffix of "_Iteration_i_" to the end of the output file
+    #           name where i is the iteration number
     # Parameters: i - iteration number
     #---------------------------------------------------------------------------
     def update_fNames(self, i):
-        
-        for key, value in self.outputObjects.items():
-            if value.active:
-                value.update_fName(i)
-            
+
+        for _, handler in self.report_handlers.items():
+            if handler.active:
+                handler.update_fName(i)
+
     #---------------------------------------------------------------------------
     # Function: annual_flush
-    #           Sets all of the values in the output object to the default value
+    #           Sets all of the reports in the output object to the default report
     #---------------------------------------------------------------------------
     def annual_flush(self):
-        
-        for key, value in self.outputObjects.items():
-            if value.active:
-                value.annual_flush()
+
+        for _, handler in self.report_handlers.items():
+            if handler.active:
+                handler.annual_flush()
 
 #-------------------------------------------------------------------------------
-# Class: OutputObject
+# Class: ReportHandler
 #        Contains every all the information printed in a yearly report
 #        Information is flushed at the beginning of every year
 #-------------------------------------------------------------------------------
-class OutputObject():
-    
-    def __init__(self, outputName, fName):
-        
+class ReportHandler():
+
+    def __init__(self, reportName, fName):
+
         self.active = True
-        self.outputName = outputName
+        self.reportName = reportName
         self.fName = fName
-        self.path = Path("../Outputs/" + self.fName)
-    
+        self.path = Path("./Outputs/" + self.fName)
+
     #---------------------------------------------------------------------------
     # Function: set_fName
     #           Adds a suffix of "_Iteration_i_" to the end of the output file
@@ -83,8 +83,8 @@ class OutputObject():
     #---------------------------------------------------------------------------
     def set_fName(self, fName):
         self.fName = fName
-        self.path = Path("../Outputs/" + self.fName)
-    
+        self.path = Path("./Outputs/" + self.fName)
+
     #---------------------------------------------------------------------------
     # Function: update_fName
     #           Adds a suffix of "_Iteration_i_" to the end of the output file
@@ -92,20 +92,20 @@ class OutputObject():
     # Parameters: i - iteration number
     #---------------------------------------------------------------------------
     def update_fName(self, i):
-        
+
         # For first iteration
-        if i == 1:    
+        if i == 1:
             index = self.fName.index('.')
             newfName = self.fName[:index] + "_Iteration_1_" + self.fName[index:]
-            
+
         # For other iterations, replace only iteration number
         else:
             index = self.fName.rfind(str(i - 1))
             newfName = self.fName[:index] + str(i) + self.fName [index + 1:]
-            
+
         self.set_fName(newfName)
 
-    
+
 from .animal_milk import AnimalMilk
 from .forage import Forage
 from .grain import Grain

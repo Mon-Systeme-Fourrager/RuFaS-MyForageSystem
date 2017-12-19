@@ -10,13 +10,46 @@
 ################################################################################
 
 #-------------------------------------------------------------------------------
+# Class: State
+#        Contains information about the current state of the farm
+#-------------------------------------------------------------------------------
+class State():
+
+    def __init__(self):
+        
+        #self.crops = Crops()
+        #self.feed = Feed()
+        #self.fieldOps = FieldOps()
+        #self.herd = Herd()
+        #self.housing = Housing()
+        #self.manure = Manure()
+        #self.soil = Soil()
+        pass
+        
+    #----------------------------------------------------------------------------
+    # Function: annual_reset
+    # 
+    #----------------------------------------------------------------------------
+    def annual_reset(self):
+        
+        #self.crops.annual_reset()
+        #self.feed.annual_reset()
+        #self.fieldOps.annual_reset()
+        #self.herd.annual_reset()
+        #self.housing.annual_reset()
+        #self.manure.annual_reset()
+        #self.soil.annual_reset()
+        pass
+        
+#-------------------------------------------------------------------------------
 # Class: Config
 #        Contains configuration information of the simulation
 #-------------------------------------------------------------------------------     
 class Config():
     
     def __init__(self):
-        self.MASM_fName = "none"
+        
+        self.fName = "none"
         self.years = 1
         self.iterations = 0
         self.iterate = False
@@ -96,10 +129,7 @@ class Time():
     #          False if it is not the end of a year
     #---------------------------------------------------------------------------
     def end_year(self):
-        if self.m > 12:
-            return True
-        else:
-            return False
+        return self.m > 12
     
     #---------------------------------------------------------------------------
     # Function: end_month
