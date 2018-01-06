@@ -42,7 +42,7 @@ def MASM_prompt_input():
                 print("Exiting MASM...")
                 sys.exit()
                 
-            inputPath = Path(userInput)
+            inputPath = Path(userInput).resolve()
 
             #
             # Handle json file input

@@ -44,7 +44,7 @@ def MASM_Simulate(input_fPath:Path):
     # New instances are created for every new simulation
     #
     initialize_globals()
-    
+
     #
     # Reads the json input file
     #
@@ -55,7 +55,7 @@ def MASM_Simulate(input_fPath:Path):
         return
     
     #
-    # Simulation Loop
+    # MAIN Simulation Loop
     #
     while not end_iterations():
         
@@ -82,6 +82,39 @@ def daily_simulation():
     # Daily Routines
     # Pass only information needed
     #
+    
+    # This IF statement is in place because of the soil hydrology file Pete has
+    # provided. His values are calculated starting from day 274 of year 1. 
+    if time.MMDD_to_JulianDay(time.m, time.d) >= 274 or time.y > 1:
+                
+        # calculate daily runoff (soil)
+        state.soil.dailyInfiltration(weather.rainfall[time.y-1]
+                                  [time.MMDD_to_JulianDay(time.m, time.d)-1],
+                                  weather.cumulative)
+    
+        # calculate daily transpiration (soil)
+        state.soil.dailyEvapotranspiration(time.MMDD_to_JulianDay(time.m, time.d)
+            , weather.tMax[time.y-1][time.MMDD_to_JulianDay(time.m, time.d)-1]
+            , weather.tMin[time.y-1][time.MMDD_to_JulianDay(time.m, time.d)-1]
+            , weather.tAvg[time.y-1][time.MMDD_to_JulianDay(time.m, time.d)-1]
+            , weather.biomass[time.y-1][time.MMDD_to_JulianDay(time.m, time.d)-1]
+            , state.location.latitude)
+        
+        state.soil.dailyPercolation()   
+        
+        state.soil.updateDailyOutput(output_handler.report_handlers.get
+                    ("soil_Summary"), weather.rainfall[time.y-1]
+                    [time.MMDD_to_JulianDay(time.m, time.d)-1], 
+                    time.MMDD_to_JulianDay(time.m, time.d), time.y)
+        
+        if float(weather.tAvg[time.y-1][time.MMDD_to_JulianDay(time.m, time.d)-1]) > 0:
+            weather.cumulative = max(-10, min(20, weather.cumulative + 1.0))
+        else:
+            weather.cumulative = max(-10, min(20, weather.cumulative - 1.0)) 
+            
+        state.soil.updateCurrentSoilWater(weather.rainfall[time.y-1]
+            [time.MMDD_to_JulianDay(time.m, time.d)-1])       
+    
     time.advance()
 
 #------------------------------------------------------------------------------- 
