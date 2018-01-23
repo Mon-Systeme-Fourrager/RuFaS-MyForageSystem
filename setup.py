@@ -8,5 +8,5 @@ setup(name='MASM',
       author='Kass Chupongstimun',
       author_email='kass_c@hotmail.com',
       url='xxx',
-      packages=['MASM', 'MASM.data', 'MASM.inputs', 'MASM.outputs'],
+      packages=['MASM', 'MASM.data', 'MASM.input', 'MASM.output'],
      )

@@ -11,8 +11,7 @@
 
 #!/usr/bin/env python3
 
-from MASM.simulation_engine import MASM_Simulate
-from MASM.inputs import MASM_prompt_input
+import MASM
 
 #-------------------------------------------------------------------------------
 # Function: main
@@ -27,15 +26,15 @@ def main():
     # Input could either be a MASM file when doing only 1 simulation
     # or a directory containing MASM files when doing a batch simulation
     #
-    input_files_list = MASM_prompt_input()
+    input_file_list = MASM.input_prompt()
     
     #
     # Begin the simulation
     # Runs the simulation for each input file in input_file_path
     # Runs only 1 simulation in the case of a single input file
     #
-    for input_file_path in input_files_list:
-        MASM_Simulate(input_file_path)
+    for input_file_path in input_file_list:
+        MASM.simulate(input_file_path)
 
 #-------------------------------------------------------------------------------
 #

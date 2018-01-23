@@ -36,7 +36,7 @@ class OutputHandler():
 
         for _, handler in self.report_handlers.items():
             if handler.active:
-                with handler.path.open('a+') as f:
+                with handler.get_fPath().open('a+') as f:
                     f.write(handler.compile_annual_report(y))
 
     #---------------------------------------------------------------------------
@@ -73,17 +73,15 @@ class ReportHandler():
         self.active = True
         self.reportName = reportName
         self.fName = fName
-        self.path = Path("./Outputs/" + self.fName)
-
+        self.path = "../Outputs/"
+        
     #---------------------------------------------------------------------------
-    # Function: set_fName
-    #           Adds a suffix of "_Iteration_i_" to the end of the output file
-    #           name where i is the iteration number
-    # Parameters: i - iteration number
-    #---------------------------------------------------------------------------
-    def set_fName(self, fName):
-        self.fName = fName
-        self.path = Path("./Outputs/" + self.fName)
+    # Function: get_fPath
+    #           Gets the path to which the report handler will write the report
+    # Returns: A path object to which the report will be writtens
+    #---------------------------------------------------------------------------        
+    def get_fPath(self):
+        return Path(self.path + self.fName)
 
     #---------------------------------------------------------------------------
     # Function: update_fName
@@ -96,15 +94,12 @@ class ReportHandler():
         # For first iteration
         if i == 1:
             index = self.fName.index('.')
-            newfName = self.fName[:index] + "_Iteration_1_" + self.fName[index:]
+            self.fname = self.fName[:index] + "_Iteration_1_" + self.fName[index:]
 
         # For other iterations, replace only iteration number
         else:
             index = self.fName.rfind(str(i - 1))
-            newfName = self.fName[:index] + str(i) + self.fName [index + 1:]
-
-        self.set_fName(newfName)
-
+            self.fname = self.fName[:index] + str(i) + self.fName [index + 1:]
 
 from .animal_milk import AnimalMilk
 from .forage import Forage

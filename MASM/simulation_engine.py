@@ -13,11 +13,9 @@
 from pathlib import Path
 
 from MASM.classes import State, Config, Time, Weather
-from MASM.outputs import OutputHandler
-from MASM.inputs import read_json_file
+from MASM.output import OutputHandler
 from MASM.errors import InvalidJSONfileError
-
-# Import all 'main' simulation routines
+from MASM.input import read_json_file
 
 #
 # Define Module Global Variables
@@ -29,7 +27,7 @@ weather = None
 output_handler = None
 
 #-------------------------------------------------------------------------------
-# Function: MASM_Simulate
+# Function: simulate
 #           Executes the simulation using the json file at the path specified
 #           Deals with simulation iterations as specified
 #           Skips over the simulation (immediately returns) when an error in
@@ -37,7 +35,7 @@ output_handler = None
 #
 # Parameters: input_fPath - path to the input json file
 #------------------------------------------------------------------------------- 
-def MASM_Simulate(input_fPath:Path):
+def simulate(input_fPath:Path):
     
     #
     # Instantiates global variables for this simulation
@@ -50,6 +48,7 @@ def MASM_Simulate(input_fPath:Path):
     #
     try:
         read_json_file(input_fPath, state, config, weather, output_handler)
+        
     except InvalidJSONfileError as e:
         print(e.msg)
         return
@@ -63,7 +62,7 @@ def MASM_Simulate(input_fPath:Path):
         
         if config.iterate:
             output_handler.update_fNames(time.i)
-            config.modify_parameters(time.i)
+            config.modify_parameters(time.i, )
 
         while not end_simulation():
             annual_simulation()
@@ -82,6 +81,11 @@ def daily_simulation():
     # Daily Routines
     # Pass only information needed
     #
+    
+    # Does calculations for simulation, saves values in state
+    
+    # Writes the values we want in the report to the report handler object
+    
     time.advance()
 
 #------------------------------------------------------------------------------- 
@@ -133,7 +137,6 @@ def end_simulation():
 #------------------------------------------------------------------------------- 
 def end_iterations():
     return time.i > config.iterations
-
 
 #------------------------------------------------------------------------------- 
 # Function: initialize_globals

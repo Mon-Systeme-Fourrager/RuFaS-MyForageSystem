@@ -9,6 +9,8 @@
 #
 ################################################################################
 
+from MASM.routines.test import Test
+
 #-------------------------------------------------------------------------------
 # Class: State
 #        Contains information about the current state of the farm
@@ -16,7 +18,7 @@
 class State():
 
     def __init__(self):
-        
+
         #self.crops = Crops()
         #self.feed = Feed()
         #self.fieldOps = FieldOps()
@@ -24,14 +26,14 @@ class State():
         #self.housing = Housing()
         #self.manure = Manure()
         #self.soil = Soil()
-        pass
-        
+        self.test = Test()
+
     #----------------------------------------------------------------------------
     # Function: annual_reset
-    # 
+    #
     #----------------------------------------------------------------------------
     def annual_reset(self):
-        
+
         #self.crops.annual_reset()
         #self.feed.annual_reset()
         #self.fieldOps.annual_reset()
@@ -39,55 +41,56 @@ class State():
         #self.housing.annual_reset()
         #self.manure.annual_reset()
         #self.soil.annual_reset()
-        pass
-        
+        self.test.annual_reset()
+
 #-------------------------------------------------------------------------------
 # Class: Config
 #        Contains configuration information of the simulation
-#-------------------------------------------------------------------------------     
+#-------------------------------------------------------------------------------
 class Config():
-    
+
     def __init__(self):
-        
+
         self.fName = "none"
         self.years = 1
         self.iterations = 0
         self.iterate = False
-    
+        self.initial_state = {}
+
     #----------------------------------------------------------------------------
     # Function: modify_parameters
-    # 
+    #
     #----------------------------------------------------------------------------
     def modify_parameters(self, i):
         pass
-    
+
 #-------------------------------------------------------------------------------
 # Class: Weather
 #        Contains daily weather information stored in 3D lists
 #        Data lists are in the format Data[year][month][day]
 #-------------------------------------------------------------------------------
 class Weather():
-    
+
     def __init__(self):
-        
+
         #
         # Weather Data in 3D lists -> [year][month][day]
         #
         self.rainfall = [[[]]]
-    
+
 #-------------------------------------------------------------------------------
 # Class: Time
 #        Contains information about the current time in the simulation
 #        This object is responsible for tracking time in the simulation
-#------------------------------------------------------------------------------- 
+#-------------------------------------------------------------------------------
 class Time():
-    
+
     def __init__(self):
         self.d = 1  # Current Day
         self.m = 1  # Current Month
         self.y = 1  # Current Year
         self.i = 1  # Current Iteration number
-        
+
     #----------------------------------------------------------------------------
     # Function: to_str
     # Returns: a String representation of the current time in the simulation in
@@ -95,7 +98,7 @@ class Time():
     #----------------------------------------------------------------------------
     def to_str(self):
         return "{}/{}/{} Iteration: {}".format(self.d, self.m, self.y, self.i)
-    
+
     #---------------------------------------------------------------------------
     # Function: advance_iteration
     #           Resets the time at the end of a simulation cycle
@@ -130,7 +133,7 @@ class Time():
     #---------------------------------------------------------------------------
     def end_year(self):
         return self.m > 12
-    
+
     #---------------------------------------------------------------------------
     # Function: end_month
     # Returns: True if it is the end of a month

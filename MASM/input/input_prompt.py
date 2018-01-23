@@ -21,7 +21,7 @@ from MASM.errors import UserInputError
 #           Loops back to the prompt until the user inputs a valid file name or
 #           chooses to quit the program
 #-------------------------------------------------------------------------------
-def MASM_prompt_input():
+def input_prompt():
     
     print("\nSingle Simulation:\n\t" +
           "Enter a json file name\n" +
@@ -45,7 +45,7 @@ def MASM_prompt_input():
             inputPath = Path(userInput)
 
             #
-            # Handle json file input
+            # Handle single json file input
             #
             if inputPath.suffix == '.json':
                 if not inputPath.is_file():
@@ -55,7 +55,7 @@ def MASM_prompt_input():
                     return [inputPath]
             
             #
-            # Handle directory of MASM files input
+            # Handle directory of json files input
             #
             elif inputPath.is_dir():
                 # Grab all json files in dir
