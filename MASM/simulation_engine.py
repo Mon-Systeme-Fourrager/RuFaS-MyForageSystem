@@ -13,9 +13,11 @@
 from pathlib import Path
 
 from MASM.classes import State, Config, Time, Weather
-from MASM.output import OutputHandler
+from MASM.outputs import OutputHandler
+from MASM.inputs import read_json_file
 from MASM.errors import InvalidJSONfileError
-from MASM.input import read_json_file
+
+# Import all 'main' simulation routines
 
 #
 # Define Module Global Variables
@@ -27,7 +29,7 @@ weather = None
 output_handler = None
 
 #-------------------------------------------------------------------------------
-# Function: simulate
+# Function: MASM_Simulate
 #           Executes the simulation using the json file at the path specified
 #           Deals with simulation iterations as specified
 #           Skips over the simulation (immediately returns) when an error in
@@ -35,26 +37,25 @@ output_handler = None
 #
 # Parameters: input_fPath - path to the input json file
 #------------------------------------------------------------------------------- 
-def simulate(input_fPath:Path):
+def MASM_Simulate(input_fPath:Path):
     
     #
     # Instantiates global variables for this simulation
     # New instances are created for every new simulation
     #
     initialize_globals()
-    
+
     #
     # Reads the json input file
     #
     try:
         read_json_file(input_fPath, state, config, weather, output_handler)
-        
     except InvalidJSONfileError as e:
         print(e.msg)
         return
     
     #
-    # Simulation Loop
+    # MAIN Simulation Loop
     #
     while not end_iterations():
         
@@ -62,7 +63,7 @@ def simulate(input_fPath:Path):
         
         if config.iterate:
             output_handler.update_fNames(time.i)
-            config.modify_parameters(time.i, )
+            config.modify_parameters(time.i)
 
         while not end_simulation():
             annual_simulation()
@@ -82,9 +83,37 @@ def daily_simulation():
     # Pass only information needed
     #
     
-    # Does calculations for simulation, saves values in state
+    # This IF statement is in place because of the soil hydrology file Pete has
+    # provided. His values are calculated starting from day 274 of year 1. 
+    if time.MMDD_to_JulianDay(time.m, time.d) >= 274 or time.y > 1:
+                
+        # calculate daily runoff (soil)
+        state.soil.dailyInfiltration(weather.rainfall[time.y-1]
+                                  [time.MMDD_to_JulianDay(time.m, time.d)-1],
+                                  weather.cumulative)
     
-    # Writes the values we want in the report to the report handler object
+        # calculate daily transpiration (soil)
+        state.soil.dailyEvapotranspiration(time.MMDD_to_JulianDay(time.m, time.d)
+            , weather.tMax[time.y-1][time.MMDD_to_JulianDay(time.m, time.d)-1]
+            , weather.tMin[time.y-1][time.MMDD_to_JulianDay(time.m, time.d)-1]
+            , weather.tAvg[time.y-1][time.MMDD_to_JulianDay(time.m, time.d)-1]
+            , weather.biomass[time.y-1][time.MMDD_to_JulianDay(time.m, time.d)-1]
+            , state.location.latitude)
+        
+        state.soil.dailyPercolation()   
+        
+        state.soil.updateDailyOutput(output_handler.report_handlers.get
+                    ("soil_Summary"), weather.rainfall[time.y-1]
+                    [time.MMDD_to_JulianDay(time.m, time.d)-1], 
+                    time.MMDD_to_JulianDay(time.m, time.d), time.y)
+        
+        if float(weather.tAvg[time.y-1][time.MMDD_to_JulianDay(time.m, time.d)-1]) > 0:
+            weather.cumulative = max(-10, min(20, weather.cumulative + 1.0))
+        else:
+            weather.cumulative = max(-10, min(20, weather.cumulative - 1.0)) 
+            
+        state.soil.updateCurrentSoilWater(weather.rainfall[time.y-1]
+            [time.MMDD_to_JulianDay(time.m, time.d)-1])       
     
     time.advance()
 

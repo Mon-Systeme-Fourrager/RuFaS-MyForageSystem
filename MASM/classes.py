@@ -8,8 +8,7 @@
 #          Jit Patil
 #
 ################################################################################
-
-from MASM.routines.test import Test
+import math
 
 #-------------------------------------------------------------------------------
 # Class: State
@@ -18,31 +17,472 @@ from MASM.routines.test import Test
 class State():
 
     def __init__(self):
+        
+        self.location = Location()
+        self.soil = Soil()
 
-        #self.crops = Crops()
-        #self.feed = Feed()
-        #self.fieldOps = FieldOps()
-        #self.herd = Herd()
-        #self.housing = Housing()
-        #self.manure = Manure()
-        #self.soil = Soil()
-        self.test = Test()
-
+        self.crops = Crops()
+        self.feed = Feed()
+        self.fieldOps = FieldOps()
+        self.herd = Herd()
+        self.housing = Housing()
+        self.manure = Manure()
+        pass
+    
+        
     #----------------------------------------------------------------------------
     # Function: annual_reset
     #
     #----------------------------------------------------------------------------
     def annual_reset(self):
+        
+        self.crops.annual_reset()
+        self.feed.annual_reset()
+        self.fieldOps.annual_reset()
+        self.herd.annual_reset()
+        self.housing.annual_reset()
+        self.manure.annual_reset()
+        self.soil.annual_reset() 
+        pass
 
-        #self.crops.annual_reset()
-        #self.feed.annual_reset()
-        #self.fieldOps.annual_reset()
-        #self.herd.annual_reset()
-        #self.housing.annual_reset()
-        #self.manure.annual_reset()
-        #self.soil.annual_reset()
-        self.test.annual_reset()
+#-------------------------------------------------------------------------------
+# Class: Location
+#        Contains the state of the farm's location 
+#-------------------------------------------------------------------------------  
+class Location():
+    def __init__(self):
+        self.latitude = 0.0
+    
+    def annual_reset(self):
+        pass
+#-------------------------------------------------------------------------------
+# Class: Crops
+#        Contains the state of the farm's crops 
+#-------------------------------------------------------------------------------  
+class Crops():
+    def __init__(self):
+        pass
+    
+    def annual_reset(self):
+        pass
 
+#-------------------------------------------------------------------------------
+# Class: Feed
+#        Contains the state of the farm's feed 
+#-------------------------------------------------------------------------------  
+class Feed():
+    def __init__(self):
+        pass
+    
+    def annual_reset(self):
+        pass
+        
+
+#-------------------------------------------------------------------------------
+# Class: FieldOps
+#        Contains the state of the farm's field operations 
+#-------------------------------------------------------------------------------  
+class FieldOps():
+    def __init__(self):
+        pass
+    
+    def annual_reset(self):
+        pass
+    
+#-------------------------------------------------------------------------------
+# Class: Herd
+#        Contains the state of the farm's herd 
+#-------------------------------------------------------------------------------  
+class Herd():
+    def __init__(self):
+        pass
+    
+    def annual_reset(self):
+        pass
+    
+
+#-------------------------------------------------------------------------------
+# Class: Housing
+#        Contains the state of the farm's housing 
+#-------------------------------------------------------------------------------  
+class Housing():
+    def __init__(self):
+        pass
+    
+    def annual_reset(self):
+        pass
+
+#-------------------------------------------------------------------------------
+# Class: Manure
+#        Contains the state of the farm's manure 
+#-------------------------------------------------------------------------------  
+class Manure():
+    def __init__(self):
+        pass
+    
+    def annual_reset(self):
+        pass
+    
+#-------------------------------------------------------------------------------
+# Class: Soil
+#        Contains the state of the farm's soil 
+#-------------------------------------------------------------------------------   
+class Soil():
+    listOfSoilLayers = [] 
+
+    def _init_(self):
+        self.wiltingPoint = 0.0
+        self.fieldCapacity = 0.0
+        self.saturation = 0.0        
+        self.profileDepth = 0.0 
+        self.CN2 = 0.0 # unitless, user-defined curve number (empirical)
+        
+        # daily output values
+        self.runoff = 0.0
+        self.Etrans = 0.0
+        self.E0 = 0.0
+        self.Esoil = 0.0
+
+    #---------------------------------------------------------------------------
+    # Class: SoilLayer
+    # An instance of this class represents a layer in the soil
+    #---------------------------------------------------------------------------      
+    class SoilLayer():
+        def __init__(self):
+            self.name = None
+            self.bottomDepth = 0.0 # depth of soil layer
+            self.fcWater = 0.0 # constant
+            self.wiltingWater = 0.0 # constant
+            #self.currentSoilWater = 0.0
+            
+            self.currentSoilWaterMM = 0.0 # soil water in layer in mm
+
+            # Variables to calculate dailyEvapotranspiration
+            self.topEsoil = 0.0 # evaporation demand at top of layer
+            self.bottomEsoil = 0.0 # evaporation demand at bottom of layer
+            self.layerEsoil = 0.0 # evaporation demand at layer
+            
+            # Variables to calculate dailyPercolation
+            self.ksat = 0 # saturated hydraulic conductivity (mm/h)
+            self.TT = 0.0  
+            self.perc = 0.0 # amount of water that percolates to next layer
+    
+    #---------------------------------------------------------------------------
+    # Function: addSoilLayer
+    # Adds a soil layer to the list of soil layers
+    #---------------------------------------------------------------------------        
+    def addSoilLayer(self, name, bd, csw, ksat):
+        soilLayer = self.SoilLayer()
+        soilLayer.name = name
+        soilLayer.bottomDepth = bd
+        #soilLayer.currentSoilWater = csw
+        soilLayer.ksat = ksat
+        self.listOfSoilLayers.append(soilLayer)
+             
+    #---------------------------------------------------------------------------
+    # Function: calculateFcWater
+    # Calculates the amount of water in soil profile for a given layer at 
+    # field capacity (mm H2O). Called when soil portion of input is read.
+    #---------------------------------------------------------------------------
+    def calculateFcWater(self):
+        for x in range(0, len(self.listOfSoilLayers)):
+            if x == 0:
+                self.listOfSoilLayers[x].fcWater = (self.
+                    listOfSoilLayers[x].bottomDepth * self.fieldCapacity)
+            else:
+                self.listOfSoilLayers[x].fcWater = (self.
+                    listOfSoilLayers[x].bottomDepth- 
+                    self.listOfSoilLayers[x-1].bottomDepth) * self.fieldCapacity        
+
+    #---------------------------------------------------------------------------
+    # Function: calculateWiltingWater
+    # Calculates the amount of water in soil profile for a given layer at 
+    # wilting point (mm H2O). Called when soil portion of input is read.
+    #---------------------------------------------------------------------------          
+    def calculateWiltingWater(self):
+        for x in range(0, len(self.listOfSoilLayers)):
+            if x == 0:
+                self.listOfSoilLayers[x].wiltingWater = (self.
+                    listOfSoilLayers[x].bottomDepth * self.wiltingPoint)
+            else:
+                self.listOfSoilLayers[x].wiltingWater = (self.
+                    listOfSoilLayers[x].bottomDepth - 
+                    self.listOfSoilLayers[x-1].bottomDepth) * self.wiltingPoint 
+    
+    #---------------------------------------------------------------------------
+    # Function: convertCurrentSoilWaterToMM
+    # Calculates the amount of soil water in a given layer in millimeters.
+    # Called once when soil portion of input is read.
+    #---------------------------------------------------------------------------  
+    def convertCurrentSoilWaterToMM(self):
+        for x in range(0, len(self.listOfSoilLayers)):
+            if x == 0:
+                self.listOfSoilLayers[x].currentSoilWaterMM = (self.
+                    listOfSoilLayers[x].bottomDepth * self.fieldCapacity)
+            else:
+                self.listOfSoilLayers[x].currentSoilWaterMM = (self.
+                    listOfSoilLayers[x].bottomDepth- 
+                    self.listOfSoilLayers[x-1].bottomDepth) * self.fieldCapacity
+    
+    #---------------------------------------------------------------------------
+    # Function: getSumSoilWater
+    # Calculates the total amount of soil water in all the soil layers (mm)
+    #---------------------------------------------------------------------------                                                  
+    def getSumSoilWater(self):
+        totalSoilWater = 0.0       
+        for soilLayer in self.listOfSoilLayers:
+            totalSoilWater += soilLayer.currentSoilWaterMM
+        return totalSoilWater
+
+    #---------------------------------------------------------------------------
+    # Function: getSumWiltingWater
+    # Calculates the total amount of wilting water in all soil layers (mm H2O)
+    #---------------------------------------------------------------------------  
+    def getSumWiltingWater(self):
+        totalWiltingWater = 0.0       
+        for soilLayer in self.listOfSoilLayers:
+            totalWiltingWater += soilLayer.wiltingWater
+        return totalWiltingWater
+    
+    #---------------------------------------------------------------------------
+    # Function: dailyInfiltration
+    # Uses curve number approach (equations taken from SWAT 2009 documentation)
+    #---------------------------------------------------------------------------       
+    def dailyInfiltration(self, dailyRainfall, cumulative): 
+          
+        # curve number 1
+        cn1 = self.CN2 - (20 * (100 - self.CN2)) / (100
+                                                    - self.CN2 + math.exp(2.533 
+                                                    - 0.0636 * (100- self.CN2)))
+        # curve number 3
+        cn3 = self.CN2 * math.exp(0.00673 * (100 - self.CN2))
+        
+        # maximum value of S on any given day (mm H2O)
+        sMax = 25.4 * ((1000 / cn1) - 10)
+
+        s3 = 25.4*((1000/cn3) - 10)
+        
+        # amount of water in soil profile at field capacity (mm H2O)
+        FC = self.profileDepth * self.fieldCapacity
+        
+        # amount of water in soil profile at saturation (mm H2O)
+        SAT = self.profileDepth * self.saturation
+
+        # soil water content of entire profile, excluding water held at wilting
+        # point (mm H2O)
+        SW = self.getSumSoilWater() - self.getSumWiltingWater()
+        
+        #shape coefficients
+        w2 = (math.log(FC / 
+                      (1 -s3 * (1/sMax)) - FC) -math.log(
+                          SAT/(1-2.54*(1/sMax))- SAT
+                          )) /(SAT - FC)                     
+        w1 = math.log((FC / 
+                       (1 - (s3) * (1/sMax)))-
+                      FC)+ w2*FC                   
+
+        # retention paramenter (mm H2O)
+        s = sMax * (1 - (SW/(SW + math.exp(w1 - (w2)*(SW)))))
+        
+        # when the top soil is frozen, s is modified
+        if(cumulative <= 0):
+            s = sMax * (1-math.exp(-0.000862 * s))
+        
+        # daily runoff (mm H2O)
+        Q = 0.0
+        if float(dailyRainfall) > 0.2*s:
+            Q = ((float(dailyRainfall) - 0.2*s)**2) / (float(dailyRainfall) 
+                                                       + 0.8*s) 
+        
+        self.runoff = Q                  
+
+    #---------------------------------------------------------------------------
+    # Function: dailyEvapotranspiration
+    # Uses Hargreaves method for simplicity (equations taken from SWAT 2009 
+    # documentation)
+    # Step 1: Calculate Potential Evapotranspiration
+    # Step 2: Calculate Crop Transpiration
+    # Step 3: Calculate Sublimation and Soil Evaporation
+    # Step 4: Partition Esoil among different soil layers 
+    #---------------------------------------------------------------------------       
+    def dailyEvapotranspiration(self, jday, tMax, tMin, tAvg, biomass, latitude):
+        
+    # Step 1: Calculate Potential Evapotranspiration
+        av = 0.2618 # angular velocity of earth's rotation (rad*h^-1)
+        
+        # eccentricity correction factor of earth's orbit
+        ECF = 1 + 0.033*math.cos((2*math.pi*(jday))/(365))
+        
+        # solar declination in radians
+        SD = math.asin(0.4*math.sin((2*math.pi/365)*(jday-82)))
+        
+        # hours of sunrise
+        TSR = math.acos(math.atan(SD)*math.tan(latitude))/av
+        
+        # extraterrestrial radiation (MJ*m^-2*d^-1)
+        H0 = (37.59)*(ECF)*((av)*(TSR)*(math.sin(SD))*(math.sin(latitude))+
+                            (math.cos(SD))*(math.cos(latitude))*
+                            math.sin(av*TSR))
+        
+        # latent heat of vaporization (MJ*kg^-1)
+        LHV = 2.501 - 2.361*(10**(-3))*float(tAvg)
+        
+        # potential evapotranspiration (mm*d^-1)
+        self.E0 = max(0.001, 0.0023*H0*(float(tMax)-float(tMin))**0.5*
+                      (float(tAvg) + 17.8)/LHV)
+                
+    # Step 2: Calculate Crop Transpiration
+        # Leaf Area Index (calculated in Crop Growth Section)
+        LAI = float(biomass) / 1500
+        
+        # maximum transpiration on a given day (mm H2O)
+        # The actual amount of transpiration may be less than this maximum 
+        # amount due to lack of available water in the rooting depth of the 
+        # soil profile. 
+        if LAI >= 0 and LAI <= 3.0:
+            self.Etrans = (self.E0 * round(LAI,3)) / 3.0
+        else:
+            self.Etrans = self.E0
+        
+    # Step 3: Calculate Sublimation and soil evaporation 
+        # aboveground biomass and residue (kg*ha^-1)        
+        
+        # soil cover index
+        soilCov = math.exp(-5.0 * ((10)**(-5)) * float(biomass))
+        
+        # maximum soil evaporation/sublimation on a given day (mm H2O)
+        Esoil = (round(self.E0,3) - self.Etrans) * (soilCov)
+        self.Esoil = min(Esoil, ((Esoil*self.E0)/(Esoil + self.Etrans)))       
+       
+        # If snow is present and snow water is greater than Esoil, there is no 
+        # evaporation from soil. If snow water is less than Esoil, both soil 
+        # and snow will contribute to Esoil. 
+        
+    # Step 4: Partition Esoil among different soil layers
+        # FOR each soil layer, calculate Esoil at top of layer, Esoil at bottom
+        # of layer and then Esoil of entire layer
+        for x in range(0, len(self.listOfSoilLayers)):
+            if x == 0:
+                self.listOfSoilLayers[x].topEsoil = 0
+                self.listOfSoilLayers[x].bottomEsoil = (Esoil *
+                    self.listOfSoilLayers[x].bottomDepth/ 
+                    (self.listOfSoilLayers[x].bottomDepth +  math.exp
+                    (2.374 - 0.00713*self.listOfSoilLayers[x].bottomDepth)))
+            else:
+                self.listOfSoilLayers[x].topEsoil = (self.listOfSoilLayers[x-1].
+                                                     bottomEsoil)
+                self.listOfSoilLayers[x].bottomEsoil = (Esoil * 
+                    self.listOfSoilLayers[x].bottomDepth/ 
+                    (self.listOfSoilLayers[x].bottomDepth + math.exp
+                    (2.374 - 0.00713*self.listOfSoilLayers[x].bottomDepth)))       
+            
+            # The evaporation demand for a given soil layer is the difference 
+            # between evaporation demands at the top and bottom of the layer. 
+            # One soil layer cannot compensate for the inability of another layer 
+            # to meet evaporation demand. Evaporation demand not met by a soil 
+            # layer results in a reduction in actual ET. 
+            if (self.listOfSoilLayers[x].currentSoilWaterMM > 
+                                            self.listOfSoilLayers[x].fcWater):
+                self.listOfSoilLayers[x].layerEsoil= (self.listOfSoilLayers[x].
+                            bottomEsoil - self.listOfSoilLayers[x].topEsoil)
+            # ELSE, When soil water content is less than field capacity, Esoil 
+            # for a given layer is reduced as:
+            else:
+                self.listOfSoilLayers[x].layerEsoil=((self.listOfSoilLayers[x].
+                            bottomEsoil - self.listOfSoilLayers[x].topEsoil)*
+                            math.exp(2.5*(self.listOfSoilLayers[x].
+                            currentSoilWaterMM-self.listOfSoilLayers[x].fcWater)
+                            /(self.listOfSoilLayers[x].fcWater-self.
+                            listOfSoilLayers[x].wiltingWater)))
+            
+    #---------------------------------------------------------------------------
+    # Function: dailyPercolation
+    # (equations taken from SWAT 2009 documentation)
+    #---------------------------------------------------------------------------      
+    def dailyPercolation(self):   
+        # Calculate value of water available for percolation FOR each layer            
+        for x in range(0, len(self.listOfSoilLayers)):
+            # Volume of water available for percolation (SWperc) in a soil layer
+            # is the difference between SW and WP. 
+            SWperc = 0.0
+            if (self.listOfSoilLayers[x].currentSoilWaterMM >= 
+                                            self.listOfSoilLayers[x].fcWater):
+                SWperc = (self.listOfSoilLayers[x].currentSoilWaterMM - 
+                          (self.listOfSoilLayers[x].fcWater))
+            
+            # travel time for percolation (h)
+            if x == 0:
+                self.listOfSoilLayers[x].TT = (((self.saturation*
+                    self.listOfSoilLayers[x].bottomDepth)-
+                    self.listOfSoilLayers[x].fcWater)/ 
+                                               self.listOfSoilLayers[x].ksat)
+            else:
+                self.listOfSoilLayers[x].TT = (((self.saturation*
+                    (self.listOfSoilLayers[x].bottomDepth-
+                     self.listOfSoilLayers[x-1].bottomDepth))-
+                    self.listOfSoilLayers[x].fcWater)/ 
+                                               self.listOfSoilLayers[x].ksat) 
+            t = 24 # time step (hours)
+            
+            #amount of water that percolates
+            self.listOfSoilLayers[x].perc = (SWperc * 
+                            (1 - math.exp(-t/self.listOfSoilLayers[x].TT)))  
+
+    #---------------------------------------------------------------------------
+    # Function: updateCurrentSoilWater
+    # Updates the soil water within each layer at the end of each day. The 
+    # model assumes 80% of plant transpiration comes out of the top soil layer 
+    # and 20% from layer 2.
+    #---------------------------------------------------------------------------
+    def updateCurrentSoilWater(self, rainfall):
+        for x in range(0, len(self.listOfSoilLayers)):
+            if x == 0:
+                self.listOfSoilLayers[x].currentSoilWaterMM = (max
+                    (self.listOfSoilLayers[x].wiltingWater,
+                    self.listOfSoilLayers[x].currentSoilWaterMM+float(rainfall)
+                    -self.runoff-self.listOfSoilLayers[x].layerEsoil
+                    -self.listOfSoilLayers[x].perc-self.Etrans*0.8))
+            elif x== 1:
+                    self.listOfSoilLayers[x].currentSoilWaterMM = (max
+                        (self.listOfSoilLayers[x].wiltingWater, 
+                         self.listOfSoilLayers[x].currentSoilWaterMM
+                        -self.listOfSoilLayers[x].layerEsoil
+                        -self.listOfSoilLayers[x].perc
+                        +self.listOfSoilLayers[x-1].perc-(self.Etrans*0.2)))
+            else:
+                    self.listOfSoilLayers[x].currentSoilWaterMM = (max
+                        (self.listOfSoilLayers[x].wiltingWater, 
+                         self.listOfSoilLayers[x].currentSoilWaterMM
+                        -self.listOfSoilLayers[x].layerEsoil
+                        -self.listOfSoilLayers[x].perc
+                        +self.listOfSoilLayers[x-1].perc))                    
+
+    #---------------------------------------------------------------------------
+    # Function: updateDailyOutput
+    # Stores the daily values that need to be printed in the 'soil summary'
+    # cvs file
+    #---------------------------------------------------------------------------           
+    def updateDailyOutput(self, SoilSumReportHandler, rainfall,day, year):
+        SoilSumReportHandler.year.append(year)
+        SoilSumReportHandler.julianDay.append(day)
+        SoilSumReportHandler.precip.append(rainfall)
+        SoilSumReportHandler.runoff.append(self.runoff)
+        SoilSumReportHandler.potentialEvapotranspiration.append(self.E0)
+        SoilSumReportHandler.cropTranspiration.append(self.Etrans)
+        SoilSumReportHandler.sublimation.append(self.Esoil)
+        
+        for x in range(0, len(self.listOfSoilLayers)):
+            SoilSumReportHandler.layersSoilWater[x].append(
+                                    self.listOfSoilLayers[x].currentSoilWaterMM)
+            SoilSumReportHandler.layersEsoil[x].append(
+                                    self.listOfSoilLayers[x].layerEsoil)
+            SoilSumReportHandler.layersPerc[x].append(
+                                    self.listOfSoilLayers[x].perc)
+
+    def annual_reset(self):
+        pass
+    
+        
 #-------------------------------------------------------------------------------
 # Class: Config
 #        Contains configuration information of the simulation
@@ -55,8 +495,7 @@ class Config():
         self.years = 1
         self.iterations = 0
         self.iterate = False
-        self.initial_state = {}
-
+    
     #----------------------------------------------------------------------------
     # Function: modify_parameters
     #
@@ -74,10 +513,16 @@ class Weather():
     def __init__(self):
 
         #
-        # Weather Data in 3D lists -> [year][month][day]
+        # Weather Data in 2D lists -> [year][julianDay]
         #
-        self.rainfall = [[[]]]
-
+        self.rainfall = [[]]
+        self.tMax = [[]]
+        self.tMin = [[]]
+        self.tAvg = [[]]
+        self.biomass = [[]]
+        
+        self.cumulative = 1.0
+       
 #-------------------------------------------------------------------------------
 # Class: Time
 #        Contains information about the current time in the simulation
@@ -99,6 +544,19 @@ class Time():
     def to_str(self):
         return "{}/{}/{} Iteration: {}".format(self.d, self.m, self.y, self.i)
 
+    #----------------------------------------------------------------------------
+    # Function: MMDD_to_JulianDay
+    # Returns: returns the julian day of the year given a particular month and 
+    # dat
+    #----------------------------------------------------------------------------    
+    def MMDD_to_JulianDay(self, month, date):
+        dayInMonths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        
+        julianDay = 0
+        for i in range(0, month-1):
+            julianDay += dayInMonths[i]
+        julianDay += date
+        return julianDay
     #---------------------------------------------------------------------------
     # Function: advance_iteration
     #           Resets the time at the end of a simulation cycle

@@ -5,7 +5,7 @@
 # main.py - Main program routine
 #
 # Authors: Kass Chupongstimun
-#          Jit Patil
+#          Jit Patil JITs
 #
 ################################################################################
 

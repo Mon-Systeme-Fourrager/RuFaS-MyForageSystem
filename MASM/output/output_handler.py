@@ -10,6 +10,7 @@
 ################################################################################
 
 from pathlib import Path
+import os
 
 #-------------------------------------------------------------------------------
 # Class: OutputHandler
@@ -25,7 +26,8 @@ class OutputHandler():
                                 'grain': Grain(),
                                 'carbon_loss': CarbonLoss(),
                                 'nitrogen_loss': NitrogenLoss(),
-                                'phosphorus_loss': PhosphorusLoss()}
+                                'phosphorus_loss': PhosphorusLoss(),
+                                'soil_Summary': SoilSummary()}
 
     #---------------------------------------------------------------------------
     # Function: write_annual_reports
@@ -36,8 +38,12 @@ class OutputHandler():
 
         for _, handler in self.report_handlers.items():
             if handler.active:
-                with handler.get_fPath().open('a+') as f:
-                    f.write(handler.compile_annual_report(y))
+                mode = 'a+' if os.path.exists(handler.path) else 'w+'
+                if isinstance(handler, SoilSummary):
+                    handler.compile_annual_report()
+                else:
+                    with open(handler.path, mode) as f:
+                        f.write(handler.compile_annual_report(y))
 
     #---------------------------------------------------------------------------
     # Function: update_fNames
@@ -73,8 +79,8 @@ class ReportHandler():
         self.active = True
         self.reportName = reportName
         self.fName = fName
-        self.path = "../Outputs/"
-        
+        self.path = Path("./Outputs/" + self.fName)
+
     #---------------------------------------------------------------------------
     # Function: get_fPath
     #           Gets the path to which the report handler will write the report
@@ -107,3 +113,4 @@ from .grain import Grain
 from .carbon_loss import CarbonLoss
 from .nitrogen_loss import NitrogenLoss
 from .phosphorus_loss import PhosphorusLoss
+from .soil_summary import SoilSummary

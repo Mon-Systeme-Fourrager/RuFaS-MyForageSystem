@@ -3,18 +3,22 @@
 
     "config":
     {
-
-        "iterations": 2,
-        "years": 7
+        "iterations": 1,
+        "years": 2
     },
 
-    "weather": null,
+    "weather": "Inputs/Weather.csv",
 
     "output":
     {
         "path": "../Outputs/",
         "reports":
         {
+            "soil_Summary":
+            {
+                "active": true,
+                "file_name": "soil_summary.txt"
+            },
             "animal_milk":
             {
                 "active": true,
@@ -50,6 +54,39 @@
 
     "farm":
     {
+      "location":
+      {
+          "Latitude": 0.7309
+      },
+      "soil":
+      {
+          "WiltingPoint": 0.1,
+          "FieldCapacity": 0.30,
+          "Saturation": 0.5,
+          "ProfileDepth": 2000,
+          "CN2": 80.00,
+
+          "Layer2":
+          {
+            "BottomDepth": 1000,
+            "StartingSoilWater": 0.3,
+            "Ksat": 4
+          },
+
+          "Layer1":
+          {
+            "BottomDepth": 150,
+            "StartingSoilWater": 0.2,
+            "Ksat": 5
+          },
+
+          "Layer3":
+          {
+            "BottomDepth": 2000,
+            "StartingSoilWater": 0.3,
+            "Ksat": 4
+          }
+      }
 
     }
 
