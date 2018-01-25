@@ -245,11 +245,37 @@ def read_soil(f, so, c:Config, o:OutputHandler):
             so.fieldCapacity = value        
         elif(key == "Saturation"):
             so.saturation = value 
+        elif(key == "FieldSlope"):
+            so.fieldSlope = value
+        elif(key == "SlopeLength"):
+            so.slopeLength = value
+        elif(key.startswith("Manning")):
+            so.manning = value
+        elif(key == "FieldSize"):
+            so.fieldSize = value
+        elif(key == "PracticeFactor"):
+            so.practiceFactor = value        
+        elif(key == "Orgc"):
+            so.orgc = value 
+        elif(key == "Sand"):
+            so.sand = value
+        elif(key == "Silt"):
+            so.silt = value
+        elif(key == "Clay"):
+            so.clay = value
         else:
             raise JSONfileError(c.fName, "Soil", "Soil Input Key Mismatch")
    
     # sort layers by bottomDepth 
     so.listOfSoilLayers.sort(key=lambda x: x.bottomDepth) 
+    
+    # calculate initial depth of each soil layer
+    for x in range(0, len(so.listOfSoilLayers)):
+        if x == 0:
+            so.listOfSoilLayers[x].depth = so.listOfSoilLayers[x].bottomDepth
+        else:   
+            so.listOfSoilLayers[x].depth = (so.listOfSoilLayers[x].bottomDepth
+                - so.listOfSoilLayers[x-1].bottomDepth)
     
     so.convertCurrentSoilWaterToMM() # calculate initial soil water in layer
     so.calculateWiltingWater() # calculate wilting water in layer
