@@ -23,8 +23,8 @@ def main():
 
     #
     # Prompt user for an input
-    # Input could either be a MASM file when doing only 1 simulation
-    # or a directory containing MASM files when doing a batch simulation
+    # Input could either be a json file when doing only 1 simulation
+    # or a directory containing json files when doing a batch simulation
     #
     input_file_list = MASM.input_prompt()
     

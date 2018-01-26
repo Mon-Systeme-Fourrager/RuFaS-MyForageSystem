@@ -130,6 +130,7 @@ class Time():
             julianDay += dayInMonths[i]
         julianDay += date
         return julianDay
+    
     #---------------------------------------------------------------------------
     # Function: advance_iteration
     #           Resets the time at the end of a simulation cycle

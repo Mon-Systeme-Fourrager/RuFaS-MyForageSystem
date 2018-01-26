@@ -31,9 +31,9 @@ def input_prompt():
           "Enter \'Q\' or \'q\'")
 
     while(True):
+        
         try:
             userInput = input("\nEnter MASM Input: ")
-            #userInput = "Sample.MASM"
 
             #
             # Handle user exiting program

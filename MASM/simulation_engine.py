@@ -62,7 +62,7 @@ def simulate(input_fPath:Path):
         
         if config.iterate:
             output_handler.update_fNames(time.i)
-            config.modify_parameters(time.i)
+            #config.modify_parameters(time.i)
 
         while not end_simulation():
             annual_simulation()
