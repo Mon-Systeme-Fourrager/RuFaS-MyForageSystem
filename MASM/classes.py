@@ -456,7 +456,7 @@ class Soil():
     #---------------------------------------------------------------------------
     # Function: dailySoilErosion
     # Use MUSLE approach (equations taken from SWAT 2009 documentation) to 
-    # determine soil erosion
+    # determine daily soil erosion
     #--------------------------------------------------------------------------- 
     def dailySoilErosion(self, rainfall, jday):
         
