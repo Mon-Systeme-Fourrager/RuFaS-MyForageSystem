@@ -7,18 +7,15 @@
         "years": 2
     },
 
-    "weather": "Inputs/Weather.csv",
+    "weather": "../Inputs/Weather.csv",
 
     "output":
     {
-        "path": "./Outputs/",
-        "reports":
+        "soil_summary":
         {
-            "soil_summary":
-            {
-                "active": true,
-                "file_name": "soil_summary.csv"
-            }
+            "active": true,
+            "file_name": "soil_summary.csv",
+            "path": null
         }
     },
 
