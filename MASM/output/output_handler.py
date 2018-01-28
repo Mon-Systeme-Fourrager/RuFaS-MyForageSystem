@@ -21,9 +21,9 @@ class OutputHandler():
 
     def __init__(self):
 
-        self.report_handlers = {
-                                'soil_summary': SoilSummary()
-                                }
+        self.reports = {
+                        'soil_summary': SoilSummary()
+                        }
         
     #---------------------------------------------------------------------------
     # Function: write_annual_reports
@@ -32,14 +32,14 @@ class OutputHandler():
     #---------------------------------------------------------------------------
     def write_annual_reports(self, y):
 
-        for _, handler in self.report_handlers.items():
-            if handler.active:
-                mode = 'a+' if handler.get_fPath().exists() else 'w+'
-                if isinstance(handler, SoilSummary):
-                    handler.compile_annual_report()
+        for _, report in self.reports.items():
+            if report.active:
+                mode = 'a+' if report.get_fPath().exists() else 'w+'
+                if isinstance(report, SoilSummary):
+                    report.compile_annual_report()
                 else:
-                    with handler.get_fPath().open(mode) as f:
-                        f.write(handler.compile_annual_report(y))
+                    with report.get_fPath().open(mode) as f:
+                        f.write(report.compile_annual_report(y))
 
     #---------------------------------------------------------------------------
     # Function: update_fNames
@@ -49,9 +49,9 @@ class OutputHandler():
     #---------------------------------------------------------------------------
     def update_fNames(self, i):
 
-        for _, handler in self.report_handlers.items():
-            if handler.active:
-                handler.update_fName(i)
+        for _, report in self.reports.items():
+            if report.active:
+                report.update_fName(i)
 
     #---------------------------------------------------------------------------
     # Function: annual_flush
@@ -59,9 +59,9 @@ class OutputHandler():
     #---------------------------------------------------------------------------
     def annual_flush(self):
 
-        for _, handler in self.report_handlers.items():
-            if handler.active:
-                handler.annual_flush()
+        for _, report in self.reports.items():
+            if report.active:
+                report.annual_flush()
 
 #-------------------------------------------------------------------------------
 # Abstract Class: ReportHandler
@@ -75,7 +75,7 @@ class ReportHandler(ABC):
         self.active = True
         self.reportName = reportName
         self.fName = fName
-        self.path = "./Outputs/"
+        self.path = "../Outputs/"
 
     #---------------------------------------------------------------------------
     # Function: get_fPath
