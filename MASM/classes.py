@@ -21,7 +21,7 @@ class State():
         
         self.location = Location()
         self.soil = Soil()
-
+        
         #self.crops = Crops()
         #self.feed = Feed()
         #self.fieldOps = FieldOps()

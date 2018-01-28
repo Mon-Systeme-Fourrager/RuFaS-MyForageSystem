@@ -11,42 +11,49 @@
 
 import math
 
+#------------------------------------------------------------------------------
+# Function: daily_soil_routine
+# Executes all the daily soil routines
+#------------------------------------------------------------------------------
 def daily_soil_routine(soil, location, weather, time):
-    
-    # This IF statement is in place because of the soil hydrology file Pete has
-    # provided. His values are calculated starting from day 274 of year 1. 
-    if time.MMDD_to_JulianDay(time.m, time.d) >= 274 or time.y > 1:
-                
-        # calculate daily runoff (soil)
-        soil.dailyInfiltration(weather.rainfall[time.y-1]
+                   
+    # calculate daily runoff 
+    soil.dailyInfiltration(weather.rainfall[time.y-1]
                                   [time.MMDD_to_JulianDay(time.m, time.d)-1],
                                   weather.cumulative)
     
-        # calculate daily transpiration (soil)
-        soil.dailyEvapotranspiration(time.MMDD_to_JulianDay(time.m, time.d)
-            , weather.tMax[time.y-1][time.MMDD_to_JulianDay(time.m, time.d)-1]
-            , weather.tMin[time.y-1][time.MMDD_to_JulianDay(time.m, time.d)-1]
-            , weather.tAvg[time.y-1][time.MMDD_to_JulianDay(time.m, time.d)-1]
-            , weather.biomass[time.y-1][time.MMDD_to_JulianDay(time.m, time.d)-1]
-            , location.latitude)
+    # calculate daily transpiration 
+    soil.dailyEvapotranspiration(time.MMDD_to_JulianDay(time.m, time.d)
+        , weather.tMax[time.y-1][time.MMDD_to_JulianDay(time.m, time.d)-1]
+        , weather.tMin[time.y-1][time.MMDD_to_JulianDay(time.m, time.d)-1]
+        , weather.tAvg[time.y-1][time.MMDD_to_JulianDay(time.m, time.d)-1]
+        , weather.biomass[time.y-1][time.MMDD_to_JulianDay(time.m, time.d)-1]
+        , location.latitude)
         
-        soil.dailyPercolation()  
+    # calculate daily percolation
+    soil.dailyPercolation()  
         
-        soil.dailySoilErosion(weather.rainfall[time.y-1]
-                                  [time.MMDD_to_JulianDay(time.m, time.d)-1], time.MMDD_to_JulianDay(time.m, time.d)) 
+    # calculate daily soil erosion
+    soil.dailySoilErosion(weather.rainfall[time.y-1]
+        [time.MMDD_to_JulianDay(time.m, time.d)-1], 
+        time.MMDD_to_JulianDay(time.m, time.d)) 
+                        
         
-        soil.updateDailyOutput(output_handler.report_handlers.get
-                    ("soil_Summary"), weather.rainfall[time.y-1]
-                    [time.MMDD_to_JulianDay(time.m, time.d)-1], 
-                    time.MMDD_to_JulianDay(time.m, time.d), time.y)
-        
-        if float(weather.tAvg[time.y-1][time.MMDD_to_JulianDay(time.m, time.d)-1]) > 0:
-            weather.cumulative = max(-10, min(20, weather.cumulative + 1.0))
-        else:
-            weather.cumulative = max(-10, min(20, weather.cumulative - 1.0)) 
+#------------------------------------------------------------------------------
+# Function: daily_soil_update
+# Update attributes of soil in preparation of following day
+#------------------------------------------------------------------------------
+def daily_soil_update(soil, weather, time):
+                
+    # update indicator (var cumulative) of whether soil is frozen
+    if float(weather.tAvg[time.y-1][time.MMDD_to_JulianDay(time.m, time.d)-1]) > 0:
+        weather.cumulative = max(-10, min(20, weather.cumulative + 1.0))
+    else:
+        weather.cumulative = max(-10, min(20, weather.cumulative - 1.0))
             
-        soil.updateCurrentSoilWater(weather.rainfall[time.y-1]
-            [time.MMDD_to_JulianDay(time.m, time.d)-1])  
+    # update current soil water    
+    soil.updateCurrentSoilWater(weather.rainfall[time.y-1]
+        [time.MMDD_to_JulianDay(time.m, time.d)-1]) 
 
 #-------------------------------------------------------------------------------
 # Class: Soil
@@ -56,20 +63,15 @@ class Soil():
     
     listOfSoilLayers = [] 
 
-    def _init_(self):
+    def __init__(self):
+        
+    # Values Initialized by Input
         self.wiltingPoint = 0.0
         self.fieldCapacity = 0.0
         self.saturation = 0.0        
         self.profileDepth = 0.0 
         self.CN2 = 0.0 # unitless, user-defined curve number (empirical)
-        self.dayInfiltraiton = 0.0 # daily infiltration
-        
-        # daily output values
-        self.runoff = 0.0
-        self.Etrans = 0.0
-        self.E0 = 0.0
-        self.Esoil = 0.0
-        
+     
         # soil erosion attributes
         self.fieldSlope = 0.0
         self.slopeLength = 0.0
@@ -80,6 +82,14 @@ class Soil():
         self.sand = 0.0
         self.silt = 0.0
         self.clay = 0.0
+        
+        # daily output values
+        self.runoff = 0.0
+        self.Etrans = 0.0
+        self.E0 = 0.0
+        self.Esoil = 0.0
+        
+        self.dayInfiltraiton = 0.0 # daily infiltration
         self.sedimentYield = 0.0
 
     #---------------------------------------------------------------------------
@@ -347,36 +357,7 @@ class Soil():
             
             #amount of water that percolates
             self.listOfSoilLayers[x].perc = (SWperc * 
-                            (1 - math.exp(-t/self.listOfSoilLayers[x].TT)))  
-
-    #---------------------------------------------------------------------------
-    # Function: updateCurrentSoilWater
-    # Updates the soil water within each layer at the end of each day. The 
-    # model assumes 80% of plant transpiration comes out of the top soil layer 
-    # and 20% from layer 2.
-    #---------------------------------------------------------------------------
-    def updateCurrentSoilWater(self, rainfall):
-        for x in range(0, len(self.listOfSoilLayers)):
-            if x == 0:
-                self.listOfSoilLayers[x].currentSoilWaterMM = (max
-                    (self.listOfSoilLayers[x].wiltingWater,
-                    self.listOfSoilLayers[x].currentSoilWaterMM+float(rainfall)
-                    -self.runoff-self.listOfSoilLayers[x].layerEsoil
-                    -self.listOfSoilLayers[x].perc-self.Etrans*0.8))
-            elif x== 1:
-                    self.listOfSoilLayers[x].currentSoilWaterMM = (max
-                        (self.listOfSoilLayers[x].wiltingWater, 
-                         self.listOfSoilLayers[x].currentSoilWaterMM
-                        -self.listOfSoilLayers[x].layerEsoil
-                        -self.listOfSoilLayers[x].perc
-                        +self.listOfSoilLayers[x-1].perc-(self.Etrans*0.2)))
-            else:
-                    self.listOfSoilLayers[x].currentSoilWaterMM = (max
-                        (self.listOfSoilLayers[x].wiltingWater, 
-                         self.listOfSoilLayers[x].currentSoilWaterMM
-                        -self.listOfSoilLayers[x].layerEsoil
-                        -self.listOfSoilLayers[x].perc
-                        +self.listOfSoilLayers[x-1].perc))                    
+                            (1 - math.exp(-t/self.listOfSoilLayers[x].TT)))                    
 
     #---------------------------------------------------------------------------
     # Function: dailySoilErosion
@@ -448,31 +429,36 @@ class Soil():
         sed = 11.8 * ((self.runoff * Qpeak)**0.56
                       ) * K * C * self.practiceFactor * LS
         self.sedimentYield = sed
-    
-    #---------------------------------------------------------------------------
-    # Function: updateDailyOutput
-    # Stores the daily values that need to be printed in the 'soil summary'
-    # cvs file
-    #---------------------------------------------------------------------------           
-    def updateDailyOutput(self, SoilSumReportHandler, rainfall,day, year):
-        SoilSumReportHandler.year.append(year)
-        SoilSumReportHandler.julianDay.append(day)
-        SoilSumReportHandler.precip.append(rainfall)
-        SoilSumReportHandler.runoff.append(self.runoff)
-        SoilSumReportHandler.potentialEvapotranspiration.append(self.E0)
-        SoilSumReportHandler.cropTranspiration.append(self.Etrans)
-        SoilSumReportHandler.sublimation.append(self.Esoil)
         
+    #---------------------------------------------------------------------------
+    # Function: updateCurrentSoilWater
+    # Updates the soil water within each layer at the end of each day. The 
+    # model assumes 80% of plant transpiration comes out of the top soil layer 
+    # and 20% from layer 2.
+    #---------------------------------------------------------------------------
+    def updateCurrentSoilWater(self, rainfall):
         for x in range(0, len(self.listOfSoilLayers)):
-            SoilSumReportHandler.layersSoilWater[x].append(
-                                    self.listOfSoilLayers[x].currentSoilWaterMM)
-            SoilSumReportHandler.layersEsoil[x].append(
-                                    self.listOfSoilLayers[x].layerEsoil)
-            SoilSumReportHandler.layersPerc[x].append(
-                                    self.listOfSoilLayers[x].perc)
-            
-        SoilSumReportHandler.sedimentYield.append(self.sedimentYield)
-
+            if x == 0:
+                self.listOfSoilLayers[x].currentSoilWaterMM = (max
+                    (self.listOfSoilLayers[x].wiltingWater,
+                    self.listOfSoilLayers[x].currentSoilWaterMM+float(rainfall)
+                    -self.runoff-self.listOfSoilLayers[x].layerEsoil
+                    -self.listOfSoilLayers[x].perc-self.Etrans*0.8))
+            elif x== 1:
+                    self.listOfSoilLayers[x].currentSoilWaterMM = (max
+                        (self.listOfSoilLayers[x].wiltingWater, 
+                         self.listOfSoilLayers[x].currentSoilWaterMM
+                        -self.listOfSoilLayers[x].layerEsoil
+                        -self.listOfSoilLayers[x].perc
+                        +self.listOfSoilLayers[x-1].perc-(self.Etrans*0.2)))
+            else:
+                    self.listOfSoilLayers[x].currentSoilWaterMM = (max
+                        (self.listOfSoilLayers[x].wiltingWater, 
+                         self.listOfSoilLayers[x].currentSoilWaterMM
+                        -self.listOfSoilLayers[x].layerEsoil
+                        -self.listOfSoilLayers[x].perc
+                        +self.listOfSoilLayers[x-1].perc)) 
+    
     def annual_reset(self):
         pass
     

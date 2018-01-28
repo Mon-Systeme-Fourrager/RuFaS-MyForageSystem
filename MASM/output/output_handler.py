@@ -108,7 +108,7 @@ class ReportHandler(ABC):
     #---------------------------------------------------------------------------
     @abstractmethod
     def daily_update(self): pass
-    @abstractmethod
+    @abstractmethod  
     def compile_annual_report(self): pass
     @abstractmethod
     def annual_flush(self): pass

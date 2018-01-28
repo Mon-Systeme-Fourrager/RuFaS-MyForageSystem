@@ -13,8 +13,8 @@ from .output_handler import ReportHandler
 import csv
 
 #-------------------------------------------------------------------------------
-# Class: SampleOutput1
-#        
+# Class: SoilSummary
+# Creates and prints to the file soil_summary.csv
 #-------------------------------------------------------------------------------
 class SoilSummary(ReportHandler):
     
@@ -24,7 +24,7 @@ class SoilSummary(ReportHandler):
     
     def __init__(self):
              
-        super().__init__("Soil Summary", "Soil_Summary.csv")
+        #super().__init__("Soil Summary", "Soil_Summary.csv")
                  
         #
         # Yearly Output
@@ -75,7 +75,33 @@ class SoilSummary(ReportHandler):
     # csv file
     #--------------------------------------------------------------------------- 
     def daily_update(self, soil, weather, time):
-        pass
+        self.updateDailySoilOutput(soil, weather.rainfall[time.y-1]
+                    [time.MMDD_to_JulianDay(time.m, time.d)-1], 
+                    time.MMDD_to_JulianDay(time.m, time.d), time.y) 
+    
+    #---------------------------------------------------------------------------
+    # Function: updateDailySoilOutput
+    # Stores the daily values that need to be printed in the 'soil summary'
+    # cvs file
+    #---------------------------------------------------------------------------           
+    def updateDailySoilOutput(self, soil, rainfall,day, year):
+        self.year.append(year)
+        self.julianDay.append(day)
+        self.precip.append(rainfall)
+        self.runoff.append(soil.runoff)
+        self.potentialEvapotranspiration.append(soil.E0)
+        self.cropTranspiration.append(soil.Etrans)
+        self.sublimation.append(soil.Esoil)
+        
+        for x in range(0, len(soil.listOfSoilLayers)):
+            self.layersSoilWater[x].append(
+                soil.listOfSoilLayers[x].currentSoilWaterMM)
+            self.layersEsoil[x].append(
+                                    soil.listOfSoilLayers[x].layerEsoil)
+            self.layersPerc[x].append(
+                                    soil.listOfSoilLayers[x].perc)
+            
+        self.sedimentYield.append(soil.sedimentYield)  
     
     #---------------------------------------------------------------------------
     # Function: compile_annual_report

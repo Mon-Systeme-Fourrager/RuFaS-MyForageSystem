@@ -69,18 +69,22 @@ def read_config(data, c:Config):
 # 
 #-------------------------------------------------------------------------------
 def read_output_options(data, o:OutputHandler, c:Config):
+    
+    directory = data['path']
+    reports = data['reports']
 
-    if len(data) != len(o.report_handlers):
+    if len(reports) != len(o.report_handlers):
         raise LengthMismatchError(c.fName, "OUTPUT", len(o.report_handlers))
     
-    for key, value in data.items():
+    for key, value in reports.items():
         if key not in o.report_handlers:
             raise JSONfileError(c.fName, "OUTPUT",
                                 "Output Report Handler name mismatch")
         else:
             o.report_handlers[key].active = value['active']
-            if data[key]['file_name'] is not None:
+            if reports[key]['file_name'] is not None:
                 o.report_handlers[key].fName = value['file_name']
+                o.report_handlers[key].path = directory + o.report_handlers[key].fName
             
     
 #-------------------------------------------------------------------------------
@@ -197,7 +201,8 @@ def read_location(data, location, c:Config):
 # Reads the data-fields associated with the soil portion from the json file 
 #-------------------------------------------------------------------------------
 def read_soil(f, so, c:Config, o:OutputHandler):
-     
+    
+    # read in each soil attribute
     for key, value in f.items():
         if(key == "ProfileDepth"):
             so.profileDepth = value
@@ -231,6 +236,7 @@ def read_soil(f, so, c:Config, o:OutputHandler):
             so.clay = value
         else:
             raise JSONfileError(c.fName, "Soil", "Soil Input Key Mismatch")
+     
    
     # sort layers by bottomDepth 
     so.listOfSoilLayers.sort(key=lambda x: x.bottomDepth) 

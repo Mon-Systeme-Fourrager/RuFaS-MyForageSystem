@@ -11,10 +11,10 @@
 
     "output":
     {
-        "path": "../Outputs/",
+        "path": "./Outputs/",
         "reports":
         {
-            "soil_Summary":
+            "soil_summary":
             {
                 "active": true,
                 "file_name": "soil_summary.csv"
@@ -24,12 +24,12 @@
 
     "farm":
     {
-    
+
       "location":
       {
           "latitude": 0.7309
       },
-      
+
       "soil":
       {
           "WiltingPoint": 0.1,

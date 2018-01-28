@@ -77,16 +77,26 @@ def simulate(input_fPath:Path):
 #------------------------------------------------------------------------------- 
 def daily_simulation():
     
-    #
-    # Daily Routines
-    # Pass only information needed
-    #
-    routines.daily_soil_routine(state.soil, state.location, weather, time)
+    # This IF statement is in place because of the soil hydrology file Pete has
+    # provided. His values are calculated starting from day 274 of year 1.
+    if time.MMDD_to_JulianDay(time.m, time.d) >= 274 or time.y > 1:
+        #
+        # Daily Routines
+        # Pass only information needed
+        #
+        routines.daily_soil_routine(state.soil, state.location, weather, time)
     
-    #
-    # Daily Output Updates
-    #
-    output_handler.report_handlers['soil_summary'].daily_update(state.soil, weather, time)
+        #
+        # Daily Output Updates
+        #
+        output_handler.report_handlers['soil_summary'].daily_update(state.soil, 
+                                                                weather, time)
+    
+        #
+        # Daily Attribute Updates
+        # Update attributes in preparation of following day
+        #
+        routines.daily_soil_update(state.soil, weather, time)
     
     time.advance()
 
