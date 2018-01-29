@@ -257,7 +257,7 @@ class Soil():
         # hours of sunrise
         TSR = math.acos(math.atan(SD)*math.tan(latitude))/av
         
-        # extraterrestrial radiation (MJ*m^-2*d^-1)
+        # extraterrestrial radiation (MJ*m^-2*d^-1) --> MAKE INPUT VARIABLE
         H0 = (37.59)*(ECF)*((av)*(TSR)*(math.sin(SD))*(math.sin(latitude))+
                             (math.cos(SD))*(math.cos(latitude))*
                             math.sin(av*TSR))
