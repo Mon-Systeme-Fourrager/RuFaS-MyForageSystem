@@ -39,8 +39,8 @@ def read_json_file(fPath:Path, s:State, c:Config, w:Weather, o:OutputHandler):
         try:
             read_config(data['config'], c)
             read_weather(data['weather'], w, c)
-            read_output_options(data['output'], o, c)
             read_farm(data['farm'], s, c, o)
+            read_output_options(data['output'], o, c)
             
         except (JSONfileError, LengthMismatchError) as e:
             print(e.msg)
@@ -73,14 +73,13 @@ def read_output_options(data, o:OutputHandler, c:Config):
     if len(data) != len(o.reports):
         raise LengthMismatchError(c.fName, "OUTPUT", len(o.reports))
     
-    
     for key in data:
         try:
             o.reports[key].active = data[key]['active']
             if data[key]['file_name'] is not None:
                 o.reports[key].fName = data[key]['file_name']
             if data[key]['path'] is not None:
-                    o.reports[key].path = data[key]['path']
+                o.reports[key].path = data[key]['path']
         except KeyError:
             raise JSONfileError(c.fName, "OUTPUT",
                                 "Output Report Handler name mismatch: " + key)
@@ -90,10 +89,8 @@ def read_output_options(data, o:OutputHandler, c:Config):
 # Function: read_weather
 # 1) Reads in rainfall data and stores date in w.rainfall
 #-------------------------------------------------------------------------------
-def read_weather(weather_fPath_str, w:Weather, c:Config):    
-    
-    fPath = Path(weather_fPath_str)
-    
+def read_weather(weather_path_str, w:Weather, c:Config):    
+
     currentRow = 0
     
     w.rainfall = [[0 for _ in range(365)]for _ in range(c.years)]
@@ -108,7 +105,7 @@ def read_weather(weather_fPath_str, w:Weather, c:Config):
     tAvgData = []
     bioMass = []
     
-    with fPath.open('r') as f:
+    with Path(weather_path_str).open('r') as f:
         readCSV = csv.reader(f, delimiter=',')
         for row in readCSV:
             if currentRow != 0:
@@ -254,6 +251,12 @@ def read_soil(f, so, c:Config, o:OutputHandler):
     so.calculateWiltingWater() # calculate wilting water in layer
     so.calculateFcWater() # calculate field capacity water in layer
     
+    
+    #
+    # TODO: Make it so that no data here is stored in Soil and extracted by
+    #       SoilSummary object from Soil instead of passing here
+    #
+    
     # initialize number of layer in soil summary report handler to get output
     # data pertaining to each soil layer 
     o.reports['soil_summary'].setNumSoilLayers(len(so.listOfSoilLayers))
@@ -263,6 +266,7 @@ def read_soil(f, so, c:Config, o:OutputHandler):
 # Reads the data-fields associated with a layer of soil from the json file 
 #-------------------------------------------------------------------------------        
 def read_soil_layer(layerName, f, so, c:Config):
+    
     bottomDepth = 0.0
     currentSoilWater = 0.0
     kSat = 0.0
@@ -275,7 +279,8 @@ def read_soil_layer(layerName, f, so, c:Config):
         elif(key == "Ksat"):
             kSat = value
         else:
-            raise JSONfileError(c.fName, "SoilLayer", "Soil Layer Input Key Mismatch")
+            raise JSONfileError(c.fName,
+                                "SoilLayer", "Soil Layer Input Key Mismatch")
         
     so.addSoilLayer(layerName, bottomDepth, currentSoilWater, kSat)
     
