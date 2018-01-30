@@ -248,16 +248,6 @@ def read_soil(f, so, c:Config, o:OutputHandler):
     so.convertCurrentSoilWaterToMM() # calculate initial soil water in layer
     so.calculateWiltingWater() # calculate wilting water in layer
     so.calculateFcWater() # calculate field capacity water in layer
-    
-    
-    #
-    # TODO: Make it so that no data here is stored in Soil and extracted by
-    #       SoilSummary object from Soil instead of passing here
-    #
-    
-    # initialize number of layer in soil summary report handler to get output
-    # data pertaining to each soil layer 
-    o.reports['soil_summary'].setNumSoilLayers(len(so.listOfSoilLayers))
 
 #-------------------------------------------------------------------------------
 # Function: read_soil_layer

@@ -57,16 +57,14 @@ class SoilSummary(ReportHandler):
     #           Transfers the needed data from Soil object to the report handler
     #---------------------------------------------------------------------------
     def initialize(self, soil):
-        pass
-    
-    #---------------------------------------------------------------------------
-    # Function: setNumSoilLayers
-    # Initializes the output arrays for current soil water, Esoil, and 
-    # percolation for each soil layer
-    #--------------------------------------------------------------------------- 
-    def setNumSoilLayers(self, numSoilLayers):
-        self.numSoilLayers = numSoilLayers
-        for _ in range (0, numSoilLayers):
+        
+        # initialize number of layer in soil summary report handler to get output
+        # data pertaining to each soil layer
+        # Initializes the output arrays for current soil water, Esoil, and 
+        # percolation for each soil layer
+        self.numSoilLayers = len(soil.listOfSoilLayers)
+        
+        for _ in range (0, self.numSoilLayers):
             soilLayerSoilWater = []
             self.layersSoilWater.append(soilLayerSoilWater)
             
