@@ -10,15 +10,16 @@
 #
 ################################################################################
 
+import json
 from pathlib import Path
 
-from MASM.input import read_json_file
-from MASM.classes import Time
-from MASM.errors import InvalidJSONfileError
+from MASM.classes import Config, State, Weather, Time
+from MASM.output import OutputHandler
+from MASM.errors import InvalidJSONfileError, JSONfileDataError
 import MASM.routines as routines
 
 #
-# Define Module Global Variables
+# Define Simulation Global Variables
 #
 config = None
 state = None
@@ -39,28 +40,20 @@ def simulate(input_fPath:Path):
 
     #
     # Reads the json input file and uses the information to instantiate the
-    # simulation global variables returned as a dictionary
+    # simulation global variables
     #
     try:
-        json_contents = read_json_file(input_fPath)
+        read_json_file(input_fPath)
     except InvalidJSONfileError as e:
         print(e.msg)
         return
     
     #
-    # Assigns the classes returned from reading the json file to the simulation
-    # global variables
-    #
-    initialize_globals(json_contents)
-    
-    #
-    # Initialize reports
     # Transfer needed data from state to report handlers
-    # Deletes existing output files of the same name from previous files
+    # Deletes existing output files of the same name from previous simulation
     #
-    output.initialize_output_dir(config)
+    output.initialize_output_dir(config.output_dir)
     output.initialize_reports(state)
-    output.handle_existing_files()
     
     #
     # MAIN Simulation Loop
@@ -145,18 +138,32 @@ def annual_simulation():
 #------------------------------------------------------------------------------- 
 def end_simulation():
     return time.y > config.duration
-
-#------------------------------------------------------------------------------- 
-# Function: initialize_globals
-#           Initializes all simulation global objects
-#           Creates a new instance for each object
-#------------------------------------------------------------------------------- 
-def initialize_globals(json_contents):
+    
+#-------------------------------------------------------------------------------
+# Function: read_json_file
+#           Sets up the parameters of the simulation
+#           Reads and interprets the json file
+#
+# Parameters: fPath - Path to the json input file for the simulation
+#
+# Raises: InvalidJSONfileError - when there is a problem with the json file
+#-------------------------------------------------------------------------------
+def read_json_file(fPath:Path):
     
     global config, state, output, weather, time
-    config = json_contents['config']
-    state = json_contents['state']
-    output = json_contents['output']
-    weather = json_contents['weather']
-    time = Time()
+    
+    with fPath.open('r') as f:
+        data = json.load(f)
+            
+        try:
+            config = Config(data['config'], fPath.name)
+            state = State(data['farm'])
+            output = OutputHandler(data['output'])
+            weather = Weather(data['weather'], config.duration)
+            time = Time()
+            
+        except JSONfileDataError as e:
+            print("JSON FILE ERROR: " + 
+                  "{} Section {}\n {}".format(fPath.name, e.section, e.msg))
+            raise InvalidJSONfileError(fPath.name)
     
