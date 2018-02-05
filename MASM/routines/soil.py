@@ -56,25 +56,6 @@ def daily_soil_update(soil, weather, time):
         [time.julian_day()-1]) 
 
 #-------------------------------------------------------------------------------
-# Function: read_soil_layer
-# Reads the data-fields associated with a layer of soil from the json file 
-#-------------------------------------------------------------------------------        
-def read_soil_layer(layerName, f, so):
-    
-    bottomDepth = 0.0
-    currentSoilWater = 0.0
-    kSat = 0.0
-    
-    for key, value in f.items():
-        if(key == "BottomDepth"):
-            bottomDepth = value   
-        elif(key == "StartingSoilWater"):
-            currentSoilWater = value
-        elif(key == "Ksat"):
-            kSat = value
-        
-    so.addSoilLayer(layerName, bottomDepth, currentSoilWater, kSat)
-#-------------------------------------------------------------------------------
 # Class: Soil
 #        Contains the state of the farm's soil 
 #-------------------------------------------------------------------------------   
@@ -84,7 +65,7 @@ class Soil():
 
     def __init__(self, data):
         
-    # Values Initialized by Input
+        # Values Initialized by Input
         self.wiltingPoint = data['WiltingPoint']
         self.fieldCapacity = data['FieldCapacity']
         self.saturation = data['Saturation']        
@@ -111,8 +92,8 @@ class Soil():
         self.dayInfiltraiton = 0.0 # daily infiltration
         self.sedimentYield = 0.0
         
-        for layerName, layer in data["SoilLayers"].items():
-            self.addSoilLayer(layerName, layer['BottomDepth'], layer['Ksat'])
+        for layerName, layerData in data["SoilLayers"].items():
+            self.listOfSoilLayers.append(self.SoilLayer(layerName, layerData))
             
         # sort layers by bottomDepth 
         self.listOfSoilLayers.sort(key=lambda x: x.bottomDepth) 
@@ -135,10 +116,10 @@ class Soil():
     #---------------------------------------------------------------------------      
     class SoilLayer():
         
-        def __init__(self):
+        def __init__(self, layerName, layerData):
             
-            self.name = None
-            self.bottomDepth = 0.0 # bottom depth of soil layer
+            self.name = layerName
+            self.bottomDepth = layerData['BottomDepth'] # bottom depth of soil layer
             self.depth = 0.0 # depth of soil layer
             self.fcWater = 0.0 # constant
             self.wiltingWater = 0.0 # constant
@@ -152,21 +133,9 @@ class Soil():
             self.layerEsoil = 0.0 # evaporation demand at layer
             
             # Variables to calculate dailyPercolation
-            self.ksat = 0 # saturated hydraulic conductivity (mm/h)
+            self.ksat = layerData['Ksat'] # saturated hydraulic conductivity (mm/h)
             self.TT = 0.0  
             self.perc = 0.0 # amount of water that percolates to next layer
-    
-    #---------------------------------------------------------------------------
-    # Function: addSoilLayer
-    # Adds a soil layer to the list of soil layers
-    #---------------------------------------------------------------------------        
-    def addSoilLayer(self, name, bd, ksat):
-        soilLayer = self.SoilLayer()
-        soilLayer.name = name
-        soilLayer.bottomDepth = bd
-        #soilLayer.currentSoilWater = csw
-        soilLayer.ksat = ksat        
-        self.listOfSoilLayers.append(soilLayer)
         
     #---------------------------------------------------------------------------
     # Function: calculateFcWater
