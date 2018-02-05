@@ -212,7 +212,7 @@ def read_location(data, location, c:Config):
 
 #-------------------------------------------------------------------------------
 # Function: read_soil
-# Reads the data-fields associated with the soil portion from the json file 
+# Reads the data-fields associated with the soil section from the json file 
 #-------------------------------------------------------------------------------
 def read_soil(f, so, c:Config):
     
