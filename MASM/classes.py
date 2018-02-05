@@ -95,6 +95,7 @@ class Weather():
         self.tMin = [[0 for _ in range(365)]for _ in range(duration)]
         self.tAvg = [[0 for _ in range(365)]for _ in range(duration)]
         self.biomass = [[0 for _ in range(365)]for _ in range(duration)]
+        self.radiation = [[0 for _ in range(365)]for _ in range(duration)]
     
         rainfallData = []
         tMaxData = []
