@@ -30,7 +30,6 @@ time = None
 #-------------------------------------------------------------------------------
 # Function: simulate
 #           Executes the simulation using the json file at the path specified
-#           Deals with simulation iterations as specified
 #           Skips over the simulation (immediately returns) when an error in
 #           the input json file is detected
 #
@@ -49,8 +48,9 @@ def simulate(input_fPath:Path):
         return
     
     #
-    # Transfer needed data from state to report handlers
+    # Creates a new directory for the output files (if doesn't already exist)
     # Deletes existing output files of the same name from previous simulation
+    # Transfer needed data from state to report handlers
     #
     output.initialize_output_dir(config.output_dir)
     output.initialize_reports(state)
@@ -82,7 +82,7 @@ def daily_simulation():
         # Daily Routines
         # Pass only information needed
         #
-        routines.daily_soil_routine(state.soil, state.location, weather, time)
+        routines.daily_soil_routine(state.soil, weather, time)
     
         #
         # Daily Output Updates
@@ -126,9 +126,9 @@ def annual_simulation():
     #
     # Annual Routines
     #
-    output.write_annual_reports(time)
-    output.annual_flush()
-    state.annual_reset()
+    output.write_annual_reports()
+    #output.annual_flush()
+    #state.annual_reset()
     time.advance()
     
 #------------------------------------------------------------------------------- 

@@ -52,9 +52,8 @@ class OutputHandler():
     #---------------------------------------------------------------------------
     # Function: write_annual_reports
     #
-    # Parameters: y - year of the report to be appended
     #---------------------------------------------------------------------------
-    def write_annual_reports(self, y):
+    def write_annual_reports(self):
 
         for _, report in self.reports.items():
             if report.active:

@@ -88,19 +88,15 @@ class SoilSummary(BaseReportHandler):
     # csv file
     #--------------------------------------------------------------------------- 
     def daily_update(self, soil, weather, time):
-        self.updateDailySoilOutput(soil, weather.rainfall[time.y-1]
-                    [time.julian_day()-1], 
-                    time.julian_day(), time.y) 
-    
-    #---------------------------------------------------------------------------
-    # Function: updateDailySoilOutput
-    # Stores the daily values that need to be printed in the 'soil summary'
-    # cvs file
-    #---------------------------------------------------------------------------           
-    def updateDailySoilOutput(self, soil, rainfall,day, year):
+        
+        rainfall = weather.rainfall[time.y-1][time.julian_day()-1]
+        day = time.julian_day()
+        year = time.y
+        
         self.year.append(year)
         self.julianDay.append(day)
         self.precip.append(rainfall)
+        
         self.runoff.append(soil.runoff)
         self.potentialEvapotranspiration.append(soil.E0)
         self.cropTranspiration.append(soil.Etrans)
@@ -121,8 +117,8 @@ class SoilSummary(BaseReportHandler):
             
         
         self.surfaceTemp.append(soil.Tsurf)  
-        self.sedimentYield.append(soil.sedimentYield)  
-    
+        self.sedimentYield.append(soil.sedimentYield) 
+ 
     #---------------------------------------------------------------------------
     # Function: write_annual_report
     #           Appends the annual report to the output file
