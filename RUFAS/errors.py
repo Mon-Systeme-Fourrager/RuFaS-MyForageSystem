@@ -10,19 +10,19 @@
 ################################################################################
 
 #-------------------------------------------------------------------------------
-# Class: UserInputError
+# Class: UserInput
 #
 #-------------------------------------------------------------------------------     
-class UserInputError(Exception):
+class UserInput(Exception):
     
     def __init__(self, msg):
         self.msg = "USER INPUT ERROR: " + msg
 
 #-------------------------------------------------------------------------------
-# Class: SectionError
+# Class: 
 #
 #-------------------------------------------------------------------------------     
-class InvalidJSONfileError(Exception):
+class InvalidJSONfile(Exception):
     
     def __init__(self, fName):
         self.msg = "Skipping simulation for {}\n".format(fName)
@@ -31,7 +31,7 @@ class InvalidJSONfileError(Exception):
 # Class: LengthMismatchError
 #
 #-------------------------------------------------------------------------------     
-class JSONfileDataError(Exception):
+class JSONfileData(Exception):
     
     def __init__(self, section, msg):
         self.section = section

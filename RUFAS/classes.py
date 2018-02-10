@@ -12,9 +12,9 @@
 import csv
 import math
 
-from pathlib import Path
+from RUFAS import util
+from RUFAS import errors
 from RUFAS.routines import Soil
-from RUFAS.errors import JSONfileDataError
 
 #-------------------------------------------------------------------------------
 # Class: State
@@ -92,20 +92,20 @@ class Weather():
         bioMassData = []
         radiationData = []
         
-        with Path(weather_path_str).open('r') as f:
+        weather_full_path = util.get_base_dir() / weather_path_str
+        
+        if not weather_full_path.is_file():
+            raise errors.JSONfileData("WEATHER",
+                                      "\tWeather file specified does not exist")
+            
+        #
+        # Read data from CSV file
+        # Data read is in the format data[day]
+        # 1D list of length total number of days in the whole weather file
+        #
+        with weather_full_path.open('r') as f:
             readCSV = csv.reader(f, delimiter=',')
-            
-            """if sum(1 for row in f) != duration:
-                raise JSONfileDataError("WEATHER",
-                                        "\tNumber of years in weather file does "
-                                        + "not match simulation duration")
-            """
-            
-            #
-            # Read data from CSV file
-            # Data read is in the format data[day]
-            # 1D list of length total number of days in the whole weather file
-            #
+                
             currentRow = 0
             for row in readCSV:
                 if currentRow != 0:
@@ -126,23 +126,23 @@ class Weather():
                     
                     # 6) Read radiation data
                     radiationData.append(row[6])
-
+    
                 currentRow += 1
-            
-            weather_file_years = math.floor(currentRow / 365)
-            # Make sure weather data length matchs simulation duaration
-            if weather_file_years != duration:
-                raise JSONfileDataError("WEATHER",
-                                        "\tWeather file contains " +
-                                        str(weather_file_years) +
-                                        "\n\tSimulation specifies " + str(duration) +
-                                        " years")
-            #
-            # TODO: check for weather file length match with simulation duration
-            #
-            # Print out number of rows(days) read from CSV file
-            #print(str(currentRow - 1))
-           
+        
+        # Make sure weather data length matchs simulation duaration
+        weather_file_years = math.floor(currentRow / 365)
+        if weather_file_years != duration:
+            raise errors.JSONfileData("WEATHER",
+                                      "\tWeather file contains " +
+                                      str(weather_file_years) +
+                                      "\n\tSimulation specifies " + str(duration) +
+                                      " years")
+        #
+        # TODO: check for weather file length match with simulation duration
+        #
+        # Print out number of rows(days) read from CSV file
+        #print(str(currentRow - 1))
+       
         #
         # Put weather data into the format:
         #    data[year][julian_day]
@@ -155,7 +155,7 @@ class Weather():
                     break
                 else:
                     self.rainfall[i][j] = rainfallData[i*365 + j]
-    
+        
         # 2) Update Max Temperature in weather
         for i in range(0, duration):
             for j in range(0, 365):
@@ -171,7 +171,7 @@ class Weather():
                     break
                 else:
                     self.tMin[i][j] = tMinData[i*365 + j]
-    
+        
         # 4) Update Avg Temperature in weather
         for i in range(0, duration):
             for j in range(0, 365):

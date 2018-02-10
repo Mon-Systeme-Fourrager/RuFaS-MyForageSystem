@@ -11,6 +11,7 @@
 
 from pathlib import Path
 from abc import ABC, abstractmethod
+from RUFAS import util
 
 #-------------------------------------------------------------------------------
 # Class: OutputHandler
@@ -32,6 +33,7 @@ class OutputHandler():
     #---------------------------------------------------------------------------
     def initialize_reports(self, state):
         
+        #self.reports['farm_summary'].get_data(state)
         self.reports['soil_summary'].get_data(state.soil)
         
     #---------------------------------------------------------------------------
@@ -42,8 +44,9 @@ class OutputHandler():
     #---------------------------------------------------------------------------
     def initialize_output_dir(self, output_dir):
         
-        Path(output_dir).mkdir(exist_ok = True, parents = False)
-        BaseReportHandler.path = output_dir
+        output_full_path = util.get_base_dir() / output_dir
+        output_full_path.mkdir(exist_ok = True, parents = False)
+        BaseReportHandler.path = output_full_path
         
         # Deletes existing output files of the same name
         for _, report in self.reports.items():
@@ -78,7 +81,7 @@ class OutputHandler():
 class BaseReportHandler(ABC):
     
     # Default path for output report files
-    path = "./Outputs/Default_Output_Dir/"
+    path = Path("Outputs/Default_Output_Dir")
 
     def set_properties(self, data):
 
@@ -92,7 +95,7 @@ class BaseReportHandler(ABC):
     # Returns: A path object to which the report will be writtens
     #---------------------------------------------------------------------------        
     def get_fPath(self):
-        return Path(self.path + self.fName)
+        return self.path / self.fName
     
     #---------------------------------------------------------------------------
     # Function: handle_existing_file
@@ -116,5 +119,9 @@ class BaseReportHandler(ABC):
     @abstractmethod
     def annual_flush(self): raise NotImplementedError()
 
-from .farm_summary import FarmSummary
-from .soil_summary import SoilSummary
+
+#
+# Imports are down here to prevent circular imports
+#
+from RUFAS.output.farm_summary import FarmSummary
+from RUFAS.output.soil_summary import SoilSummary

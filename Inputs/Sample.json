@@ -4,10 +4,10 @@
     "config":
     {
         "duration": 24,
-        "output_dir": "./Outputs/Sample_Farm_Outputs/"
+        "output_dir": "Outputs/Sample_Farm_Outputs/"
     },
 
-    "weather": "./Inputs/Weather.csv",
+    "weather": "Inputs/Weather.csv",
 
     "output":
     {

@@ -16,10 +16,10 @@ import RUFAS
 #-------------------------------------------------------------------------------
 # Function: main
 #           Main function of RUFAS, the whole simulation is executed here
-#-------------------------------------------------f------------------------------
+#-------------------------------------------------------------------------------
 def main():
  
-    print("RUFAS: Ruminant Farm Systems Model")
+    print("\nRUFAS: Ruminant Farm Systems Model")
 
     #
     # Prompt user for an input

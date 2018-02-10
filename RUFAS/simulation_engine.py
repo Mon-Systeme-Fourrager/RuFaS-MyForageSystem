@@ -13,10 +13,10 @@
 import json
 from pathlib import Path
 
+from RUFAS import routines
+from RUFAS import errors
 from RUFAS.classes import Config, State, Weather, Time
 from RUFAS.output import OutputHandler
-from RUFAS.errors import InvalidJSONfileError, JSONfileDataError
-import RUFAS.routines as routines
 
 #
 # Define Simulation Global Variables
@@ -43,7 +43,7 @@ def simulate(input_fPath:Path):
     #
     try:
         read_json_file(input_fPath)
-    except InvalidJSONfileError as e:
+    except errors.InvalidJSONfile as e:
         print(e.msg)
         return
     
@@ -162,8 +162,8 @@ def read_json_file(fPath:Path):
             weather = Weather(data['weather'], config.duration)
             time = Time()
             
-        except JSONfileDataError as e:
+        except errors.JSONfileData as e:
             print("JSON FILE ERROR: " + 
                   "{} \n\t{} Section\n{}\n".format(fPath.name, e.section, e.msg))
-            raise InvalidJSONfileError(fPath.name)
+            raise errors.InvalidJSONfile(fPath.name)
     

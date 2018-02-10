@@ -2,7 +2,7 @@
 #
 # RUFAS: Ruminant Farm Systems Model
 #
-# prompt_user.py - Contains user input prompt routines
+# user_prompt.py - Contains user input prompt routines
 #
 # Authors: Kass Chupongstimun
 #          Jit Patil
@@ -11,8 +11,9 @@
 
 import sys
 from pathlib import Path
-import RUFAS.util as util
-from RUFAS.errors import UserInputError
+
+from RUFAS import util
+from RUFAS import errors
 
 #-------------------------------------------------------------------------------
 # Function: input_prompt
@@ -28,7 +29,7 @@ def input_prompt():
                 "Enter a json file name\n" +
           "Batch Simulation:\n\t" +
                 "Enter a directory containing json files\n" +
-          "Print Directory:\n\t" +
+          "Print Base Directory:\n\t" +
                 "Enter \'dir\'\n" +
           "Exit RUFAS:\n\t" +
                 "Enter \'Q\' or \'q\'")
@@ -46,7 +47,7 @@ def input_prompt():
                 sys.exit()
             
             #
-            # Handle print working directory
+            # Handle print base directory
             #
             elif user_input.lower() == 'dir':
                 print(str(util.get_base_dir()))
@@ -59,7 +60,7 @@ def input_prompt():
             #
             if input_path.suffix == '.json':
                 if not input_path.is_file():
-                    raise UserInputError("Specified file does not exist")
+                    raise errors.UserInput("Specified file does not exist")
                 else:
                     print("json file Detected...\n")
                 return [input_path]
@@ -72,7 +73,7 @@ def input_prompt():
                 path_list = list(input_path.glob('*.json'))
                 # Handle no json files in dir
                 if len(path_list) < 1:
-                    raise UserInputError("Directory contains no json files")
+                    raise errors.UserInput("Directory contains no json files")
                 else:
                     print(str(len(path_list)) + " json files detected...\n")
                     return path_list
@@ -81,7 +82,7 @@ def input_prompt():
             # Handle bad inputs
             #
             else:
-                raise UserInputError("Invalid Input")
+                raise errors.UserInput("Invalid Input")
                 
-        except UserInputError as e:
+        except errors.UserInput as e:
                 print(e.msg)
