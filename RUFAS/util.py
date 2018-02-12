@@ -17,8 +17,8 @@ def get_base_dir():
         
         # Get the executable file path
         # Resolve to absolute path
-        # Take the parent xxx/RUFAS_exe
-        #                 parent = xxx/
+        # Take the parent base_dir/RUFAS_exe
+        #                 parent = base_dir/
         return Path(sys.executable).resolve().parent
     
     # Unfrozen
@@ -26,7 +26,7 @@ def get_base_dir():
         
         # Get path of current file (util.py)
         # Resolve to absolute path
-        # Get the 2nd parent  xxx/RUFAS/util.py
-        #                     parent[1] = xxx/
-        #                     parent[0] = xxx/RUFAS
+        # Get the 2nd parent  base_dir/RUFAS/util.py
+        #                     parent[0] = base_dir/RUFAS
+        #                     parent[1] = base_dir/
         return Path(__file__).resolve().parents[1]

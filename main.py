@@ -19,7 +19,7 @@ import RUFAS
 #-------------------------------------------------------------------------------
 def main():
  
-    print("\nRUFAS: Ruminant Farm Systems Model")
+    print("\nRUFAS: Ruminant Farm Systems Model 2018")
 
     #
     # Prompt user for an input

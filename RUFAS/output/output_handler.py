@@ -84,7 +84,6 @@ class BaseReportHandler(ABC):
     path = Path("Outputs/Default_Output_Dir")
 
     def set_properties(self, data):
-
         self.active = data['active']
         self.report_name = data['report_name']
         self.fName = data['file_name']

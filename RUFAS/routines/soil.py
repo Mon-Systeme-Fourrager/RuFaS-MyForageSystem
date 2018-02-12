@@ -83,21 +83,13 @@ class Soil():
         self.soilAlbedo = data['SoilAlbedo']
         self.Tsurf = data['SoilLayers']['Layer1']['InitialTemperature']
         
-        # daily output values
-        self.runoff = 0.0
-        self.Etrans = 0.0
-        self.E0 = 0.0
-        self.Esoil = 0.0
-        
-        self.dayInfiltraiton = 0.0 # daily infiltration
-        self.sedimentYield = 0.0
 
         for layerName, layerData in data['SoilLayers'].items():
             self.listOfSoilLayers.append(self.SoilLayer(layerName, layerData))
             
         # sort layers by bottomDepth 
-        self.listOfSoilLayers.sort(key=lambda x: x.bottomDepth) 
-        
+        self.listOfSoilLayers.sort(key=lambda x: x.bottomDepth)
+
         # calculate initial depth of each soil layer
         for x in range(0, len(self.listOfSoilLayers)):
             if x == 0:
@@ -105,11 +97,20 @@ class Soil():
             else:   
                 self.listOfSoilLayers[x].depth = (self.listOfSoilLayers[x].bottomDepth
                     - self.listOfSoilLayers[x-1].bottomDepth)
-        
+
         self.convertCurrentSoilWaterToMM() # calculate initial soil water in layer
         self.calculateWiltingWater() # calculate wilting water in layer
         self.calculateFcWater() # calculate field capacity water in layer
 
+        # daily output values
+        self.runoff = 0.0
+        self.Etrans = 0.0
+        self.E0 = 0.0
+        self.Esoil = 0.0
+        
+        self.dayInfiltraiton = 0.0
+        self.sedimentYield = 0.0
+        
     #---------------------------------------------------------------------------
     # Class: SoilLayer
     # An instance of this class represents a layer in the soil

@@ -18,11 +18,6 @@ from RUFAS.output.output_handler import BaseReportHandler
 #-------------------------------------------------------------------------------
 class SoilSummary(BaseReportHandler):
     
-    layersSoilWater = []
-    layersEsoil = []
-    layersPerc = []
-    layersTemperature = []
-    
     def __init__(self, data):
              
         #
@@ -43,7 +38,12 @@ class SoilSummary(BaseReportHandler):
         self.sublimation = []
         self.surfaceTemp = []
         self.sedimentYield = []
-        self.numSoilLayers = 0   
+        self.numSoilLayers = 0 
+        
+        self.layersSoilWater = []
+        self.layersEsoil = []
+        self.layersPerc = []
+        self.layersTemperature = []  
     
     #---------------------------------------------------------------------------
     # Function: get_data
@@ -57,18 +57,11 @@ class SoilSummary(BaseReportHandler):
         # percolation for each soil layer
         self.numSoilLayers = len(soil.listOfSoilLayers)
         
-        for _ in range (0, self.numSoilLayers):
-            soilLayerSoilWater = []
-            self.layersSoilWater.append(soilLayerSoilWater)
-            
-            soilLayerEsoil = []
-            self.layersEsoil.append(soilLayerEsoil)
-            
-            soilLayerPerc = []
-            self.layersPerc.append(soilLayerPerc)
-            
-            soilLayerTemperature = []
-            self.layersTemperature.append(soilLayerTemperature)
+        for _ in range (0, self.numSoilLayers):       
+            self.layersSoilWater.append([])
+            self.layersEsoil.append([])
+            self.layersPerc.append([])
+            self.layersTemperature.append([])
 
     #---------------------------------------------------------------------------
     # Function: updateDailyOutput
@@ -165,28 +158,35 @@ class SoilSummary(BaseReportHandler):
 
             # 3) Write data day by day
             for x in range(0, len(self.julianDay)):
-                dailySoilData = {'Year': str(self.year[x]), 
-                    'Julian Day': self.julianDay[x], 
-                    'Rainfall': str(round(float(self.precip[x]), 2)), 
-                    'Runoff (Q)': str(round(self.runoff[x], 2)),
-                    'Potential Evapotranspiration (E0)': str(round
-                                    (self.potentialEvapotranspiration[x],3)),
-                    'Crop Transpiration (Etrans)': str(round
-                                    (self.cropTranspiration[x],3)),
-                    'Maximum Sublimation (Esoil)': str(round
-                                    (self.sublimation[x],3)),
-                    'Surface Temp': str(round(self.surfaceTemp[x],3)),
-                    'Sediment Yield': str(round(self.sedimentYield[x],3))}
+                dailySoilData = {
+                    'Year':
+                        str(self.year[x]), 
+                    'Julian Day':
+                        self.julianDay[x], 
+                    'Rainfall':
+                        str(round(float(self.precip[x]), 2)), 
+                    'Runoff (Q)':
+                        str(round(self.runoff[x], 2)),
+                    'Potential Evapotranspiration (E0)':
+                        str(round(self.potentialEvapotranspiration[x],3)),
+                    'Crop Transpiration (Etrans)':
+                        str(round(self.cropTranspiration[x],3)),
+                    'Maximum Sublimation (Esoil)':
+                        str(round(self.sublimation[x],3)),
+                    'Surface Temp':
+                        str(round(self.surfaceTemp[x],3)),
+                    'Sediment Yield':
+                        str(round(self.sedimentYield[x],3))}
                 
                 for y in range(0, self.numSoilLayers):
-                        dailySoilData["SoilWater/L" + str(y+1)] = str(
-                            round(self.layersSoilWater[y][x], 3))
-                        dailySoilData["Esoil/L" + str(y+1)] = str(
-                            round(self.layersEsoil[y][x], 3))
-                        dailySoilData["Perc/L" + str(y+1)] = str(
-                            round(self.layersPerc[y][x], 3))
-                        dailySoilData["Temp/L" + str(y+1)] = str(
-                            round(self.layersTemperature[y][x], 3))
+                    dailySoilData["SoilWater/L" + str(y+1)] = str(
+                        round(self.layersSoilWater[y][x], 3))
+                    dailySoilData["Esoil/L" + str(y+1)] = str(
+                        round(self.layersEsoil[y][x], 3))
+                    dailySoilData["Perc/L" + str(y+1)] = str(
+                        round(self.layersPerc[y][x], 3))
+                    dailySoilData["Temp/L" + str(y+1)] = str(
+                        round(self.layersTemperature[y][x], 3))
                         
                 writer.writerow(dailySoilData)
                     
@@ -195,7 +195,22 @@ class SoilSummary(BaseReportHandler):
     #           Sets all of the values in the output object to the default value
     #---------------------------------------------------------------------------
     def annual_flush(self):
-        #self.precip = []
-        #self.runoff = []
-        pass
+        
+        self.year = []
+        self.julianDay = []
+        self.precip = []
+        
+        self.runoff = []
+        self.potentialEvapotranspiration = []
+        self.cropTranspiration = []
+        self.sublimation = []
+        
+        for x in range(0, self.numSoilLayers):
+            self.layersSoilWater[x] = []
+            self.layersEsoil[x] = []
+            self.layersPerc[x] = []
+            self.layersTemperature[x] = []
+            
+        self.surfaceTemp = []
+        self.sedimentYield = []
         

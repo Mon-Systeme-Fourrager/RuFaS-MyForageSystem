@@ -13,8 +13,7 @@
 import json
 from pathlib import Path
 
-from RUFAS import routines
-from RUFAS import errors
+from RUFAS import routines, errors
 from RUFAS.classes import Config, State, Weather, Time
 from RUFAS.output import OutputHandler
 
@@ -127,7 +126,7 @@ def annual_simulation():
     # Annual Routines
     #
     output.write_annual_reports()
-    #output.annual_flush()
+    output.annual_flush()
     #state.annual_reset()
     time.advance()
     
