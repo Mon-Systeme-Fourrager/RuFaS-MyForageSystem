@@ -3,7 +3,7 @@
 
     "config":
     {
-        "duration": 24,
+        "duration": 2,
         "output_dir": "Outputs/Sample_Farm_Outputs/"
     },
 
@@ -17,7 +17,7 @@
             "report_name": "Farm Summary",
             "file_name": "farm_summary.txt"
         },
-        
+
         "soil_summary":
         {
             "active": true,

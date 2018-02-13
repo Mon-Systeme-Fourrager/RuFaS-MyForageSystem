@@ -46,6 +46,61 @@ class SoilSummary(BaseReportHandler):
         self.layersTemperature = []  
     
     #---------------------------------------------------------------------------
+    # Function: get_header
+    #           Writes the header (title and units) in the csvfile
+    #---------------------------------------------------------------------------
+    def write_header(self, soil):
+        
+        mode = 'a+' if self.get_fPath().exists() else 'w+'
+            
+        with self.get_fPath().open(mode) as csvfile:
+            
+            # 1) Initialize the header of the cvsfile
+            fieldnames = ['Year', 'Julian Day', 'Rainfall', 'Runoff (Q)',
+                          'Potential Evapotranspiration (E0)', 
+                          'Crop Transpiration (Etrans)',
+                          'Maximum Sublimation (Esoil)']
+            
+            for x in range(0, self.numSoilLayers):
+                fieldnames.append("SoilWater/L" + str(x+1))
+
+            for x in range(0, self.numSoilLayers):
+                fieldnames.append("Esoil/L" + str(x+1))
+                
+            for x in range(0, self.numSoilLayers):
+                fieldnames.append("Perc/L" + str(x+1))
+                
+            for x in range(0, self.numSoilLayers):
+                fieldnames.append("Temp/L" + str(x+1))
+                      
+            fieldnames.append("Surface Temp")
+            fieldnames.append("Sediment Yield")
+            
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames, 
+                                    lineterminator = '\n')
+            writer.writeheader()
+    
+            # 2) Write Units in 2nd row of cvsfile
+            units = {'Year': '', 'Julian Day': '',
+                             'Rainfall': "mm", 'Runoff (Q)': "mm", 
+                             'Potential Evapotranspiration (E0)': "mm d^-1",
+                             'Crop Transpiration (Etrans)': "mm H2O",
+                             'Maximum Sublimation (Esoil)': "mm H2O",
+                             'Surface Temp': "C",
+                             'Sediment Yield': "metric tons"}
+            for fieldname in fieldnames:
+                if fieldname.startswith("SoilWater"):
+                    units[fieldname] = 'mm'
+                elif fieldname.startswith("Esoil"):
+                    units[fieldname] = 'mm H2O'
+                elif fieldname.startswith("Perc"):
+                    units[fieldname] = 'mm H2O'
+                elif fieldname.startswith("Temp"):
+                    units[fieldname] = 'C'
+                                        
+            writer.writerow(units)
+    
+    #---------------------------------------------------------------------------
     # Function: get_data
     #           Transfers the needed data from Soil object to the report handler
     #---------------------------------------------------------------------------
@@ -108,55 +163,11 @@ class SoilSummary(BaseReportHandler):
     def write_annual_report(self):
         
         mode = 'a+' if self.get_fPath().exists() else 'w+'
-        
+          
+            
         with self.get_fPath().open(mode) as csvfile:
-            
-            # 1) Initialize the header of the cvsfile
-            fieldnames = ['Year', 'Julian Day', 'Rainfall', 'Runoff (Q)',
-                          'Potential Evapotranspiration (E0)', 
-                          'Crop Transpiration (Etrans)',
-                          'Maximum Sublimation (Esoil)']
-            
-            for x in range(0, self.numSoilLayers):
-                fieldnames.append("SoilWater/L" + str(x+1))
-
-            for x in range(0, self.numSoilLayers):
-                fieldnames.append("Esoil/L" + str(x+1))
-                
-            for x in range(0, self.numSoilLayers):
-                fieldnames.append("Perc/L" + str(x+1))
-                
-            for x in range(0, self.numSoilLayers):
-                fieldnames.append("Temp/L" + str(x+1))
-                      
-            fieldnames.append("Surface Temp")
-            fieldnames.append("Sediment Yield")
-            
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames, 
-                                    lineterminator = '\n')
-            writer.writeheader()
-    
-            # 2) Write Units in 2nd row of cvsfile
-            units = {'Year': '', 'Julian Day': '',
-                             'Rainfall': "mm", 'Runoff (Q)': "mm", 
-                             'Potential Evapotranspiration (E0)': "mm d^-1",
-                             'Crop Transpiration (Etrans)': "mm H2O",
-                             'Maximum Sublimation (Esoil)': "mm H2O",
-                             'Surface Temp': "C",
-                             'Sediment Yield': "metric tons"}
-            for fieldname in fieldnames:
-                if fieldname.startswith("SoilWater"):
-                    units[fieldname] = 'mm'
-                elif fieldname.startswith("Esoil"):
-                    units[fieldname] = 'mm H2O'
-                elif fieldname.startswith("Perc"):
-                    units[fieldname] = 'mm H2O'
-                elif fieldname.startswith("Temp"):
-                    units[fieldname] = 'C'
-                                        
-            writer.writerow(units)
-
-            # 3) Write data day by day
+              
+        # Write data day by day
             for x in range(0, len(self.julianDay)):
                 dailySoilData = {
                     'Year':
@@ -187,7 +198,9 @@ class SoilSummary(BaseReportHandler):
                         round(self.layersPerc[y][x], 3))
                     dailySoilData["Temp/L" + str(y+1)] = str(
                         round(self.layersTemperature[y][x], 3))
-                        
+                    
+                writer = csv.DictWriter(csvfile, fieldnames=dailySoilData, 
+                                    lineterminator = '\n')                        
                 writer.writerow(dailySoilData)
                     
     #---------------------------------------------------------------------------

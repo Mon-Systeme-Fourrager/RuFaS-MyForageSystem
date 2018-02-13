@@ -35,6 +35,8 @@ class OutputHandler():
         
         #self.reports['farm_summary'].get_data(state)
         self.reports['soil_summary'].get_data(state.soil)
+        self.reports['soil_summary'].write_header(state.soil)
+
         
     #---------------------------------------------------------------------------
     # Function: make_output_dir
