@@ -14,7 +14,16 @@
 import tests
 
 def test():
-    tests.test_LP()
+
+    #
+    # TEST LP ROUTINE
+    #
+    #tests.test_LP()
+
+    #
+    # TEST RATION FORMULATION ROUTINE
+    #
+	tests.test_ration()
 
 #-------------------------------------------------------------------------------
 #

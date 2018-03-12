@@ -42,11 +42,11 @@ def get_base_dir():
 # Returns:
 #-------------------------------------------------------------------------------
 def LP_solve(LHS, RHS, objective, variables, operators,
-             mode="minimize", name="LP", min_v=None,max_v=None):
+             mode="min", name="LP", min_v=None, max_v=None):
 
-    if mode == 'minimize':
+    if mode.lower().startswith("min"):
         LP = pulp.LpProblem(name, pulp.LpMinimize)
-    elif mode == 'maximize':
+    elif mode.lower().startswith("max"):
         LP = pulp.LpProblem(name, pulp.LpMaximize)
     else:
         print("ERROR")
@@ -77,7 +77,7 @@ def LP_solve(LHS, RHS, objective, variables, operators,
     LP_vars = []
     for v in range(num_variables):
         LP_vars.append( pulp.LpVariable(variables[v], min_v[v], max_v[v]) )
-        print("Appending {}, min:{}, max:{} to LP_vars".format(variables[v], min_v[v], max_v[v]))
+        #print("Appending {}, min:{}, max:{} to LP_vars".format(variables[v], min_v[v], max_v[v]))
 
     #
     # Objective function
@@ -98,14 +98,54 @@ def LP_solve(LHS, RHS, objective, variables, operators,
     #pulp.LpSolverDefault.msg = 1
     LP.solve()
 
-    results = {}
+    results = { }
     for v in LP.variables():
         results[v.name] = v.varValue
+
     results['status'] = pulp.LpStatus[LP.status]
-    results['sol'] = pulp.value(LP.objective)
+    results['objective'] = pulp.value(LP.objective)
 
     return results
 
+def LP_print(LHS, RHS, objective, variables, operators,
+             mode="min", name="LP", min_v=None, max_v=None):
+
+    LP_text = "\nLP Problem: {}\n".format(name)
+    #LP_text += str(len(variables)) + " variables\n"
+    #LP_text += str(len(LHS)) + " constraints\n"
+
+    if mode.lower().startswith("min"):
+        mode_text = "Minimize"
+    elif mode.lower().startswith("max"):
+        mode_text = "Minimize"
+    else:
+        mode_text = "Bad Mode Input"
+
+    LP_text += mode + ":\n"
+
+    objective_text = "\t"
+    for v in range(len(variables)):
+        objective_text += "{}*{} ".format(objective[v], variables[v])
+        if not v == len(variables) - 1:
+                objective_text += "+ "
+    LP_text += objective_text + '\n'
+
+    constraint_text = "Subject to:\n"
+    for c in range(len(LHS)):
+        constraint_text += '\t'
+        for v in range(len(variables)):
+            constraint_text += "{}*{} ".format(LHS[c][v], variables[v])
+            if not v == len(variables) - 1:
+                constraint_text += "+ "
+        constraint_text += "{} {}\n".format(operators[c], RHS[c])
+
+    LP_text += constraint_text
+
+    LP_text += "With:\n"
+    for v in range(len(variables)):
+        LP_text += "\t{} ≤ {} ≤ {}\n".format(min_v[v], variables[v], max_v[v])
+
+    print(LP_text)
 
 
 

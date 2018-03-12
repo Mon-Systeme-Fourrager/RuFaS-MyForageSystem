@@ -9,9 +9,7 @@
 #
 ################################################################################
 
-#!/usr/bin/env python3
-
-from RUFAS.util import LP_solve
+from RUFAS.util import LP_solve, LP_print
 
 
 #-------------------------------------------------------------------------------
@@ -34,11 +32,8 @@ def test_LP():
                       "maximize", "TEST", min_v, max_v)
     print(result)
 
-#-------------------------------------------------------------------------------
-#
-# PROGRAM ENTRY POINT
-#
-#------------------------------------------------------------------------------- 
-if __name__ == '__main__': test_LP()
+    LP_print(LHS, RHS, objective, variables, operators,
+                      "maximize", "TEST", min_v, max_v)
+
         
     

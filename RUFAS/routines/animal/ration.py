@@ -1,7 +1,7 @@
 import math
 from RUFAS import util
 
-def optimize_feed_ration(parity, WIM, AMF, BWR, base_MEID, housing):
+def optimize_feed_ration(parity, WIM, AMF, BWR, base_NED, housing, feed):
 
 	#
 	# FIC: Fiber intake capacity
@@ -128,40 +128,45 @@ def optimize_feed_ration(parity, WIM, AMF, BWR, base_MEID, housing):
 
 	#
 	# Estimate Rumen degradable and undegradable protein
-	# MEIeds: base_MEID, ME_req
+	# MEIeds: base_NED, ME_req
 	#
-	base_MED = 1.095 * base_MEID + 0.751 # BaseMED is the baseliMEI Metabolizable eMEIrgy of the diet
+	base_MED = 1.095 * base_NED + 0.751 # BaseMED is the baseliMEI Metabolizable eMEIrgy of the diet
 	DMI_est = ME_req / base_MED
-	TDN = 0.31 * base_MEID + 0.2 # Total digestible Nutrients (TDN) is a measure of diet quality/content used the the NRC
+	TDN = 0.31 * base_NED + 0.2 # Total digestible Nutrients (TDN) is a measure of diet quality/content used the the NRC
 	MCP = 0.13 * TDN * DMI_est # MCP is microbial crude protein
 
-	#
-	# LIMEIAR PROGRAM SECTION
-	#
 
-	# Feed Types, corresponds to "columns" in liMEIar program
-	feed_types = ['cg', 'prot', 'uprot', 'fat']
+	#-------------------------------------------------------------------------------
+	# LINEAR PROGRAM SECTION
+	#-------------------------------------------------------------------------------
 
 	#
 	# Set Constraints limits based on requirements and intake capacity
 	# (RHS of constraints matrix)
-	# MEIeds: BW, FIC, base_MEID, DMI_est, MP_req, MCP
+	# MEIeds: BW, FIC, base_NED, DMI_est, MP_req, MCP
 	#
+
 	FI_max = 0.01025 * BW * FIC
 	RV_min = 0
-	MEI_min = base_MEID * DMI_est * (1 - 0.0206) - 0.7 * MP_req / 1000
+	NE_min = base_NED * DMI_est * (1 - 0.0206) - 0.7 * MP_req / 1000
 	RPD_min = MCP / 0.9
 	RUP_min = MP_req /1000 - 0.8 * 0.8 * MCP
 
+	"""FI_max = round(FI_max, 3)
+	RV_min = round(RV_min, 3)
+	NE_min = round(NE_min, 3)
+	RPD_min = round(RPD_min, 3)
+	RUP_min = round(RUP_min, 3)"""
+
 	# LP_RHS [type_nutrient]
-	LP_RHS = [FI_max, RV_min, MEI_min, RPD_min, RUP_min]
+	RHS = [FI_max, RV_min, NE_min, RPD_min, RUP_min]
 	
 	#
 	# (LHS of constraints matrix)
 	#
 	FI = {}
 	RV = {}
-	MEI = {}
+	NE = {}
 	RDP = {}
 	RUP = {}
 
@@ -171,42 +176,65 @@ def optimize_feed_ration(parity, WIM, AMF, BWR, base_MEID, housing):
 
 	# Loop over types of feed
 	# CHANGE i TO KEY
-	for key in feed_types:
+	for key in feed.keys():
 		#set FI, rumen volume, and MEIt eMEIrgy 
 		FI[key] = feed[key]['FI']
 		RV[key] = feed[key]['RV']
-		MEI[key] = feed[key]['MEI']
+		NE[key] = feed[key]['NE']
       
 		# Use rumen degradable, total, and indigestible CP to estimate degradable and undegradable CP
-		NH3[key] = feed[key]['x'] * feed[key]['y']
+		NH3[key] = feed[key]['CP'] * feed[key]['RDP']
       
-		if feed[key]['z'] == "Conc":
-			unavail_prot[key] = 0.4 * feed[key]['xx']
-		else:
-			unavail_prot[key] = 0.7 * feed[key]['xx']
+		if feed[key]['conc'] == "conc":
+			unavail_prot[key] = 0.4 * feed[key]['ICP']
+		else: # feed[key]['conc'] == "rough"
+			unavail_prot[key] = 0.7 * feed[key]['ICP']
       
-		RDP[key] = NH3[key] + 0.15 * feed[key]['x']
-		RUP[key] = 0.87 * (feed[key]['x'] - NH3[key] - unavail_prot[key] * feed[key]['x'])
+		RDP[key] = NH3[key] + 0.15 * feed[key]['CP']
+		RUP[key] = 0.87 * (feed[key]['CP'] - NH3[key] - unavail_prot[key] * feed[key]['CP'])
 
-	# LP_LHS [type_nutrient][type_feed]
-	LP_LHS = [FI, RV, MEI, RDP, RUP]
-
+	# LHS [type_nutrient][type_feed]
+	LHS = [
+			[ FI[key] for key in feed.keys() ],
+			[ RV[key] for key in feed.keys() ],
+			[ NE[key] for key in feed.keys() ],
+			[ RDP[key] for key in feed.keys() ],
+			[ RUP[key] for key in feed.keys() ]
+		  ]
+	"""
+	LHS = [
+			[ round(FI[key], 3) for key in feed.keys() ],
+			[ round(RV[key], 3) for key in feed.keys() ],
+			[ round(NE[key], 3) for key in feed.keys() ],
+			[ round(RDP[key], 3) for key in feed.keys() ],
+			[ round(RUP[key], 3) for key in feed.keys() ]
+		  ]
+	"""
 
 	#
-	# LP variables, limits are user inputs
+	# Objective
 	#
-	LP_vars = {
-				'cg': LpVariable("CornGrain", 0, feed['cg']['lim']),
-				'prot': LpVariable("Protein", 0, feed['prot']['lim']),
-				'uprot': LpVariable("UndegradableProtein", 0, feed['uprot']['lim']),
-				'fat': LpVariable("Fat", 0, feed['fat']['lim'])
-			  }
+	objective = [ feed[key]['price'] for key in feed.keys() ]
 
-	# Setup LP solver
-	LP_ration = LpProblem("Ration", LpMinimize)
+	#
+	# Variables
+	#
+	variables = list(feed.keys())
 
-	# Objective Function
-	LP_ration += LpSum([ LP_vars[key] * feed[key]['price'] for key in feed_types ])
+	#
+	# Operators
+	#
+	operators = [ '<=', '>=', '>=', '>=', '>=']
 
-	ration = util.LP_solve(LHS, RHS, objective, operators, feed_types, "minimize", 
-						   "LP_Ration", max_feed, None)
+	#
+	# min/max variable values
+	#
+	min_v = [0]*len(variables)
+	max_v = [ feed[key]['limit'] for key in feed.keys()]
+
+	util.LP_print(LHS, RHS, objective, variables, operators,
+				  "minimize", "RATION", min_v, max_v)
+	ration = util.LP_solve(LHS, RHS, objective, variables, operators,
+						   "minimize", "RATION", min_v, max_v)
+
+	return ration
