@@ -66,15 +66,30 @@ class Animal():
 		nutrients_list = ['FI', 'RV', 'NE', 'RDP', 'RUP']
 		feed_types = feed.keys()
 
+		# Constraints: minimum nutrition requirements for cows
+		# values here are coefficients (on the LHS of the eq)
 		constraints = ration.calculate_constraints(feed, nutrients_list)
+		# Objective: minimize total cost of all feeds
 		objective = {feed_type: feed[feed_type]['price'] for feed_type in feed_types}
+		# Maximum allowed use for each feed type
 		limits = {feed_type: feed[feed_type]['limit'] for feed_type in feed_types}
 
+		# Loop variables
+		infeasible = True
+		# scaling factor for base_MY (milk production figure)
 		milk_production_power = 0
 		milk_production_multiplier = 1.0
-		infeasible = True
 
+		#
+		# Loop until ration formulated is feasible
+		# If not feasible, scale down milk production figure (base_MY)
+		# and try again
+		# base_MY is scaled down by 5% for every iteration
+		#
 		while infeasible:
+			# Constraints: minimum nutrition requirements for cows
+			# values here are requiremtnts (on the RHS of constraint eq)
+			# milk_production_multiplier is passed as scaling factor
 			rqmts = ration.calculate_rqmts(self.parity, self.WIM, self.AMF,
 										   self.BWR, self.base_NED, self.housing,
 										   nutrients_list, milk_production_multiplier)
