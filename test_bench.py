@@ -1,12 +1,11 @@
 ################################################################################
-#
-# RUFAS: Ruminant Farm Systems Model
-#
-# t_LP.py - Test bench for LP module
-#
-# Authors: Kass Chupongstimun
-#          Jit Patil JITs
-#
+'''
+RUFAS: Ruminant Farm Systems Model
+File name: test_bench.py
+Description:
+Author(s): Kass Chupongstimun, kass_c@hotmail.com
+           Jit Patil, spatil5@wisc.edu
+'''
 ################################################################################
 
 #!/usr/bin/env python3
@@ -26,9 +25,7 @@ def test():
 	test_ration()
 
 #-------------------------------------------------------------------------------
-#
 # PROGRAM ENTRY POINT
-#
 #------------------------------------------------------------------------------- 
 if __name__ == '__main__': test()
         

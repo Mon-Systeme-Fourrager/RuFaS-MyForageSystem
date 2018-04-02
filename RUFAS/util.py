@@ -1,16 +1,16 @@
 ################################################################################
-#
-# RUFAS: Ruminant Farm Systems Model
-#
-# util.py - Contains utility functions
-#
-# Authors: Kass Chupongstimun
-#          Jit Patil
-#
+'''
+RUFAS: Ruminant Farm Systems Model
+File name: util.py
+Description:
+Author(s): Kass Chupongstimun, kass_c@hotmail.com
+           Jit Patil, spatil5@wisc.edu
+'''
 ################################################################################
 
 import sys
 import pulp
+import time as timer
 from pathlib import Path
 
 #-------------------------------------------------------------------------------
@@ -25,19 +25,19 @@ def get_base_dir():
     Returns:
         Path: The reference directory for all paths in the program.
     '''
-    
+
     # Frozen
     if getattr(sys, 'frozen', False):
-        
+
         # Get the executable file path
         # Resolve to absolute path
         # Take the parent base_dir/RUFAS_exe
         #                 parent = base_dir/
         return Path(sys.executable).resolve().parent
-    
+
     # Unfrozen
     else:
-        
+
         # Get path of current file (util.py)
         # Resolve to absolute path
         # Get the 2nd parent  base_dir/RUFAS/util.py
@@ -51,12 +51,12 @@ def get_base_dir():
 def LP_solve(LHS, RHS, objective, variables, operators,
              mode="min", name="LP", min_v=None, max_v=None):
     '''Solves the linear program using the PULP package solver.
-    
+
     Solves the Linear Program and returns the results of the optimization.
     LHS, RHS, and operators will have length of #constraints in the LP.
     variables, objective, min_v, max_v, and each sub-list in LHS must have
     length of #variables in the LP.
-    
+
     Args:
         LHS (float[[]]): Coefficients of the LHS of the constraints of the LP.
             Each sublist corresponds to a constraint equation.
@@ -86,6 +86,8 @@ def LP_solve(LHS, RHS, objective, variables, operators,
             }
     '''
 
+    start = timer.time()
+
     if mode.lower().startswith("min"):
         LP = pulp.LpProblem(name, pulp.LpMinimize)
     elif mode.lower().startswith("max"):
@@ -93,16 +95,14 @@ def LP_solve(LHS, RHS, objective, variables, operators,
     else:
         print("ERROR")
 
-    if len(LHS) != len(RHS):
-        print("ERROR")
-
-    if len(variables) != len(objective):
-        print("ERROR")
+    #if len(LHS) != len(RHS) or len(variables) != len(objective):
+    #    print("ERROR")
+    #    return None
 
     num_constraints = len(RHS)
     num_variables = len(variables)
 
-    
+
     # If max and min values for variables were not given
     if min_v is None:
         min_v = [None]*num_variables
@@ -137,8 +137,7 @@ def LP_solve(LHS, RHS, objective, variables, operators,
         else:
             LP += pulp.lpSum([ LHS[c][v] * LP_vars[v] for v in range(num_variables) ]) == RHS[c]
 
-    #pulp.LpSolverDefault.msg = 1
-    LP.solve()
+    LP.solve(pulp.solvers.GLPK(msg=0))
 
     results = { }
     for v in LP.variables():
@@ -147,6 +146,9 @@ def LP_solve(LHS, RHS, objective, variables, operators,
     results['status'] = pulp.LpStatus[LP.status]
     results['objective'] = pulp.value(LP.objective)
 
+    end = timer.time()
+
+    #print("LP elapsed time: " + str(end-start))
     return results
 
 #-------------------------------------------------------------------------------
@@ -202,6 +204,7 @@ def LP_print(LHS, RHS, objective, variables, operators,
     print(LP_text)
     print("* All floats rounded to 4 decimal places")
     return LP_text
+
 
 
 

@@ -1,106 +1,132 @@
 ################################################################################
-#
-# RUFAS: Ruminant Farm Systems Model
-#
-# animal.py - 
-#
-# Authors: Kass Chupongstimun
-#          Jit Patil
-#
+'''
+RUFAS: Ruminant Farm Systems Model
+File name: animal.py
+Description:
+Author(s): Kass Chupongstimun, kass_c@hotmail.com
+'''
 ################################################################################
 
 from math import pow
-
 from RUFAS.routines.animal import ration
 
-#------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # Function: daily_animal_routine
-# 
-#------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def daily_animal_routine(animal, feed, weather, time):
-	
-	if animal.user_input_ration:
-		# Do something
-		pass
-	else:
-		animal.formulate_optimized_ration(feed)
+    '''
+    TODO: Add DocString
+    '''
 
-#------------------------------------------------------------------------------
+    # Formulate ration using LP
+    if not animal.user_input_ration:
+        if animal.end_ration_interval(time.julian_day()):
+            print("formulating ration on: " + time.to_str())
+            animal.formulate_optimized_ration(feed.all_feed, feed.feed_nutrition)
+
+#-------------------------------------------------------------------------------
 # Function: daily_animal_routine
-# 
-#------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 def daily_animal_update(animal, weather, time):
-	pass
+    '''
+    TODO: Add DocString
+    '''
+    pass
 
-#------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # Class: animal
-# 
-#------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 class Animal():
+    '''
+    TODO: Add DocString
+    '''
 
-	def __init__(self, data):
+    def __init__(self, data):
+        '''
+        TODO: Add DocString
+        '''
 
-		self.housing = data['housing']
-		self.user_input_ration = data['ration']['user_input']
+        self.housing = data['housing']
+        self.user_input_ration = data['ration']['user_input']
 
-		#
-		# ARE THESE DIRECT INPUTS OR INTERMEDIATES??????
-		# Probably intermediates...
-		#
-		self.parity = 0.0
-		self.WIM = 0.0
-		self.AMF = 0.0
-		self.BWR = 0.0
-		self.base_NED = 0.0
+        self.ration_formulation_interval = data['ration']['formulation_interval']
 
-		self.ration = {}
+        #
+        # ARE THESE DIRECT INPUTS OR INTERMEDIATES??????
+        # Probably intermediates...
+        #
+        # HARD-CODED for now
+        self.parity = 1.0
+        self.WIM = 20.0
+        self.AMF = 3.5
+        self.BWR = 1.0
+        self.base_NED = 1.0
 
-	#------------------------------------------------------------------------------
-	# Function: formulate_optimized_ration
-	# 
-	#------------------------------------------------------------------------------
-	def formulate_optimized_ration(self, farm_feed, purchased_feed):
-		
-		feed = {**farm_feed, **purchased_feed}	# merge feed from farm and purchased
+        self.ration = {}
 
-		nutrients_list = ['FI', 'RV', 'NE', 'RDP', 'RUP']
-		feed_types = feed.keys()
+    #---------------------------------------------------------------------------
+    # Method: formulate_optimized_ration
+    #---------------------------------------------------------------------------
+    def formulate_optimized_ration(self, feed, feed_nutrition):
+        '''
+        TODO: Add DocString
+        '''
 
-		# Constraints: minimum nutrition requirements for cows
-		# values here are coefficients (on the LHS of the eq)
-		constraints = ration.calculate_constraints(feed, nutrients_list)
-		# Objective: minimize total cost of all feeds
-		objective = {feed_type: feed[feed_type]['price'] for feed_type in feed_types}
-		# Maximum allowed use for each feed type
-		limits = {feed_type: feed[feed_type]['limit'] for feed_type in feed_types}
+        nutrients = feed_nutrition.keys()
+        feed_types = feed.keys()
 
-		# Loop variables
-		infeasible = True
-		# scaling factor for base_MY (milk production figure)
-		milk_production_power = 0
-		milk_production_multiplier = 1.0
+        # Constraints: minimum nutrition requirements for cows
+        # values here are coefficients (on the LHS of the eq)
+        #constraints = ration.calculate_constraints(feed, nutrients)
+        constraints = {nutrient: [feed_nutrition[nutrient][feed_type] for feed_type in feed_types] for nutrient in nutrients}
+        # Objective: minimize total cost of all feeds
+        objective = {feed_type: feed[feed_type]['price'] for feed_type in feed_types}
+        # Maximum allowed use for each feed type
+        limits = {feed_type: feed[feed_type]['limit'] for feed_type in feed_types}
 
-		#
-		# Loop until ration formulated is feasible
-		# If not feasible, scale down milk production figure (base_MY)
-		# and try again
-		# base_MY is scaled down by 5% for every iteration
-		#
-		while infeasible:
-			# Constraints: minimum nutrition requirements for cows
-			# values here are requiremtnts (on the RHS of constraint eq)
-			# milk_production_multiplier is passed as scaling factor
-			rqmts = ration.calculate_rqmts(self.parity, self.WIM, self.AMF,
-										   self.BWR, self.base_NED, self.housing,
-										   nutrients_list, milk_production_multiplier)
-			formulated_ration = ration.optimize(constraints, rqmts, objective,
-												limits, nutrients_list, feed_types)
-			infeasible = (formulated_ration['status'] == 'Infeasible')
+        # Loop variables
+        infeasible = True
+        # scaling factor for base_MY (milk production figure)
+        milk_production_power = 0
+        milk_production_multiplier = 1.0
 
-			milk_production_power += 1
-			milk_production_multiplier = pow(0.95, milk_production_power)
+        #
+        # Loop until ration formulation is feasible
+        # If not feasible, scale down milk production figure (base_MY)
+        # and try again
+        # base_MY is scaled down by 5% for every iteration
+        #
+        while infeasible:
+            # Constraints: minimum nutrition requirements for cows
+            # values here are requiremtnts (on the RHS of constraint eq)
+            # milk_production_multiplier is passed as scaling factor
+            rqmts = ration.calculate_rqmts(self.parity, self.WIM, self.AMF,
+                                           self.BWR, self.base_NED, self.housing,
+                                           nutrients, milk_production_multiplier)
+            formulated_ration = ration.optimize(constraints, rqmts, objective,
+                                                limits, nutrients, feed_types)
+            infeasible = (formulated_ration['status'] == 'Infeasible')
 
-		self.ration = formulated_ration
+            milk_production_power += 1
+            milk_production_multiplier = pow(0.95, milk_production_power)
 
-	def annual_reset(self):
-		pass
+        self.ration = formulated_ration
+        self.ration['MP_reduction'] = milk_production_multiplier
+
+    #---------------------------------------------------------------------------
+    # Method: end_ration_interval
+    #---------------------------------------------------------------------------
+    def end_ration_interval(self, day):
+        '''
+        TODO: Add DocString
+        '''
+        return (day % self.ration_formulation_interval) == 1
+
+    #---------------------------------------------------------------------------
+    # Method: annual_reset
+    #---------------------------------------------------------------------------
+    def annual_reset(self):
+        '''
+        TODO: Add DocString
+        '''
+        pass

@@ -1,7 +1,7 @@
 ################################################################################
 '''
 RUFAS: Ruminant Farm Systems Model
-File name: ration_report.py
+File name: crop_report.py
 Description:
 Author(s): Kass Chupongstimun, kass_c@hotmail.com
 '''
@@ -11,9 +11,9 @@ from pathlib import Path
 from RUFAS.output.output_handler import BaseReportHandler
 
 #-------------------------------------------------------------------------------
-# Class: RationReport
+# Class: CropReport
 #-------------------------------------------------------------------------------
-class RationReport(BaseReportHandler):
+class CropReport(BaseReportHandler):
     '''Creates and prints to the file ration_report.txt'''
 
     def __init__(self, data):
@@ -30,35 +30,28 @@ class RationReport(BaseReportHandler):
         # Daily Outputs
         # 1D Lists [julianDay]
         #
-        self.achieved_price = [None]*366
-        self.feed_amounts = [None]*366
-        self.milk_production_reduction = [None]*366
-        #self.LP_text = ""
+        self.LAI = [None]*366
+        self.dBiomass_max = [None]*366
 
         # static
-        self.feed_info = {}
 
     #---------------------------------------------------------------------------
     # Method: get_data
     #---------------------------------------------------------------------------
-    def get_data(self, feed):
-        '''Transfers the needed data from Soil object to the report handler.'''
-
-        # get static data like units associated with each feed type
-        # store in Feed or Animal???????
-        self.feed_info = {**feed.purchased_feed, **feed.farm_feed}
+    def get_data(self, crops):
+        '''Transfers the needed data from Crop object to the report handler.'''
         pass
 
     #---------------------------------------------------------------------------
     # Method: daily_update
     #---------------------------------------------------------------------------
-    def daily_update(self, animal, time):
-        d = time.julian_day()
+    def daily_update(self, crops, time):
         '''Stores the daily values that need to be printed in the report.'''
-        self.achieved_price[d] = animal.ration['objective']
-        self.feed_amounts[d] = {feed_type: animal.ration[feed_type] for feed_type in self.feed_info.keys()}
-        self.milk_production_reduction[d] = animal.ration['MP_reduction']
-        pass
+
+        d = time.julian_day()
+
+        self.LAI[d] = crop.LAI
+        self.dBiomass_max[d] = crop.dBiomass_max
 
     #---------------------------------------------------------------------------
     # Method: write_annual_report
@@ -66,30 +59,24 @@ class RationReport(BaseReportHandler):
     def write_annual_report(self, y):
         '''Appends the annual report to the output file.'''
 
-        print("printing ration report for year: " + str(y))
+        print("printing crop report for year: " + str(y))
         mode = 'a+' if self.get_fPath().exists() else 'w+'
 
         with self.get_fPath().open(mode) as f:
-            f.write("RUFAS: Ration Formulation Report\n")
+            f.write("RUFAS: Crop Report\n")
             f.write("Year {}:".format(y))
 
             for d in range(1, 366):
                 f.write("\tDay: " + str(d))
-                #f.write("\tRation Optimization Status: " + self.ration_LP_status[d])
-                f.write("\tAchieved Total Price: " + str(self.achieved_price[d]))
-
-                for feed_type in self.feed_info.keys():
-                    f.write("\t{}: {} {}".format(feed_type,
-                                                 self.feed_amounts[d][feed_type],
-                                                 self.feed_info[feed_type]['units'])
-                            )
+                f.write("\tLeaf Area Index: " + str(self.LAI[d]))
+                f.write("\tMax Potential Biomass Change: " + str(self.dBiomass_max[d]))
                 f.write('\n')
+
     #---------------------------------------------------------------------------
     # Method: annual_flush
     #---------------------------------------------------------------------------
     def annual_flush(self):
         '''Sets all of the values in the output object to the default value.'''
 
-        self.achieved_price = [None]*366
-        self.feed_amounts = [None]*366
-        self.milk_production_reduction = [None]*366
+        self.LAI = [None]*366
+        self.dBiomass_max = [None]*366

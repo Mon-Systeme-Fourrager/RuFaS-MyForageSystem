@@ -17,7 +17,7 @@
             "report_name": "Farm Summary",
             "file_name": "farm_summary.txt"
         },
-        
+
         "soil_summary":
         {
             "active": true,
@@ -29,11 +29,26 @@
             "active": true,
             "report_name": "Ration Report",
             "file_name": "ration_report.txt"
+        },
+        "crop_report":
+        {
+            "active": true,
+            "report_name": "Crop Report",
+            "file_name": "crop_report.txt"
         }
     },
 
     "farm":
     {
+        "crop":
+        {
+            "crop_x":
+            {
+                "crop_name": "crop x",
+                "crop_type": "annual",
+                "planting_date": 10
+            }
+        },
         "soil":
         {
             "ProfileDepth": 2000,
@@ -91,17 +106,18 @@
             "ration":
             {
                 "user_input": false,
+                "formulation_interval": 7
             }
         },
 
         "feed":
-        {   
+        {
             "nutrients_list": ["FI", "RV", "NE", "CP", "ICP", "RDP", "conc"],
 
             "purchased_feed":
             {
                 "CG":
-                {   
+                {
                 "price": 0.132,
                 "units": "w",
                 "limit": 20,
@@ -117,7 +133,7 @@
                 }
                 },
                 "PROT":
-                {   
+                {
                     "price": 0.462,
                     "units": "x",
                     "limit": 10,
@@ -133,7 +149,7 @@
                     }
                 },
                 "UPROT":
-                {   
+                {
                     "price": 0.46,
                     "units": "y",
                     "limit": 2,
@@ -149,7 +165,7 @@
                     }
                 },
                 "FAT":
-                {   
+                {
                     "price": 1.06,
                     "units": "z",
                     "limit": 100,
@@ -163,9 +179,9 @@
                         "RDP": 0.0,
                         "conc": "conc"
                     }
-                }     
+                }
             },
-            
+
             "farm_feed":
             {
                 "FRGE":
@@ -197,7 +213,7 @@
                         "CP": 0.09,
                         "ICP": 0.07,
                         "RDP": 0.034,
-                        "conc": "conc"   
+                        "conc": "conc"
                     }
                 }
             }

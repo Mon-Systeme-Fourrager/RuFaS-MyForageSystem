@@ -1,2 +1,4 @@
-from .soil import Soil, daily_soil_routine, daily_soil_update
-from .animal import Animal, daily_animal_routine, daily_animal_update
+from .soil import *
+from .animal import *
+from .crop import *
+from .feed import *
