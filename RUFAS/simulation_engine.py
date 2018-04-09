@@ -95,12 +95,6 @@ def daily_simulation():
         routines.daily_nitrogen_cycling_routine(state.soil, time, weather)
 
         #
-        # Daily Output Updates
-        #
-        output.reports['soil_summary'].daily_update(state.soil, weather, time)
-        output.reports['soil_nitrogen'].daily_update(state.soil, time)
-
-        #
         # Daily Attribute Updates
         # Update attributes in preparation of following day
         #

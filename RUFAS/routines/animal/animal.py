@@ -20,7 +20,7 @@ def daily_animal_routine(animal, feed, weather, time):
     # Formulate ration using LP
     if not animal.user_input_ration:
         if animal.end_ration_interval(time.julian_day()):
-            print("formulating ration on: " + time.to_str())
+            #print("formulating ration on: " + time.to_str())
             animal.formulate_optimized_ration(feed.all_feed, feed.feed_nutrition)
 
 #-------------------------------------------------------------------------------

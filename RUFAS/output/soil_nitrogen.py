@@ -143,7 +143,9 @@ class SoilNitrogen(BaseReportHandler):
     # Function: get_data
     #           Transfers the needed data from Soil object to the report handler
     #---------------------------------------------------------------------------
-    def get_data(self, soil):
+    def get_data(self, state):
+
+        soil = state.soil
 
         # initialize number of layer in soil summary report handler to get output
         # data pertaining to each soil layer
@@ -174,7 +176,9 @@ class SoilNitrogen(BaseReportHandler):
     # Stores the daily values that need to be printed in the 'soil summary'
     # csv file
     #---------------------------------------------------------------------------
-    def daily_update(self, soil, time):
+    def daily_update(self, state, weather, time):
+
+        soil = state.soil
 
         day = time.julian_day()
         year = time.y
@@ -223,7 +227,7 @@ class SoilNitrogen(BaseReportHandler):
     #           Appends the annual report to the output file
     # Soil Summary is a cvsfile
     #---------------------------------------------------------------------------
-    def write_annual_report(self):
+    def write_annual_report(self, y):
 
         mode = 'a+' if self.get_fPath().exists() else 'w+'
 

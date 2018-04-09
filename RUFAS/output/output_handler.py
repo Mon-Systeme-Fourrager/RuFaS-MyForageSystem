@@ -13,6 +13,7 @@ from RUFAS import util
 from RUFAS.output.report_handler import BaseReportHandler
 from RUFAS.output.farm_summary import FarmSummary
 from RUFAS.output.soil_summary import SoilSummary
+from RUFAS.output.soil_nitrogen import SoilNitrogen
 from RUFAS.output.ration_report import RationReport
 from RUFAS.output.crop_report import CropReport
 
@@ -33,9 +34,9 @@ class OutputHandler():
         self.reports = {
                         'farm_summary': FarmSummary(data['farm_summary']),
                         'soil_summary': SoilSummary(data['soil_summary']),
+                        'soil_nitrogen': SoilNitrogen(data['soil_nitrogen']),
                         'ration_report': RationReport(data['ration_report']),
-                        'crop_report': CropReport(data['crop_report']),
-                        'soil_nitrogen': SoilNitrogen(data['soil_nitrogen'])
+                        'crop_report': CropReport(data['crop_report'])
                         }
 
     #---------------------------------------------------------------------------
@@ -47,7 +48,7 @@ class OutputHandler():
         for _, report in self.reports.items():
             if report.active:
                 report.get_data(state)
-            if report.getfPath().suffix == '.csv':
+            if report.get_fPath().suffix == '.csv':
                 report.write_header()
 
     #---------------------------------------------------------------------------
