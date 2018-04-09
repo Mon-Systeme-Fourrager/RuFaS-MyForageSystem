@@ -7,7 +7,7 @@ Author(s): Kass Chupongstimun, kass_c@hotmail.com
 '''
 ################################################################################
 
-from math import pow, exp, log
+from numpy import exp, log
 
 #-------------------------------------------------------------------------------
 # Function: daily_crop_routine
@@ -20,7 +20,7 @@ def daily_crop_routine(crop, w, t):
     d = t.julian_day()
 
     for _,crop_type in crop.crops_list.items():
-        crop_type.calculate_biomass(w.T_min[d], w.T_max[d], w.radiation[d])
+        crop_type.calculate_max_dBiomass(w.T_min[d], w.T_max[d], w.radiation[d])
 
 #-------------------------------------------------------------------------------
 # Function: annual_crop_routine
@@ -104,9 +104,9 @@ class Crop():
                         self.start_day = d
 
         #-----------------------------------------------------------------------
-        # Method: calculate_biomass
+        # Method: calculate_max_dBiomass
         #-----------------------------------------------------------------------
-        def calculate_biomass(self, T_min, T_max, H_radiation):
+        def calculate_max_dBiomass(self, T_min, T_max, H_radiation):
             '''Calculates the maximum potential biomass increase.
 
             Calculates the maximum potential biomass increase on the day. The
@@ -180,7 +180,7 @@ class Crop():
             #
             # 4) Calculate maximum potential Biomass Accumulation
             #
-            H_phosyn = 0.5 * H_radiation * (1.0 - exp(-self.kl * LAI))
+            H_phosyn = 0.5 * H_radiation * (1.0 - exp(-self.kl * self.LAI))
             self.dBiomass_max = self.RUE * H_phosyn
 
     #---------------------------------------------------------------------------

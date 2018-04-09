@@ -7,7 +7,8 @@ Author(s): Kass Chupongstimun, kass_c@hotmail.com
 '''
 ################################################################################
 
-from RUFAS.output.output_handler import BaseReportHandler
+from pathlib import Path
+from RUFAS.output.report_handler import BaseReportHandler
 
 #-------------------------------------------------------------------------------
 # Class: FarmSummary
@@ -88,7 +89,7 @@ class FarmSummary(BaseReportHandler):
     #---------------------------------------------------------------------------
     # Method: get_data
     #---------------------------------------------------------------------------
-    def get_data(self):
+    def get_data(self, state):
         '''Transfers the needed data from Soil object to the report handler.'''
 
 

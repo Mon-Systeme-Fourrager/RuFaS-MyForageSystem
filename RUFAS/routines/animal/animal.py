@@ -7,7 +7,6 @@ Author(s): Kass Chupongstimun, kass_c@hotmail.com
 '''
 ################################################################################
 
-from math import pow
 from RUFAS.routines.animal import ration
 
 #-------------------------------------------------------------------------------
@@ -87,8 +86,7 @@ class Animal():
         # Loop variables
         infeasible = True
         # scaling factor for base_MY (milk production figure)
-        milk_production_power = 0
-        milk_production_multiplier = 1.0
+        milk_production_power = -1
 
         #
         # Loop until ration formulation is feasible
@@ -97,6 +95,9 @@ class Animal():
         # base_MY is scaled down by 5% for every iteration
         #
         while infeasible:
+
+            milk_production_power += 1
+            milk_production_multiplier = 0.95**milk_production_power
             # Constraints: minimum nutrition requirements for cows
             # values here are requiremtnts (on the RHS of constraint eq)
             # milk_production_multiplier is passed as scaling factor
@@ -106,9 +107,6 @@ class Animal():
             formulated_ration = ration.optimize(constraints, rqmts, objective,
                                                 limits, nutrients, feed_types)
             infeasible = (formulated_ration['status'] == 'Infeasible')
-
-            milk_production_power += 1
-            milk_production_multiplier = pow(0.95, milk_production_power)
 
         self.ration = formulated_ration
         self.ration['MP_reduction'] = milk_production_multiplier

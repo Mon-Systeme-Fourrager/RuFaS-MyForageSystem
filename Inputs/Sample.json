@@ -13,14 +13,14 @@
     {
         "farm_summary":
         {
-            "active": true,
+            "active": false,
             "report_name": "Farm Summary",
             "file_name": "farm_summary.txt"
         },
 
         "soil_summary":
         {
-            "active": true,
+            "active": false,
             "report_name": "Soil Summary",
             "file_name": "soil_summary.csv"
         },
@@ -32,7 +32,7 @@
         },
         "crop_report":
         {
-            "active": true,
+            "active": false,
             "report_name": "Crop Report",
             "file_name": "crop_report.txt"
         }

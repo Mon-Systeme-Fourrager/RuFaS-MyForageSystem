@@ -10,7 +10,7 @@
 ################################################################################
 
 import csv
-from RUFAS.output.output_handler import BaseReportHandler
+from RUFAS.output.report_handler import BaseReportHandler
 
 #-------------------------------------------------------------------------------
 # Class: SoilSummary

@@ -8,8 +8,13 @@ Author(s): Kass Chupongstimun, kass_c@hotmail.com
 ################################################################################
 
 from pathlib import Path
-from abc import ABC, abstractmethod
+
 from RUFAS import util
+from RUFAS.output.report_handler import BaseReportHandler
+from RUFAS.output.farm_summary import FarmSummary
+from RUFAS.output.soil_summary import SoilSummary
+from RUFAS.output.ration_report import RationReport
+from RUFAS.output.crop_report import CropReport
 
 #-------------------------------------------------------------------------------
 # Class: OutputHandler
@@ -29,7 +34,7 @@ class OutputHandler():
                         'farm_summary': FarmSummary(data['farm_summary']),
                         'soil_summary': SoilSummary(data['soil_summary']),
                         'ration_report': RationReport(data['ration_report']),
-                        #'crop_report': CropReport(data['crop_report'])
+                        'crop_report': CropReport(data['crop_report'])
                         }
 
     #---------------------------------------------------------------------------
@@ -38,10 +43,9 @@ class OutputHandler():
     def initialize_reports(self, state):
         '''Transfer needed (initial) data from state to report handlers.'''
 
-        #self.reports['farm_summary'].get_data(state)
-        self.reports['soil_summary'].get_data(state.soil)
-        self.reports['ration_report'].get_data(state.feed)
-        #self.reports['crop_report'].get_data(state.crop)
+        for _, report in self.reports.items():
+            if report.active:
+                report.get_data(state)
 
     #---------------------------------------------------------------------------
     # Method: initialize_output_dir
@@ -55,6 +59,12 @@ class OutputHandler():
 
         # Initialize path for reports
         output_full_path = util.get_base_dir() / output_dir
+
+        # Delete directory if previously exists
+        for file in output_full_path.iterdir():
+            file.unlink()
+        output_full_path.rmdir()
+
         output_full_path.mkdir(exist_ok = True, parents = False)
         BaseReportHandler.path = output_full_path
 
@@ -69,9 +79,9 @@ class OutputHandler():
     def daily_update(self, state, weather, time):
         '''Sets all of the reports in the output object to the default.'''
 
-        #self.reports['soil_summary'].daily_update(state.soil, weather, time)
-        self.reports['ration_report'].daily_update(state.animal, time)
-        #self.reports['crop_report'].daily_update(state.crop, time)
+        for _, report in self.reports.items():
+            if report.active:
+                report.daily_update(state, weather, time)
 
 
     #---------------------------------------------------------------------------
@@ -93,62 +103,3 @@ class OutputHandler():
         for _, report in self.reports.items():
             if report.active:
                 report.annual_flush()
-
-#-------------------------------------------------------------------------------
-# Abstract Class: BaseReportHandler
-#-------------------------------------------------------------------------------
-class BaseReportHandler(ABC):
-    '''
-    Contains an interface for report handlers, each output report
-    file implements this abstract class.
-    '''
-
-    # Default path for output report files
-    path = Path("Outputs/Default_Output_Dir")
-
-    def set_properties(self, data):
-        self.active = data['active']
-        self.report_name = data['report_name']
-        self.fName = data['file_name']
-
-    #---------------------------------------------------------------------------
-    # Method: get_fPath
-    #---------------------------------------------------------------------------
-    def get_fPath(self):
-        '''Gets the path to which the report handler will write the report.
-
-        Returns:
-            Path: path to which the report will be written.
-        '''
-        return self.path / self.fName
-
-    #---------------------------------------------------------------------------
-    # Method: handle_existing_file
-    #---------------------------------------------------------------------------
-    def handle_existing_file(self):
-        '''Deletes the existing output file of the same name if exists.'''
-
-        if self.get_fPath().exists():
-            self.get_fPath().unlink()
-            print("Existing {} file detected and deleted".format(self.fName))
-
-    #---------------------------------------------------------------------------
-    # Abstract Methods
-    #---------------------------------------------------------------------------
-    @abstractmethod
-    def get_data(self): raise NotImplementedError()
-    @abstractmethod
-    def daily_update(self): raise NotImplementedError()
-    @abstractmethod
-    def write_annual_report(self): raise NotImplementedError()
-    @abstractmethod
-    def annual_flush(self): raise NotImplementedError()
-
-
-#
-# Imports are down here to prevent circular imports
-#
-from RUFAS.output.farm_summary import FarmSummary
-from RUFAS.output.soil_summary import SoilSummary
-from RUFAS.output.ration_report import RationReport
-from RUFAS.output.crop_report import CropReport

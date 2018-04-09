@@ -8,7 +8,7 @@ Author(s): Kass Chupongstimun, kass_c@hotmail.com
 ################################################################################
 
 from pathlib import Path
-from RUFAS.output.output_handler import BaseReportHandler
+from RUFAS.output.report_handler import BaseReportHandler
 
 #-------------------------------------------------------------------------------
 # Class: CropReport
@@ -38,17 +38,18 @@ class CropReport(BaseReportHandler):
     #---------------------------------------------------------------------------
     # Method: get_data
     #---------------------------------------------------------------------------
-    def get_data(self, crops):
+    def get_data(self, state):
         '''Transfers the needed data from Crop object to the report handler.'''
         pass
 
     #---------------------------------------------------------------------------
     # Method: daily_update
     #---------------------------------------------------------------------------
-    def daily_update(self, crops, time):
+    def daily_update(self, state, weather, time):
         '''Stores the daily values that need to be printed in the report.'''
 
         d = time.julian_day()
+        crop = state.crop
 
         self.LAI[d] = crop.LAI
         self.dBiomass_max[d] = crop.dBiomass_max

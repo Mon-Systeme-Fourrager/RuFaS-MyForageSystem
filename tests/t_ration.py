@@ -15,7 +15,7 @@ from RUFAS.routines.animal import Animal
 def test_ration():
 
     animal = Animal({'housing': "barn", 'ration': {'user_input': False}})
- 
+
     #
     # HARD-CODED USER INPUTS!!!!!
     #
@@ -27,7 +27,7 @@ def test_ration():
 
     purchased_feed = {
                 "CG":
-                {   
+                {
                 "price": 0.132,
                 "units": "w",
                 "limit": 20,
@@ -43,10 +43,10 @@ def test_ration():
                 }
                 },
                 "PROT":
-                {   
+                {
                     "price": 0.462,
                     "units": "x",
-                    "limit": 10,
+                    "limit": 2,
                     "nutrition":
                     {
                         "FI": 0.048,
@@ -59,8 +59,8 @@ def test_ration():
                     }
                 },
                 "UPROT":
-                {   
-                    "price": 0.46,
+                {
+                    "price": 0.76,
                     "units": "y",
                     "limit": 2,
                     "nutrition":
@@ -75,7 +75,7 @@ def test_ration():
                     }
                 },
                 "FAT":
-                {   
+                {
                     "price": 1.06,
                     "units": "z",
                     "limit": 100,
@@ -89,9 +89,9 @@ def test_ration():
                         "RDP": 0.0,
                         "conc": "conc"
                     }
-                }     
+                }
             }
-            
+
     farm_feed = {
                 "FRGE":
                 {
@@ -113,7 +113,7 @@ def test_ration():
                 {
                     "price": 0.0,
                     "units": "x",
-                    "limit": 9999999,
+                    "limit": 0,
                     "nutrition":
                     {
                         "FI": 0.04,
@@ -122,10 +122,9 @@ def test_ration():
                         "CP": 0.09,
                         "ICP": 0.07,
                         "RDP": 0.034,
-                        "conc": "conc"   
+                        "conc": "conc"
                     }
                 }
             }
     animal.formulate_optimized_ration(farm_feed, purchased_feed)
-    print(animal.ration) 
-    
+    print(animal.ration)

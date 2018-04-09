@@ -7,7 +7,7 @@ Author(s): Kass Chupongstimun, kass_c@hotmail.com
 '''
 ################################################################################
 
-from math import exp, pow
+from numpy import exp
 from RUFAS import util
 
 #-------------------------------------------------------------------------------
@@ -56,10 +56,10 @@ def calculate_rqmts(parity, WIM, AMF, BWR, base_NED, housing,
 	# FIC: Fiber intake capacity
 	#
 	if parity > 1:
-		FIC = ( 0.564 * pow(WIM + 0.857, 0.360) *
+		FIC = ( 0.564 * (WIM + 0.857)**0.360 *
 				exp(-0.0186 * (WIM + 0.857)) )
 	else:
-		FIC = ( 0.388 * pow(WIM + 3, 0.588) *
+		FIC = ( 0.388 * (WIM + 3)**0.588 *
 				exp(-0.0277 * (WIM + 3)) )
 
 	#
@@ -67,10 +67,10 @@ def calculate_rqmts(parity, WIM, AMF, BWR, base_NED, housing,
 	# BaseMY is the milk base milk yield estimated from breed specific lactation curve
 	#
 	if parity > 1:
-		base_MY = ( 33.95 * pow(WIM, 0.2208) *
+		base_MY = ( 33.95 * WIM**0.2208 *
 					exp(-0.03395 * WIM) )
 	else:
-		base_MY = ( 24.12 * pow(WIM, 0.1782) *
+		base_MY = ( 24.12 * WIM**0.1782 *
 			 		exp(-0.02095 * WIM) )
 
 	base_MY *= milk_production_multiplier
@@ -80,7 +80,7 @@ def calculate_rqmts(parity, WIM, AMF, BWR, base_NED, housing,
 	# BaseMF is the base milk fat estimated from breed specific
 	# average milk fat and compoMEInt lactation curve
 	#
-	base_MF = ( 1.4286 * AMF * pow(WIM, -0.24) *
+	base_MF = ( 1.4286 * AMF * WIM**-0.24 *
 				exp(0.016 * WIM) )
 
 	#
