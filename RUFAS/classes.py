@@ -2,7 +2,7 @@
 '''
 RUFAS: Ruminant Farm Systems Model
 File name: classes.py
-Description:
+Description: Contains top level class definitions for RUFAS
 Author(s): Kass Chupongstimun, kass_c@hotmail.com
 		   Jit Patil, spatil5@wisc.edu
 '''
@@ -19,7 +19,19 @@ from RUFAS.routines import Soil, Animal, Feed, Crop
 # Class: State
 #-------------------------------------------------------------------------------
 class State():
-	'''Contains information about the current state of the farm'''
+	'''Contains information about the current state of the farm.
+
+	The state object represents the state of the farm at a certain instant in
+	time. It contains information arranged in different objects by what routine
+	they (mostly) relate to. The state object (or some of its sub-objects) will
+	be passed to routines during the simulation, which may access the
+	information in the different sub-objects in the state to use in its
+	calculations.
+	The state object should ONLY store persistent data that WILL be used in
+	future calculations and/or reports.
+	DO NOT store immediate operands or values that do not NEED to be accessed in
+	the future or in an output report in the state object.
+	'''
 
 	def __init__(self, data):
 		'''
@@ -74,9 +86,9 @@ class Config():
 # Class: Weather
 #-------------------------------------------------------------------------------
 class Weather():
-	'''Contains daily weather information stored in 3D lists
+	'''Contains daily weather information stored in 2D lists
 
-	Data lists are in the format Data[year][julian_day]
+	Data lists are in the format Data[year][julian_day].
 	'''
 
 	def __init__(self, weather_path_str, duration):
@@ -142,7 +154,7 @@ class Weather():
 
 		# Make sure weather data length matchs simulation duaration
 		weather_file_years = math.floor(currentRow / 365)
-		if weather_file_years != duration:
+		if weather_file_years < duration:
 			raise errors.JSONfileData("WEATHER",
 									  "\tWeather file contains " +
 									  str(weather_file_years) +

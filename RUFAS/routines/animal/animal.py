@@ -20,7 +20,6 @@ def daily_animal_routine(animal, feed, weather, time):
     # Formulate ration using LP
     if not animal.user_input_ration:
         if animal.end_ration_interval(time.julian_day()):
-            #print("formulating ration on: " + time.to_str())
             animal.formulate_optimized_ration(feed.all_feed, feed.feed_nutrition)
 
 #-------------------------------------------------------------------------------
@@ -71,6 +70,13 @@ class Animal():
         TODO: Add DocString
         '''
 
+    #***************************************************************************
+    # WARNING: EXTREMELY MESSY AND INTRACTABLE CODE BELOW
+    #   I'M SORRY IF YOU HAVE TO TRY TO READ THIS
+    #   WILL REFACTOR WHEN I HAVE TIME
+    #   - Kass C.
+    #***************************************************************************
+
         nutrients = feed_nutrition.keys()
         feed_types = feed.keys()
 
@@ -95,18 +101,29 @@ class Animal():
         # base_MY is scaled down by 5% for every iteration
         #
         while infeasible:
-
             milk_production_power += 1
             milk_production_multiplier = 0.95**milk_production_power
+            print("MP reduction: " + str(milk_production_multiplier))
+
+            #
             # Constraints: minimum nutrition requirements for cows
             # values here are requiremtnts (on the RHS of constraint eq)
             # milk_production_multiplier is passed as scaling factor
-            rqmts = ration.calculate_rqmts(self.parity, self.WIM, self.AMF,
-                                           self.BWR, self.base_NED, self.housing,
-                                           nutrients, milk_production_multiplier)
-            formulated_ration = ration.optimize(constraints, rqmts, objective,
-                                                limits, nutrients, feed_types)
-            infeasible = (formulated_ration['status'] == 'Infeasible')
+            #
+            rqmts = ration.calculate_rqmts(
+                self.parity, self.WIM, self.AMF, self.BWR, self.base_NED,
+                self.housing, nutrients, milk_production_multiplier
+            )
+            formulated_ration = ration.optimize(
+                constraints, rqmts, objective, limits, nutrients, feed_types
+            )
+            #
+            # Ideally, we will use status == 'Infeasible', but due to bugs in
+            # the GLPK routine outputting an 'Undefined' in some infeasible
+            # cases, we have to just check for not optimal and re-iterate
+            # accordingly
+            #
+            infeasible = (formulated_ration['status'] != 'Optimal')
 
         self.ration = formulated_ration
         self.ration['MP_reduction'] = milk_production_multiplier
@@ -115,8 +132,11 @@ class Animal():
     # Method: end_ration_interval
     #---------------------------------------------------------------------------
     def end_ration_interval(self, day):
-        '''
-        TODO: Add DocString
+        '''Checks whether it is the day to formulate a new ration.
+
+        Returns:
+            bool: True if today is the day a new ration has to be formulated,
+                false otherwise.
         '''
         return (day % self.ration_formulation_interval) == 1
 

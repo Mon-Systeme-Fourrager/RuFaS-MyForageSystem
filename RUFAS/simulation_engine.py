@@ -2,7 +2,7 @@
 '''
 RUFAS: Ruminant Farm Systems Model
 File name: simulation_engine.py
-Description:
+Description: Contains the main routines that drive the simulation
 Author(s): Kass Chupongstimun, kass_c@hotmail.com
            Jit Patil, spatil5@wisc.edu
 '''

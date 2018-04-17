@@ -4,7 +4,7 @@
     "config":
     {
         "duration": 2,
-        "output_dir": "Outputs/Sample_Farm_Outputs/"
+        "output_dir": "Outputs/Output_Ration_Scenario_1/"
     },
 
     "weather": "Inputs/Weather.csv",
@@ -19,7 +19,7 @@
         },
         "soil_summary":
         {
-            "active": true,
+            "active": false,
             "report_name": "Soil Summary",
             "file_name": "soil_summary.csv"
         },

@@ -47,21 +47,21 @@ class RationReport(BaseReportHandler):
         # get static data like units associated with each feed type
         # store in Feed or Animal???????
         self.feed_info = {**feed.purchased_feed, **feed.farm_feed}
-        pass
+        self.ration_interval = state.animal.ration_formulation_interval
 
     #---------------------------------------------------------------------------
     # Method: daily_update
     #---------------------------------------------------------------------------
     def daily_update(self, state, weather, time):
+        '''Stores the daily values that need to be printed in the report.'''
 
         d = time.julian_day()
-        animal = state.animal
+        if (d % self.ration_interval) == 1:
+            animal = state.animal
 
-        '''Stores the daily values that need to be printed in the report.'''
-        self.achieved_price[d] = animal.ration['objective']
-        self.feed_amounts[d] = {feed_type: animal.ration[feed_type] for feed_type in self.feed_info.keys()}
-        self.milk_production_reduction[d] = animal.ration['MP_reduction']
-        pass
+            self.achieved_price[d] = animal.ration['objective']
+            self.feed_amounts[d] = {feed_type: animal.ration[feed_type] for feed_type in self.feed_info.keys()}
+            self.milk_production_reduction[d] = animal.ration['MP_reduction']
 
     #---------------------------------------------------------------------------
     # Method: write_annual_report
@@ -74,19 +74,20 @@ class RationReport(BaseReportHandler):
 
         with self.get_fPath().open(mode) as f:
             f.write("RUFAS: Ration Formulation Report\n")
-            f.write("Year {}:".format(y))
+            f.write("Year {}:\n".format(y))
 
             for d in range(1, 366):
-                f.write("\tDay: " + str(d))
-                #f.write("\tRation Optimization Status: " + self.ration_LP_status[d])
-                f.write("\tAchieved Total Price: " + str(self.achieved_price[d]))
+                if (d % self.ration_interval) == 1:
+                    f.write("\tDay:{} \n".format(str(d)))
+                    #f.write("\tRation Optimization Status: " + self.ration_LP_status[d])
+                    f.write("\t\tAchieved Total Price: " + str(self.achieved_price[d]))
+                    f.write("\n\t\tMilk Production Reduction Factor: " + str(self.milk_production_reduction[d]) + '\n')
 
-                for feed_type in self.feed_info.keys():
-                    f.write("\t{}: {} {}".format(feed_type,
-                                                 self.feed_amounts[d][feed_type],
-                                                 self.feed_info[feed_type]['units']))
-                f.write("\tMilk Production Reduction Factor: " + str(self.milk_production_reduction[d]))
-                f.write('\n')
+                    for feed_type in self.feed_info.keys():
+                        f.write("\t\t{}: {} {}".format(feed_type,
+                                                     self.feed_amounts[d][feed_type],
+                                                     self.feed_info[feed_type]['units']))
+                    f.write('\n')
     #---------------------------------------------------------------------------
     # Method: annual_flush
     #---------------------------------------------------------------------------

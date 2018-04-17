@@ -28,7 +28,7 @@ def get_base_dir():
 
     # Frozen
     if getattr(sys, 'frozen', False):
-
+        #
         # Get the executable file path
         # Resolve to absolute path
         # Take the parent base_dir/RUFAS_exe
@@ -37,7 +37,7 @@ def get_base_dir():
 
     # Unfrozen
     else:
-
+        #
         # Get path of current file (util.py)
         # Resolve to absolute path
         # Get the 2nd parent  base_dir/RUFAS/util.py

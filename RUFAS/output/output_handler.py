@@ -21,16 +21,26 @@ from RUFAS.output.crop_report import CropReport
 # Class: OutputHandler
 #-------------------------------------------------------------------------------
 class OutputHandler():
-    '''
-    Contains a dictionary of all the report handlers.
-    Handles output related interactions.
+    '''Handles all output related interactions.
+
+    Contains a dictionary of all the report handlers, which handles all output-
+    related functionalities. This object is the (only) bridge between the
+    simulation engine and the output routines.
+    Output values are updated at the end of each day, and the each report is
+    printed at the end of each year, using the values (that are written daily)
+    for the year period. After each the report for the year is printed, every
+    single report handler object is flushed, leaving absolutely nothing. The
+    report handler begins accumulating information again for the next year.
+    There must absolutely be NO CALCULATIONS performed by ANY report handler.
+    Report handlers exist ONLY to store RAW OUTPUT DATA. All calculations should
+    be done within the routine, saved to the State object, then extracted from
+    the state object to the report handler at the end of the day.
     '''
 
     def __init__(self, data):
-        '''
-        TODO: Add DocString
-        '''
+        '''Initializes the report handlers with the given data'''
 
+        # Instantiate Report Handler Objects here
         self.reports = {
                         'farm_summary': FarmSummary(data['farm_summary']),
                         'soil_summary': SoilSummary(data['soil_summary']),
@@ -48,34 +58,35 @@ class OutputHandler():
         for _, report in self.reports.items():
             if report.active:
                 report.get_data(state)
-            if report.get_fPath().suffix == '.csv':
-                report.write_header()
+                if report.get_fPath().suffix == '.csv':
+                    report.write_header()
 
     #---------------------------------------------------------------------------
     # Method: initialize_output_dir
     #---------------------------------------------------------------------------
     def initialize_output_dir(self, output_dir):
         '''
-        Creates the directory to store output files (if doesn't exist)
-        Sets output file path for all reports (through ReportHandler class
-        attribute)
+        If a directory of the same name exists, it and its contents is deleted,
+        then creates the directory for all output report files as specified.
+        Sets output file path for all reports through the class attribute of the
+        BaseReportHandler class.
+
+        Args:
+            output_dir (Path): The path to the directory that will store all
+                output report files.
         '''
 
         # Initialize path for reports
-        output_full_path = util.get_base_dir() / output_dir
+        output_dir = util.get_base_dir() / output_dir
 
         # Delete directory if previously exists
-        for file in output_full_path.iterdir():
-            file.unlink()
-        output_full_path.rmdir()
+        if output_dir.exists():
+            for file in output_dir.iterdir():
+                file.unlink()
+            output_dir.rmdir()
 
-        output_full_path.mkdir(exist_ok = True, parents = False)
-        BaseReportHandler.path = output_full_path
-
-        # Deletes existing output files of the same name
-        for _, report in self.reports.items():
-            if report.active:
-                report.handle_existing_file()
+        output_dir.mkdir(exist_ok = True, parents = False)
+        BaseReportHandler.set_dir(output_dir)
 
     #---------------------------------------------------------------------------
     # Method: daily_update

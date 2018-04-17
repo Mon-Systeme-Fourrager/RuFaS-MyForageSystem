@@ -10,6 +10,8 @@ Author(s): Kass Chupongstimun, kass_c@hotmail.com
 from pathlib import Path
 from abc import ABC, abstractmethod
 
+from RUFAS import util
+
 #-------------------------------------------------------------------------------
 # Abstract Class: BaseReportHandler
 #-------------------------------------------------------------------------------
@@ -17,10 +19,14 @@ class BaseReportHandler(ABC):
     '''
     Contains an interface for report handlers, each output report
     file implements this abstract class.
+    When a Report Handler object that implements this abstract class is
+    instantiated, set_properties() is called to set the properties that all
+    report handlers must contain.
     '''
 
-    # Default path for output report files
-    path = Path("Outputs/Default_Output_Dir")
+    # Private Property
+    # Default directory for output report files
+    __output_dir = util.get_base_dir() / Path("Outputs/Default_Output_Dir")
 
     def set_properties(self, data):
         self.active = data['active']
@@ -36,17 +42,15 @@ class BaseReportHandler(ABC):
         Returns:
             Path: path to which the report will be written.
         '''
-        return self.path / self.fName
+        return self.__output_dir / self.fName
 
     #---------------------------------------------------------------------------
-    # Method: handle_existing_file
+    # Class Method: set_dir
     #---------------------------------------------------------------------------
-    def handle_existing_file(self):
-        '''Deletes the existing output file of the same name if exists.'''
-
-        if self.get_fPath().exists():
-            self.get_fPath().unlink()
-            print("Existing {} file detected and deleted".format(self.fName))
+    @classmethod
+    def set_dir(cls, new_dir):
+        '''Sets the base path to write the output report files to'''
+        cls.__output_dir = new_dir
 
     #---------------------------------------------------------------------------
     # Abstract Methods
@@ -59,3 +63,15 @@ class BaseReportHandler(ABC):
     def write_annual_report(self): raise NotImplementedError()
     @abstractmethod
     def annual_flush(self): raise NotImplementedError()
+
+    """
+    #---------------------------------------------------------------------------
+    # Method: handle_existing_file
+    #---------------------------------------------------------------------------
+    def handle_existing_file(self):
+        '''Deletes the existing output file of the same name if exists.'''
+
+        if self.get_fPath().exists():
+            self.get_fPath().unlink()
+            print("Existing {} file detected and deleted".format(self.fName))
+    """

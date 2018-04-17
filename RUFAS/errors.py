@@ -2,7 +2,7 @@
 '''
 RUFAS: Ruminant Farm Systems Model
 File name: errors.py
-Description:
+Description: Defines custom errors for RUFAS
 Author(s): Kass Chupongstimun, kass_c@hotmail.com
 '''
 ################################################################################
