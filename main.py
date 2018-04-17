@@ -2,7 +2,7 @@
 '''
 RUFAS: Ruminant Farm Systems Model
 File name: main.py
-Description:
+Description: Main entry point of RUFAS
 Author(s): Kass Chupongstimun, kass_c@hotmail.com
 '''
 ################################################################################
@@ -14,7 +14,7 @@ import RUFAS
 def main():
     '''
     Main function of RUFAS, executes simulations for all files specified.
-  
+
     Prompts the user to enter an input path to a json file or a directory of
     json files. The path(s) are returned in a list, which the program loops
     through and executes the simulation for each of the files in the list.
@@ -28,7 +28,7 @@ def main():
     # or a directory containing json files when doing a batch simulation
     #
     input_file_list = RUFAS.input_prompt()
-    
+
     #
     # Begin the simulation
     # Runs the simulation for each input file in input_file_path
@@ -39,7 +39,6 @@ def main():
 
 #-------------------------------------------------------------------------------
 # PROGRAM ENTRY POINT
-#------------------------------------------------------------------------------- 
+#-------------------------------------------------------------------------------
 if __name__ == '__main__': main()
-        
-    
+
