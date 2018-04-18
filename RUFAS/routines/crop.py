@@ -7,31 +7,33 @@ Author(s): Kass Chupongstimun, kass_c@hotmail.com
 '''
 ################################################################################
 
-from numpy import exp, log
+from numpy import exp, log, floor
 
 #-------------------------------------------------------------------------------
 # Function: daily_crop_routine
 #-------------------------------------------------------------------------------
-def daily_crop_routine(crop, w, t):
+def daily_crop_routine(crop, weather, time):
     '''
     TODO: Add DocString
     '''
 
-    d = t.julian_day()
-
     for _,crop_type in crop.crops_list.items():
-        crop_type.calculate_max_dBiomass(w.T_min[d], w.T_max[d], w.radiation[d])
+        crop_type.calculate_max_dBiomass(
+            weather.T_min[day], weather.T_max[day], weather.radiation[day]
+        )
 
 #-------------------------------------------------------------------------------
 # Function: annual_crop_routine
 #-------------------------------------------------------------------------------
-def annual_crop_routine(crop, w, t):
+def annual_crop_routine(crop, weather, time):
     '''
     TODO: Add DocString
     '''
 
     for _,crop_type in crop.crops.items():
-        crop_type.calculate_start_growth_day(w.T_min, w.T_max, w.T_avg)
+        crop_type.calculate_start_growth_day(
+            weather.T_min, weather.T_max, weather.T_avg
+        )
 
 #-------------------------------------------------------------------------------
 # Class: Crop
@@ -58,6 +60,9 @@ class Crop():
             TODO: Add DocString
             '''
 
+            #
+            # CONSTANTS
+            #
             self.crop_name = data['crop_name']
             self.crop_type = data['crop_type']
             self.planting_date = data['planting_date']
@@ -72,13 +77,14 @@ class Crop():
             self.LAI_max = data['LAI_max']
             self.kl = data['kl']
             self.RUE = data['radiation_use_efficiency']
+            self.T_base = (self.T_base_min + self.T_base_max) / 2.0
 
             #
             # "Static" values
             #
             self.start_day = 0
             self.accumulated_HU = 0.0
-            self.prev_LAI = 0.0
+            self.fr_LAI_max = 0.0
 
             #
             # Daily Output Values
@@ -86,7 +92,6 @@ class Crop():
             self.LAI = 0.0
             self.dBiomass_max = 0.0
 
-            self.T_base = (self.T_base_min + self.T_base_max) / 2.0
 
         #-----------------------------------------------------------------------
         # Method: calculate_start_growth_day
@@ -154,34 +159,75 @@ class Crop():
             # 2) Calculate accumulated fraction of potential Heat Units
             #
             fr_PHU = self.accumulated_HU / self.PHU
+            self.fr_PHU = fr_PHU
 
             #
             # 3) Calculate Leaf Area Index (LAI)
             #
+
+            # At this point, self.LAI contains the LAI for the previous day
+            # preserve it in this variable
+            prev_LAI = self.LAI
+            prev_fr_LAI_max = self.fr_LAI_max
+
             l2 = ( (log(abs((self.fr_PHU_1 / self.fr_LAI_1) - self.fr_PHU_1)) -
                     log(abs((self.fr_PHU_2 / self.fr_LAI_2) - self.fr_PHU_2)))
                  / (self.fr_PHU_2 - self.fr_PHU_1) )
             l1 = ( log(abs((self.fr_PHU_1 / self.fr_LAI_1) - self.fr_PHU_1)) +
                     (l2 * self.fr_PHU_1) )
 
-            fr_LAI_max = fr_PHU / (fr_PHU + exp(l1 - l2 * fr_PHU))
+            self.fr_LAI_max = fr_PHU / (fr_PHU + exp(l1 - l2 * fr_PHU))
 
-            dLAI = ( (fr_LAI_max - self.prev_fr_LAI_max) *
+            dLAI = ( (self.fr_LAI_max - prev_fr_LAI_max) *
                       self.LAI_max *
-                      (1.0 - exp(5.0 * (self.prev_LAI - self.LAI_max))) )
+                      (1.0 - exp(5.0 * (prev_LAI - self.LAI_max))) )
 
             if fr_PHU < self.fr_PHU_sen:
-                self.LAI = self.prev_LAI + dLAI
+                self.LAI = prev_LAI + dLAI
             else:
                 self.LAI = self.LAI_max * ((1.0 - fr_PHU) /
                            (1.0 - self.fr_PHU_sen))
-            self.prev_LAI = self.LAI
 
             #
             # 4) Calculate maximum potential Biomass Accumulation
             #
             H_phosyn = 0.5 * H_radiation * (1.0 - exp(-self.kl * self.LAI))
             self.dBiomass_max = self.RUE * H_phosyn
+
+        #-----------------------------------------------------------------------
+        # Method: calculate_water_uptake
+        #-----------------------------------------------------------------------
+        def calculate_water_uptake(self, T_min, T_max, H_radiation):
+            ''' '''
+
+            #
+            # 1) Root development in Soil
+            #
+            fr_root = 0.4 - 0.2*self.fr_PHU
+
+            if ((self.crop_type == "perennial") or
+                (self.crop_type == "annual" and self.fr_PHU > 0.4)):
+                z_root = z_root_max
+            else: #crop_type == "annual" and self.fr_PHU <= 0.4
+                z_root = 2.5 * self.fr_PHU * z_root_max
+
+
+            #
+            # 2) Maximum potential water uptake
+            #
+            w_up_z = ((E_t / (1.0 - exp(-beta_w))) *
+                      floor(1.0 - exp(-beta_w * z/z_root)))
+            w_up_ly = w_up_zl - w_up_zu
+
+
+            #
+            # 3) Impact of low soil water content on potential water uptake
+            #
+
+            #
+            # 4) Actual water uptake
+            #
+
 
     #---------------------------------------------------------------------------
     # Method: annual_reset

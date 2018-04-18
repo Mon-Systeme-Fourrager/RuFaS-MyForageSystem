@@ -50,18 +50,6 @@ class OutputHandler():
                         }
 
     #---------------------------------------------------------------------------
-    # Method: initialize_reports
-    #---------------------------------------------------------------------------
-    def initialize_reports(self, state):
-        '''Transfer needed (initial) data from state to report handlers.'''
-
-        for _, report in self.reports.items():
-            if report.active:
-                report.get_data(state)
-                if report.get_fPath().suffix == '.csv':
-                    report.write_header()
-
-    #---------------------------------------------------------------------------
     # Method: initialize_output_dir
     #---------------------------------------------------------------------------
     def initialize_output_dir(self, output_dir):
@@ -89,6 +77,18 @@ class OutputHandler():
         BaseReportHandler.set_dir(output_dir)
 
     #---------------------------------------------------------------------------
+    # Method: initialize_reports
+    #---------------------------------------------------------------------------
+    def initialize_reports(self, state):
+        '''Transfer needed (initial) data from state to report handlers.'''
+
+        for _, report in self.reports.items():
+            if report.active:
+                report.get_data(state)
+                if report.get_fPath().suffix == '.csv':
+                    report.write_header()
+
+    #---------------------------------------------------------------------------
     # Method: daily_update
     #---------------------------------------------------------------------------
     def daily_update(self, state, weather, time):
@@ -97,7 +97,6 @@ class OutputHandler():
         for _, report in self.reports.items():
             if report.active:
                 report.daily_update(state, weather, time)
-
 
     #---------------------------------------------------------------------------
     # Method: write_annual_reports

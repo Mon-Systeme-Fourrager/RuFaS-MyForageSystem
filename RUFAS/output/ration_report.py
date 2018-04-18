@@ -80,13 +80,17 @@ class RationReport(BaseReportHandler):
                 if (d % self.ration_interval) == 1:
                     f.write("\tDay:{} \n".format(str(d)))
                     #f.write("\tRation Optimization Status: " + self.ration_LP_status[d])
-                    f.write("\t\tAchieved Total Price: " + str(self.achieved_price[d]))
-                    f.write("\n\t\tMilk Production Reduction Factor: " + str(self.milk_production_reduction[d]) + '\n')
+                    f.write("\t\tAchieved Total Price: " +
+                            str(self.achieved_price[d]))
+                    f.write("\n\t\tMilk Production Reduction Factor: " +
+                            str(self.milk_production_reduction[d]) + '\n')
 
                     for feed_type in self.feed_info.keys():
-                        f.write("\t\t{}: {} {}".format(feed_type,
-                                                     self.feed_amounts[d][feed_type],
-                                                     self.feed_info[feed_type]['units']))
+                        f.write("\t\t{}: {} {}".format(
+                            feed_type,
+                            self.feed_amounts[d][feed_type],
+                            self.feed_info[feed_type]['units'])
+                        )
                     f.write('\n')
     #---------------------------------------------------------------------------
     # Method: annual_flush
