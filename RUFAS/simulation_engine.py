@@ -95,6 +95,11 @@ def daily_simulation():
         routines.daily_nitrogen_cycling_routine(state.soil, time, weather)
 
         #
+        # Daily Output Updates
+        #
+        output.daily_update(state, weather, time)
+        
+        #
         # Daily Attribute Updates
         # Update attributes in preparation of following day
         #
@@ -104,13 +109,9 @@ def daily_simulation():
     #
     # Daily routines
     #
-    routines.daily_animal_routine(state.animal, state.feed, weather, time)
+    #routines.daily_animal_routine(state.animal, state.feed, weather, time)
     #routines.daily_crop_routine(state.crop, weather, time)
 
-    #
-    # Daily Output Updates
-    #
-    output.daily_update(state, weather, time)
     print("simulating: " + time.to_str())
     time.advance()
 

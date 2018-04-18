@@ -25,7 +25,7 @@
         },
         "ration_report":
         {
-            "active": true,
+            "active": false,
             "report_name": "Ration Report",
             "file_name": "ration_report.txt"
         },
