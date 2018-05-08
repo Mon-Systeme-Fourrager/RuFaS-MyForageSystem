@@ -3,7 +3,8 @@
 
     "config":
     {
-        "duration": 2,
+        "StartYear": 2008,
+        "EndYear": 2009,
         "output_dir": "Outputs/Sample_Farm_Outputs/"
     },
 
@@ -66,11 +67,10 @@
             "Orgc": 1,
             "Sand": 15,
             "Silt": 65,
-            "Clay": 20,
             "SoilAlbedo": 0.16,
             "Residue": 0,
-            "LabileP": 15,
             "FreshNMineralRate": 0.05,
+            "SoilCoverType": "BARE",
 
             "SoilLayers":
             {
@@ -90,7 +90,10 @@
                     "DenitrificationRate": 0.005,
                     "NH4": 1,
                     "FracActiveN": 0.02,
-                    "VolatileExchangeFac": 0.1
+                    "VolatileExchangeFac": 0.1,
+                    "LabileP": 15,
+                    "Clay": 20,
+                    "OM%": 1.9
                 },
                 "Layer2":
                 {
@@ -108,7 +111,10 @@
                     "DenitrificationRate": 0.005,
                     "NH4": 1,
                     "FracActiveN": 0.02,
-                    "VolatileExchangeFac": 0.1
+                    "VolatileExchangeFac": 0.1,
+                    "LabileP": 15,
+                    "Clay": 20,
+                    "OM%": 1.9
                 },
                 "Layer3":
                 {
@@ -126,7 +132,87 @@
                     "DenitrificationRate": 0.005,
                     "NH4": 1,
                     "FracActiveN": 0.02,
-                    "VolatileExchangeFac": 0.1
+                    "VolatileExchangeFac": 0.1,
+                    "LabileP": 15,
+                    "Clay": 20,
+                    "OM%": 1.9
+                }
+            },
+
+            "Fertilizers":
+            {
+                "Application1":
+                {
+                    "Year": 2008,
+                    "JDay": 179,
+                    "PMass": 25.0,
+                    "Depth": 3.0,
+                    "%onSurface": 0.25
+                }
+            },
+
+            "ManureApplication":
+            {
+                "Application1":
+                {
+                    "Type": "DAIRY",
+                    "Year": 2009,
+                    "Jday": 200,
+                    "Mass": 1000.0,
+                    "TotalP": 0.025,
+                    "WEIP": 0.50,
+                    "WEOP": 0.05,
+                    "DryMatter": 0.05,
+                    "%Cover": 0.5,
+                    "Depth": 0.0,
+                    "%onSurface": 100.0
+                }
+            },
+
+            "TillageOperations":
+            {
+                "Operation1":
+                {
+                    "Year": 2008,
+                    "Jday": 365,
+                    "%Incorporate": 0.5,
+                    "%Mixed": 0.30,
+                    "Depth": 15.0
+                },
+                "Operation2":
+                {
+                    "Year": 2009,
+                    "Jday": 365,
+                    "%Incorporate": 0.5,
+                    "%Mixed": 0.30,
+                    "Depth": 15.0
+                },
+                "Operation3":
+                {
+                    "Year": 2010,
+                    "Jday": 365,
+                    "%Incorporate": 0.5,
+                    "%Mixed": 0.30,
+                    "Depth": 15.0
+                }
+            },
+
+            "CropPUptake":
+            {
+                "Uptake1":
+                {
+                    "Year": 2008,
+                    "PUptake": 15.0
+                },
+                "Uptake2":
+                {
+                    "Year": 2009,
+                    "PUptake": 15.0
+                },
+                "Uptake3":
+                {
+                    "Year": 2010,
+                    "PUptake": 15.0
                 }
             }
         },

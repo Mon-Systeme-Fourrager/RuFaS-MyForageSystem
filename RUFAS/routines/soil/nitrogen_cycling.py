@@ -105,8 +105,7 @@ def daily_soil_nitrogen(soil, jday, year, rainfall):
         if x == 0:
             freshOrganicP = soil.residue * 0.0003
             freshOrganicP = freshOrganicP * BD * soil.listOfSoilLayers[x].bottomDepth / 100  # kg
-            labileP = soil.labileP  # input
-            labileP = labileP * BD * soil.listOfSoilLayers[x].bottomDepth / 100
+            labileP = soil.listOfSoilLayers[x].labileP  # input
 
             carbonToNitrogen = (0.58 * soil.residue) / (soil.topLayerFreshN + NO3)  # C:N ratio
             soil.CToN = carbonToNitrogen
