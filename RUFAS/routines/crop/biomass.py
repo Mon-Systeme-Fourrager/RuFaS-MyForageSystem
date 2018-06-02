@@ -13,6 +13,9 @@ CropType values updated by calculate_actual_Biomass():
 '''
 
 from math import exp
+from decimal import *
+
+gammareg_test_file = "gammareg_results.csv"
 
 def calculate_actual_Biomass(crop_type, time, weather):
     H_phosyn = calculate_intercepted_radiation(crop_type, time, weather)
@@ -42,10 +45,11 @@ def calculate_gamma_reg(crop_type, time, weather):
     #
     # The following code was used to test the gamma reg and growth constraint calculations
     #
-    # testResults = open("actualGammaRegResults.csv", "a")
-    # testResults.write("%i,%f,%f,%f,%f,%f\n" %(crop_type.line, wstrs, tstrs, nstrs, pstrs, crop_type.gamma_reg))
-    # testResults.close()
-    # crop_type.line += 1
+    with open(gammareg_test_file, "a") as testResults:
+        testResults.write("%i,%f,%f,%f,%f,%f\n"%\
+                          (crop_type.line, wstrs, tstrs, nstrs, pstrs, crop_type.gamma_reg))
+
+
     
     
 '''
@@ -58,40 +62,53 @@ They do not modify the values of any State class.
 def calculate_wstrs(crop_type):
     if crop_type.Et == 0:
         return 0
+    result = 1.0 - (crop_type.water_actual_up / crop_type.Et)
+    if result < 0:
+        return 0
     else:
-        return 1.0 - (crop_type.water_actual_up / crop_type.Et)
+        return min(0.99, result)
     
 def calculate_tstrs(crop_type, time, weather):
-    T_avg = weather.T_avg[time.year-1][time.day-1]
-    T_opt = crop_type.T_opt
+    T_avg = Decimal(weather.T_avg[time.year-1][time.day-1])
+    T_opt = Decimal(crop_type.T_opt)
     T_base_min = crop_type.T_base_min
-    
+    MAX = 0.99
+    result = 0
     if T_avg <= T_base_min:
-        return 1
+        result = MAX
     
     elif T_base_min < T_avg  and T_avg <= T_opt:
-        top_half_eq = -0.1054 * (T_opt - T_avg)**2
+        top_half_eq = Decimal("-0.1054") * (T_opt - T_avg)**2
         bottom_half_eq = (T_avg - T_base_min)**2
-        return 1 - exp(top_half_eq / bottom_half_eq)
+        result = 1 - exp(top_half_eq / bottom_half_eq)
     
     elif T_opt < T_avg and T_avg <= (2 * T_opt - T_base_min):
-        top_half_eq = -0.1054 * (T_opt - T_avg)**2
+        top_half_eq = Decimal("-0.1054") * (T_opt - T_avg)**2
         bottom_half_eq = (2*T_opt - T_avg - T_base_min)**2
-        return 1 - exp(top_half_eq / bottom_half_eq)
+        result = 1 - exp(top_half_eq / bottom_half_eq)
     
     elif T_avg > (2*T_opt - T_base_min):
-        return 1
+        result = MAX
+    else:
+        ''' Should have hit one of the preceding cases. Not sure if they cover
+            all possible cases though.'''
+        print("Error: Did not hit one of the cases for calculate_tstrs.")
+        print("Check if T_opt and T_base_min input values are correct")
+        print("Exiting program")
+        exit()
+
+    return min(result, MAX)
     
 def calculate_nstrs(crop_type):
     if crop_type.bio_N_opt == 0:
         return 0
     phi_n = max(0, 200 * ((crop_type.bio_N/crop_type.bio_N_opt) - 0.5))
     result = 1 - phi_n / (phi_n + exp(3.535 - 0.02597*phi_n))
-    return result
+    return min(0.99, result)
     
 def calculate_pstrs(crop_type):
     if crop_type.bio_P_opt == 0:
         return 0
     phi_p = 200 * ((crop_type.bio_P/crop_type.bio_P_opt) - 0.5)
     result = 1 - phi_p / (phi_p + exp(3.535 - 0.02597 * phi_p))
-    return result
+    return min(0.99, result)

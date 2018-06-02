@@ -17,12 +17,16 @@ CropType values updated by calling calculate_frPHU():
 Author(s): Andy Achenreiner, achenreiner@wisc.edu
 '''
 ################################################################################
-
+from decimal import *
+heat_units_test_file = "heat_units_results.csv"
 
 def calculate_frPHU(crop, T_min, T_max, time):
     #
     # Part 1B of Crop Biomass pseudocode
     #
+
+    T_min = Decimal(T_min)
+    T_max = Decimal(T_max)
     if T_min < crop.T_base_min:
         T_HU_min = crop.T_base_min
     else:
@@ -33,10 +37,10 @@ def calculate_frPHU(crop, T_min, T_max, time):
     else:
         T_HU_max = T_max
 
-    T_HU = (T_HU_min + T_HU_max) / 2.0
+    T_HU = (T_HU_min + T_HU_max) / 2
 
     if T_HU < crop.T_base_min:
-        HU = 0.0
+        HU = Decimal("0.0")
     else:
         HU = T_HU - crop.T_base_min
 
@@ -51,6 +55,12 @@ def calculate_frPHU(crop, T_min, T_max, time):
     if time.day >= crop.planting_date:
         crop.accumulated_HU += HU
 
+
     # Calculate accumulated fraction of potential Heat Units
     crop.prev_fr_PHU = crop.fr_PHU
+
     crop.fr_PHU = crop.accumulated_HU / crop.PHU
+    with open(heat_units_test_file, "a") as results:
+        info = "%i,%f,%f,%f,%f,%f,%f,%f,%f\n"%\
+               (time.day,T_max,T_min,T_HU_max,T_HU_min,T_HU,HU,crop.accumulated_HU,crop.fr_PHU)
+        results.write(info)

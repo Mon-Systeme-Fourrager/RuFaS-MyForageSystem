@@ -1,6 +1,6 @@
 import openpyxl
 
-inputWorkBook = openpyxl.load_workbook("others/__model_PlantGrowth_2.0.xlsx")
+inputWorkBook = openpyxl.load_workbook("others/__model_PlantGrowth_3.4.xlsx")
 
 weatherSheet = inputWorkBook["Weather"]
 
@@ -19,7 +19,7 @@ def rearrange(row):
 	return newRow
 
 limit = 2
-with open("Inputs/crop_module_testWeather.csv","w") as outFile:
+with open("Inputs/crop_module_testWeather_3.4.csv","w") as outFile:
 	for row in weatherSheet:
 		if not isEmpty(row[0]):
 			valueList = [str(x.value) for x in row]

@@ -9,6 +9,7 @@ Author(s): Kass Chupongstimun, kass_c@hotmail.com
 
 from math import exp, log, floor
 from . import heat_units, leaf_area_index, root_depth, biomass
+from decimal import *
 #-------------------------------------------------------------------------------
 # Function: daily_crop_routine
 #-------------------------------------------------------------------------------
@@ -32,7 +33,7 @@ def daily_crop_routine(crop, weather, time, soil):
 
         heat_units.calculate_frPHU(crop_type, T_min, T_max, time)
         biomass.calculate_gamma_reg(crop_type, time, weather)
-        # leaf_area_index.calculate_LAI_actual(crop_type)
+        leaf_area_index.calculate_LAI_actual(crop_type, time)
         # root_depth.calculate_z_root(crop_type)
         # biomass.calculate_actual_Biomass(crop_type, time, weather)
        
@@ -56,6 +57,9 @@ class Crop():
     '''
     TODO: Add DocString
     '''
+
+
+
 
     def __init__(self, data):
         '''
@@ -82,42 +86,43 @@ class Crop():
             self.crop_name = data['crop_name']
             self.crop_type = data['crop_type']
             self.planting_date = data['planting_date']
+            self.harvest_date = data['harvest_date']
             self.start_day = 0
             
             #===================================================================
             ''' HEAT UNIT DATA '''
            
             # Inputs
-            self.T_base_min = data['min_temp_for_growth']
-            self.T_base_max = data['max_temp_for_growth']
-            self.PHU = data['HU_for_maturity']
+            self.T_base_min = Decimal(str(data['min_temp_for_growth']))
+            self.T_base_max = Decimal(str(data['max_temp_for_growth']))
+            self.PHU = Decimal(str(data['HU_for_maturity']))
 
             # Internally calculated inputs
-            self.accumulated_HU = 0.0
-            self.prev_accumulated_HU = 0.0
+            self.accumulated_HU = Decimal("0.0")
+            self.prev_accumulated_HU = Decimal("0.0")
             
             # Outputs
-            self.fr_PHU = 0
-            self.prev_fr_PHU = 0
+            self.fr_PHU = Decimal("0.0")
+            self.prev_fr_PHU = Decimal("0.0")
             
             #===================================================================
             ''' LEAF AREA INDEX (LAI) DATA '''
             
             # Inputs
-            self.fr_PHU_1 = data['fr_PHU_1']
-            self.fr_PHU_2 = data['fr_PHU_2']
-            self.fr_LAI_1 = data['fr_LAI_1']
-            self.fr_LAI_2 = data['fr_LAI_2']
-            self.fr_PHU_sen = data['fr_PHU_sen']
-            self.LAI_max = data['LAI_max']
+            self.fr_PHU_1 = Decimal(str(data['fr_PHU_1']))
+            self.fr_PHU_2 = Decimal(str(data['fr_PHU_2']))
+            self.fr_LAI_1 = Decimal(str(data['fr_LAI_1']))
+            self.fr_LAI_2 = Decimal(str(data['fr_LAI_2']))
+            self.fr_PHU_sen = Decimal(str(data['fr_PHU_sen']))
+            self.LAI_max = Decimal(str(data['LAI_max']))
             
             # Internally calculated inputs
-            self.prev_fr_LAI_max = 0 # Need to figure out what this should be on the first day - Andy
-            self.fr_LAI_max = 0
+            self.prev_fr_LAI_max = Decimal("0") # Need to figure out what this should be on the first day - Andy
+            self.fr_LAI_max = Decimal("0")
             
             # Outputs
-            self.prev_LAI_actual = 0
-            self.LAI_actual = 0
+            self.prev_LAI_actual = Decimal("0")
+            self.LAI_actual = Decimal("0")
             
             #===================================================================
             ''' ROOT DEPTH DATA '''
@@ -275,10 +280,10 @@ class Crop():
         TODO: Add DocString
         '''
         for _, crop_type in self.crops_list.items():
-            crop_type.accumulated_HU = 0.0
-            crop_type.prev_accumulated_HU = 0.0
+            crop_type.accumulated_HU = Decimal("0")
+            crop_type.prev_accumulated_HU = Decimal("0")
 
-            crop_type.fr_PHU = 0
-            crop_type.prev_fr_PHU = 0
+            crop_type.fr_PHU = Decimal("0")
+            crop_type.prev_fr_PHU = Decimal("0")
 
 

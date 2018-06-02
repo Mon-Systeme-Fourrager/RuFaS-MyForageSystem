@@ -16,6 +16,10 @@ from RUFAS import routines, errors
 from RUFAS.classes import Config, State, Weather, Time
 from RUFAS.output import OutputHandler
 
+from RUFAS.routines.crop.heat_units import heat_units_test_file
+from RUFAS.routines.crop.leaf_area_index import lai_test_file
+from RUFAS.routines.crop.biomass import gammareg_test_file
+
 #-------------------------------------------------------------------------------
 # Function: simulate
 #-------------------------------------------------------------------------------
@@ -57,6 +61,7 @@ def simulate(input_fPath:Path):
     #
     # MAIN Simulation Loop
     #
+    reset_test_files()
     while not time.end_simulation():
         annual_simulation()
 
@@ -96,14 +101,14 @@ def daily_simulation():
     # Daily routines
     #
 
-    routines.daily_animal_routine(state.animal, state.feed, weather, time)
+    # routines.daily_animal_routine(state.animal, state.feed, weather, time)
 
     routines.daily_crop_routine(state.crop, weather, time, state.soil)
     
     #
     # Daily Output Updates
     #
-    output.daily_update(state, weather, time)
+    # output.daily_update(state, weather, time)
 
     #print("simulating: " + time.to_str()) # Print out current day of simulation
     time.advance()
@@ -130,8 +135,8 @@ def annual_simulation():
     #
     # Post-Annual Routines
     #
-    output.annual_update(state, weather, time)
-    output.write_annual_reports(time.year)
+    # output.annual_update(state, weather, time)
+    # output.write_annual_reports(time.year)
     output.annual_flush()
     state.annual_reset()
     time.advance()
@@ -174,3 +179,11 @@ def read_json_file(fPath:Path):
             print("JSON FILE ERROR: " +
                   "{} \n\t{} Section\n{}\n".format(fPath.name, e.section, e.msg))
             raise errors.InvalidJSONfile(fPath.name)
+
+#=======================================================================================
+# Reset test files
+def reset_test_files():
+    testFiles = [heat_units_test_file, gammareg_test_file, lai_test_file]
+    for file in testFiles:
+        with open(file, "w") as curFile:
+            pass
