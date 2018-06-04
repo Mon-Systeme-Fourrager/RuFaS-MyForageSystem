@@ -13,9 +13,10 @@ CropType values updated by calculate_actual_Biomass():
 '''
 
 from math import exp
-from decimal import *
+
 
 gammareg_test_file = "gammareg_results.csv"
+biomass_test_file = "biomass_results.csv"
 
 def calculate_actual_Biomass(crop_type, time, weather):
     H_phosyn = calculate_intercepted_radiation(crop_type, time, weather)
@@ -24,10 +25,33 @@ def calculate_actual_Biomass(crop_type, time, weather):
     # calculate_gamma_reg(crop_type, time, weather)
     crop_type.dBiomass_actual = crop_type.dBiomass_max * crop_type.gamma_reg
     crop_type.prev_biomass_actual = crop_type.biomass_actual
-    crop_type.biomass_actual += crop_type.dBiomass_actual
-    
+
+    inGrowingPeriod = crop_type.planting_date <= time.day <= crop_type.harvest_date
+    if inGrowingPeriod:
+        crop_type.biomass_actual += crop_type.dBiomass_actual
+    else:
+        crop_type.biomass_actual = 0
+
+    #
+    # The following is used to test/record the biomass calculations
+    #
+    with open(biomass_test_file, "a") as testResults:
+        results = "%i,%f,%f,%f,%f,%f,%f\n" % (
+            time.day,
+            weather.radiation[time.year - 1][time.day - 1],
+            H_phosyn,
+            crop_type.dBiomass_max,
+            crop_type.gamma_reg,
+            crop_type.dBiomass_actual,
+            crop_type.biomass_actual
+        )
+        if time.day ==1 and time.year == 1:
+            testResults.write("Day,H_day,Hphosyn,dbiomax,gamma reg, dbioactual,bioactual\n")
+        testResults.write(results)
+
+
 def calculate_intercepted_radiation(crop_type, time, weather):
-    H_day = weather.radiation[time.year][time.day]
+    H_day = weather.radiation[time.year-1][time.day-1]
     return 0.5 * H_day * (1 - exp(-1*crop_type.kl*crop_type.LAI_actual))
 
 
@@ -47,7 +71,7 @@ def calculate_gamma_reg(crop_type, time, weather):
     #
     with open(gammareg_test_file, "a") as testResults:
         testResults.write("%i,%f,%f,%f,%f,%f\n"%\
-                          (crop_type.line, wstrs, tstrs, nstrs, pstrs, crop_type.gamma_reg))
+                          (time.day, wstrs, tstrs, nstrs, pstrs, crop_type.gamma_reg))
 
 
     
@@ -69,8 +93,8 @@ def calculate_wstrs(crop_type):
         return min(0.99, result)
     
 def calculate_tstrs(crop_type, time, weather):
-    T_avg = Decimal(weather.T_avg[time.year-1][time.day-1])
-    T_opt = Decimal(crop_type.T_opt)
+    T_avg = weather.T_avg[time.year-1][time.day-1]
+    T_opt = crop_type.T_opt
     T_base_min = crop_type.T_base_min
     MAX = 0.99
     result = 0
@@ -78,12 +102,12 @@ def calculate_tstrs(crop_type, time, weather):
         result = MAX
     
     elif T_base_min < T_avg  and T_avg <= T_opt:
-        top_half_eq = Decimal("-0.1054") * (T_opt - T_avg)**2
+        top_half_eq = -0.1054 * (T_opt - T_avg)**2
         bottom_half_eq = (T_avg - T_base_min)**2
         result = 1 - exp(top_half_eq / bottom_half_eq)
     
     elif T_opt < T_avg and T_avg <= (2 * T_opt - T_base_min):
-        top_half_eq = Decimal("-0.1054") * (T_opt - T_avg)**2
+        top_half_eq = -0.1054 * (T_opt - T_avg)**2
         bottom_half_eq = (2*T_opt - T_avg - T_base_min)**2
         result = 1 - exp(top_half_eq / bottom_half_eq)
     

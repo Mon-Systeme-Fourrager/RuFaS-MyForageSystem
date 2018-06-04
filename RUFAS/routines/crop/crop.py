@@ -8,8 +8,8 @@ Author(s): Kass Chupongstimun, kass_c@hotmail.com
 ################################################################################
 
 from math import exp, log, floor
-from . import heat_units, leaf_area_index, root_depth, biomass
-from decimal import *
+from . import heat_units, leaf_area_index, root_development, biomass
+
 #-------------------------------------------------------------------------------
 # Function: daily_crop_routine
 #-------------------------------------------------------------------------------
@@ -22,6 +22,12 @@ def daily_crop_routine(crop, weather, time, soil):
     T_max = weather.T_max[time.year-1][time.day-1]
 
     for _,crop_type in crop.crops_list.items():
+
+        '''
+        Load in input value to represent input from other modules
+        These will have to be updated to get this information from the other
+        modules instead of from an input file.
+        '''
         timeIndex = (time.year -1)*365 + time.day -1
         crop_type.Et = crop_type.test_Et[timeIndex]
         crop_type.water_actual_up = crop_type.test_water_actual_up[timeIndex]
@@ -30,12 +36,17 @@ def daily_crop_routine(crop, weather, time, soil):
         crop_type.bio_N_opt = crop_type.test_bio_N_opt[timeIndex]
         crop_type.bio_P = crop_type.test_bio_P[timeIndex]
         crop_type.bio_P_opt = crop_type.test_bio_P_opt[timeIndex]
+        # crop_type.LAI_actual = crop_type.test_LAI_actual[timeIndex]
 
-        heat_units.calculate_frPHU(crop_type, T_min, T_max, time)
+        #
+        # Run calculations
+        #
+        heat_units.update_all(crop_type, T_min, T_max, time)
         biomass.calculate_gamma_reg(crop_type, time, weather)
-        leaf_area_index.calculate_LAI_actual(crop_type, time)
-        # root_depth.calculate_z_root(crop_type)
-        # biomass.calculate_actual_Biomass(crop_type, time, weather)
+        biomass.calculate_actual_Biomass(crop_type, time, weather)
+        leaf_area_index.update_all(crop_type, time)
+        root_development.update_all(crop_type, time)
+
        
         # Other daily calculations to be made
 
@@ -93,42 +104,45 @@ class Crop():
             ''' HEAT UNIT DATA '''
            
             # Inputs
-            self.T_base_min = Decimal(str(data['min_temp_for_growth']))
-            self.T_base_max = Decimal(str(data['max_temp_for_growth']))
-            self.PHU = Decimal(str(data['HU_for_maturity']))
+            self.T_base_min = data['min_temp_for_growth']
+            self.T_base_max = data['max_temp_for_growth']
+            self.PHU = data['HU_for_maturity']
 
             # Internally calculated inputs
-            self.accumulated_HU = Decimal("0.0")
-            self.prev_accumulated_HU = Decimal("0.0")
+            self.accumulated_HU = 0.0
+            self.prev_accumulated_HU = 0.0
             
             # Outputs
-            self.fr_PHU = Decimal("0.0")
-            self.prev_fr_PHU = Decimal("0.0")
+            self.fr_PHU = 0.0
+            self.prev_fr_PHU = 0.0
             
             #===================================================================
             ''' LEAF AREA INDEX (LAI) DATA '''
             
             # Inputs
-            self.fr_PHU_1 = Decimal(str(data['fr_PHU_1']))
-            self.fr_PHU_2 = Decimal(str(data['fr_PHU_2']))
-            self.fr_LAI_1 = Decimal(str(data['fr_LAI_1']))
-            self.fr_LAI_2 = Decimal(str(data['fr_LAI_2']))
-            self.fr_PHU_sen = Decimal(str(data['fr_PHU_sen']))
-            self.LAI_max = Decimal(str(data['LAI_max']))
+            self.fr_PHU_1 = data['fr_PHU_1']
+            self.fr_PHU_2 = data['fr_PHU_2']
+            self.fr_LAI_1 = data['fr_LAI_1']
+            self.fr_LAI_2 = data['fr_LAI_2']
+            self.fr_PHU_sen = data['fr_PHU_sen']
+            self.LAI_max = data['LAI_max']
             
             # Internally calculated inputs
-            self.prev_fr_LAI_max = Decimal("0") # Need to figure out what this should be on the first day - Andy
-            self.fr_LAI_max = Decimal("0")
+            self.prev_fr_LAI_max = 0
+            self.fr_LAI_max = 0
             
             # Outputs
-            self.prev_LAI_actual = Decimal("0")
-            self.LAI_actual = Decimal("0")
+            self.prev_LAI_actual = 0
+            self.LAI_actual = 0
             
             #===================================================================
             ''' ROOT DEPTH DATA '''
             
             # Inputs
             self.z_root_max = data['z_root_max'] # maximum depth of root development
+
+            # Internally calculated inputs
+            self.fr_root = 0
             
             # Outputs
             self.z_root = 0
@@ -189,6 +203,8 @@ class Crop():
             self.test_bio_P_opt = data["TESTING_bioP_opt"]
             self.test_bio_N = data["TESTING_bioN"]
             self.test_bio_N_opt = data["TESTING_bioN_opt"]
+
+            self.test_LAI_actual = data["TESTING_LAI_actual"]
         #-----------------------------------------------------------------------
         # Method: calculate_start_growth_day
         #-----------------------------------------------------------------------
@@ -280,10 +296,10 @@ class Crop():
         TODO: Add DocString
         '''
         for _, crop_type in self.crops_list.items():
-            crop_type.accumulated_HU = Decimal("0")
-            crop_type.prev_accumulated_HU = Decimal("0")
+            crop_type.accumulated_HU = 0
+            crop_type.prev_accumulated_HU = 0
 
-            crop_type.fr_PHU = Decimal("0")
-            crop_type.prev_fr_PHU = Decimal("0")
+            crop_type.fr_PHU = 0
+            crop_type.prev_fr_PHU = 0
 
 

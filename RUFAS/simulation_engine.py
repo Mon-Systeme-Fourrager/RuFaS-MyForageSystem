@@ -18,7 +18,8 @@ from RUFAS.output import OutputHandler
 
 from RUFAS.routines.crop.heat_units import heat_units_test_file
 from RUFAS.routines.crop.leaf_area_index import lai_test_file
-from RUFAS.routines.crop.biomass import gammareg_test_file
+from RUFAS.routines.crop.biomass import gammareg_test_file, biomass_test_file
+from RUFAS.routines.crop.root_development import root_depth_test_file
 
 #-------------------------------------------------------------------------------
 # Function: simulate
@@ -183,7 +184,15 @@ def read_json_file(fPath:Path):
 #=======================================================================================
 # Reset test files
 def reset_test_files():
-    testFiles = [heat_units_test_file, gammareg_test_file, lai_test_file]
+
+    testFiles = [
+        heat_units_test_file,
+        gammareg_test_file,
+        lai_test_file,
+        biomass_test_file,
+        root_depth_test_file
+    ]
+
     for file in testFiles:
         with open(file, "w") as curFile:
             pass
