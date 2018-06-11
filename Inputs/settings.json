@@ -1,0 +1,6 @@
+{
+	"config":{	
+		"duration": 2
+		"output_dir":"Outputs/Sample_Farm_Outputs/"		}	"weather":"weather/crop_module_testWeather_3.4.csv"
+	"output":{	
+		"soil_summary":

@@ -16,17 +16,38 @@ CropType values updated by calling update_all():
 ###############################################################################
 
 from math import log, exp
+from .nitrogen_fixation import calc_N_fixation
 
 #
 #
 #
-def update_all(crop_type, time):
-    n2 = calc_n2(crop_type)
-    n1 = calc_n1(crop_type, n2)
-    calc_fr_N(crop_type, n1, n2)
+def update_all(crop_type, soil, time):
+
+    calc_fr_N(crop_type)
     calc_bio_N_opt(crop_type)
     calc_N_up(crop_type)
+    calc_actual_N_up_each_layer(crop_type, soil)
+    calc_bio_N(crop_type, soil)
+
     record_results(crop_type, time)
+
+
+#
+#
+#
+def calc_fr_N(crop_type):
+    n2 = calc_n2(crop_type)
+    n1 = calc_n1(crop_type, n2)
+
+    if crop_type.prev_biomass_actual == 0:
+        crop_type.fr_N = 0
+    else:
+        term1 = crop_type.fr_n1
+
+        exp_part = exp(n1 - n2 * crop_type.prev_fr_PHU)
+        term2 = 1 - crop_type.prev_fr_PHU / (crop_type.prev_fr_PHU + exp_part)
+
+        crop_type.fr_N = term1 * term2 + crop_type.fr_n3
 
 
 def calc_n2(crop_type):
@@ -57,22 +78,16 @@ def calc_log_term_of_shape_coeff(crop_type, fr_PHU_fract, fr_n_):
     return log(inside)
 
 
-def calc_fr_N(crop_type, n1, n2):
-    if crop_type.prev_biomass_actual == 0:
-        crop_type.fr_N = 0
-    else:
-        term1 = crop_type.fr_n1
-
-        exp_part = exp(n1 - n2 * crop_type.prev_fr_PHU)
-        term2 = 1 - crop_type.prev_fr_PHU / (crop_type.prev_fr_PHU + exp_part)
-
-        crop_type.fr_N = term1 * term2 + crop_type.fr_n3
-
-
+#
+#
+#
 def calc_bio_N_opt(crop_type):
     crop_type.bio_N_opt = crop_type.fr_N * crop_type.prev_biomass_actual
 
 
+#
+#
+#
 def calc_N_up(crop_type):
     if crop_type.bio_N_opt - crop_type.bio_N < 0:
         crop_type.N_up = 0
@@ -81,6 +96,57 @@ def calc_N_up(crop_type):
         option2 = 4 * crop_type.fr_n3 * crop_type.dBiomass_max
         crop_type.N_up = 1.5 * min(option1, option2)
 
+
+#
+#
+#
+def calc_actual_N_up_each_layer(crop_type, soil):
+    N_up_each_layer = calc_N_up_each_layer(crop_type, soil)
+    act_N_up_each_layer = []
+    N_up_over = 0
+    NO3_over = 0
+    N_demand = 0
+
+    for pot_N_up, soilLayer in zip(N_up_each_layer, soil.listOfSoilLayers):
+        act_N_up = min((pot_N_up + N_demand), soilLayer.NO3)
+        act_N_up_each_layer.append(act_N_up)
+
+        # Update values so ready for the next layer
+        N_up_over += pot_N_up
+        NO3_over += soilLayer.NO3
+        N_demand = N_up_over - NO3_over
+
+    crop_type.act_N_up_each_layer = act_N_up_each_layer
+
+
+def calc_N_up_each_layer(crop_type, soil):
+    N_up_each_layer = []
+    N_up_for_top_of_layer = 0
+    for layer in soil.listOfSoilLayers:
+        N_up_for_bottom_of_layer = calc_N_up_z(crop_type, layer.bottomDepth)
+        N_up_ly = N_up_for_bottom_of_layer - N_up_for_top_of_layer
+
+        N_up_each_layer.append(N_up_ly)
+
+        # Set the top for next layer equal to bottom of this layer
+        N_up_for_top_of_layer = N_up_for_bottom_of_layer
+
+    return N_up_each_layer
+
+
+def calc_N_up_z(crop_type, z):
+    term1 = crop_type.N_up / (1 - exp(-1*crop_type.beta_n))
+    term2 = 1 - exp(-1*crop_type.beta_n * z / crop_type.z_root)
+    return term1 * term2
+
+
+#
+#
+#
+def calc_bio_N(crop_type, soil):
+    N_actual_up = sum(crop_type.act_N_up_each_layer)
+    N_fix = calc_N_fixation(crop_type, soil)
+    crop_type.bio_N = crop_type.bio_N + N_actual_up + N_fix
 
 #==============================================================================
 

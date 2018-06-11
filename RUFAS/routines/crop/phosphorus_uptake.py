@@ -80,7 +80,50 @@ def calc_P_up(crop_type):
         option2 = 4 * crop_type.fr_p3 * crop_type.dBiomass_max
         crop_type.P_up = 1.5 * min(option1, option2)
 
+#==============================================================================
 
+
+#
+#
+#
+def calc_actual_N_up_each_layer(crop_type, soil):
+    P_up_each_layer = calc_P_up_each_layer(crop_type, soil)
+    act_P_up_each_layer = []
+    P_up_over = 0
+    NO3_over = 0
+    N_demand = 0
+
+    for pot_N_up, soilLayer in zip(P_up_each_layer, soil.listOfSoilLayers):
+        act_N_up = min((pot_N_up + N_demand), soilLayer.NO3)
+        act_P_up_each_layer.append(act_N_up)
+
+        # Update values so ready for the next layer
+        P_up_over += pot_N_up
+        NO3_over += soilLayer.NO3
+        N_demand = P_up_over - NO3_over
+
+    crop_type.act_N_up_each_layer = act_P_up_each_layer
+
+
+def calc_P_up_each_layer(crop_type, soil):
+    P_up_each_layer = []
+    P_up_for_top_of_layer = 0
+    for layer in soil.listOfSoilLayers:
+        P_up_for_bottom_of_layer = calc_P_up_z(crop_type, layer.bottomDepth)
+        P_up_ly = P_up_for_bottom_of_layer - P_up_for_top_of_layer
+
+        P_up_each_layer.append(P_up_ly)
+
+        # Set the top for next layer equal to bottom of this layer
+        P_up_for_top_of_layer = P_up_for_bottom_of_layer
+
+    return P_up_each_layer
+
+
+def calc_P_up_z(crop_type, z):
+    term1 = crop_type.P_up / (1 - exp(-1*crop_type.beta_p))
+    term2 = 1 - exp(-1*crop_type.beta_p * z / crop_type.z_root)
+    return term1 * term2
 
 #==============================================================================
 

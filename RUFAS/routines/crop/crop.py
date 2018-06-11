@@ -186,7 +186,9 @@ class Crop():
             
             #===================================================================
             ''' Nitrogen Uptake Data '''
-            
+
+            self.beta_n = data["beta_n"]
+
             self.bio_N_opt = 0
             self.bio_N = 0
 
@@ -199,7 +201,9 @@ class Crop():
             self.fr_N_up = 0
             #===================================================================
             ''' Phosphorus Uptake Data '''
-            
+
+            self.beta_p = data["beta_p"]
+
             self.bio_P_opt = 0
             self.bio_P = 0
 

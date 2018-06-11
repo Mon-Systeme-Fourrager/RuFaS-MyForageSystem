@@ -85,10 +85,12 @@ def calc_fr_LAI_max(crop_type, time, l1, l2):
     crop_type.prev_fr_LAI_max = crop_type.fr_LAI_max
 
     inGrowingPeriod = crop_type.planting_date <= time.day <= crop_type.harvest_date
+
     if not inGrowingPeriod:
         crop_type.fr_LAI_max = 0
     else:
-        crop_type.fr_LAI_max = crop_type.fr_PHU / (crop_type.fr_PHU + exp(l1 - l2 * crop_type.fr_PHU))
+        exp_part = exp(l1 - l2 * crop_type.fr_PHU)
+        crop_type.fr_LAI_max = crop_type.fr_PHU / (crop_type.fr_PHU + exp_part)
 
 
 #
@@ -107,9 +109,9 @@ def calculate_LAI_actual(crop_type, time):
         dLAI_actual = 0
 
     elif crop_type.fr_PHU < crop_type.fr_PHU_sen:
-        #print("%i, %f" % (time.day, crop.prev_LAI_actual))
         exp_part = exp(5 * (crop_type.prev_LAI_actual - crop_type.LAI_max))
-        dLAI_max = (crop_type.fr_LAI_max - crop_type.prev_fr_LAI_max) * crop_type.LAI_max * (1 - exp_part)
+        d_fr_LAI_max = (crop_type.fr_LAI_max - crop_type.prev_fr_LAI_max)
+        dLAI_max = d_fr_LAI_max * crop_type.LAI_max * (1 - exp_part)
         dLAI_actual = dLAI_max * sqrt(crop_type.gamma_reg)
         crop_type.LAI_actual = crop_type.prev_LAI_actual + dLAI_actual
 
@@ -119,6 +121,7 @@ def calculate_LAI_actual(crop_type, time):
         dLAI_max = crop_type.LAI_actual - crop_type.prev_LAI_actual
         dLAI_actual = dLAI_max * sqrt(crop_type.gamma_reg)
 
+    # Return these calculated values just so they can be used in testing/debugging
     return (dLAI_max, dLAI_actual)
 
 # ==============================================================================
@@ -142,11 +145,20 @@ def record_results(crop_type, time, results):
     with open(lai_test_file, "a") as resultFile:
         dLAI_max = results[0]
         dLAI_actual = results[1]
-        info = "%i,%f,%f,%f,%f,%f,%f\n" %\
-                 (time.day, crop_type.fr_PHU, crop_type.fr_LAI_max, dLAI_max, crop_type.gamma_reg, dLAI_actual, crop_type.LAI_actual)
+
+        info = "%i,%f,%f,%f,%f,%f,%f\n" %(
+                  time.day,
+                  crop_type.fr_PHU,
+                  crop_type.fr_LAI_max,
+                  dLAI_max,
+                  crop_type.gamma_reg,
+                  dLAI_actual,
+                  crop_type.LAI_actual
+                  )
 
         if time.day == 1 and time.year == 1:
             resultFile.write("time.day,fr_PHU,fr_LAI_max,dLAI_max,gamma_reg,dLAI_actual,LAI_actual\n")
+
         resultFile.write(info)
 
 
