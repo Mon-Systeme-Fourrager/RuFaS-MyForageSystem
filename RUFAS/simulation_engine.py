@@ -78,21 +78,28 @@ def daily_simulation():
     # provided. His values are calculated starting from day 188 of year 1.
     # We should avoid doing this if possible
     #
-    if time.day >= 188 or time.year > 1:
+    #if time.day >= 188 or time.year > 1:
 
         #
         # Daily Routines
         # Pass only information needed
         #
-        routines.daily_soil_routine(state.soil, weather, time)
-        routines.daily_nitrogen_cycling_routine(state.soil, time, weather)
+        #routines.daily_soil_routine(state.soil, weather, time)
+        #routines.daily_nitrogen_cycling_routine(state.soil, time, weather)
+    routines.daily_phosphorus_cycling_routine(state.soil, time, weather, config)
 
+        #
+        # Daily Output Updates
+        #
+    output.daily_update(state, weather, time)
+        
         #
         # Daily Attribute Updates
         # Update attributes in preparation of following day
         #
-        routines.daily_soil_update(state.soil, weather, time)
-        routines.daily_nitrogen_update(state.soil, time, weather)
+        #routines.daily_soil_update(state.soil, weather, time)
+        #routines.daily_nitrogen_update(state.soil, time, weather)
+    routines.daily_phosphorus_update(state.soil, time, weather)
 
     #
     # Daily routines
@@ -167,7 +174,7 @@ def read_json_file(fPath:Path):
         # Instantiate objects using dictionary data from .json file
         try:
             config = Config(data['config'])
-            state = State(data['farm'])
+            state = State(data['farm'], config)
             output = OutputHandler(data['output'])
             weather = Weather(data['weather'], config.duration)
             time = Time(config.duration)

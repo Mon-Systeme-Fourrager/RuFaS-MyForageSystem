@@ -33,12 +33,12 @@ class State():
 	the future or in an output report in the state object.
 	'''
 
-	def __init__(self, data):
+	def __init__(self, data, config):
 		'''
 		TODO: Add DocString
 		'''
 
-		self.soil = Soil(data['soil'])
+		self.soil = Soil(data['soil'], config)
 		self.animal = Animal(data['animal'])
 		self.feed = Feed(data['feed'])
 		self.crop = Crop(data['crop'])
@@ -74,12 +74,15 @@ class Config():
 		'''
 		TODO: Add DocString
 		'''
-
-		if data['duration'] <= 0:
+		
+		self.startYear = data['StartYear']
+		self.endYear = data['EndYear']
+		self.duration = self.endYear - self.startYear + 1
+		
+		if self.duration <= 0:
 			raise errors.JSONfileData("CONFIG",
 								"\tSimulation Duration must be at least 1 year")
 
-		self.duration = data['duration']
 		self.output_dir = data['output_dir']
 
 #-------------------------------------------------------------------------------
@@ -103,6 +106,14 @@ class Weather():
 		self.biomass = [[0 for _ in range(365)]for _ in range(duration)]
 		self.radiation = [[0 for _ in range(365)]for _ in range(duration)]
 		self.addedN = [[0 for _ in range(365)]for _ in range(duration)]
+		
+		self.evaporation = [[0 for _ in range(365)]for _ in range(duration)]
+		self.lCows = [[0 for _ in range(365)]for _ in range(duration)]
+		self.dCows = [[0 for _ in range(365)]for _ in range(duration)]
+		self.heifer = [[0 for _ in range(365)]for _ in range(duration)]
+		self.calf = [[0 for _ in range(365)]for _ in range(duration)]
+		self.beef = [[0 for _ in range(365)]for _ in range(duration)]
+		self.beefCalf = [[0 for _ in range(365)]for _ in range(duration)]
 
 		rainfallData = []
 		tMaxData = []
@@ -111,6 +122,14 @@ class Weather():
 		bioMassData = []
 		radiationData = []
 		addedNData = []
+		
+		evaporationData = []
+		lCowsData = []
+		dCowsData = []
+		heiferData = []
+		calfData = []
+		beefData = []
+		beefCalfData = []
 
 		weather_full_path = util.get_base_dir() / weather_path_str
 
@@ -150,6 +169,27 @@ class Weather():
 					# 7) Added N Data
 					addedNData.append(float(row[7]))
 
+					# 8) Evaporation Data
+					evaporationData.append(row[8])
+
+					# 9) Lactate Cows Data
+					lCowsData.append(row[9])
+					
+					# 10) Dry Cows Data
+					dCowsData.append(row[10])
+					
+					# 11) Heifer Data
+					heiferData.append(row[11])
+					
+					# 12) Calf Data
+					calfData.append(row[12])
+					
+					# 13) Beef Data
+					beefData.append(row[13])
+					
+					# 8) Beef Calf Data
+					beefCalfData.append(row[14])
+					
 				currentRow += 1
 
 		# Make sure weather data length matchs simulation duration
@@ -226,6 +266,62 @@ class Weather():
 					break
 				else:
 					self.addedN[i][j] = addedNData[i*365 + j]
+					
+		# 8) Update evaporation in weather
+		for i in range(0, duration):
+			for j in range(0, 365):
+				if (i*365+j) >= len(evaporationData):
+					break
+				else:
+					self.evaporation[i][j] = evaporationData[i*365 + j]
+
+		# 9) Update lactate cows in weather
+		for i in range(0, duration):
+			for j in range(0, 365):
+				if (i*365+j) >= len(lCowsData):
+					break
+				else:
+					self.lCows[i][j] = lCowsData[i*365 + j]
+					
+		# 10) Update dry cows in weather
+		for i in range(0, duration):
+			for j in range(0, 365):
+				if (i*365+j) >= len(dCowsData):
+					break
+				else:
+					self.dCows[i][j] = dCowsData[i*365 + j]
+					
+		# 11) Update heifer in weather
+		for i in range(0, duration):
+			for j in range(0, 365):
+				if (i*365+j) >= len(heiferData):
+					break
+				else:
+					self.heifer[i][j] = heiferData[i*365 + j]
+					
+		# 12) Update calf in weather
+		for i in range(0, duration):
+			for j in range(0, 365):
+				if (i*365+j) >= len(calfData):
+					break
+				else:
+					self.calf[i][j] = calfData[i*365 + j]
+					
+		# 13) Update beef in weather
+		for i in range(0, duration):
+			for j in range(0, 365):
+				if (i*365+j) >= len(beefData):
+					break
+				else:
+					self.beef[i][j] = beefData[i*365 + j]
+					
+		# 14) Update beef calf in weather
+		for i in range(0, duration):
+			for j in range(0, 365):
+				if (i*365+j) >= len(beefCalfData):
+					break
+				else:
+					self.beefCalf[i][j] = beefCalfData[i*365 + j]
 
 
 #-------------------------------------------------------------------------------
