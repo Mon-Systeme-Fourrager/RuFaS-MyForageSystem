@@ -125,7 +125,7 @@ def soilChem(soil):
                     14.0*10000.0*soil.listOfSoilLayers[x].bulkDensity*
                     soil.listOfSoilLayers[x].depth*0.1)   
         
-        print("HI")
+        # print("HI")
 
 #------------------------------------------------------------------------------
 # Function: initializePhosphorusInputs
@@ -247,19 +247,20 @@ def initializePhosphorusInputs(soil, time, weather, config):
             soil.yieldFactor.append((7500.0-9000.0)/31.0+soil.yieldFactor
                                     [len(soil.yieldFactor)-1]) 
             
-    print("HI")
+    #print("HI")
 
 #------------------------------------------------------------------------------
 # Function: uptake
 # Initilaize crop phosphorus uptake array
 #------------------------------------------------------------------------------
 def uptake(pUptake, soil, config):
+
     for i in range(0, len(soil.cropPUptakes)):
         if(soil.cropPUptakes[i].uptakeYear == config.startYear):
             for j in range(0, 365):
                 pUptake[soil.cropPUptakes[i].uptakeYear][j] = (
                     soil.cropPUptakes[i].pUptake/364)
-                print(pUptake[soil.cropPUptakes[i].uptakeYear][j])
+                # print(pUptake[soil.cropPUptakes[i].uptakeYear][j])
         
         elif(soil.cropPUptakes[i].uptakeYear == config.endYear):
             for j in range(0, 365):
@@ -268,6 +269,7 @@ def uptake(pUptake, soil, config):
                 
         else:
             for j in range(0, 365):
+
                 pUptake[soil.cropPUptakes[i].uptakeYear][j] = (
                     soil.cropPUptakes[i].pUptake/365)
 

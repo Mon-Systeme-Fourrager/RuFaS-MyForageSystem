@@ -82,6 +82,9 @@ def calc_f_sw(accessible_layers):
     SW_root = sum([layer.currentSoilWaterMM for layer in accessible_layers])
     FC_root = sum([layer.fcWater for layer in accessible_layers])
 
+    if FC_root == 0:
+        return 0
+
     return SW_root / (0.85 * FC_root)
 
 

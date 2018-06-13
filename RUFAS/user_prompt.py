@@ -49,7 +49,7 @@ def input_prompt():
         
         try:
             #user_input = input("\nEnter RUFAS Input: ")
-            user_input = "Inputs/phosphorus.json"
+            user_input = "Inputs/Sample2.json"
 
             #
             # Handle user exiting program

@@ -48,8 +48,8 @@ def simulate(input_fPath:Path):
     # Deletes existing output files of the same name from previous simulation
     # Transfer needed (initial) data from state to report handlers
     #
-    output.initialize_output_dir(config.output_dir)
-    output.initialize_reports(state)
+    # output.initialize_output_dir(config.output_dir)
+    # output.initialize_reports(state)
 
     print("\nSimulating: {}".format(input_fPath.name))
 
@@ -86,12 +86,12 @@ def daily_simulation():
         #
         #routines.daily_soil_routine(state.soil, weather, time)
         #routines.daily_nitrogen_cycling_routine(state.soil, time, weather)
-    routines.daily_phosphorus_cycling_routine(state.soil, time, weather, config)
+    #routines.daily_phosphorus_cycling_routine(state.soil, time, weather, config)
 
         #
         # Daily Output Updates
         #
-    output.daily_update(state, weather, time)
+    #output.daily_update(state, weather, time)
         
         #
         # Daily Attribute Updates
@@ -99,7 +99,7 @@ def daily_simulation():
         #
         #routines.daily_soil_update(state.soil, weather, time)
         #routines.daily_nitrogen_update(state.soil, time, weather)
-    routines.daily_phosphorus_update(state.soil, time, weather)
+    #routines.daily_phosphorus_update(state.soil, time, weather)
 
     #
     # Daily routines

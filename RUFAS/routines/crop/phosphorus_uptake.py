@@ -20,13 +20,18 @@ from math import log, exp
 #
 #
 #
-def update_all(crop_type, time):
+def update_all(crop_type, soil, time):
     p2 = calc_p2(crop_type)
     p1 = calc_p1(crop_type, p2)
     calc_fr_P(crop_type, p1, p2)
     calc_bio_P_opt(crop_type)
     calc_P_up(crop_type)
-    record_results(crop_type, time)
+
+
+    calc_actual_P_up_each_layer(crop_type, soil)
+    calc_bio_P(crop_type)
+
+    record_results(crop_type, soil, time)
 
 def calc_p2(crop_type):
     first_term = calc_log_term_of_shape_coeff(
@@ -72,6 +77,7 @@ def calc_bio_P_opt(crop_type):
     crop_type.bio_P_opt = crop_type.prev_biomass_actual * crop_type.fr_P
 
 
+
 def calc_P_up(crop_type):
     if crop_type.bio_P_opt - crop_type.bio_P < 0:
         crop_type.P_up = 0
@@ -80,29 +86,30 @@ def calc_P_up(crop_type):
         option2 = 4 * crop_type.fr_p3 * crop_type.dBiomass_max
         crop_type.P_up = 1.5 * min(option1, option2)
 
-#==============================================================================
-
 
 #
 #
 #
-def calc_actual_N_up_each_layer(crop_type, soil):
+def calc_actual_P_up_each_layer(crop_type, soil):
     P_up_each_layer = calc_P_up_each_layer(crop_type, soil)
     act_P_up_each_layer = []
     P_up_over = 0
-    NO3_over = 0
-    N_demand = 0
+    P_over = 0
+    P_demand = 0
 
-    for pot_N_up, soilLayer in zip(P_up_each_layer, soil.listOfSoilLayers):
-        act_N_up = min((pot_N_up + N_demand), soilLayer.NO3)
-        act_P_up_each_layer.append(act_N_up)
+    for pot_P_up, soilLayer in zip(P_up_each_layer, soil.listOfSoilLayers):
+        # Not sure what soilLayer phosphorus attribute represents "P_solution" in the pseudocode
+        # I used "labileP" for now, but this may need to be changed -Andy
+        act_P_up = min((pot_P_up + P_demand), soilLayer.labileP)
+        act_P_up_each_layer.append(act_P_up)
 
         # Update values so ready for the next layer
-        P_up_over += pot_N_up
-        NO3_over += soilLayer.NO3
-        N_demand = P_up_over - NO3_over
+        P_up_over += pot_P_up
+        P_over += soilLayer.labileP
+        P_demand = P_up_over - P_over
+        if P_demand < 0 : P_demand = 0
 
-    crop_type.act_N_up_each_layer = act_P_up_each_layer
+    crop_type.act_P_up_each_layer = act_P_up_each_layer
 
 
 def calc_P_up_each_layer(crop_type, soil):
@@ -121,9 +128,17 @@ def calc_P_up_each_layer(crop_type, soil):
 
 
 def calc_P_up_z(crop_type, z):
+    if crop_type.z_root == 0:
+        return 0
     term1 = crop_type.P_up / (1 - exp(-1*crop_type.beta_p))
     term2 = 1 - exp(-1*crop_type.beta_p * z / crop_type.z_root)
     return term1 * term2
+
+def calc_bio_P(crop_type):
+    if crop_type.prev_fr_PHU == 0:
+        crop_type.bio_P = 0
+    P_actual_up = sum(crop_type.act_P_up_each_layer)
+    crop_type.bio_P += P_actual_up
 
 #==============================================================================
 
@@ -139,20 +154,28 @@ test_file = "tests/crop_test_files/phosphorus_uptake_results.csv"
 # The following will record the root depth calculations into the
 # test file.
 #
-def record_results(crop_type, time):
+def record_results(crop_type, soil, time):
     if time.day == 1 and time.year == 1:
         reset_file((test_file))
+    Pup_ly = calc_P_up_each_layer(crop_type, soil)
 
     with open(test_file, "a") as resultFile:
-        result = "%i,%f,%f,%f,%f\n" % (
+        result = "%i,%f,%f,%f,%f,%f,%f,%f,%f,%f\n" % (
             time.day,
-            crop_type.prev_biomass_actual,
+            crop_type.biomass_actual,
+            crop_type.z_root,
             crop_type.fr_P,
             crop_type.bio_P_opt,
-            crop_type.P_up
+            crop_type.P_up,
+            crop_type.act_P_up_each_layer[0],
+            crop_type.act_P_up_each_layer[1],
+            crop_type.act_P_up_each_layer[2],
+            crop_type.bio_P
+
         )
         if time.day == 1 and time.year == 1:
-            resultFile.write("day,prev_biomass_actual,fr_P,bio_P_opt,P_up\n")
+            resultFile.write("day,biomass_actual,z_root,fr_P,bio_P_opt,P_up,"
+                             "actPup1,actPup2,actPup3,bio_P\n")
         resultFile.write(result)
 
 

@@ -1,27 +1,51 @@
 
 
+def getParts(inString):
+    inString = inString.strip("\n")
+    colonIndex = inString.index(":")
+    first = inString[:colonIndex + 1]
+    second = inString[colonIndex+1:]
 
-def generator(finalSettings, headFile, tabCount):
-    finalSettings.write("{" + "\t"*tabCount + "\n")
-    with open(headFile, "r") as readFile:
-        tabCount+=1
+    return first, second
+
+def getPathInfo(inString):
+    inString = inString.strip('"\n')
+    slashIndex = inString.index("/")
+    path = inString[:slashIndex + 1]
+    file = inString[slashIndex + 1:]
+    return path, file
+
+
+def generator(finalSettings, currFile, currPath, tabCount):
+    orig_Indent = "\t" * tabCount
+    #input(repr(orig_Indent + "{" + "\n"))
+    finalSettings.write("\n" + orig_Indent + "{" + "\n")
+    with open(currFile, "r") as readFile:
+        tabCount += 1
+        indent = "\t" * tabCount
         for row in readFile:
-            print(row)
-            colonIndex = row.index(":")
-            finalSettings.write("\t"*tabCount + row[:colonIndex+1])
+            try:
+                title, value = getParts(row)
+              #  input(repr(indent + title))
+                finalSettings.write(indent + title)
 
-            restOfLine = row[colonIndex+1:]
-            print(repr(restOfLine))
-            if restOfLine[-5:-2] == "txt":
-                generator(finalSettings, restOfLine.strip('\n"'), tabCount)
-            else:
-                finalSettings.write(restOfLine)
-        finalSettings.write("\t"*tabCount + "}")
+                if ".txt" in value:
+                    path, fileName = getPathInfo(value)
+                    newPath = currPath + path
+                    generator(finalSettings, newPath + fileName, newPath, tabCount)
+                else:
+                   # input(repr(value + "/n"))
+                    finalSettings.write(value + "\n")
+            except Exception:
+              #  input((repr(indent+row)))
+                finalSettings.write(indent + row.strip("\t\n") + "\n")
 
+      #  input(repr(orig_Indent + "}\n"))
+        finalSettings.write(orig_Indent + "}\n")
 
 
 finalSettings = open("settings.json", "w")
 try:
-    generator(finalSettings, "parameters.txt", 0)
+    generator(finalSettings, "parameters.txt", "", 0)
 finally:
     finalSettings.close()

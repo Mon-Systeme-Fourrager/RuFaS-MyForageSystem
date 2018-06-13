@@ -54,12 +54,12 @@ class OutputHandler():
 
         # Instantiate Report Handler Objects here
         self.reports = {
-                        'farm_summary': FarmSummary(data['farm_summary']),
+                        #'farm_summary': FarmSummary(data['farm_summary']),
                         'soil_summary': SoilSummary(data['soil_summary']),
                         'soil_nitrogen': SoilNitrogen(data['soil_nitrogen']),
-                        'soil_phosphorus': SoilPhosphorus(data['soil_phosphorus']),
+                        #'soil_phosphorus': SoilPhosphorus(data['soil_phosphorus']),
                         'ration_report': RationReport(data['ration_report']),
-                        'crop_report': CropReport(data['crop_report'])
+                        #'crop_report': CropReport(data['crop_report'])
                         }
 
     #---------------------------------------------------------------------------
@@ -136,5 +136,5 @@ class OutputHandler():
         '''Sets all of the reports in the output object to the default.'''
 
         for report in self.reports:
-            if report.active:
-                report.annual_flush()
+            if self.reports[report].active:
+                self.reports[report].annual_flush()

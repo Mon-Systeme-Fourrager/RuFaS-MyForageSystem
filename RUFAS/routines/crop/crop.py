@@ -50,11 +50,13 @@ def daily_crop_routine(crop, weather, time, soil):
 
         leaf_area_index.update_all(crop_type, time)
 
+
+
+        phosphorus_uptake.update_all(crop_type, soil, time)
+
+        nitrogen_uptake.update_all(crop_type, soil, time)
+
         root_development.update_all(crop_type, time)
-
-        phosphorus_uptake.update_all(crop_type, time)
-
-        nitrogen_uptake.update_all(crop_type, time)
 
         yields.update_all(crop_type, time)
        
@@ -108,6 +110,7 @@ class Crop():
             self.crop_type = data['crop_type']
             self.planting_date = data['planting_date']
             self.harvest_date = data['harvest_date']
+            self.fix_nitrogen = data['fix_nitrogen']
             self.start_day = 0
             
             #===================================================================
@@ -192,13 +195,14 @@ class Crop():
             self.bio_N_opt = 0
             self.bio_N = 0
 
-            self.fr_n1 = data["fr_p1"]
-            self.fr_n2 = data["fr_p2"]
-            self.fr_n3 = data["fr_p3"]
-            self.fr_n3ish = data["fr_p3ish"]
+            self.fr_n1 = data["fr,n1"]
+            self.fr_n2 = data["fr,n2"]
+            self.fr_n3 = data["fr,n3"]
+            self.fr_n3ish = data["fr,n~3"]
 
             self.fr_N = 0
             self.fr_N_up = 0
+            self.N_up = 0
             #===================================================================
             ''' Phosphorus Uptake Data '''
 
@@ -209,10 +213,10 @@ class Crop():
 
             self.fr_PHU_50 = data["fr_PHU_50"]
             self.fr_PHU_100 = data["fr_PHU_100"]
-            self.fr_p1 = data["fr_p1"]
-            self.fr_p2 = data["fr_p2"]
-            self.fr_p3 = data["fr_p3"]
-            self.fr_p3ish = data["fr_p3ish"]
+            self.fr_p1 = data["fr,p1"]
+            self.fr_p2 = data["fr,p2"]
+            self.fr_p3 = data["fr,p3"]
+            self.fr_p3ish = data["fr,p~3"]
 
             self.fr_P = 0
             self.P_up = 0

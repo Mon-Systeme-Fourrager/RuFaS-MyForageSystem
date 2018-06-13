@@ -1,0 +1,7 @@
+"farm":
+{
+  animal/default.json,
+  crop/default.json,
+  feed/default.json,
+  soil/default.json
+}

@@ -169,26 +169,26 @@ class Weather():
 					# 7) Added N Data
 					addedNData.append(float(row[7]))
 
-					# 8) Evaporation Data
-					evaporationData.append(row[8])
-
-					# 9) Lactate Cows Data
-					lCowsData.append(row[9])
-					
-					# 10) Dry Cows Data
-					dCowsData.append(row[10])
-					
-					# 11) Heifer Data
-					heiferData.append(row[11])
-					
-					# 12) Calf Data
-					calfData.append(row[12])
-					
-					# 13) Beef Data
-					beefData.append(row[13])
-					
-					# 8) Beef Calf Data
-					beefCalfData.append(row[14])
+					# # 8) Evaporation Data
+					# evaporationData.append(row[8])
+                    #
+					# # 9) Lactate Cows Data
+					# lCowsData.append(row[9])
+					#
+					# # 10) Dry Cows Data
+					# dCowsData.append(row[10])
+					#
+					# # 11) Heifer Data
+					# heiferData.append(row[11])
+					#
+					# # 12) Calf Data
+					# calfData.append(row[12])
+					#
+					# # 13) Beef Data
+					# beefData.append(row[13])
+					#
+					# # 8) Beef Calf Data
+					# beefCalfData.append(row[14])
 					
 				currentRow += 1
 

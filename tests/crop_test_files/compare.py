@@ -8,7 +8,9 @@ def main():
     expectedFile = open(expectedFileName, "r")
     resultFile = open(resultFileName, "r")
 
-    line = 0
+    day = 0
+    cut_off = .00015
+    show_errors = 5
 
     passed = "PASSED"
     skipFirst = True
@@ -19,7 +21,7 @@ def main():
 
         cellsExpected = rowExpected.split(",")
         cellsResult = rowResult.split(",")
-        line += 1
+        day += 1
 
         for i in range(len(cellsExpected)):
             try:
@@ -28,10 +30,14 @@ def main():
             except Exception as e:
                 print("error")
 
-            if abs(valueExpected - valueResult) > .00015:
+            if abs(valueExpected - valueResult) > cut_off:
                 passed = "FAILED"
-                print("error on line %i col %i in csv"% (line, i+1))
+                print("error on day %i col %i in csv"% (day, i+1))
                 print("Expected : %f \nResult  :  %f" % (valueExpected, valueResult))
+                show_errors -= 1
+                if show_errors == 0:
+                    print("%s %s %s\n" % (passed, expectedFileName, resultFileName))
+                    exit()
 
     print("%s %s %s\n" % (passed, expectedFileName, resultFileName))
 

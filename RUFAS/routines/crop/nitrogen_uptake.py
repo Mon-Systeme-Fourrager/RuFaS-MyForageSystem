@@ -29,7 +29,7 @@ def update_all(crop_type, soil, time):
     calc_actual_N_up_each_layer(crop_type, soil)
     calc_bio_N(crop_type, soil)
 
-    record_results(crop_type, time)
+    record_results(crop_type, time, soil)
 
 
 #
@@ -42,7 +42,7 @@ def calc_fr_N(crop_type):
     if crop_type.prev_biomass_actual == 0:
         crop_type.fr_N = 0
     else:
-        term1 = crop_type.fr_n1
+        term1 = crop_type.fr_n1 - crop_type.fr_n3
 
         exp_part = exp(n1 - n2 * crop_type.prev_fr_PHU)
         term2 = 1 - crop_type.prev_fr_PHU / (crop_type.prev_fr_PHU + exp_part)
@@ -54,12 +54,15 @@ def calc_n2(crop_type):
     term1 = calc_log_term_of_shape_coeff(
         crop_type, crop_type.fr_PHU_50, crop_type.fr_n2
     )
+    #print("\nterm1 = %f"%term1)
 
     term2 = calc_log_term_of_shape_coeff(
         crop_type, crop_type.fr_PHU_100, crop_type.fr_n3ish
     )
+    #print("term2 = %f" % term2)
 
     term3 = crop_type.fr_PHU_100 - crop_type.fr_PHU_50
+    #print("term3 = %f\n" % term3)
 
     return (term1 - term2) / term3
 
@@ -75,6 +78,7 @@ def calc_n1(crop_type, n2):
 def calc_log_term_of_shape_coeff(crop_type, fr_PHU_fract, fr_n_):
     bottom = 1 - (fr_n_ - crop_type.fr_n3) / (crop_type.fr_n1 - crop_type.fr_n3)
     inside = (fr_PHU_fract / bottom) - fr_PHU_fract
+
     return log(inside)
 
 
@@ -94,7 +98,9 @@ def calc_N_up(crop_type):
     else:
         option1 = crop_type.bio_N_opt - crop_type.bio_N
         option2 = 4 * crop_type.fr_n3 * crop_type.dBiomass_max
-        crop_type.N_up = 1.5 * min(option1, option2)
+
+        # The 1.5 is not included in the spreadsheet
+        crop_type.N_up = min(option1, option2)
 
 
 #
@@ -115,6 +121,7 @@ def calc_actual_N_up_each_layer(crop_type, soil):
         N_up_over += pot_N_up
         NO3_over += soilLayer.NO3
         N_demand = N_up_over - NO3_over
+        if N_demand < 0 : N_demand = 0
 
     crop_type.act_N_up_each_layer = act_N_up_each_layer
 
@@ -135,6 +142,8 @@ def calc_N_up_each_layer(crop_type, soil):
 
 
 def calc_N_up_z(crop_type, z):
+    if crop_type.z_root == 0:
+        return 0
     term1 = crop_type.N_up / (1 - exp(-1*crop_type.beta_n))
     term2 = 1 - exp(-1*crop_type.beta_n * z / crop_type.z_root)
     return term1 * term2
@@ -145,7 +154,12 @@ def calc_N_up_z(crop_type, z):
 #
 def calc_bio_N(crop_type, soil):
     N_actual_up = sum(crop_type.act_N_up_each_layer)
-    N_fix = calc_N_fixation(crop_type, soil)
+    N_fix = 0
+
+    # Check if the plant type fixes nitrogen
+    if crop_type.fix_nitrogen :
+        N_fix = calc_N_fixation(crop_type, soil)
+
     crop_type.bio_N = crop_type.bio_N + N_actual_up + N_fix
 
 #==============================================================================
@@ -162,20 +176,25 @@ test_file = "tests/crop_test_files/nitrogen_uptake_results.csv"
 # The following will record the root depth calculations into the
 # test file.
 #
-def record_results(crop_type, time):
+def record_results(crop_type, time, soil):
     if time.day == 1 and time.year == 1:
         reset_file((test_file))
 
+
     with open(test_file, "a") as resultFile:
-        result = "%i,%f,%f,%f,%f\n" % (
+        result = "%i,%f,%f,%f,%f,%f,%f,%f,%f\n" % (
             time.day,
-            crop_type.prev_biomass_actual,
+            crop_type.biomass_actual,
             crop_type.fr_N,
             crop_type.bio_N_opt,
-            crop_type.N_up
+            crop_type.N_up,
+            soil.listOfSoilLayers[0].NO3,
+            soil.listOfSoilLayers[1].NO3,
+            soil.listOfSoilLayers[2].NO3,
+            crop_type.bio_N
         )
         if time.day == 1 and time.year == 1:
-            resultFile.write("day,prev_biomass_actual,fr_N,bio_N_opt,N_up\n")
+            resultFile.write("day,biomass_actual,fr_N,bio_N_opt,N_up\n")
         resultFile.write(result)
 
 
