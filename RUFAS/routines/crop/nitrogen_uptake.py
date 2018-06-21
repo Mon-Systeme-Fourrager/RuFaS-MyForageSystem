@@ -53,7 +53,7 @@ from math import log, exp
 from .nitrogen_fixation import calc_N_fixation
 
 #
-# This function updates all of a crops nitrogen uptake information.
+# This function updates all of a crop's nitrogen uptake information.
 #
 def update_all(crop_type, soil, time):
     calc_fr_N(crop_type)
@@ -193,9 +193,11 @@ def calc_actual_N_up_each_layer(crop_type, soil):
 #
 def calc_N_up_each_layer(crop_type, soil):
     N_up_each_layer = []
+
     N_up_for_top_of_layer = 0
     for layer in soil.listOfSoilLayers:
         N_up_for_bottom_of_layer = calc_N_up_z(crop_type, layer.bottomDepth)
+
         N_up_ly = N_up_for_bottom_of_layer - N_up_for_top_of_layer
 
         N_up_each_layer.append(N_up_ly)
@@ -224,9 +226,6 @@ def calc_N_up_z(crop_type, z):
 # "Pseudo code_SC_NitrogenUptake_1.0.docx" section 3.E.1
 #
 def calc_bio_N(crop_type, soil):
-    N_fix = 0
-
-    # Check if the plant type fixes nitrogen
     N_fix = calc_N_fixation(crop_type, soil)
 
     crop_type.bio_N = crop_type.bio_N + crop_type.N_actual_up + N_fix
@@ -240,6 +239,7 @@ def calc_bio_N(crop_type, soil):
 # This is for testing purposes.
 #
 test_file = "tests/crop_test_files/nitrogen_uptake_results.csv"
+
 
 #
 # The following will record the root depth calculations into the
@@ -257,9 +257,9 @@ def record_results(crop_type, time, soil):
             crop_type.fr_N,
             crop_type.bio_N_opt,
             crop_type.N_up,
-            soil.listOfSoilLayers[0].NO3,
-            soil.listOfSoilLayers[1].NO3,
-            soil.listOfSoilLayers[2].NO3,
+            crop_type.act_N_up_each_layer[0],
+            crop_type.act_N_up_each_layer[1],
+            crop_type.act_N_up_each_layer[2],
             crop_type.bio_N
         )
         if time.day == 1 and time.year == 1:

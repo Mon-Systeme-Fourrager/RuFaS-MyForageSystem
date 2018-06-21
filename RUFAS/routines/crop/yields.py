@@ -60,6 +60,7 @@ def update_all(crop_type, time):
     calc_HI_actual(crop_type, time)
     calc_yield_max(crop_type, time)
     calc_yield_actual(crop_type)
+
     record_results(crop_type, time)
 
 

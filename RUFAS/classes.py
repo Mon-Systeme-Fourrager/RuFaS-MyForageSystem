@@ -149,6 +149,7 @@ class Weather():
 			for row in readCSV:
 				if currentRow != 0: # Skip the first row because first row contains column headers
 					# 1) Read rainfall data
+
 					rainfallData.append(float(row[1]))
 
 					# 2) Read max temperature data

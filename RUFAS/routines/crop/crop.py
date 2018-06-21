@@ -4,13 +4,85 @@ RUFAS: Ruminant Farm Systems Model
 File name: crop.py
 Description:
 Author(s): Kass Chupongstimun, kass_c@hotmail.com
+           Andy Achenreiner, achenreiner@wisc.edu
+
+This module needs the following inputs in order to operate correctly:
+
+    These are attributes of a crop type that need to be specified in the json input
+    file. The values on the right are just examples from a corn crop type.
+        "crop_name": "corn",
+        "crop_type": "annual",
+        "fix_nitrogen": false,
+
+        "planting_date": 121,
+        "harvest_date": 319,
+
+        "harvest_index": 0.65,
+        "harvest_eff": 0.9,
+        "HI_opt": 0.6,
+        "HI_min": 0.3,
+
+        "min_temp_for_growth": 10,
+        "max_temp_for_growth": 30,
+        "opt_temp_for_growth": 25,
+        "HU_for_maturity": 1200,
+
+        "fr_PHU_50" : 0.5,
+        "fr_PHU_100" : 1.0,
+        "fr_PHU_sen": 0.90,
+        "fr_PHU_1": 0.15,
+        "fr_PHU_2": 0.50,
+        "fr_LAI_1": 0.05,
+        "fr_LAI_2": 0.95,
+
+        "LAI_max": 3,
+        "radiation_use_efficiency": 39,
+        "light extinction coefficient": 0.65,
+
+        "z_root_max": 2000,
+
+        "fr,n1": 0.047,
+        "fr,n2": 0.0177,
+        "fr,n3": 0.0138,
+        "fr,n~3": 0.01381,
+        "beta_n": 10,
+
+        "beta_w": 10,
+        "epco": 0.5,
+
+        "fr,p1": 0.0048,
+        "fr,p2": 0.0018,
+        "fr,p3": 0.0014,
+        "fr,p~3": 0.00141,
+        "beta_p": 10
+
+    From the weather class, the following will be needed:
+        T_min
+        T_max
+        radiation
+        T_avg
+
+    From the soil class, the following will be needed:
+        listOfSoilLayers
+
+        And the following attributes of a soil layer:
+            bottomDepth
+            Ea
+            Eo
+            Et
+            NO3
+            labileP
+            currentSoilWaterMM
+            fcWater
+            wiltingWater
+
 '''
 ################################################################################
 
 from math import exp, log, floor
 from . import heat_units, leaf_area_index, root_development, biomass, yields, \
-    phosphorus_uptake, nitrogen_uptake
-
+    phosphorus_uptake, nitrogen_uptake, soil_water_uptake
+from RUFAS import util
 #-------------------------------------------------------------------------------
 # Function: daily_crop_routine
 #-------------------------------------------------------------------------------
@@ -24,33 +96,39 @@ def daily_crop_routine(crop, weather, time, soil):
 
     for _,crop_type in crop.crops_list.items():
 
+#------------------------------------------------------------------------------
         '''
-        Load in input value to represent input from other modules
-        These will have to be updated to get this information from the other
-        modules instead of from an input file.
+        Load input values to represent input from other modules.
+        This will need to be removed eventually because the crop module will
+        get this information from the other modules instead of from an input file. 
+        This is just for testing the calculations of the crop module.
         '''
         timeIndex = (time.year -1)*365 + time.day -1
         crop_type.Et = crop_type.test_Et[timeIndex]
-        crop_type.water_actual_up = crop_type.test_water_actual_up[timeIndex]
-
-        crop_type.bio_N = crop_type.test_bio_N[timeIndex]
-        crop_type.bio_N_opt = crop_type.test_bio_N_opt[timeIndex]
-        #crop_type.bio_P = crop_type.test_bio_P[timeIndex]
-        #crop_type.bio_P_opt = crop_type.test_bio_P_opt[timeIndex]
 
         crop_type.Ea_sum = crop_type.test_Ea_sum[time.year-1]
         crop_type.Eo_sum = crop_type.test_Eo_sum[time.year-1]
+
+        soil.listOfSoilLayers[0].NO3 = crop_type.test_NO3_l1[timeIndex]
+        soil.listOfSoilLayers[1].NO3 = crop_type.test_NO3_l2[timeIndex]
+        soil.listOfSoilLayers[2].NO3 = crop_type.test_NO3_l3[timeIndex]
+
+        soil.listOfSoilLayers[0].currentSoilWaterMM = crop_type.test_soil_water1[timeIndex]
+        soil.listOfSoilLayers[1].currentSoilWaterMM = crop_type.test_soil_water2[timeIndex]
+        soil.listOfSoilLayers[2].currentSoilWaterMM = crop_type.test_soil_water3[timeIndex]
+
+#------------------------------------------------------------------------------
 
         #
         # Run calculations
         #
         heat_units.update_all(crop_type, T_min, T_max, time)
 
+        soil_water_uptake.update_all(crop_type, soil, time)
+
         biomass.update_all(crop_type, time, weather)
 
         leaf_area_index.update_all(crop_type, time)
-
-
 
         phosphorus_uptake.update_all(crop_type, soil, time)
 
@@ -59,8 +137,7 @@ def daily_crop_routine(crop, weather, time, soil):
         root_development.update_all(crop_type, time)
 
         yields.update_all(crop_type, time)
-       
-        # Other daily calculations to be made
+
 
 #-------------------------------------------------------------------------------
 # Function: annual_crop_routine
@@ -81,9 +158,6 @@ class Crop():
     TODO: Add DocString
     '''
 
-
-
-
     def __init__(self, data):
         '''
         TODO: Add DocString
@@ -100,8 +174,6 @@ class Crop():
             '''
             TODO: Add DocString
             '''
-
-            self.line = 16
 
             #
             # CONSTANTS
@@ -159,6 +231,7 @@ class Crop():
             
             # Outputs
             self.z_root = 0
+            self.prev_z_root = 0
             
             #===================================================================
             ''' BIOMASS DATA '''
@@ -179,12 +252,12 @@ class Crop():
             
             #===================================================================
             ''' Soil Water Uptake Data '''
-            
-            self.E_t = data['E_t']         # maximum plant transpiration on a given day
+
             self.beta_w = data['beta_w']   # water-use distribution parameter
             self.epco = data['epco']
 
-            self.actual_E_t = 0
+            self.Et_actual = 0
+            self.water_actual_up = 0
             self.water_uptake_each_layer = []
 
             self.Ea = 0
@@ -253,13 +326,28 @@ class Crop():
             #===================================================================
             ''' Testing Data '''
 
-            self.test_water_actual_up = data["TESTING_water_up"]
-            self.test_Et = data["TESTING_Et"]
+            TEST_DATA = util.get_csv_columns(data["TEST_DATA"])
 
-            self.test_bio_P = data["TESTING_bioP"]
-            self.test_bio_P_opt = data["TESTING_bioP_opt"]
-            self.test_bio_N = data["TESTING_bioN"]
-            self.test_bio_N_opt = data["TESTING_bioN_opt"]
+
+            self.test_Et = TEST_DATA[1][1:]
+
+            self.test_water_actual_up = TEST_DATA[2][1:]
+
+            self.test_bio_N_opt = TEST_DATA[3][1:]
+
+            self.test_bio_N = TEST_DATA[4][1:]
+
+            self.test_bio_P_opt = TEST_DATA[5][1:]
+
+            self.test_bio_P = TEST_DATA[6][1:]
+
+            self.test_NO3_l1 = TEST_DATA[7][1:]
+            self.test_NO3_l2 = TEST_DATA[8][1:]
+            self.test_NO3_l3 = TEST_DATA[9][1:]
+
+            self.test_soil_water1 = TEST_DATA[10][1:]
+            self.test_soil_water2 = TEST_DATA[11][1:]
+            self.test_soil_water3 = TEST_DATA[12][1:]
 
             self.test_Ea_sum = data["TESTING_Ea_sum"]
             self.test_Eo_sum = data["TESTING_Eo_sum"]
@@ -281,72 +369,6 @@ class Crop():
                         self.start_day = d
 
 
-        #-----------------------------------------------------------------------
-        # Method: calculate_water_uptake
-        #-----------------------------------------------------------------------
-        ''' Maybe add Soil as an arg because we will need the soil layer information
-            for this function
-        '''
-        def calculate_water_uptake(self, T_min, T_max, H_radiation, soil):
-            ''' '''
-
-            #
-            # 1) Root development in Soil
-            #
-            fr_root = 0.4 - 0.2*self.fr_PHU
-
-            if ((self.crop_type == "perennial") or
-                (self.crop_type == "annual" and self.fr_PHU > 0.4)):
-                z_root = self.z_root_max
-            else: #crop_type == "annual" and self.fr_PHU <= 0.4
-                z_root = 2.5 * self.fr_PHU * self.z_root_max
-
-
-            #
-            # 2) Maximum potential water uptake
-            #
-            def max_pos_water_uptake(z):
-                w_up_z = ((self.E_t / (1.0 - exp(-self.beta_w))) *
-                      floor(1.0 - exp(-self.beta_w * z/z_root)))
-                return w_up_z
-            
-            def max_pos_water_uptake_layer(upper_boundary, lower_boundary):
-                w_up_zu = max_pos_water_uptake(upper_boundary)
-                w_up_zl = max_pos_water_uptake(lower_boundary)
-                return w_up_zl - w_up_zu
-
-
-            #
-            # 3) Impact of low soil water content on potential water uptake
-            #
-            sum_adj_w_up = 0 
-            pos_uptake_overlying_layers = 0
-            sum_avail_soil_water_overlying = 0
-            first_layer = True
-            prev_ly_depth = 0
-            for ly in soil.listOfSoilLayers:
-                if first_layer:
-                    sum_adj_w_up = max_pos_water_uptake_layer(prev_ly_depth, ly.bottomDepth)
-                    
-                    first_layer = False
-                else:
-                    pos_uptake_overlying_layers = sum_adj_w_up
-                    w_demand = pos_uptake_overlying_layers - sum_avail_soil_water_overlying
-                    if w_demand < 0:
-                        w_demand = 0
-                    adj_w_up = max_pos_water_uptake_layer(
-                        prev_ly_depth, ly.bottomDepth) + w_demand * self.epco
-                    
-                    sum_adj_w_up += adj_w_up
-                    
-                sum_avail_soil_water_overlying += ly.currentSoilWaterMM
-                prev_ly_depth = ly.bottomDepth
-            
-
-            #
-            # 4) Actual water uptake by a plant
-            #
-
 
     #---------------------------------------------------------------------------
     # Method: annual_reset
@@ -361,5 +383,12 @@ class Crop():
 
             crop_type.fr_PHU = 0
             crop_type.prev_fr_PHU = 0
+
+            crop_type.biomass_actual = 0
+            crop_type.prev_biomass_actual = 0
+
+            crop_type.bio_P = 0
+            crop_type.bio_N = 0
+
 
 

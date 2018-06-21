@@ -58,7 +58,7 @@ class OutputHandler():
                         'soil_summary': SoilSummary(data['soil_summary']),
                         'soil_nitrogen': SoilNitrogen(data['soil_nitrogen']),
                         #'soil_phosphorus': SoilPhosphorus(data['soil_phosphorus']),
-                        'ration_report': RationReport(data['ration_report']),
+                        #'ration_report': RationReport(data['ration_report']),
                         #'crop_report': CropReport(data['crop_report'])
                         }
 
@@ -95,7 +95,8 @@ class OutputHandler():
     def initialize_reports(self, state):
         '''Transfer needed (initial) data from state to report handlers.'''
 
-        for report in self.reports:
+        for reportName in self.reports:
+            report = self.reports[reportName]
             if report.active:
                 report.initialize(state)
 
@@ -105,7 +106,8 @@ class OutputHandler():
     def daily_update(self, state, weather, time):
         '''Updates the report handler with new daily values.'''
 
-        for report in self.reports:
+        for reportName in self.reports:
+            report = self.reports[reportName]
             if report.active:
                 report.daily_update(state, weather, time)
 
@@ -115,7 +117,8 @@ class OutputHandler():
     def annual_update(self, state, weather, time):
         '''Updates the report handler with anuual output values.'''
 
-        for report in self.reports:
+        for reportName in self.reports:
+            report = self.reports[reportName]
             if report.active:
                 report.annual_update(state, weather, time)
 
@@ -125,7 +128,8 @@ class OutputHandler():
     def write_annual_reports(self, y):
         '''Prints the annual report to file for all reports.'''
 
-        for report in self.reports:
+        for reportName in self.reports:
+            report = self.reports[reportName]
             if report.active:
                 report.write_annual_report(y)
 
@@ -135,6 +139,7 @@ class OutputHandler():
     def annual_flush(self):
         '''Sets all of the reports in the output object to the default.'''
 
-        for report in self.reports:
-            if self.reports[report].active:
-                self.reports[report].annual_flush()
+        for reportName in self.reports:
+            report = self.reports[reportName]
+            if report.active:
+                report.annual_flush()

@@ -12,6 +12,7 @@ import sys
 import pulp
 import time as timer
 from pathlib import Path
+import csv
 
 #-------------------------------------------------------------------------------
 # Function: get_base_dir
@@ -206,5 +207,28 @@ def LP_print(LHS, RHS, objective, variables, operators,
     return LP_text
 
 
+#
+# Takes in the path to a csv file with the path starting after MASM/
+# This function returns a list of tuples. Each tuple is the contents of
+# a column in the csv. Thus, returnedList[0] would be the tuple of the contents
+# in the first column in the csv. If an entry in the csv can be turned into a
+# float, then it will be.
+#
+def get_csv_columns(fileName):
+    filePath = get_base_dir() / fileName
+    with filePath.open("r") as input:
+        readCSV = csv.reader(input, delimiter=',')
+        allRows = list(readCSV)
+
+        # Convert all numerical data to floats if possible
+        allRows = [[try_to_float(value) for value in row] for row in allRows]
+
+        allColumns = zip(*allRows)
+        return list(allColumns)
 
 
+def try_to_float(input):
+    try:
+        return float(input)
+    except:
+        return input

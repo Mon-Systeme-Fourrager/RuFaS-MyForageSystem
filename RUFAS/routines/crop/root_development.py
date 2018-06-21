@@ -65,6 +65,9 @@ def calc_z_root(crop_type, time):
 
     afterHarvest = time.day > crop_type.harvest_date
 
+    # Save the previous day's value
+    crop_type.prev_z_root = crop_type.z_root
+
     if crop_type.crop_type == "perennial":
         crop_type.z_root = crop_type.z_root_max
 
