@@ -1,9 +1,0 @@
-"animal":
-        {
-            "housing": "barn",
-            "ration":
-            {
-                "user_input": false,
-                "formulation_interval": 7
-            }
-        }
