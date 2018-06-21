@@ -1,3 +1,5 @@
+# This was just used to generate Inputs/crop_module_testWeather_3.4.csv so the
+# results can match those in adjusted_model_PlantGrowth_3.5.xlsx
 import openpyxl
 
 inputWorkBook = openpyxl.load_workbook("others/__model_PlantGrowth_3.4.xlsx")
