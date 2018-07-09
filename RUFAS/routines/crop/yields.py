@@ -37,6 +37,13 @@ Variable definitions:
 
     yield_actual = Actual crop yield at harvest (kg ha^-1)
 
+    yield_N = Amount of nitrogen removed in the yield
+
+    yield_P = Amount of phosphorus removed in the yield
+
+    residue = Material in the residue pool for the top 10mm of soil on current
+              day (kg ha^-1)
+
 
 CropType values updated by update_all():
     gamma_wu
@@ -45,7 +52,9 @@ CropType values updated by update_all():
     HI_actual
     yield_max
     yield_actual
-
+    yield_N
+    yield_P
+    residue
 '''
 ###############################################################################
 from math import exp
@@ -60,6 +69,8 @@ def update_all(crop_type, time, soil):
     calc_HI_actual(crop_type, time)
     calc_yield_max(crop_type, time)
     calc_yield_actual(crop_type)
+    calc_nutrient_removal(crop_type)
+    calc_residue(crop_type)
 
     record_results(crop_type, time)
 
@@ -126,6 +137,24 @@ def calc_yield_max(crop_type, time):
 #
 def calc_yield_actual(crop_type):
     crop_type.yield_actual = crop_type.harvest_eff * crop_type.yield_max
+
+
+#
+# Calculates the amount of nitrogen and phosphorus removed in the yield.
+# "Pseudo code_SC_crop yield_1.1.docx" section 5.4
+#
+def calc_nutrient_removal(crop_type):
+    crop_type.yield_N = crop_type.fr_N * crop_type.yield_actual
+    crop_type.yield_P = crop_type.fr_P * crop_type.yield_actual
+
+
+#
+# Updates the current residue.
+# "Pseudo code_SC_actual growth and yield_1.0.docx" section 7.B.4
+#
+def calc_residue(crop_type):
+    dResidue = crop_type.biomass_actual - crop_type.yield_actual
+    crop_type.residue += dResidue
 
 
 #==============================================================================

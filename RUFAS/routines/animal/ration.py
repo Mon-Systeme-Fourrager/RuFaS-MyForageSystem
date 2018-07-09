@@ -172,7 +172,7 @@ def calculate_rqmts(parity, WIM, AMF, BWR, base_NED, housing,
 	MP_mlk = 10 * PROT_mlk*base_MY/0.65  # g metabolizable protein for milk
 
 	#
-	# Sum total requisrements
+	# Sum total requirements
 	# MEIeds: MEIM, MEIACT, ME_mlk, MECBW, MPM
 	#
 	ME_req = MEIM/0.667 + MEIACT/0.667 + ME_mlk + MECBW # total ME req (Mcal)

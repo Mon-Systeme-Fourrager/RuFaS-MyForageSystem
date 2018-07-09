@@ -15,3 +15,4 @@ python3 compare.py yield_expected.csv yield_results.csv
 python3 compare.py phosphorus_uptake_expected.csv phosphorus_uptake_results.csv
 python3 compare.py nitrogen_uptake_expected.csv nitrogen_uptake_results.csv
 python3 compare.py water_uptake_expected.csv water_uptake_results.csv
+python3 compare.py crop_summary_expected.csv crop_summary.csv

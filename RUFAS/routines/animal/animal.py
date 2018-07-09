@@ -67,7 +67,7 @@ class Animal():
         '''Formulates the least cost ration for the animals.
 
         1) Extract feed nutrition from Feed object
-        2) Compile the information into the contraint and objective coefficients
+        2) Compile the information into the constraint and objective coefficients
            for the linear program
         3) Set up loop variables and enter formulation loop, for each loop,
            calculate requirements and linear program to solve for optimal
@@ -90,8 +90,10 @@ class Animal():
         # values here are coefficients (on the LHS of the eq)
         #constraints = ration.calculate_constraints(feed, nutrients)
         constraints = {nutrient: [feed_nutrition[nutrient][feed_type] for feed_type in feed_types] for nutrient in nutrients}
+
         # Objective: minimize total cost of all feeds
         objective = {feed_type: feed[feed_type]['price'] for feed_type in feed_types}
+
         # Maximum allowed use for each feed type
         limits = {feed_type: feed[feed_type]['limit'] for feed_type in feed_types}
 
@@ -112,7 +114,7 @@ class Animal():
 
             #
             # Constraints: minimum nutrition requirements for cows
-            # values here are requiremtnts (on the RHS of constraint eq)
+            # values here are requirements (on the RHS of constraint eq)
             # milk_production_multiplier is passed as scaling factor
             #
             rqmts = ration.calculate_rqmts(

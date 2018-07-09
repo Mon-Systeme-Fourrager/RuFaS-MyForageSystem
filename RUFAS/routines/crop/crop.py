@@ -21,6 +21,7 @@ This module needs the following inputs in order to operate correctly:
         "harvest_eff": 0.9,
         "HI_opt": 0.6,
         "HI_min": 0.3,
+        "init_residue": 8000,
 
         "min_temp_for_growth": 10,
         "max_temp_for_growth": 30,
@@ -318,6 +319,9 @@ class Crop():
             self.bio_AG = 0
             self.yield_max = 0
             self.yield_actual = 0
+            self.yield_N = 0
+            self.yield_P = 0
+            self.residue = data["init_residue"]
 
             #===================================================================
             ''' Testing Data '''

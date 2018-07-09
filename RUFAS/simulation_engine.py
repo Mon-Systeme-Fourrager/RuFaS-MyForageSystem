@@ -80,25 +80,25 @@ def daily_simulation():
     # We should avoid doing this if possible
     #
     if time.day >= 188 or time.year > 1:
-
+        pass
         #
         # Daily Routines
         # Pass only information needed
         #
-        routines.daily_soil_routine(state.soil, weather, time)
-        routines.daily_nitrogen_cycling_routine(state.soil, time, weather)
+         #routines.daily_soil_routine(state.soil, weather, time)
+         #routines.daily_nitrogen_cycling_routine(state.soil, time, weather)
 
         #
         # Daily Attribute Updates
         # Update attributes in preparation of following day
         #
-        routines.daily_soil_update(state.soil, weather, time)
-        routines.daily_nitrogen_update(state.soil, time, weather)
+         #routines.daily_soil_update(state.soil, weather, time)
+         #routines.daily_nitrogen_update(state.soil, time, weather)
 
     #
     # Daily routines
     #
-    routines.daily_phosphorus_cycling_routine(state.soil, time, weather, config)
+     #routines.daily_phosphorus_cycling_routine(state.soil, time, weather, config)
     # routines.daily_animal_routine(state.animal, state.feed, weather, time)
     routines.daily_crop_routine(state.crop, weather, time, state.soil)
 

@@ -59,7 +59,7 @@ class OutputHandler():
                         'soil_nitrogen': SoilNitrogen(data['soil_nitrogen']),
                         #'soil_phosphorus': SoilPhosphorus(data['soil_phosphorus']),
                         #'ration_report': RationReport(data['ration_report']),
-                        #'crop_report': CropReport(data['crop_report'])
+                        'crop_report': CropReport(data['crop_report'])
                         }
 
     #---------------------------------------------------------------------------

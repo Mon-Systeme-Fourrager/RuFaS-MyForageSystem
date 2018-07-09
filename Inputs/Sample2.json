@@ -29,6 +29,12 @@
             "active": true,
             "report_name": "Soil Nitrogen",
             "file_name": "soil_nitrogen.csv"
+        },
+        "crop_report":
+        {
+            "active": true,
+            "report_name": "Crop Report",
+            "file_name": "crop_summary.csv"
         }
     },
 
@@ -36,7 +42,7 @@
     {
         "crop":
         {
-            "crop_x":
+            "corn":
             {
                 "crop_name": "corn",
                 "crop_type": "annual",
@@ -49,6 +55,7 @@
                 "harvest_eff": 0.9,
                 "HI_opt": 0.6,
                 "HI_min": 0.3,
+                "init_residue": 8000,
 
                 "min_temp_for_growth": 10,
                 "max_temp_for_growth": 30,
