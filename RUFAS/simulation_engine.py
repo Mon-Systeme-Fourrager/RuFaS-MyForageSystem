@@ -99,7 +99,7 @@ def daily_simulation():
     # Daily routines
     #
      #routines.daily_phosphorus_cycling_routine(state.soil, time, weather, config)
-    # routines.daily_animal_routine(state.animal, state.feed, weather, time)
+    routines.daily_animal_routine(state.animal, state.feed, weather, time)
     routines.daily_crop_routine(state.crop, weather, time, state.soil)
 
     #

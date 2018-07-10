@@ -138,7 +138,8 @@ def LP_solve(LHS, RHS, objective, variables, operators,
         else:
             LP += pulp.lpSum([ LHS[c][v] * LP_vars[v] for v in range(num_variables) ]) == RHS[c]
 
-    LP.solve(pulp.solvers.GLPK(msg=0))
+    #LP.solve(pulp.solvers.GLPK(msg=0)) # Switched to GUROBI because ~2-3x faster
+    LP.solve(pulp.solvers.GUROBI(msg=0))
 
     results = { }
     for v in LP.variables():
