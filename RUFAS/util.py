@@ -91,16 +91,6 @@ def LP_solve(LHS, RHS, objective, var_names, operators,
             'variableN_name': variable value
             }
     '''
-    for group in zip(*LHS):
-        print(sorted(list(group)))
-
-    print("-")
-    print(repr(RHS))
-    print("-")
-    for name, obj in zip(var_names, objective):
-        print(str(obj) + " " + name)
-    print("-")
-    print(repr(operators))
 
     start = timer.time()
 
@@ -130,10 +120,8 @@ def LP_solve(LHS, RHS, objective, var_names, operators,
     results = organize_results(LP)
 
     end = timer.time()
-    LP.writeLP("FirstDay4.lp")
-    exit()
+    print("LP elapsed time: " + str(end-start))
 
-    #print("LP elapsed time: " + str(end-start))
     return results
 
 

@@ -32,8 +32,10 @@ class Feed():
 
         # merge feed from farm and purchased
         self.all_feed = {**self.farm_feed, **self.purchased_feed}
+        self.feed_types = sorted(list(self.all_feed.keys()))
 
         self.feed_nutrition = { 'FI': {}, 'RV': {}, 'NE': {}, 'RDP': {}, 'RUP': {}}
+        self.nutrient_types = sorted(list(self.feed_nutrition.keys()))
 
         # RDP -> Rumen degradable protein
         # NE --> Net Energy
@@ -44,7 +46,7 @@ class Feed():
         unavail_prot = {}
 
         # Loop over types of feed
-        for feed_type in self.all_feed.keys():
+        for feed_type in self.feed_types:
             #set FI, rumen volume, and MEIt eMEIrgy
             self.feed_nutrition['FI'][feed_type] = self.all_feed[feed_type]['nutrition']['FI']
             self.feed_nutrition['RV'][feed_type] = self.all_feed[feed_type]['nutrition']['RV']
