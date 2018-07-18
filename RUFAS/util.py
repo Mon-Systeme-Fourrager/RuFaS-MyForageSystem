@@ -55,7 +55,7 @@ def LP_solve(LHS, RHS, objective, var_names, operators,
 
     Solves the Linear Program and returns the results of the optimization.
     LHS, RHS, and operators will have length of #constraints in the LP.
-    variables, objective, min_v, max_v, and each sub-list in LHS must have
+    variables, objective, lower_var_bounds, upper_var_bounds, and each sub-list in LHS must have
     length of #variables in the LP.
 
     Args:
@@ -91,7 +91,6 @@ def LP_solve(LHS, RHS, objective, var_names, operators,
             'variableN_name': variable value
             }
     '''
-
     start = timer.time()
 
     num_variables = len(var_names)
@@ -113,29 +112,33 @@ def LP_solve(LHS, RHS, objective, var_names, operators,
     add_LP_constraints(LHS, RHS, LP_vars, operators, LP)
 
     # Solve
-    #LP.solve(pulp.solvers.GLPK(msg=0)) # Switched to GUROBI because ~2-3x faster
+    # Switched from GLPK to GUROBI because ~2-3x faster
+    #LP.solve(pulp.solvers.GLPK(msg=0))
     LP.solve(pulp.solvers.GUROBI(msg=0))
 
     # Get organized results
     results = organize_results(LP)
 
     end = timer.time()
-    print("LP elapsed time: " + str(end-start))
+    # print("LP elapsed time: " + str(end-start))
 
     return results
 
 
+# Initializes the LP problem
 def create_LP_problem(name, mode):
     if mode.lower().startswith("min"):
         LP = pulp.LpProblem(name, pulp.LpMinimize)
     elif mode.lower().startswith("max"):
         LP = pulp.LpProblem(name, pulp.LpMaximize)
     else:
-        print("ERROR")
+        print("Incorrect LP mode. Exiting ...")
         exit()
     return LP
 
 
+# Checks if there are equal number of constraints and RHS values
+# Checks that objective and each constraint have all variables
 def is_correct_structure(LHS, RHS, objective, var_names):
     if len(LHS) != len(RHS) or len(objective) != len(var_names):
         return False
@@ -145,6 +148,9 @@ def is_correct_structure(LHS, RHS, objective, var_names):
     return True
 
 
+# Initializes the LP variables, and returns a list containing them.
+# Each variable represents the quantity of a feed type. The variables
+# are organized in order of the feed types alphabetically.
 def generate_LP_vars(var_names, lower_bounds, upper_bounds):
     num_vars = len(var_names)
 
@@ -161,10 +167,11 @@ def generate_LP_vars(var_names, lower_bounds, upper_bounds):
     for var_info in zip(var_names, lower_bounds, upper_bounds):
         new_variable = pulp.LpVariable(*var_info)
         LP_vars.append(new_variable)
-
     return LP_vars
 
 
+# Adds the constraints to the LP problem. Each constraint represents the needed
+# amount of a certain nutrient in the ration for the cow.
 def add_LP_constraints(LHS, RHS, LP_Vars, operators, LP):
     num_vars = len(LP_Vars)
     for constraint_eq, constraint_value, operator in zip(LHS, RHS, operators):
@@ -177,6 +184,9 @@ def add_LP_constraints(LHS, RHS, LP_Vars, operators, LP):
             LP += pulp.lpSum(terms_in_equation) == constraint_value
 
 
+# Organizes the results in a dictionary such that the names of variables
+# pair up with their optimal value (if possible), 'objective' with the optimal
+# value of the objective, and the LP status with 'status'.
 def organize_results(LP):
     results = {}
     for v in LP.variables():

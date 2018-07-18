@@ -31,24 +31,25 @@ def optimize(feed, rqmts):
     objective = [feed.all_feed[feed_type]['price'] for feed_type in feed.feed_types]
 
     # Variables
-    variables = list(feed.feed_types)
+    variables = feed.feed_types
 
     # operators [type_nutrient]
     operators = [rqmts[nutrient]['op'] for nutrient in feed.nutrient_types]
 
-    # min/max variable values [type_feed]
-    min_v = [0] * len(feed.feed_types)
-    max_v = [feed.all_feed[feed_type]['limit'] for feed_type in feed.feed_types]
+    # The lower and upper bounds for quantity of each feed type
+    lower_bounds = [0] * len(feed.feed_types)
+    upper_bounds = [feed.all_feed[feed_type]['limit'] for feed_type in feed.feed_types]
 
     # util.LP_print(LHS, RHS, objective, variables, operators,
-    #			  "minimize", "RATION", min_v, max_v)
+    #			  "minimize", "RATION", lower_bounds, upper_bounds)
 
     return util.LP_solve(LHS, RHS, objective, variables, operators,
-                         "minimize", "RATION", min_v, max_v)
+                         "minimize", "RATION", lower_bounds, upper_bounds)
 
 
 # -------------------------------------------------------------------------------
-# Function: calculate_rqmts
+# Function: Calculate the dietary requirements of the cows. These values are used
+#           on the RHS of the linear program.
 # -------------------------------------------------------------------------------
 def calculate_rqmts(parity, WIM, AMF, BWR, base_NED, housing,
                     nutrients_list, milk_production_multiplier):
