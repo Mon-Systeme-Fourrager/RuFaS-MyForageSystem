@@ -5,7 +5,7 @@ from RUFAS.routines.field.crop.crop_enum import CropSpecies
 
 from .tractor import Tractor
 from .tractor_implement import TractorImplement
-from .enums import TractorSize, FieldOperationEvent
+from .enums import TractorSize, FieldOperationEvent, TillageImplement
 
 om = OutputManager()
 
@@ -23,7 +23,7 @@ class EnergyEstimator:
         }
         filters = [
             {
-                "name": "Fertilizer",
+                "name": FieldOperationEvent.FERTILIZER_APPLICATION.value,
                 "use_name": True,
                 "filters": ["Field._record_fertilizer_application.fertilizer_application.field='.*'"],
                 "variables": ["mass", "application_depth", "field_size", "average_clay_percent"],
@@ -35,7 +35,7 @@ class EnergyEstimator:
                 "variables": ["tillage_depth", "implement", "field_size", "average_clay_percent"],
             },
             {
-                "name": "Manure",
+                "name": FieldOperationEvent.MANURE_APPLICATION.value,
                 "use_name": True,
                 "filters": ["Field._record_manure_application.manure_application.field='.*'"],
                 "variables": [
@@ -47,21 +47,83 @@ class EnergyEstimator:
                 ],
             },
             {
-                "name": "Harvestings",
+                "name": FieldOperationEvent.HARVEST.value,
                 "use_name": True,
                 "filters": ["CropManagement._record_yield.harvest_yield.field='.*'"],
                 "variables": ["dry_yield", "crop", "field_size"],
             },
             {
-                "name": "Plantings",
+                "name": FieldOperationEvent.PLANTING.value,
                 "use_name": True,
                 "filters": ["Field._plant_crop.crop_planting.field='.*'"],
                 "variables": ["crop", "field_size", "average_clay_percent"],
             },
         ]
+        for filter in filters:
+            result = om.filter_variables_pool_complex(filter)
+            first_key, first_value = next(iter(result.items()))
+            length=len(first_value)
+            key_prefix=first_key.rsplit('.', 1)[0]
+            if first_key.startswith(FieldOperationEvent.FERTILIZER_APPLICATION.value):
+                ???
+
+        expected_result = [
+            {
+                "Fertilizer_0.mass": [100.0],
+                "Fertilizer_0.application_depth": [0.0],
+                "Fertilizer_0.field_size": [1.0],
+                "Fertilizer_0.average_clay_percent": [20.0],
+            },
+            {
+                "Tillage_0.tillage_depth": [100, 150, 100, 150, 100, 150, 100],
+                "Tillage_0.implement": [
+                    TillageImplement.DISK_HARROW,
+                    TillageImplement.DISK_HARROW,
+                    TillageImplement.DISK_HARROW,
+                    TillageImplement.DISK_HARROW,
+                    TillageImplement.DISK_HARROW,
+                    TillageImplement.DISK_HARROW,
+                    TillageImplement.DISK_HARROW,
+                ],
+                "Tillage_0.field_size": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+                "Tillage_0.average_clay_percent": [20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0],
+            },
+            {
+                "Manure_0.dry_matter_mass": [2015.0474292233089, 924.8542134993613, 1418.4044520966129],
+                "Manure_0.dry_matter_fraction": [0.023256383765445036, 0.020361824706314476, 0.020549795285264225],
+                "Manure_0.application_depth": [150.0, 150.0, 150.0],
+                "Manure_0.field_size": [1.0, 1.0, 1.0],
+                "Manure_0.average_clay_percent": [20.0, 20.0, 20.0],
+            },
+            {
+                "Harvestings_0.crop": [
+                    CropSpecies.ALFALFA_HAY,
+                    CropSpecies.ALFALFA_HAY,
+                    CropSpecies.ALFALFA_HAY,
+                    CropSpecies.CORN_GRAIN,
+                ],
+                "Harvestings_0.dry_yield": [
+                    2035.6063130026596,
+                    1805.667208160874,
+                    1947.9321959672566,
+                    3566.3202314189934,
+                ],
+                "Harvestings_0.field_size": [1.0, 1.0, 1.0, 1.0],
+            },
+            {
+                "Plantings_0.crop": [
+                    CropSpecies.ALFALFA_HAY,
+                    CropSpecies.ALFALFA_HAY,
+                    CropSpecies.ALFALFA_HAY,
+                    CropSpecies.CORN_GRAIN,
+                ],
+                "Plantings_0.field_size": [1.0, 1.0, 1.0, 1.0],
+                "Plantings_0.average_clay_percent": [20.0, 20.0, 20.0, 20.0],
+            },
+        ]
+        print(expected_result)
         crop_yield = 0  # TODO get the correct value
         field_production_size = 0  # TODO get the correct value
-        herd_size = 0  # TODO get the correct value
         operation_event = FieldOperationEvent.PLANTING  # TODO get the correct value
         crop_type = CropSpecies.ALFALFA_BALEAGE  # TODO get the correct value
         tractor_size = (
