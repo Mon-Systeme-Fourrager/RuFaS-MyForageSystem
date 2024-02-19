@@ -1416,7 +1416,58 @@ class OutputManager(object):
 
         self.variables_pool = filtered_pool
 
-    def save_results(  # noqa: C901
+    def _filter_variables_pool_complex(self, filter_content: Dict[str, Any]) -> Dict[str, pool_element_type]:
+        """
+        # TODO
+        This is a temp function to extend `_filter_variables_pool` functionality without creating merge conflicts.
+        It will be fixed by getting modified and removing `_filter_variables_pool` in issue 996.
+        """
+        filter_name = filter_content.get("name", "NO NAME FOUND")
+        filter_by_exclusion = filter_content.get("filter_by_exclusion", False)
+        info_map = {
+            "class": self.__class__.__name__,
+            "function": self._filter_variables_pool_complex.__name__,
+            "filter_name": filter_name,
+            "filter_by_exclusion": filter_by_exclusion,
+        }
+
+        if filter_by_exclusion:
+            filter_excl_msg = f"Performing filtering by exclusion per filter's contents. {filter_name=}"
+        else:
+            filter_excl_msg = f"Performing filtering by inclusion per filter's contents. {filter_name=}"
+        self.add_log("filtering_log", filter_excl_msg, info_map)
+
+        filtered_pool = Utility.filter_pool(self.variables_pool, filter_content.get("filters", []), filter_by_exclusion)
+        self.add_log(
+            "num_filter_pattern_matches",
+            f"There were {len(filtered_pool)} matches for filter pattern(s) in {filter_name=}.",
+            info_map,
+        )
+        selected_variables = filter_content.get("variables")
+        results: Dict[str, OutputManager.pool_element_type] = {}
+        for key in filtered_pool.keys():
+            is_data_in_dict = isinstance(filtered_pool[key]["values"][0], dict)
+            if is_data_in_dict:
+                if selected_variables is None or not isinstance(selected_variables, list):
+                    self.add_error(
+                        "Unpacking Pool Error",
+                        "Unable to unpack {key=} in the data pool, need a valid `variables` entry for this entry."
+                        f"{is_data_in_dict=}, {selected_variables=}",
+                        info_map,
+                    )
+                temp_data = Utility.convert_list_of_dicts_to_dict_of_lists(filtered_pool[key]["values"])
+                filtered_data = Utility.filter_pool(temp_data, selected_variables, filter_by_exclusion)
+                for filtered_key, filtered_value in filtered_data.items():
+                    combined_key = f"{key}.{filtered_key}"
+                    if combined_key in results:
+                        results[combined_key].extend(filtered_value)
+                    else:
+                        results[combined_key] = filtered_value
+            else:
+                results = filtered_pool
+        return results
+
+    def save_results(
         self,
         filters_dir_path: Path,
         exclude_info_maps: bool,
