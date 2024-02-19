@@ -1421,14 +1421,20 @@ class OutputManager(object):
         # TODO
         This is a temp function to extend `_filter_variables_pool` functionality without creating merge conflicts.
         It will be fixed by getting modified and removing `_filter_variables_pool` in issue 996.
+
+        This function is tested minimally, needs more comprehensive testing before replacing `_filter_variables_pool`.
+
+        `use_name` entry if present and true, uses filter name to populate the output, otherwise, uses the default key
         """
         filter_name = filter_content.get("name", "NO NAME FOUND")
+        use_filter_name = filter_content.get("use_name", False)
         filter_by_exclusion = filter_content.get("filter_by_exclusion", False)
         info_map = {
             "class": self.__class__.__name__,
             "function": self._filter_variables_pool_complex.__name__,
             "filter_name": filter_name,
             "filter_by_exclusion": filter_by_exclusion,
+            "use_filter_name": use_filter_name,
         }
 
         if filter_by_exclusion:
@@ -1445,6 +1451,7 @@ class OutputManager(object):
         )
         selected_variables = filter_content.get("variables")
         results: Dict[str, OutputManager.pool_element_type] = {}
+        counter = 0
         for key in filtered_pool.keys():
             is_data_in_dict = isinstance(filtered_pool[key]["values"][0], dict)
             if is_data_in_dict:
@@ -1458,13 +1465,18 @@ class OutputManager(object):
                 temp_data = Utility.convert_list_of_dicts_to_dict_of_lists(filtered_pool[key]["values"])
                 filtered_data = Utility.filter_pool(temp_data, selected_variables, filter_by_exclusion)
                 for filtered_key, filtered_value in filtered_data.items():
-                    combined_key = f"{key}.{filtered_key}"
+                    if use_filter_name:
+                        combined_key = f"{filter_name}_{counter}.{filtered_key}"
+                    else:
+                        combined_key = f"{key}.{filtered_key}"
                     if combined_key in results:
                         results[combined_key].extend(filtered_value)
                     else:
                         results[combined_key] = filtered_value
             else:
-                results = filtered_pool
+                if use_filter_name:
+                    results[f"{filter_name}_{counter}"] = results[key]
+                results[key] = filtered_pool[key]
         return results
 
     def save_results(
