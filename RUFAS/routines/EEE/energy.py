@@ -24,29 +24,30 @@ class EnergyEstimator:
             "unit": "unitless",
         }
         estimator = EnergyEstimator()
-        diesel_conumption_data = estimator.parse_inputs_for_diesel_consumption_calculation()
-        tractor = Tractor(
-            diesel_conumption_data["event_type"],
-            diesel_conumption_data["crop_type"],
-            diesel_conumption_data["herd_size"],  # TODO
-            diesel_conumption_data["application_depth"],
-        )
+        diesel_conumption_data_list = estimator.parse_inputs_for_diesel_consumption_calculation()
+        for diesel_consumption_data_item in diesel_conumption_data_list:
+            tractor = Tractor(
+                diesel_consumption_data_item["event_type"],
+                diesel_consumption_data_item.get("crop_type"),
+                diesel_consumption_data_item["herd_size"],  # TODO
+                diesel_consumption_data_item.get("application_depth"),
+            )
 
-        diesel_consumption_tractor_implement_liter_per_ton = estimator.calculate_diesel_consumption(
-            diesel_conumption_data["crop_yield"],
-            diesel_conumption_data["field_production_size"],
-            tractor,
-            diesel_conumption_data["clay_percent"],
-        )
-        variable_info_map = {"unit": "liter/tone", "tractor_size": tractor.tractor_size}
-        om.add_variable(
-            "diesel_consumption_tractor_implement",
-            diesel_consumption_tractor_implement_liter_per_ton,
-            {**base_info_map, **variable_info_map},
-        )
+            diesel_consumption_tractor_implement_liter_per_ton = estimator.calculate_diesel_consumption(
+                diesel_consumption_data_item.get("crop_yield", 0),
+                diesel_consumption_data_item["field_production_size"],
+                tractor,
+                diesel_consumption_data_item.get("clay_percent", 0),
+            )
+            variable_info_map = {"unit": "liter/tone", "tractor_size": tractor.tractor_size}
+            om.add_variable(
+                "diesel_consumption_tractor_implement",
+                diesel_consumption_tractor_implement_liter_per_ton,
+                {**base_info_map, **variable_info_map},
+            )
 
     def parse_inputs_for_diesel_consumption_calculation(self) -> List[Dict[str, Any]]:
-        filters = [
+        crop_and_soil_filters = [
             {
                 "name": FieldOperationEvent.FERTILIZER_APPLICATION,
                 "use_name": True,
@@ -115,7 +116,7 @@ class EnergyEstimator:
                 "clay_percent": "average_clay_percent",
             },
         }
-        for filter in filters:
+        for filter in crop_and_soil_filters:
             filtered_pool = om.filter_variables_pool_complex(filter)
             max_index = Utility.find_max_index_from_keys(filtered_pool)
             first_key_in_pool = next(iter(filtered_pool.keys()))
@@ -132,6 +133,15 @@ class EnergyEstimator:
                         }
                         event_data["operation_event"] = event_type
                         result.append(event_data)
+        herd_filter = {
+            "name": "Herd Size",
+            "use_name": True,
+            "filters": ["AnimalManager._record_animal_counts.num_animals"],
+            "variables": [".*"],
+        }
+
+        herd_data = om.filter_variables_pool_complex(herd_filter)
+        result["herd_size"] = herd_data["Herd Size_0"]["values"][0]
         return result
 
     def calculate_diesel_consumption(
