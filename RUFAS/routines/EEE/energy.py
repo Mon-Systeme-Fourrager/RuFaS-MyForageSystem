@@ -121,21 +121,19 @@ class EnergyEstimator:
             filtered_pool = om.filter_variables_pool_complex(filter)
             max_index = Utility.find_max_index_from_keys(filtered_pool)
             first_key_in_pool = next(iter(filtered_pool.keys()))
-            for mapping_key in eee_to_om_key_mapping.keys():
-                if first_key_in_pool.startswith(mapping_key.value):
+            for event_type, key_mappings in eee_to_om_key_mapping.items():
+                if first_key_in_pool.startswith(event_type.value):
                     for index in range(max_index):
-                        key_prefix = f"{mapping_key}_{index}"
-                        first_key_in_the_map = next(iter(eee_to_om_key_mapping[mapping_key].keys()))
+                        key_prefix = f"{event_type}_{index}"
+                        first_key_in_the_map = next(iter(key_mappings.keys()))
                         length = len(filtered_pool[f"{key_prefix}.{first_key_in_the_map}"])
-                        d = {
-                            eee_to_om_key_mapping[mapping_key][k]: filtered_pool[
-                                f"{key_prefix}.{eee_to_om_key_mapping[mapping_key][k]}"
-                            ][i]
+                        event_data = {
+                            key_mappings[k]: filtered_pool[f"{key_prefix}.{key_mappings[k]}"][i]
                             for i in range(length)
-                            for k in eee_to_om_key_mapping[mapping_key].keys()
+                            for k in key_mappings.keys()
                         }
-                        d["event_type"] = mapping_key
-                        result.append(d)
+                        event_data["event_type"] = event_type
+                        result.append(event_data)
         return result
 
     def calculate_diesel_consumption(
