@@ -1,8 +1,8 @@
 from math import sqrt
-from typing import Tuple
-import re
+from typing import Any, Dict, List
 
 from RUFAS.output_manager import OutputManager
+from RUFAS.util import Utility
 from RUFAS.routines.field.crop.crop_enum import CropSpecies
 
 from .tractor import Tractor
@@ -46,7 +46,7 @@ class EnergyEstimator:
             {**base_info_map, **variable_info_map},
         )
 
-    def parse_inputs_for_diesel_consumption_calculation(self) -> Tuple:
+    def parse_inputs_for_diesel_consumption_calculation(self) -> List[Dict[str, Any]]:
         filters = [
             {
                 "name": FieldOperationEvent.FERTILIZER_APPLICATION,
@@ -85,25 +85,83 @@ class EnergyEstimator:
                 "filters": ["Field._plant_crop.crop_planting.field='.*'"],
                 "variables": ["event_type", "crop", "field_size", "average_clay_percent"],
             },
-        ]
-        # for filter in filters:
-        #     result = output_manager.filter_variables_pool_complex(filter)
-        #     if result["Fertilizer Application_0.event_type"][0] == FieldOperationEvent.FERTILIZER_APPLICATION:
-        #         print("tr " * 50)
-
+        ]  # TODO remove event type
+        result: List[Dict[str, Any]] = []
         for filter in filters:
-            result = om.filter_variables_pool_complex(filter)
-            
-
-            # Find the maximum number, which is n
-            n = max(numbers) if numbers else -1  # Returns -1 if no numbers found
-            first_key, first_value = next(iter(result.items()))
-            length = len(first_value)
-            key_prefix = first_key.rsplit(".", 1)[0]
+            filtered_pool = om.filter_variables_pool_complex(filter)
+            max_index = Utility.find_max_index_from_keys(filtered_pool)
+            first_key = next(iter(filtered_pool.keys()))
             if first_key.startswith(FieldOperationEvent.FERTILIZER_APPLICATION.value):
-                pass
+                for index in range(max_index):
+                    key_prefix = f"{FieldOperationEvent.FERTILIZER_APPLICATION}_{index}"
+                    length = len(filtered_pool[f"{key_prefix}.mass"])
+                    for i in range(length):
+                        result.append(
+                            {
+                                "event_type": FieldOperationEvent.FERTILIZER_APPLICATION,
+                                "mass": filtered_pool[f"{key_prefix}.mass"][i],
+                                "application_depth": filtered_pool[f"{key_prefix}.application_depth"][i],
+                                "field_size": filtered_pool[f"{key_prefix}.field_size"][i],
+                                "clay_percent": filtered_pool[f"{key_prefix}.average_clay_percent"][i],
+                            }
+                        )
+            elif first_key.startswith(FieldOperationEvent.TILLING.value):
+                for index in range(max_index):
+                    key_prefix = f"{FieldOperationEvent.TILLING}_{index}"
+                    length = len(filtered_pool[f"{key_prefix}.tillage_depth"])
+                    for i in range(length):
+                        result.append(
+                            {
+                                "event_type": FieldOperationEvent.TILLING,
+                                "tillage_depth": filtered_pool[f"{key_prefix}.tillage_depth"][i],
+                                "implement": filtered_pool[f"{key_prefix}.implement"][i],
+                                "field_size": filtered_pool[f"{key_prefix}.field_size"][i],
+                                "clay_percent": filtered_pool[f"{key_prefix}.average_clay_percent"][i],
+                            }
+                        )
+            elif first_key.startswith(FieldOperationEvent.MANURE_APPLICATION.value):
+                for index in range(max_index):
+                    key_prefix = f"{FieldOperationEvent.MANURE_APPLICATION}_{index}"
+                    length = len(filtered_pool[f"{key_prefix}.dry_matter_mass"])
+                    for i in range(length):
+                        result.append(
+                            {
+                                "event_type": FieldOperationEvent.MANURE_APPLICATION,
+                                "dry_matter_mass": filtered_pool[f"{key_prefix}.dry_matter_mass"][i],
+                                "dry_matter_fraction": filtered_pool[f"{key_prefix}.dry_matter_fraction"][i],
+                                "application_depth": filtered_pool[f"{key_prefix}.application_depth"][i],
+                                "field_size": filtered_pool[f"{key_prefix}.field_size"][i],
+                                "clay_percent": filtered_pool[f"{key_prefix}.average_clay_percent"][i],
+                            }
+                        )
+            elif first_key.startswith(FieldOperationEvent.HARVEST.value):
+                for index in range(max_index):
+                    key_prefix = f"{FieldOperationEvent.HARVEST}_{index}"
+                    length = len(filtered_pool[f"{key_prefix}.crop"])
+                    for i in range(length):
+                        result.append(
+                            {
+                                "event_type": FieldOperationEvent.HARVEST,
+                                "crop_type": filtered_pool[f"{key_prefix}.crop"][i],
+                                "dry_yield": filtered_pool[f"{key_prefix}.dry_yield"][i],
+                                "field_size": filtered_pool[f"{key_prefix}.field_size"][i],
+                            }
+                        )
+            elif first_key.startswith(FieldOperationEvent.PLANTING.value):
+                for index in range(max_index):
+                    key_prefix = f"{FieldOperationEvent.PLANTING}_{index}"
+                    length = len(filtered_pool[f"{key_prefix}.crop"])
+                    for i in range(length):
+                        result.append(
+                            {
+                                "event_type": FieldOperationEvent.PLANTING,
+                                "crop_type": filtered_pool[f"{key_prefix}.crop"][i],
+                                "clay_percent": filtered_pool[f"{key_prefix}.average_clay_percent"][i],
+                                "field_size": filtered_pool[f"{key_prefix}.field_size"][i],
+                            }
+                        )
 
-        expected_result = [
+        expected_filtered_pool = [
             {
                 "Fertilizer Application_0.event_type": [FieldOperationEvent.FERTILIZER_APPLICATION],
                 "Fertilizer Application_0.mass": [100.0],
@@ -193,7 +251,6 @@ class EnergyEstimator:
                 "planting_0.average_clay_percent": [20.0, 20.0, 20.0, 20.0],
             },
         ]
-        print(expected_result)
         crop_yield = 0  # TODO get the correct value
         field_production_size = 0  # TODO get the correct value
         operation_event = FieldOperationEvent.PLANTING  # TODO get the correct value
@@ -204,7 +261,6 @@ class EnergyEstimator:
         herd_size: int = 750  # TODO get the correct value
         application_depth: float = 10  # TODO get the correct value
         clay_percent = 0  # TODO get the correct value
-
 
     def calculate_diesel_consumption(
         self,
