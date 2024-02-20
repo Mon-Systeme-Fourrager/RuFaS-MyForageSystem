@@ -79,7 +79,7 @@ class Utility:
         return result
 
     @staticmethod
-    def find_max_index_from_keys(data) -> int | None:
+    def find_max_index_from_keys(data: Dict[str, Any]) -> int | None:
         """
         Extracts and returns the maximum index (n) from the keys of the given dictionary.
         Assumes keys follow the format `<prefix>_<number>.<suffix>` and number >= 0.
