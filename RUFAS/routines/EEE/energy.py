@@ -7,7 +7,7 @@ from RUFAS.routines.field.crop.crop_enum import CropSpecies
 
 from .tractor import Tractor
 from .tractor_implement import TractorImplement
-from .enums import TractorSize, FieldOperationEvent, TillageImplement
+from .enums import FieldOperationEvent
 
 om = OutputManager()
 
@@ -51,20 +51,19 @@ class EnergyEstimator:
                 "name": FieldOperationEvent.FERTILIZER_APPLICATION,
                 "use_name": True,
                 "filters": ["Field._record_fertilizer_application.fertilizer_application.field='.*'"],
-                "variables": ["event_type", "mass", "application_depth", "field_size", "average_clay_percent"],
+                "variables": ["mass", "application_depth", "field_size", "average_clay_percent"],
             },
             {
                 "name": "Tillage",
                 "use_name": True,
                 "filters": ["TillageApplication._record_tillage.tillage_record.field='.*'"],
-                "variables": ["event_type", "tillage_depth", "implement", "field_size", "average_clay_percent"],
+                "variables": ["tillage_depth", "implement", "field_size", "average_clay_percent"],
             },
             {
                 "name": FieldOperationEvent.MANURE_APPLICATION,
                 "use_name": True,
                 "filters": ["Field._record_manure_application.manure_application.field='.*'"],
                 "variables": [
-                    "event_type",
                     "dry_matter_mass",
                     "dry_matter_fraction",
                     "application_depth",
@@ -76,44 +75,43 @@ class EnergyEstimator:
                 "name": FieldOperationEvent.HARVEST,
                 "use_name": True,
                 "filters": ["CropManagement._record_yield.harvest_yield.field='.*'"],
-                "variables": ["event_type", "dry_yield", "crop", "field_size"],
+                "variables": ["dry_yield", "crop", "field_size"],
             },
             {
                 "name": FieldOperationEvent.PLANTING,
                 "use_name": True,
                 "filters": ["Field._record_planting.crop_planting.field='.*'"],
-                "variables": ["event_type", "crop", "field_size", "average_clay_percent"],
+                "variables": ["crop", "field_size", "average_clay_percent"],
             },
-        ]  # TODO remove event type
+        ]
         result: List[Dict[str, Any]] = []
         eee_to_om_key_mapping = {
             FieldOperationEvent.PLANTING: {
                 "crop_type": "crop",
                 "clay_percent": "average_clay_percent",
-                "field_size": "field_size",
+                "field_production_size": "field_size",
             },
             FieldOperationEvent.HARVEST: {
                 "crop_type": "crop",
-                "dry_yield": "dry_yield",
-                "field_size": "field_size",
+                "crop_yield": "dry_yield",
+                "field_production_size": "field_size",
             },
             FieldOperationEvent.MANURE_APPLICATION: {
-                "dry_matter_mass": ".dry_matter_mass",
-                "dry_matter_fraction": "dry_matter_fraction",
+                "mass": ".dry_matter_mass",
                 "application_depth": "application_depth",
-                "field_size": "field_size",
+                "field_production_size": "field_size",
                 "clay_percent": "average_clay_percent",
             },
             FieldOperationEvent.TILLING: {
                 "tillage_depth": "tillage_depth",
                 "implement": "implement",
-                "field_size": "field_size",
+                "field_production_size": "field_size",
                 "clay_percent": "average_clay_percent",
             },
             FieldOperationEvent.FERTILIZER_APPLICATION: {
                 "mass": "mass",
                 "application_depth": "application_depth",
-                "field_size": "field_size",
+                "field_production_size": "field_size",
                 "clay_percent": "average_clay_percent",
             },
         }
@@ -132,7 +130,7 @@ class EnergyEstimator:
                             for i in range(length)
                             for k in key_mappings.keys()
                         }
-                        event_data["event_type"] = event_type
+                        event_data["operation_event"] = event_type
                         result.append(event_data)
         return result
 

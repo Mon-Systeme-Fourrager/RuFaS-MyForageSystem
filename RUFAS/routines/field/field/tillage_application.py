@@ -2,7 +2,7 @@ from typing import Optional
 
 from RUFAS.routines.field.field.field_data import FieldData
 from RUFAS.routines.field.soil.soil_data import SoilData
-from RUFAS.routines.EEE.enums import TillageImplement, FieldOperationEvent
+from RUFAS.routines.EEE.enums import TillageImplement
 from RUFAS.output_manager import OutputManager
 from RUFAS.routines.field.field.field_data import FieldData
 from RUFAS.routines.field.soil.manure_pool import ManurePool
@@ -346,7 +346,6 @@ class TillageApplication:
             "units": units,
         }
         value = {
-            "event_type": FieldOperationEvent.TILLING,
             "tillage_depth": tillage_depth,
             "incorporation_fraction": incorporation_fraction,
             "mixing_fraction": mixing_fraction,
