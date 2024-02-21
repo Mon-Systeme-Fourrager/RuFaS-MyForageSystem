@@ -42,8 +42,17 @@ class EnergyEstimator:
                 tractor,
                 diesel_consumption_data_item.get("clay_percent", 0),
             )
-            print(f"{diesel_consumption_tractor_implement_liter_per_ton=}")
-            variable_info_map = {"unit": "liter/tone", "tractor_size": tractor.tractor_size}
+            variable_info_map = {
+                "unit": "liter/tone",
+                "tractor_size": tractor.tractor_size.value,
+                "operation_event": diesel_consumption_data_item["operation_event"],
+                "crop_type": diesel_consumption_data_item.get("crop_type"),
+                "herd_size": herd_size,
+                "field_production_size": diesel_consumption_data_item["field_production_size"],
+                "crop_yield": diesel_consumption_data_item.get("crop_yield", 1),
+                "application_depth": diesel_consumption_data_item.get("application_depth"),
+                "tillage_implement": diesel_consumption_data_item.get("tillage_implement"),
+            }
             om.add_variable(
                 "diesel_consumption_tractor_implement",
                 diesel_consumption_tractor_implement_liter_per_ton,
