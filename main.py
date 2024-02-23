@@ -236,23 +236,7 @@ def execute_simulations(
                 f"Data not valid for {str(metadata_file['path'])}, simulation not run",
                 info_map,
             )
-        from RUFAS.routines.EEE.energy import EnergyEstimator
 
-        EnergyEstimator.estimate_all()
-        diesel_filter = {
-            "name": "Diesel Consumption",
-            "filters": ["total_diesel_consumption_tractor_implement"],
-            "variables": [".*"],
-        }
-        deisel_consumption = output_manager.filter_variables_pool_complex(diesel_filter)
-        print(deisel_consumption)
-        diesel_filter = {
-            "name": "Diesel Consumption",
-            "filters": ["diesel_consumption_tractor_implement"],
-            "variables": [".*"],
-        }
-        deisel_consumption = output_manager.filter_variables_pool_complex(diesel_filter)
-        print(deisel_consumption)
         output_manager.save_results(output_dir, filters_dir, exclude_info_maps, produce_graphics, graphics_dir, csv_dir)
         input_manager.dump_get_data_logs(path=output_dir)
         output_manager.dump_all_nondata_pools(output_dir, exclude_info_maps, format_option)

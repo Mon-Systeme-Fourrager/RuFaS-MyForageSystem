@@ -16,6 +16,7 @@ from RUFAS.routines.manure.manure_manager import ManureManager
 from RUFAS.time import Time
 from RUFAS.units import MeasurementUnits
 from RUFAS.weather import Weather
+from RUFAS.routines.EEE.energy import EnergyEstimator
 
 from .routines.EEE.EEE_manager import EEEManager
 

@@ -45,13 +45,26 @@ class EnergyEstimator:
             variable_info_map = {
                 "unit": "liter/tone",
                 "tractor_size": tractor.tractor_size.value,
-                "operation_event": diesel_consumption_data_item["operation_event"],
-                "crop_type": diesel_consumption_data_item.get("crop_type"),
+                "operation_event": (
+                    diesel_consumption_data_item["operation_event"].value
+                    if diesel_consumption_data_item["operation_event"]
+                    else diesel_consumption_data_item["operation_event"]
+                ),
+                "crop_type": (
+                    diesel_consumption_data_item.get("crop_type").value
+                    if diesel_consumption_data_item.get("crop_type")
+                    else diesel_consumption_data_item.get("crop_type")
+                ),
                 "herd_size": herd_size,
                 "field_production_size": diesel_consumption_data_item["field_production_size"],
                 "crop_yield": diesel_consumption_data_item.get("crop_yield", 1),
                 "application_depth": diesel_consumption_data_item.get("application_depth"),
-                "tillage_implement": diesel_consumption_data_item.get("tillage_implement"),
+                "tillage_implement": (
+                    diesel_consumption_data_item.get("tillage_implement").value
+                    if diesel_consumption_data_item.get("tillage_implement")
+                    else diesel_consumption_data_item.get("tillage_implement")
+                ),
+                "consumed_fuel": diesel_consumption_tractor_implement_liter_per_ton,
             }
             om.add_variable(
                 "diesel_consumption_tractor_implement",
