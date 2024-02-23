@@ -67,11 +67,6 @@ class TractorImplement:
                     self.depth_cm = data_entry["Depth"]
                 self.is_depth_relevant = data_entry["is depth relevant"]
                 break
-        else:
-            print("no match for:")
-            print(f"{self.tractor_size.value.lower()=}")
-            print(f"{self.operation_type.value.lower()=}")
-            print(f"{crop_type_or_tillage_implement}")
 
     def field_capacity_ha_per_hr(self, crop_yield_ton_per_ha: float | None) -> float:
         """

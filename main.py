@@ -199,13 +199,6 @@ def execute_simulations(
         if is_data_valid:
             output_manager.add_log("Validation complete", "Data is valid. \nSimulating...\n", info_map)
             simulation_config = Config(input_manager.get_data("config"))
-            # herd_size = input_manager.get_data("animal.herd_information.herd_num")
-            # print(f"herd from main: {herd_size}")
-            # from RUFAS.routines.temp import Temp
-
-            # t = Temp()
-            # t.test(input_manager)
-            # exit()
             try:
                 initialize_herd(
                     simulation_config=simulation_config,
