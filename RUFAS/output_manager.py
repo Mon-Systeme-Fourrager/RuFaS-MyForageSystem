@@ -1441,7 +1441,9 @@ class OutputManager:
             filter_excl_msg = f"Performing filtering by inclusion per filter's contents. {filter_name=}"
         self.add_log("filtering_log", filter_excl_msg, info_map)
 
-        filtered_pool = Utility.filter_pool(self.variables_pool, filter_content.get("filters", []), filter_by_exclusion)
+        filtered_pool = Utility.filter_dictionary(
+            self.variables_pool, filter_content.get("filters", []), filter_by_exclusion
+        )
         self.add_log(
             "num_filter_pattern_matches",
             f"There were {len(filtered_pool)} matches for filter pattern(s) in {filter_name=}.",
@@ -1461,7 +1463,7 @@ class OutputManager:
                         info_map,
                     )
                 temp_data = Utility.convert_list_of_dicts_to_dict_of_lists(filtered_pool[key]["values"])
-                filtered_data = Utility.filter_pool(temp_data, selected_variables, filter_by_exclusion)
+                filtered_data = Utility.filter_dictionary(temp_data, selected_variables, filter_by_exclusion)
                 for filtered_key, filtered_value in filtered_data.items():
                     if use_filter_name:
                         combined_key = f"{filter_name}_{counter}.{filtered_key}"
