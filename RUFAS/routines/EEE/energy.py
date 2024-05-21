@@ -151,7 +151,7 @@ class EnergyEstimator:
             },
         }
         for filter in crop_and_soil_filters:
-            filtered_pool = om.filter_variables_pool_complex(filter)
+            filtered_pool = om.filter_variables_pool(filter)
             max_index = Utility.find_max_index_from_keys(filtered_pool)
             first_key_in_pool = next(iter(filtered_pool.keys()))
             for event_type, key_mappings in eee_to_om_key_mapping.items():
