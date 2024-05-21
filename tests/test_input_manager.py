@@ -353,12 +353,6 @@ def test_populate_pool_invalid(
     assert "file1" not in mock_input_manager._InputManager__pool
     assert "file2" not in mock_input_manager._InputManager__pool
 
-    mock_input_manager._populate_pool = input_manager_original_method_states["_populate_pool"]
-    mock_input_manager._dict_type_validator = input_manager_original_method_states["_dict_type_validator"]
-    mock_input_manager._load_data_from_csv = input_manager_original_method_states["_load_data_from_csv"]
-    mock_input_manager._load_data_from_json = input_manager_original_method_states["_load_data_from_json"]
-    mock_input_manager._log_missing_keys = input_manager_original_method_states["_log_missing_keys"]
-
 
 def test_populate_pool_partial_invalid(
     mock_metadata: Dict[str, Dict[str, Any]],
@@ -1268,7 +1262,7 @@ def test_num_type_validator(
 
     assert result == expected_result
     assert add_warning.call_count == expected_warning_call_count
-    mock_input_manager._num_type_validator = input_manager_original_method_states["_num_type_validator"]
+    mock_input_manager._number_type_validator = input_manager_original_method_states["_number_type_validator"]
 
 
 @pytest.mark.parametrize(
