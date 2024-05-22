@@ -75,7 +75,7 @@ class TractorImplement:
         """
         if self.operation_type == OperationType.COLLECTION:  # 418b
             crop_yield_kg_per_ha = crop_yield_ton_per_ha * 1000
-            return crop_yield_kg_per_ha / self.throughput * 1000 * self.field_efficiency
+            return crop_yield_kg_per_ha / (self.throughput * 1000) * self.field_efficiency
         return 0.1 * self.field_speed_km_per_hr * self.width_m * self.field_efficiency  # 418a
 
     def calculate_operation_time_hr(
