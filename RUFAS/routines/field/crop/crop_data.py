@@ -1,9 +1,9 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Optional
 
 from RUFAS.data_structures.crop_soil_to_feed_storage_connection import CropCategory, CropType, StorageType
-from RUFAS.routines.field.crop.crop_enum import CropSpecies
+from RUFAS.data_structures.feed_storage_to_animal_connection import RUFAS_ID
 
 
 class PlantCategory(Enum):
@@ -50,12 +50,14 @@ class CropData:
 
     Attributes
     ----------
-    species : CropSpecies, default None
-        The species of the crop.
     name : Optional[str]
         The name of this specific crop instance.
+    rufas_ids : list[RUFAS_ID]
+        List of RUFAS IDs that harvests from this crop may be fed as.
     id : Optional[Any]
         The unique identifier for this crop instance.
+    rufas_ids : list[RUFAS_ID]
+        List of RuFaS Feed IDs that harvests of this crop may be fed as.
     plant_category : Optional[PlantCategory]
         Classification of the plant (Reference SWAT crop.dat file, IDC variable).
     is_perennial : Optional[bool]
@@ -185,6 +187,14 @@ class CropData:
         Phosphorus fraction of biomass at maturity (unitless).
     max_root_depth : float, default 2000
         Maximum depth of roots in the soil (mm).
+    root_distribution_param_da: float
+        Empirical root distribution parameter d_a (mm).
+        Reference: Fan, Jianling, et al. "Root distribution by depth for temperate agricultural crops." Field Crops
+            Research 189 (2016): 68-74, table 1. Note that the value has been converted to mm.
+    root_distribution_param_c: float
+        Empirical root distribution parameter c (unitless).
+        Reference: Fan, Jianling, et al. "Root distribution by depth for temperate agricultural crops." Field Crops
+            Research 189 (2016): 68-74, table 1.
     cumulative_evaporation : float, default 0.0
         Total water lost to evaporation by the plant during the growing season (mm).
     cumulative_transpiration : float, default 0.0
@@ -228,9 +238,10 @@ class CropData:
     """
 
     # ID variables (SWAT Table A-1 ish)
-    species: CropSpecies = None
     name: Optional[str] = "default generic annual crop"
+    rufas_ids: list[int] = field(default_factory=list)
     id: Optional[Any] = None
+    rufas_ids: list[RUFAS_ID]
     plant_category: Optional[PlantCategory] = PlantCategory("cool_annual")
     is_perennial: Optional[bool] = False
     is_nitrogen_fixer: bool = False
@@ -250,7 +261,7 @@ class CropData:
     optimal_harvest_index: float = 0.5
     minimum_harvest_index: float = 0.3
     yield_phosphorus_fraction: Optional[float] = 0.0
-    crude_protein_percent: float = (12.481,)
+    crude_protein_percent: float = 12.481
     non_protein_nitrogen: float = 2.518
     starch: float = 72.586
     adf: float = 3.934
@@ -305,10 +316,10 @@ class CropData:
     half_mature_heat_fraction: float = 0.5
     mature_heat_fraction: float = 1.0
     root_depth: float = 1
-    optimal_nitrogen_fraction: Optional[float] = None
-    total_soil_layers: Optional[int] = None
-    accessible_soil_layers: Optional[int] = None
-    inaccessible_soil_layers: Optional[int] = None
+    optimal_nitrogen_fraction: Optional[float] = 0.001
+    total_soil_layers: Optional[int] = 2
+    accessible_soil_layers: Optional[int] = 1
+    inaccessible_soil_layers: Optional[int] = 1
 
     # ---- phosphorus incorporation
     emergence_phosphorus_fraction: float = 0.005
@@ -317,13 +328,15 @@ class CropData:
 
     # ---- root development
     max_root_depth: float = 2_000
+    root_distribution_param_da: float
+    root_distribution_param_c: float
 
     # ---- water dynamics
     cumulative_evaporation: float = 0.0
     cumulative_transpiration: float = 0.0
     cumulative_potential_evapotranspiration: float = 0.0
-    water_deficiency: Optional[float] = None
-    max_transpiration: Optional[float] = None
+    water_deficiency: Optional[float] = 0
+    max_transpiration: Optional[float] = 0
     canopy_water: float = 0
     max_canopy_water_capacity: float = 0.8
 
@@ -339,7 +352,7 @@ class CropData:
     # ---- dormancy
     dormancy_loss_fraction: Optional[float] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """
         Initialize all attributes with defaults that depend on other attributes after the object has been initialized.
         """

@@ -8,10 +8,13 @@ specific harvest method will be used when harvesting a crop, and a `crop_referen
 crop that is presently growing in a field will be harvested.
 """
 
-from RUFAS.routines.EEE.enums import TillageImplement
-from RUFAS.routines.field.crop.harvest_operations import HarvestOperation
+from datetime import date
+
+from RUFAS.data_structures.manure_supplement_methods import ManureSupplementMethod
 from RUFAS.data_structures.manure_types import ManureType
-from RUFAS.time import Time
+from RUFAS.data_structures.tillage_implements import TillageImplement
+from RUFAS.routines.field.crop.harvest_operations import HarvestOperation
+from RUFAS.rufas_time import RufasTime
 
 
 class BaseFieldManagementEvent:
@@ -42,24 +45,24 @@ class BaseFieldManagementEvent:
         self.year = year
         self.day = day
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Overrides the equality operator for BaseFieldManagementEvent objects."""
         if isinstance(other, BaseFieldManagementEvent):
             return other.year == self.year and other.day == self.day
         return False
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Overrides the hash method for BaseFieldManagementEvent objects."""
         return hash((self.year, self.day))
 
-    def occurs_today(self, time: Time) -> bool:
+    def occurs_today(self, time: RufasTime) -> bool:
         """
         Checks if the event occurs on the current day in the current year..
 
         Parameters
         ----------
-        time : Time
-            Time object that contains the current day and year.
+        time : RufasTime
+            RufasTime object that contains the current day and year.
 
         Returns
         -------
@@ -68,6 +71,11 @@ class BaseFieldManagementEvent:
 
         """
         return self.year == time.current_calendar_year and self.day == time.current_julian_day
+
+    @property
+    def date_occurs(self) -> date:
+        """Gets the date when the event occurs."""
+        return RufasTime.convert_year_jday_to_date(self.year, self.day).date()
 
 
 class PlantingEvent(BaseFieldManagementEvent):
@@ -84,12 +92,14 @@ class PlantingEvent(BaseFieldManagementEvent):
 
     """
 
-    def __init__(self, crop_reference: str, year: int = 1, day: int = 120, heat_scheduled_harvest: bool = False):
+    def __init__(
+        self, crop_reference: str, heat_scheduled_harvest: bool = False, year: int = 1, day: int = 120
+    ) -> None:
         super().__init__(year=year, day=day)
         self.crop_reference = crop_reference
         self.use_heat_scheduled_harvest = heat_scheduled_harvest
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Overrides the equality operator for PlantingEvent objects."""
         if isinstance(other, PlantingEvent):
             return (
@@ -99,7 +109,7 @@ class PlantingEvent(BaseFieldManagementEvent):
             )
         return False
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Overrides the hash method for PlantingEvent objects."""
         return hash((self.crop_reference, self.year, self.day, self.use_heat_scheduled_harvest))
 
@@ -121,15 +131,15 @@ class HarvestEvent(BaseFieldManagementEvent):
     def __init__(
         self,
         crop_reference: str,
+        operation: HarvestOperation = HarvestOperation.HARVEST_KILL,
         year: int = 1,
         day: int = 240,
-        operation: HarvestOperation = HarvestOperation.HARVEST_KILL,
     ):
         super().__init__(year=year, day=day)
         self.crop_reference = crop_reference
         self.operation = operation
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Overrides the equality operator for HarvestEvent objects."""
         if isinstance(other, HarvestEvent):
             return (
@@ -139,7 +149,7 @@ class HarvestEvent(BaseFieldManagementEvent):
             )
         return False
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Overrides the hash method for HarvestEvent objects."""
         return hash((self.year, self.day, self.crop_reference, self.operation))
 
@@ -177,7 +187,7 @@ class TillageEvent(BaseFieldManagementEvent):
         self.mixing_fraction = mixing_fraction
         self.implement = implement
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Overrides the equality operator for TillageEvent objects."""
         if isinstance(other, TillageEvent):
             return (
@@ -189,7 +199,7 @@ class TillageEvent(BaseFieldManagementEvent):
             )
         return False
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Overrides the hash method for TillageEvent objects."""
         return hash(
             (self.year, self.day, self.tillage_depth, self.incorporation_fraction, self.mixing_fraction, self.implement)
@@ -213,6 +223,8 @@ class ManureEvent(BaseFieldManagementEvent):
         Minimum mass of phosphorus that should be contained in this manure application (kg).
     manure_type : ManureType
         The type of manure for which the application request will be made.
+    manure_supplement_method : ManureSupplementMethod
+        The method that the event will use to supplement nutrient deficiencies.
     field_coverage : float
         Fraction of the field covered by this manure application (unitless).
     application_depth : float
@@ -224,24 +236,26 @@ class ManureEvent(BaseFieldManagementEvent):
 
     def __init__(
         self,
-        year: int,
-        day: int,
         nitrogen_mass: float,
         phosphorus_mass: float,
         manure_type: ManureType,
+        manure_supplement_method: ManureSupplementMethod,
         field_coverage: float,
         application_depth: float,
         surface_remainder_fraction: float,
+        year: int,
+        day: int,
     ):
         super().__init__(year=year, day=day)
         self.nitrogen_mass = nitrogen_mass
         self.phosphorus_mass = phosphorus_mass
         self.manure_type = manure_type
+        self.manure_supplement_method = manure_supplement_method
         self.field_coverage = field_coverage
         self.application_depth = application_depth
         self.surface_remainder_fraction = surface_remainder_fraction
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Overrides the equality operator for ManureEvent objects."""
         if isinstance(other, ManureEvent):
             return (
@@ -252,10 +266,11 @@ class ManureEvent(BaseFieldManagementEvent):
                 and other.field_coverage == self.field_coverage
                 and other.application_depth == self.application_depth
                 and other.surface_remainder_fraction == self.surface_remainder_fraction
+                and other.manure_supplement_method == self.manure_supplement_method
             )
         return False
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Overrides the hash method for ManureEvent objects."""
         return hash(
             (
@@ -298,13 +313,13 @@ class FertilizerEvent(BaseFieldManagementEvent):
     def __init__(
         self,
         mix_name: str,
-        year: int,
-        day: int,
         nitrogen_mass: float,
         phosphorus_mass: float,
         potassium_mass: float,
         depth: float,
         surface_remainder_fraction: float,
+        year: int,
+        day: int,
     ):
         super().__init__(year=year, day=day)
         self.mix_name = mix_name
@@ -314,7 +329,7 @@ class FertilizerEvent(BaseFieldManagementEvent):
         self.depth = depth
         self.surface_remainder_fraction = surface_remainder_fraction
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Overrides the equality operator for FertilizerEvent objects."""
         if isinstance(other, FertilizerEvent):
             return (
@@ -328,7 +343,7 @@ class FertilizerEvent(BaseFieldManagementEvent):
             )
         return False
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Overrides the hash method for FertilizerEvent objects."""
         return hash(
             (

@@ -1,8 +1,6 @@
 from typing import Optional
 
-from RUFAS.routines.field.field.field_data import FieldData
-from RUFAS.routines.field.soil.soil_data import SoilData
-from RUFAS.routines.EEE.enums import TillageImplement
+from RUFAS.data_structures.tillage_implements import TillageImplement
 from RUFAS.output_manager import OutputManager
 from RUFAS.routines.field.field.field_data import FieldData
 from RUFAS.routines.field.soil.manure_pool import ManurePool

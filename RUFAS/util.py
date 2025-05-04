@@ -4,12 +4,14 @@ import os
 import re
 import shutil
 from pathlib import Path
+from random import random
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
+from matplotlib.dates import DateFormatter
 
-from .general_constants import GeneralConstants
+from RUFAS.general_constants import GeneralConstants
 
 
 class Utility:
@@ -40,74 +42,25 @@ class Utility:
         return result
 
     @staticmethod
-    def flatten_keys_to_nested_structure(input_dict: Dict[str, Any]) -> Dict[str, Any]:
+    def convert_dict_of_lists_to_list_of_dicts(dict_of_lists: dict[str, list[Any]]) -> list[dict[str, Any]]:
         """
         Convert a dictionary of lists into a list of dictionaries.
 
         Parameters
         ----------
-        dict_of_lists : Dict[str, List[Any]]
-            A dictionary with string keys and list of values.
+        dict_of_lists : dict[str, list[Any]]
+            A dictionary where keys are unique keys and values are lists of corresponding values.
 
         Returns
         -------
-        List[Dict[str, Any]]
-            A list of dictionaries, where each dictionary represents a "row" with keys
-            from the original dictionary and values corresponding to the values at the
-            same index in the input lists.
-        Raises
-        ------
-        ValueError
-            If the lists within the dictionary do not all have the same length, which is
-            necessary to ensure each dictionary in the resulting list can be constructed
-            with the same keys and corresponding values.
+        list[dict[str, Any]]
+            A list of dictionaries with string keys and integer values.
+
         """
-        if not dict_of_lists:
-            return []
-
-        list_lengths = [len(list_) for list_ in dict_of_lists.values()]
-        if len(set(list_lengths)) != 1:
-            raise ValueError("All lists in the dictionary must have the same length.")
-
-        result_length = list_lengths[0]
-        result = []
-
-        for i in range(result_length):
-            row_dict = {key: dict_of_lists[key][i] for key in dict_of_lists}
-            result.append(row_dict)
-
-        return result
+        return [dict(zip(dict_of_lists.keys(), values)) for values in zip(*dict_of_lists.values())]
 
     @staticmethod
-    def find_max_index_from_keys(data: Dict[str, Any]) -> int | None:
-        """
-        Extracts and returns the maximum index (n) from the keys of the given dictionary.
-        Assumes keys follow the format `<prefix>_<number>.<suffix>` and number >= 0.
-
-        Parameters
-        ----------
-        data: Dict[str, Any]
-            The dictionary whose keys will be analyzed.
-
-        Returns
-        -------
-        int | None
-            The maximum index found among the keys, or None if no numeric index is found.
-        """
-        pattern = re.compile(r"_([0-9]+)\.")
-        max_number = -1
-
-        for key in data.keys():
-            match = pattern.search(key)
-            if match:
-                number = int(match.group(1))
-                if number > max_number:
-                    max_number = number
-
-        return max_number if max_number != -1 else None
-
-    @staticmethod
-    def get_base_dir():
+    def flatten_keys_to_nested_structure(input_dict: Dict[str, Any]) -> Dict[str, Any]:
         """
         Convert a dictionary with flat, dot-separated keys into a nested structure composed of
         dictionaries and lists based on the keys. Numeric segments in the keys indicate list indices,
@@ -554,7 +507,7 @@ class Utility:
         }
 
     @staticmethod
-    def remove_special_chars(input_string: str | list[str] | None) -> str:
+    def remove_special_chars(input_string: str | list[str]) -> str:
         """Function to remove special characters from a string.
 
         Parameters
@@ -641,6 +594,11 @@ class Utility:
         return time_series
 
     @staticmethod
+    def convert_celsius_to_kelvin(temperature: float) -> float:
+        """Converts a temperature in degrees Celsius to degrees Kelvin."""
+        return temperature + GeneralConstants.CELSIUS_TO_KELVIN
+
+    @staticmethod
     def convert_ordinal_date_to_month_date(year: int, day: int) -> datetime.date:
         """Generates a datetime.date based on a year and ordinal day."""
         maximum_day = (
@@ -711,6 +669,8 @@ class Utility:
         result_df.to_csv(output_csv_path, index=False)
 
         shutil.rmtree(saved_csv_working_folder)
+
+    @staticmethod
     def convert_list_to_dict_by_key(list_of_dicts: List[Dict[str, Any]], id_key: str) -> Dict[Any, Dict[str, Any]]:
         """
         Convert a list of dictionaries into a dictionary keyed by a specified identifier,
@@ -760,3 +720,192 @@ class Utility:
                 raise KeyError(f"Key '{id_key}' not found in dictionary.")
 
         return result
+
+    @staticmethod
+    def elongate_list(list_to_elongate: list[Any], reference_list_length: int) -> list[Any]:
+        """
+        Takes a list and lengthens it to match the length of the reference list, if the original length was 1.
+
+        Parameters
+        ----------
+        list_to_elongate : list[Any]
+            List to be extended if its length is 1.
+        reference_list_length : int
+            Length of that the list should be extended to, if it its original length is 1.
+
+        Returns
+        -------
+        list[Any]
+            The elongated list.
+
+        Notes
+        -----
+        In the context of Schedule-descendant classes, the reference list length will always be the length of the years
+        list.
+
+        """
+        if len(list_to_elongate) != 1:
+            return list_to_elongate
+        elongated_list = list_to_elongate * reference_list_length
+        return elongated_list
+
+    @staticmethod
+    def determine_if_all_non_negative_values(values: list[int | float]) -> bool:
+        """
+        Checks that all values in a list are >= 0.
+
+        Parameters
+        ----------
+        values : List[Any]
+            List of values to be checked.
+
+        Returns
+        -------
+        bool
+            True if all values are >= 0, False otherwise.
+
+        """
+        return all(value >= 0 for value in values)
+
+    @staticmethod
+    def validate_fractions(fractions: List[float]) -> bool:
+        """
+        Checks that all fractions passed are valid.
+
+        Parameters
+        ----------
+        fractions : List[float]
+            List of fractions to be valid
+
+        Returns
+        -------
+        bool
+            True if all fractions passed are valid, False otherwise.
+
+        Notes
+        -----
+        A fraction is valid if it is in the range[0.0, 1.0]
+
+        """
+        return all(0.0 <= fraction <= 1.0 for fraction in fractions)
+
+    @staticmethod
+    def round_numeric_values_in_dict(data: dict[str, any], significant_digits: int) -> dict[str, Any]:
+        """
+        Rounds all numeric values in a dictionary to the specified number of significant digits.
+
+        Parameters
+        ----------
+        data : dict[str, any]
+            The dictionary containing numeric values to be rounded.
+        significant_digits : int
+            The number of significant digits to round the numeric values to.
+
+        Returns
+        -------
+        dict[str, any]
+            The dictionary with numeric values rounded to the specified number of significant digits.
+
+        Notes
+        -----
+        Some specific behavior of the round() function used by this method:
+
+        If significant_digits is None or 0, floats are converted to ints.
+        round(12.7) -> 13 (int)
+        round(12.3) -> 12 (int)
+        round(-12.7) -> -13 (int)
+        round(12.5) -> 12 (int) - If rounded number is 5, Python rounds to the nearest even number.
+        round(11.5) -> 12 (int) - Because of this rule, both 11.5 and 12.5 round to 12.
+
+        If significant_digits is less than 0, it rounds to the nearest multiple of 10, 100, 1000, etc.
+        round(1234, -2) -> 1200 (rounds to the nearest multiple of 100)
+        round(1234, -3) -> 1000 (rounds to the nearest multiple of 1000)
+        round(-1234, -1) -> -1230 (rounds to the nearest multiple of 10)
+
+        If significant_digits is 0, it rounds to the nearest integer and converts it to a float.
+        round(12.7, 0) -> 13.0 (float)
+        round(-12.3, 0) -> -12.0 (float)
+        """
+        return {
+            key: (
+                [round(x, significant_digits) for x in value]
+                if isinstance(value, list) and all(isinstance(x, (float, int)) for x in value)
+                else value
+            )
+            for key, value in data.items()
+        }
+
+    @staticmethod
+    def compare_randomized_rate_less_than(reference_rate: float) -> bool:
+        """
+        Compare a random rate to a reference rate to determine if an event occurs.
+
+        Parameters
+        ----------
+        reference_rate : float
+            Reference rate for comparison.
+
+        Returns
+        -------
+        bool
+            True if the randomized rate is less than the reference rate, False otherwise.
+        """
+
+        return random() < reference_rate
+
+    @staticmethod
+    def validate_date_format(date_format: str) -> bool:
+        """
+        Checks if date_format is a valid Python datetime format for both strftime() and strptime().
+
+        Parameters
+        ----------
+        date_format : str
+            The date format to be validated.
+
+        Returns
+        -------
+        bool
+
+        """
+        test_date = datetime.datetime(2020, 12, 31, 00, 00, 00, 00)
+        try:
+            test_str = test_date.strftime(date_format)
+            _ = datetime.datetime.strptime(test_str, date_format)
+            return False if test_str == date_format else True
+        except Exception:
+            return False
+
+    @staticmethod
+    def get_date_formatter(date_format: str | None) -> DateFormatter:
+        """
+        Get a `matplotlib.dates.DateFormatter` instance for the requested date format.
+
+        Parameters
+        ----------
+        date_format : str
+            The format requested by the user. Common date formats are:
+            - "%j/%Y": Formats dates as "day_of_year/year" (e.g., "123/2024").
+            - "%d/%m/%Y": Formats dates as "day/month/year" (e.g., "23/12/2024").
+            - "%m/%d/%Y": Formats dates as "month/day/year" (e.g., "12/23/2024").
+            - "%b/%d/%Y": Formats dates as "month_abbreviation/day/year" (e.g., "Dec/23/2024").
+            - "%B/%d/%Y": Formats dates as "month_string/day/year" (e.g., "December/23/2024").
+            - "%m/%d/%y": Formats dates as "month/day/year_without_century" (e.g., "12/23/24").
+            - "%m %d %Y": Formats dates as "month day year" (e.g., "12 23 2024").
+            - "%m-%d-%Y": Formats dates as "month-day-year" (e.g., "12-23-2024").
+
+        Returns
+        -------
+        matplotlib.dates.DateFormatter
+            A `DateFormatter` instance for the specified format.
+
+        Notes
+        -----
+        If the date_format is None or invalid, the default format "%d/%m/%Y" will be used instead.
+
+        """
+
+        if date_format is None or not Utility.validate_date_format(date_format):
+            return DateFormatter("%d/%m/%Y")
+
+        return DateFormatter(date_format)
