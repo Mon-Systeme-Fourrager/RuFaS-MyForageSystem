@@ -889,6 +889,125 @@ def test_combine(
     mock_list_dir.assert_called_once_with(saved_csv_working_folder)
 
     mock_rmtree.assert_called_once_with(saved_csv_working_folder)
+def test_filter_pool(data_pool, filter_patterns, filter_by_exclusion, expected_result):
+    assert Utility.filter_pool(data_pool, filter_patterns, filter_by_exclusion) == expected_result
+
+
+def test_convert_dict_of_lists_to_list_of_dicts_normal_case():
+    input_dict = {"id": [1, 2, 3], "name": ["Alice", "Bob", "Charlie"], "age": [25, 30, 35]}
+    expected_output = [
+        {"id": 1, "name": "Alice", "age": 25},
+        {"id": 2, "name": "Bob", "age": 30},
+        {"id": 3, "name": "Charlie", "age": 35},
+    ]
+    assert Utility.convert_dict_of_lists_to_list_of_dicts(input_dict) == expected_output
+
+
+def test_convert_dict_of_lists_to_list_of_dicts_empty_input():
+    input_dict = {}
+    expected_output = []
+    assert Utility.convert_dict_of_lists_to_list_of_dicts(input_dict) == expected_output
+
+
+def test_convert_dict_of_lists_to_list_of_dicts_unequal_length():
+    input_dict = {"id": [1, 2, 3], "name": ["Alice", "Bob"]}  # This list is shorter than the others.
+    with pytest.raises(ValueError):
+        Utility.convert_dict_of_lists_to_list_of_dicts(input_dict)
+
+
+def test_convert_dict_of_lists_to_list_of_dicts_single_element_lists():
+    input_dict = {"id": [1], "name": ["Alice"], "age": [25]}
+    expected_output = [{"id": 1, "name": "Alice", "age": 25}]
+    assert Utility.convert_dict_of_lists_to_list_of_dicts(input_dict) == expected_output
+
+
+def test_convert_list_to_dict_by_key_basic():
+    list_of_dicts = [
+        {"ID": 1, "value": 2, "other_keys": "other values"},
+        {"ID": 3, "value": 4, "other_keys": "other values"},
+    ]
+    expected_output = {1: {"value": 2, "other_keys": "other values"}, 3: {"value": 4, "other_keys": "other values"}}
+    assert Utility.convert_list_to_dict_by_key(list_of_dicts, "ID") == expected_output
+
+
+def test_convert_list_to_dict_by_key_empty_list():
+    list_of_dicts = []
+    expected_output = {}
+    assert Utility.convert_list_to_dict_by_key(list_of_dicts, "ID") == expected_output
+
+
+def test_convert_list_to_dict_by_key_missing_key():
+    list_of_dicts = [{"ID": 1, "value": 2}, {"value": 3}]  # Missing 'ID'
+    with pytest.raises(KeyError):
+        Utility.convert_list_to_dict_by_key(list_of_dicts, "ID")
+
+
+def test_convert_list_to_dict_by_key_different_key():
+    list_of_dicts = [{"unique_id": 1, "value": "A"}, {"unique_id": 2, "value": "B"}]
+    expected_output = {1: {"value": "A"}, 2: {"value": "B"}}
+    assert Utility.convert_list_to_dict_by_key(list_of_dicts, "unique_id") == expected_output
+
+
+def test_find_max_index_from_keys_mixed_single_and_multi_digit_numbers() -> None:
+    data = {
+        "Prefix_0.suffix": ["value"],
+        "Prefix_1.suffix": ["value"],
+        "Prefix_10.suffix": ["value"],
+        "Prefix_2.suffix": ["value"],
+        "Prefix_21.suffix": ["value"],
+    }
+    assert Utility.find_max_index_from_keys(data) == 21
+
+
+def test_find_max_index_from_keys_no_matching_keys() -> None:
+    data = {
+        "NoPrefixOrNumber.suffix": ["value"],
+        "AnotherWithoutNumber": ["value"],
+    }
+    assert Utility.find_max_index_from_keys(data) is None
+
+
+def test_find_max_index_from_keys_negative_numbers() -> None:
+    data = {
+        "Prefix_-1.suffix": ["value"],
+        "Prefix_-2.suffix": ["value"],
+    }
+    assert Utility.find_max_index_from_keys(data) is None
+
+
+def test_find_max_index_from_keys_empty_dictionary() -> None:
+    data = {}
+    assert Utility.find_max_index_from_keys(data) is None
+
+
+@pytest.mark.parametrize(
+    "dict_to_be_filtered, filter_patterns, filter_by_exclusion, expected_result",
+    [
+        (
+            {"var1": 1, "var2": 2, "var3": 3},
+            ["var1", "var2"],
+            False,
+            {"var1": 1, "var2": 2},
+        ),
+        ({"var1": 1, "var2": 2, "var3": 3}, ["var1", "var2"], True, {"var3": 3}),
+        ({"var1": 1, "var2": 2, "var3": 3}, ["var4"], False, {}),
+        (
+            {"var1": 1, "var2": 2, "var3": 3},
+            ["var4"],
+            True,
+            {"var1": 1, "var2": 2, "var3": 3},
+        ),
+        ({}, ["var1"], False, {}),
+        ({"var1": 1, "var2": 2, "var3": 3}, [], False, {}),
+    ],
+)
+def test_filter_dictionary(
+    dict_to_be_filtered: Dict[str, Any],
+    filter_patterns: List[str],
+    filter_by_exclusion: bool,
+    expected_result: Dict[str, Any],
+) -> None:
+    assert Utility.filter_dictionary(dict_to_be_filtered, filter_patterns, filter_by_exclusion) == expected_result
 
 
 @pytest.mark.parametrize(
