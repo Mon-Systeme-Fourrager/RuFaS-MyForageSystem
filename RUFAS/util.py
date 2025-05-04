@@ -110,6 +110,34 @@ class Utility:
         return nested_structure
 
     @staticmethod
+    def find_max_index_from_keys(data: dict[str, Any]) -> int | None:
+        """
+        Extracts and returns the maximum index (n) from the keys of the given dictionary.
+        Assumes keys follow the format `<prefix>_<number>.<suffix>` and number >= 0.
+
+        Parameters
+        ----------
+        data: Dict[str, Any]
+            The dictionary whose keys will be analyzed.
+
+        Returns
+        -------
+        int | None
+            The maximum index found among the keys, or None if no numeric index is found.
+        """
+        pattern = re.compile(r"_([0-9]+)\.")
+        max_number = -1
+
+        for key in data.keys():
+            match = pattern.search(key)
+            if match:
+                number = int(match.group(1))
+                if number > max_number:
+                    max_number = number
+
+        return max_number if max_number != -1 else None
+
+    @staticmethod
     def expand_data_temporally(
         data_to_expand: dict[str, dict[str, list[Any]]],
         fill_value: Any = np.nan,

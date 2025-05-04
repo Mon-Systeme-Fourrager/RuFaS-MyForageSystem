@@ -1,7 +1,7 @@
+from RUFAS.data_structures.tillage_implements import FieldOperationEvent, TractorSize, TillageImplement, OperationType
 from RUFAS.util import Utility
 from RUFAS.input_manager import InputManager
 from RUFAS.routines.field.crop.crop_enum import CropSpecies
-from .enums import FieldOperationEvent, OperationType, TractorSize, TillageImplement
 
 input_manager = InputManager()
 
@@ -30,7 +30,7 @@ class TractorImplement:
     def determine_implement_parameters(self, application_depth: float | None) -> None:
         """
         Assign a tractor implement based on the operation, tractor size, and crop type where applicable. Not all
-        operations are depended on crop type.
+        operations depend on the crop type.
         Implements Helper Function 419 in EEE Functions file.
         """
         dataset_raw = input_manager.get_data("tractor_dataset")
@@ -71,7 +71,7 @@ class TractorImplement:
     def field_capacity_ha_per_hr(self, crop_yield_ton_per_ha: float | None) -> float:
         """
         Calculates the Field Capacity for a specific crop, field operation and tractor implement.
-        Implements Helper Functions 418a and 418b  in EEE Functions file.
+        Implements Helper Functions 418a and 418b in EEE Functions file.
         """
         if self.operation_type == OperationType.COLLECTION:  # 418b
             crop_yield_kg_per_ha = crop_yield_ton_per_ha * 1000
@@ -82,8 +82,9 @@ class TractorImplement:
         self, field_production_size_ha: float, crop_yield_ton_per_ha: float | None
     ) -> float:
         """
-        Calculates number of hours taken by tractor given other factors like implement size to perform the operation.
-        Implements Helper Function 416  in EEE Functions file.
+        Calculates the number of hours taken by a tractor given other factors like implement size to perform the
+        operation.
+        Implements Helper Function 416 in EEE Functions file.
         """
         return field_production_size_ha / self.field_capacity_ha_per_hr(crop_yield_ton_per_ha)
 
@@ -91,16 +92,16 @@ class TractorImplement:
         """
         Calculates Drawbar Power (kW) which is the power required by the implement for propulsion forward if it
         requires a transfer of tractor power to its wheel drives for this purpose.
-        Implements Helper Function 414  in EEE Functions file.
+        Implements Helper Function 414 in EEE Functions file.
         """
         functional_draft = self.calculate_functional_draft(clay_percent)
         return functional_draft * self.field_speed_km_per_hr * 1.2 / 3600
 
     def calculate_functional_draft(self, clay_percent: float) -> float:
         """
-        Calculatse Functional draft in Newtons, the force required for pulling various planting implements and
+        Calculate Functional draft in Newtons, the force required for pulling various planting implements and
         minor tillage tools operated at shallow depths.
-        Implements Helper Functions 417 and 421  in EEE Functions file.
+        Implements Helper Functions 417 and 421 in EEE Functions file.
         """
         soil_texture_adjustment = (
             3 if clay_percent < 20 else 2 if clay_percent < 50 else 1 if clay_percent <= 100 else "Invalid"
@@ -110,12 +111,12 @@ class TractorImplement:
             self.width_m * effective_depth * soil_texture_adjustment * self.A
             + self.B * self.field_speed_km_per_hr
             + self.C * self.field_speed_km_per_hr**2
-        )  # The parentheses did not match in in EEE Functions file, this is my best guestimation
+        )  # The parentheses did not match in EEE Functions file, this is my best guestimation
 
     def calculate_needed_PTO(self, crop_yield_ton_per_ha: float, field_production_size_ha: float) -> float:
         """
         Calculates PTO_Power (kW) from the tractor to power the implement's operation.
-        Implements Helper Function 415  in EEE Functions file.
+        Implements Helper Function 415 in EEE Functions file.
         """
 
         return (

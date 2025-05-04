@@ -2,8 +2,8 @@ from typing import List
 from .tractor_implement import TractorImplement
 from RUFAS.util import Utility
 from RUFAS.input_manager import InputManager
+from RUFAS.data_structures.tillage_implements import FieldOperationEvent, TillageImplement, TractorSize, OperationType
 from RUFAS.routines.field.crop.crop_enum import CropSpecies
-from .enums import TractorSize, FieldOperationEvent, OperationType, TillageImplement
 
 input_manager = InputManager()
 
@@ -56,8 +56,8 @@ class Tractor:
 
     def herd_size_to_tractor_size(self, herd_size: int) -> TractorSize:
         """
-        Assign a Tractor Size based on number of cows
-        Implements Helper Function 420  in EEE Functions file.
+        Assign a Tractor Size based on the number of cows
+        Implements Helper Function 420 in EEE Functions file.
         """
         if herd_size < 0:
             raise ValueError("Herd size must be a positive integer.")
@@ -113,7 +113,7 @@ class Tractor:
 
     @property
     def power_available_kW(self) -> float:
-        """Constants 590, 593, 596 in EEE Functions file, calculated bsaed on PTO"""
+        """Constants 590, 593, 596 in EEE Functions file, calculated based on PTO"""
         return self.PTO_kW / 1.4
 
     @property
@@ -134,6 +134,6 @@ class Tractor:
     def calculate_axel_power(self, implement: TractorImplement) -> float:
         """
         Calculates total Axle Power (kW) required by tractor wheels to move the tractor (and implement if applicable).
-        Implements Helper Function 413  in EEE Functions file.
+        Implements Helper Function 413 in EEE Functions file.
         """
         return (self.mass_kg + implement.mass_kg) * self.speed_km_hr * 9.8 * 0.08 * 1.1 * 1.2 / 3600

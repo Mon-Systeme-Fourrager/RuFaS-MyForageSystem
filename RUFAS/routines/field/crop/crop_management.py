@@ -10,7 +10,6 @@ from RUFAS.routines.field.soil.layer_data import LayerData
 from RUFAS.routines.field.soil.soil_data import SoilData
 from RUFAS.rufas_time import RufasTime
 from RUFAS.units import MeasurementUnits
-from RUFAS.output_manager import OutputManager
 
 
 class CropManagement:

@@ -1,21 +1,21 @@
 from math import sqrt
-from typing import Any, Dict, List
+from typing import Any
 
+from RUFAS.data_structures.tillage_implements import FieldOperationEvent
 from RUFAS.input_manager import InputManager
 from RUFAS.units import MeasurementUnits
 from RUFAS.output_manager import OutputManager
 from RUFAS.util import Utility
 
-from .tractor import Tractor
-from .tractor_implement import TractorImplement
-from .enums import FieldOperationEvent
+from RUFAS.routines.EEE.tractor import Tractor
+from RUFAS.routines.EEE.tractor_implement import TractorImplement
 
 im = InputManager()
 om = OutputManager()
 
 
 class EnergyEstimator:
-    """Class to esitmate energy consumption for various operations on the farm"""
+    """Class to estimate energy consumption for various operations on the farm"""
 
     @staticmethod
     def estimate_all() -> None:
@@ -26,10 +26,10 @@ class EnergyEstimator:
             "units": MeasurementUnits.UNITLESS,
         }
         estimator = EnergyEstimator()
-        diesel_conumption_data_list = estimator.parse_inputs_for_diesel_consumption_calculation()
+        diesel_consumption_data_list = estimator.parse_inputs_for_diesel_consumption_calculation()
         total_diesel_consumption_tractor_implement_liter_per_ton = 0
         herd_size = im.get_data("animal.herd_information.herd_num")
-        for diesel_consumption_data_item in diesel_conumption_data_list:
+        for diesel_consumption_data_item in diesel_consumption_data_list:
             tractor = Tractor(
                 operation_event=diesel_consumption_data_item["operation_event"],
                 crop_type=diesel_consumption_data_item.get("crop_type"),
@@ -81,7 +81,7 @@ class EnergyEstimator:
             {**base_info_map, **{"units": MeasurementUnits.LITERS_PER_TONS}},
         )
 
-    def parse_inputs_for_diesel_consumption_calculation(self) -> List[Dict[str, Any]]:
+    def parse_inputs_for_diesel_consumption_calculation(self) -> list[dict[str, Any]]:
         crop_and_soil_filters = [
             {
                 "name": FieldOperationEvent.FERTILIZER_APPLICATION,
@@ -120,7 +120,7 @@ class EnergyEstimator:
                 "variables": ["crop", "field_size", "average_clay_percent"],
             },
         ]
-        result: List[Dict[str, Any]] = []
+        result: list[dict[str, Any]] = []
         eee_to_om_key_mapping = {
             FieldOperationEvent.PLANTING: {
                 "crop_type": "crop",
@@ -178,18 +178,20 @@ class EnergyEstimator:
         clay_percent: float,
     ) -> float:
         """
-        General estimate  how diesel fuel consumption is estimated for a given attachment type and tractor size.
+        General estimate of diesel fuel consumption for a given attachment type and tractor size.
         Different practices use different types of tools/implements; the equation to estimate diesel fuel consumption
-        may be the same across practices but different implements have different parameter values.
+        may be the same across practices, but different implements have different parameter values.
 
         Parameters
         ----------
         crop_yield: float
-            Amount of crop yielded per hectars (metric ton/ha)
+            Amount of crop yielded per hectares (metric ton/ha)
         field_production_size: float
             The filed area under production (ha)
         tractor: Tractor
-            The specifications of the tractor
+            The specifications of the tractor.
+        clay_percent : float
+            The clay percentage of the field under production (unitless).
 
         Returns
         -------
@@ -231,11 +233,11 @@ class EnergyEstimator:
     ) -> float:
         """
         Calculates the total power needed to perform the field operation by the tractor and implement where applicable.
-        Implements Helper Function 412  in EEE Functions file.
+        Implements Helper Function 412 in EEE Functions file.
         """
-        tactor_axel_power = tractor.calculate_axel_power(implement)
+        tractor_axel_power = tractor.calculate_axel_power(implement)
         tractor_implement_drawbar_power = implement.calculate_drawbar_power(clay_percent)
         tractor_implement_PTO_power_needed = implement.calculate_needed_PTO(
             crop_yield_ton_per_ha, field_production_size_ha
         )
-        return tactor_axel_power + tractor_implement_drawbar_power + tractor_implement_PTO_power_needed
+        return tractor_axel_power + tractor_implement_drawbar_power + tractor_implement_PTO_power_needed
