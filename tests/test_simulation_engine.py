@@ -4,6 +4,7 @@ import pytest
 from unittest.mock import MagicMock, call
 
 from pytest_mock import MockerFixture
+from unittest.mock import patch
 
 from RUFAS.biophysical.animal.animal_module_reporter import AnimalModuleReporter
 from RUFAS.biophysical.animal.herd_manager import HerdManager
@@ -31,6 +32,7 @@ from RUFAS.data_structures.crop_soil_to_feed_storage_connection import (
 )
 from RUFAS.input_manager import InputManager
 from RUFAS.output_manager import OutputManager
+from RUFAS.routines.EEE.EEE_manager import EEEManager
 from RUFAS.routines.field.field.field import Field
 from RUFAS.routines.field.field.manure_application import ManureApplication
 from RUFAS.routines.field.manager.field_manager import FieldManager
@@ -76,7 +78,12 @@ def test_simulation_engine_init(is_end_to_end_test_run: bool, mocker: MockerFixt
 
 
 @pytest.mark.parametrize("start_time, end_time", [(100, 200), (300, 400)])
-def test_simulate(simulation_engine: SimulationEngine, mocker: MockerFixture, start_time: int, end_time: int) -> None:
+def test_simulate(
+    simulation_engine: SimulationEngine,
+    mocker: MockerFixture,
+    start_time: int,
+    end_time: int,
+) -> None:
     """
     Unit test for function simulate() in file RUFAS/simulation_engine.py
     """
@@ -92,6 +99,7 @@ def test_simulate(simulation_engine: SimulationEngine, mocker: MockerFixture, st
 
     mocker.patch("RUFAS.output_manager.OutputManager.add_variable")
     mock_om_add_log = mocker.patch("RUFAS.output_manager.OutputManager.add_log")
+    mock_estimate_all = mocker.patch.object(EEEManager, "estimate_all")
 
     mock_time = MagicMock(auto_spec=RufasTime)
     mock_time.simulation_day = 100
@@ -121,6 +129,7 @@ def test_simulate(simulation_engine: SimulationEngine, mocker: MockerFixture, st
         simulation_engine.herd_manager.cows,
     )
     mock_feed_query_available_feeds.assert_called_once()
+    mock_estimate_all.assert_called_once_with()
 
 
 @pytest.mark.parametrize(
