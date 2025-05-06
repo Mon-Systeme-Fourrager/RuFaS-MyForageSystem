@@ -4,6 +4,7 @@ import pytest
 from unittest.mock import MagicMock, call
 
 from pytest_mock import MockerFixture
+from unittest.mock import patch
 
 from RUFAS.biophysical.animal.animal_module_reporter import AnimalModuleReporter
 from RUFAS.biophysical.animal.herd_manager import HerdManager
@@ -76,7 +77,14 @@ def test_simulation_engine_init(is_end_to_end_test_run: bool, mocker: MockerFixt
 
 
 @pytest.mark.parametrize("start_time, end_time", [(100, 200), (300, 400)])
-def test_simulate(simulation_engine: SimulationEngine, mocker: MockerFixture, start_time: int, end_time: int) -> None:
+@patch("RUFAS.simulation_engine.EnergyEstimator.estimate_all")
+def test_simulate(
+    simulation_engine: SimulationEngine,
+    mock_estimate_all: MockerFixture,
+    mocker: MockerFixture,
+    start_time: int,
+    end_time: int,
+) -> None:
     """
     Unit test for function simulate() in file RUFAS/simulation_engine.py
     """
