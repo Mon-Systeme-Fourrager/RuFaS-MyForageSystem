@@ -1,7 +1,7 @@
 from math import sqrt
 from typing import Any
 
-from RUFAS.data_structures.tillage_implements import FieldOperationEvent
+from RUFAS.data_structures.tillage_implements import FieldOperationEvent, TractorSize
 from RUFAS.input_manager import InputManager
 from RUFAS.units import MeasurementUnits
 from RUFAS.output_manager import OutputManager
@@ -43,34 +43,11 @@ class EnergyEstimator:
                 tractor,
                 diesel_consumption_data_item.get("clay_percent", 0),
             )
-            variable_info_map = {
-                "units": MeasurementUnits.LITERS_PER_TONS,
-                "tractor_size": tractor.tractor_size.value,
-                "operation_event": (
-                    diesel_consumption_data_item["operation_event"].value
-                    if diesel_consumption_data_item["operation_event"]
-                    else diesel_consumption_data_item["operation_event"]
-                ),
-                "crop_type": (
-                    diesel_consumption_data_item.get("crop_type")
-                    if diesel_consumption_data_item.get("crop_type")
-                    else diesel_consumption_data_item.get("crop_type")
-                ),
-                "herd_size": herd_size,
-                "field_production_size": diesel_consumption_data_item["field_production_size"],
-                "crop_yield": diesel_consumption_data_item.get("crop_yield", 1),
-                "application_depth": diesel_consumption_data_item.get("application_depth"),
-                "tillage_implement": (
-                    diesel_consumption_data_item.get("tillage_implement").value
-                    if diesel_consumption_data_item.get("tillage_implement")
-                    else diesel_consumption_data_item.get("tillage_implement")
-                ),
-                "consumed_fuel": diesel_consumption_tractor_implement_liter_per_ton,
-            }
-            om.add_variable(
-                "diesel_consumption_tractor_implement",
-                diesel_consumption_tractor_implement_liter_per_ton,
-                {**base_info_map, **variable_info_map},
+            estimator.report_diesel_consumption(
+                diesel_consumption_data_item,
+                herd_size,
+                tractor.tractor_size,
+                diesel_consumption_tractor_implement_liter_per_ton
             )
             total_diesel_consumption_tractor_implement_liter_per_ton += (
                 diesel_consumption_tractor_implement_liter_per_ton
@@ -78,6 +55,66 @@ class EnergyEstimator:
         om.add_variable(
             "total_diesel_consumption_tractor_implement",
             total_diesel_consumption_tractor_implement_liter_per_ton,
+            {**base_info_map, **{"units": MeasurementUnits.LITERS_PER_TONS}},
+        )
+
+    def report_diesel_consumption(
+            self,
+            diesel_consumption_data: dict[str, Any],
+            herd_size: int,
+            tractor_size: TractorSize,
+            diesel_consumption_tractor_implement_liter_per_ton: float,
+    ) -> None:
+        base_info_map = {
+            "class": EnergyEstimator.__name__,
+            "function": EnergyEstimator.estimate_all.__name__,
+        }
+        suffix: str = diesel_consumption_data["operation_event"].value if diesel_consumption_data["operation_event"] \
+            else str(diesel_consumption_data["operation_event"])
+        om.add_variable(
+            f"tractor_size_for_{suffix}",
+            tractor_size.value,
+            {**base_info_map, **{"units": MeasurementUnits.UNITLESS}}
+        )
+        om.add_variable(
+            f"operation_event_for_{suffix}",
+            suffix,
+            {**base_info_map, **{"units": MeasurementUnits.UNITLESS}}
+        )
+        om.add_variable(
+            f"crop_type_for_{suffix}",
+            diesel_consumption_data.get("crop_type"),
+            {**base_info_map, **{"units": MeasurementUnits.UNITLESS}}
+        )
+        om.add_variable(
+            f"herd_size_for_{suffix}",
+            herd_size,
+            {**base_info_map, **{"units": MeasurementUnits.ANIMALS}}
+        )
+        om.add_variable(
+            f"field_production_size_for_{suffix}",
+            diesel_consumption_data["field_production_size"],
+            {**base_info_map, **{"units": MeasurementUnits.HECTARE}}
+        )
+        om.add_variable(
+            f"crop_yield_for_{suffix}",
+            diesel_consumption_data.get("crop_yield", 1),
+            {**base_info_map, **{"units": MeasurementUnits.KILOGRAMS_PER_HECTARE}}
+        )
+        om.add_variable(
+            f"application_depth_for_{suffix}",
+            diesel_consumption_data.get("application_depth"),
+            {**base_info_map, **{"units": MeasurementUnits.CENTIMETERS}}
+        )
+        om.add_variable(
+            f"tillage_implement_for_{suffix}",
+            diesel_consumption_data.get("tillage_implement").value if diesel_consumption_data.get("tillage_implement")
+            else diesel_consumption_data.get("tillage_implement"),
+            {**base_info_map, **{"units": MeasurementUnits.UNITLESS}}
+        )
+        om.add_variable(
+            f"diesel_consumption_tractor_implement_for_{suffix}",
+            diesel_consumption_tractor_implement_liter_per_ton,
             {**base_info_map, **{"units": MeasurementUnits.LITERS_PER_TONS}},
         )
 
