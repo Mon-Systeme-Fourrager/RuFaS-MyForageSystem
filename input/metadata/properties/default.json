@@ -71,7 +71,13 @@
         "default": 100,
         "minimum": 6
       },
-      "replace_num": {
+      "lactating_fraction":{
+          "type": "number",
+          "description": "Fraction of cows that are lactating. Used during herd initialization.",
+          "default": 0.5,
+          "minimum": 0
+        },
+        "replace_num": {
         "type": "number",
         "description": "Replacements (head) -- Number of replacement animals available in the replacement market",
         "default": 5000,
@@ -91,24 +97,36 @@
       },
       "parity_fractions": {
         "type": "object",
-        "description": "Fractions of the milking animal population that are parity 1, 2, and 3 and beyond. The sum of these fractions must be 1.0",
+        "description": "Fractions of the milking animal population that are parity 1, 2, 3, 4, and 5 and greater. The sum of these fractions must be 1.0",
         "1": {
           "type": "number",
           "minimum": 0.0,
           "maximum": 1.0,
-          "default": 0.346
+          "default": 0.36
         },
         "2": {
           "type": "number",
           "minimum": 0.0,
           "maximum": 1.0,
-          "default": 0.272
+          "default": 0.26
         },
         "3": {
           "type": "number",
           "minimum": 0.0,
           "maximum": 1.0,
-          "default": 0.379
+          "default": 0.18
+        },
+        "4": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "default": 0.11
+        },
+        "5": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "default": 0.9
         }
       },
       "annual_milk_yield": {
@@ -5965,6 +5983,17 @@
       "dry_matter_percentage": {
         "type": "number"
       },
+      "config_name": {
+        "type": "string",
+        "description": "Name of the crop configuration that produced this harvested crop."
+      },
+      "rufas_ids": {
+          "type": "array",
+          "description": "List of RuFaS Feed IDs which harvests from this crop configuration can be fed to animals as. Must be selected from the \"rufas_id\" of the feed library used.",
+          "properties": {
+            "type": "number"
+          }
+        },
       "lignin": {
         "type": "number"
       },
@@ -6001,6 +6030,17 @@
       "dry_matter_percentage": {
         "type": "number"
       },
+      "config_name": {
+        "type": "string",
+        "description": "Name of the crop configuration that produced this harvested crop."
+      },
+      "rufas_ids": {
+          "type": "array",
+          "description": "List of RuFaS Feed IDs which harvests from this crop configuration can be fed to animals as. Must be selected from the \"rufas_id\" of the feed library used.",
+          "properties": {
+            "type": "number"
+          }
+        },
       "lignin": {
         "type": "number"
       },
@@ -6037,6 +6077,17 @@
       "dry_matter_percentage": {
         "type": "number"
       },
+      "config_name": {
+        "type": "string",
+        "description": "Name of the crop configuration that produced this harvested crop."
+      },
+      "rufas_ids": {
+          "type": "array",
+          "description": "List of RuFaS Feed IDs which harvests from this crop configuration can be fed to animals as. Must be selected from the \"rufas_id\" of the feed library used.",
+          "properties": {
+            "type": "number"
+          }
+        },
       "lignin": {
         "type": "number"
       },
@@ -6073,6 +6124,17 @@
       "dry_matter_percentage": {
         "type": "number"
       },
+      "config_name": {
+        "type": "string",
+        "description": "Name of the crop configuration that produced this harvested crop."
+      },
+      "rufas_ids": {
+          "type": "array",
+          "description": "List of RuFaS Feed IDs which harvests from this crop configuration can be fed to animals as. Must be selected from the \"rufas_id\" of the feed library used.",
+          "properties": {
+            "type": "number"
+          }
+        },
       "lignin": {
         "type": "number"
       },
