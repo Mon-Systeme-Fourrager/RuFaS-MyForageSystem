@@ -883,7 +883,6 @@ class Pen:
                     pen_available_feeds=pen_available_feeds,
                     average_nutrient_requirements=self.average_nutrition_requirements,
                     sim_day=simulation_day,  # TODO: pull real sim‐day from RuFaS
-                    info_map=info_map,
                 )
 
             # Lac cow success exit and non lac cow one time run only exit
