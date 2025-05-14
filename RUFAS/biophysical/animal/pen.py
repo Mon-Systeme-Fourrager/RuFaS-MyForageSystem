@@ -1,5 +1,8 @@
 import math
-from typing import NamedTuple
+from typing import NamedTuple, Any
+
+from scipy.optimize import OptimizeResult
+
 from RUFAS.biophysical.animal.animal import Animal
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
 from RUFAS.biophysical.animal.data_types.nutrition_data_structures import (
@@ -27,9 +30,8 @@ from RUFAS.data_structures.pen_manure_data import PenManureData
 from RUFAS.data_structures.feed_storage_to_animal_connection import RUFAS_ID, Feed
 from RUFAS.enums import AnimalCombination
 
-from RUFAS.biophysical.animal.ration.ration_optimizer import RationOptimizer
+from RUFAS.biophysical.animal.ration.ration_optimizer import RationOptimizer, RationConfig
 from RUFAS.output_manager import OutputManager
-from RUFAS.rufas_time import RufasTime
 
 
 class Pen:
@@ -867,18 +869,8 @@ class Pen:
 
         while True:
             num_attempts += 1
-
-            self.set_animal_nutritional_requirements(
-                temperature=temperature,
-                available_feeds=pen_available_feeds,
-            )
-
-            solution, ration_config = self.ration_optimizer.attempt_optimization(
-                pen_average_body_weight=self.average_body_weight,
-                requirements=self.average_nutrition_requirements,
-                pen_available_feeds=pen_available_feeds,
-                animal_combination=self.animal_combination,
-                previous_ration=previous_ration,
+            solution, ration_config = self._attempt_formulation(
+                pen_available_feeds, temperature, previous_ration
             )
 
             if solution and not solution.success:
@@ -894,56 +886,77 @@ class Pen:
                     info_map=info_map,
                 )
 
-            # Lac cow success exit and non lac cow one time rub only exit
+            # Lac cow success exit and non lac cow one time run only exit
             if solution and solution.success or self.animal_combination is not AnimalCombination.LAC_COW:
                 break
 
             # For lac cow
-            if self.average_milk_production < AnimalModuleConstants.MINIMUM_AVG_PEN_MILK:
-                self.om.add_error(
-                    "Milk production too low",
-                    (f"Check failed_constraint_summary_for_pen_{self.id} to see what caused formulation to fail."
-                     f" Possible solution is to provide additional feed ingredients to {self.animal_combination.name}."),
-                    info_map,
-                )
-                raise ValueError("Cannot meet minimum milk production.")
-
-            could_reduce = self.reduce_milk_production()
-            if not could_reduce:
-                self.om.add_error(
-                    "Milk production reduced below reduction maximum.",
-                    (f"Check failed_constraint_summary_for_pen_{self.id} to see what caused formulation to fail."
-                     f" Possible solution is to provide additional feed ingredients to {self.animal_combination.name}."
-                     f" Also consider increasing the milk reduction maximum in input JSON."),
-                    info_map,
-                )
-                raise ValueError("Milk production reduction limit reached.")
+            self._reduce_on_lactation_failure(info_map=info_map)
 
         if solution is not None and solution.success:
             print(self.animal_combination)
             print(f"num_attempts = {num_attempts}")
-            self.ration = self.ration_optimizer.make_ration_from_solution(
-                pen_available_feeds=pen_available_feeds, solution=solution
-            )
-            # TODO update/modify/replace the methods below to better match autoamted results/workflow
-            self.set_animal_nutritional_supply(feeds_used=pen_available_feeds, ration_formulation=self.ration)
-            _, evaluation_result = NutritionEvaluator.evaluate_nutrition_supply(
-                self.average_nutrition_requirements,
-                self.average_nutrition_supply,
-                (self.animal_combination == AnimalCombination.LAC_COW),
-            )
-            self.average_nutrition_evaluation = (
-                evaluation_result if self.is_populated else NutritionEvaluationResults.make_empty_evaluation_results()
-            )
+            self._apply_successful_solution(solution, pen_available_feeds)
+
         elif self.ration == {}:
             self.om.add_error(
                 "No previous ration available",
-                f" Check failed_constraint_summary_for_pen_{self.id} to see what caused formulation to fail. "
+                f"Check failed_constraint_summary_for_pen_{self.id} to see what caused formulation to fail. "
                 f"Possible solution is to provide additional feed ingredients to {self.animal_combination.name}.",
                 info_map,
             )
 
             raise ValueError("No previous ration available")
+
+    def _attempt_formulation(
+        self, pen_feeds, temperature, previous_ration
+    ) -> tuple[OptimizeResult | None, RationConfig]:
+        """Runs the optimizer and returns solution and config."""
+        self.set_animal_nutritional_requirements(
+            temperature=temperature, available_feeds=pen_feeds
+        )
+        return self.ration_optimizer.attempt_optimization(
+            pen_average_body_weight=self.average_body_weight,
+            requirements=self.average_nutrition_requirements,
+            pen_available_feeds=pen_feeds,
+            animal_combination=self.animal_combination,
+            previous_ration=previous_ration,
+        )
+
+    def _apply_successful_solution(self, solution: OptimizeResult | None, pen_feeds: list[Feed]) -> None:
+        """Applies the optimizer solution to the pen."""
+        self.ration = self.ration_optimizer.make_ration_from_solution(
+            pen_available_feeds=pen_feeds, solution=solution
+        )
+        self.set_animal_nutritional_supply(
+            feeds_used=pen_feeds, ration_formulation=self.ration
+        )
+        _, evaluation = NutritionEvaluator.evaluate_nutrition_supply(
+            self.average_nutrition_requirements,
+            self.average_nutrition_supply,
+            self.animal_combination is AnimalCombination.LAC_COW,
+        )
+        self.average_nutrition_evaluation = (
+            evaluation if self.is_populated else NutritionEvaluationResults.make_empty_evaluation_results()
+        )
+
+    def _reduce_on_lactation_failure(self, info_map: dict[str, str]) -> None:
+        """Processes failures and attempts milk reduction if needed for lactating cows."""
+        if self.average_milk_production < AnimalModuleConstants.MINIMUM_AVG_PEN_MILK:
+            self.om.add_error(
+                "Milk production too low",
+                f"Check failed_constraint_summary_for_pen_{self.id} to see cause.",
+                info_map,
+            )
+            raise ValueError("Cannot meet minimum milk production.")
+
+        if not self.reduce_milk_production():
+            self.om.add_error(
+                "Milk production reduction limit reached.",
+                f"Check failed_constraint_summary_for_pen_{self.id} and consider adjusting input.",
+                info_map,
+            )
+            raise ValueError("Milk production reduction limit reached.")
 
         # # improvements -> repeating
         # self.set_animal_nutritional_requirements(temperature=temperature, available_feeds=pen_available_feeds)

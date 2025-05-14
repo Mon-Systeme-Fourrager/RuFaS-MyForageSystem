@@ -452,7 +452,7 @@ class RationOptimizer:
         if ration_config.print_print:
             print(f"set bounds = {set_bounds}")
         arguments = (ration_config,)
-        # improvements -> could be set in contsraint and only use the one needed so we don't need to calculate and choose
+        # improvements -> could be set in constraint and only use the one needed so we don't need to calculate and choose
         self.set_constraints(arguments=arguments)
         if animal_combination is AnimalCombination.LAC_COW:
             constraints_to_use = self.cow_constraints
