@@ -452,6 +452,10 @@ class RationOptimizer:
 
         bounds = self._build_bounds(ration_config)
 
+        for i in range(0, len(x0)):
+            if x0[i] < bounds[i][0] or x0[i] > bounds[i][1]:
+                x0[i] = np.clip(x0[i], bounds[i][0], bounds[i][1])
+
         arguments = (ration_config,)
         self.set_constraints(arguments=arguments)
 
@@ -580,7 +584,7 @@ class RationOptimizer:
         pen_id: RUFAS_ID,
         pen_available_feeds: Any,
         average_nutrient_requirements: NutritionRequirements,
-        sim_day: int = 9999,
+        sim_day: int,
     ) -> None:
         """
         Handle and log failed constraints during the ration optimization process.
@@ -605,8 +609,6 @@ class RationOptimizer:
         """
         # TODO get the time! For sim day
         constraints_failed_list = []
-        arguments = (ration_config,)
-        # self.set_constraints(arguments=arguments)
         if animal_combination == AnimalCombination.LAC_COW:
             failed_constraints = RationOptimizer.find_failed_constraints(solution.x, self.cow_constraints, ration_config)
         else:
@@ -615,10 +617,9 @@ class RationOptimizer:
             )
 
         if failed_constraints:
-            for constr in failed_constraints:
-                constraints_failed_list.append(constr["fun"].__name__)
+            for constraint in failed_constraints:
+                constraints_failed_list.append(constraint["fun"].__name__)
         fail_summary = {
-            # improvements : pass in sim day
             "simulation day": sim_day,
             "attempt number": num_attempts,
             "constraints_failed_dict": constraints_failed_list,

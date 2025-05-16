@@ -882,7 +882,7 @@ class Pen:
                     pen_id=self.id,
                     pen_available_feeds=pen_available_feeds,
                     average_nutrient_requirements=self.average_nutrition_requirements,
-                    sim_day=simulation_day,  # TODO: pull real sim‐day from RuFaS
+                    sim_day=simulation_day
                 )
 
             # Lac cow success exit and non lac cow one time run only exit
@@ -956,83 +956,6 @@ class Pen:
                 info_map,
             )
             raise ValueError("Milk production reduction limit reached.")
-
-        # # improvements -> repeating
-        # self.set_animal_nutritional_requirements(temperature=temperature, available_feeds=pen_available_feeds)
-        # # improvements -> using setter
-        # previous_ration = None
-        # if hasattr(self, "ration"):
-        #     previous_ration = self.ration
-        #
-        # # improvements -> condense the while loop, first attempt does not have to be outside of the loop maybe?
-        # solution, ration_config = ration_optimizer.attempt_optimization(
-        #     pen_average_body_weight=self.average_body_weight,
-        #     requirements=self.average_nutrition_requirements,
-        #     pen_available_feeds=pen_available_feeds,
-        #     animal_combination=self.animal_combination,
-        #     previous_ration=previous_ration,
-        # )
-        # num_attempts: int = 1
-        # if solution and not solution.success:
-        #     ration_optimizer.handle_failed_constraints(
-        #         num_attempts=num_attempts,
-        #         solution=solution,
-        #         ration_config=ration_config,
-        #         animal_combination=self.animal_combination,
-        #         pen_id=self.id,
-        #         pen_available_feeds=pen_available_feeds,
-        #         average_nutrient_requirements=self.average_nutrition_requirements,
-        #         sim_day=9999,
-        #         info_map=info_map,
-        #     )
-        # if self.animal_combination == AnimalCombination.LAC_COW:
-        #     while not solution.success:
-        #         if self.average_milk_production < AnimalModuleConstants.MINIMUM_AVG_PEN_MILK:
-        #             om.add_error(
-        #                 "Milk production too low",
-        #                 (
-        #                     f"Check failed_constraint_summary_for_pen_{self.id} to see what caused formulation to fail."
-        #                     f" Possible solution is to provide additional feed ingredients to "
-        #                     f"{self.animal_combination.name}."
-        #                 ),
-        #                 info_map,
-        #             )
-        #             raise ValueError
-        #         could_reduce = self.reduce_milk_production()
-        #         if not could_reduce:
-        #             om.add_error(
-        #                 "Milk production reduced below reduction maximum.",
-        #                 (
-        #                     f"Check failed_constraint_summary_for_pen_{self.id} to see what caused formulation to fail."
-        #                     f" Possible solution is to provide additional feed ingredients to "
-        #                     f"{self.animal_combination.name}."
-        #                     f"Also consider increasing the milk reduction maxmimum in input JSON."
-        #                 ),
-        #                 info_map,
-        #             )
-        #             raise ValueError
-        #         self.set_animal_nutritional_requirements(temperature=temperature, available_feeds=pen_available_feeds)
-        #
-        #         solution, ration_config = ration_optimizer.attempt_optimization(
-        #             pen_average_body_weight=self.average_body_weight,
-        #             requirements=self.average_nutrition_requirements,
-        #             pen_available_feeds=pen_available_feeds,
-        #             animal_combination=self.animal_combination,
-        #             previous_ration=previous_ration,
-        #         )
-        #         num_attempts += 1
-        #         if solution and not solution.success:
-        #             ration_optimizer.handle_failed_constraints(
-        #                 num_attempts=num_attempts,
-        #                 solution=solution,
-        #                 ration_config=ration_config,
-        #                 animal_combination=self.animal_combination,
-        #                 pen_id=self.id,
-        #                 pen_available_feeds=pen_available_feeds,
-        #                 average_nutrient_requirements=self.average_nutrition_requirements,
-        #                 sim_day=9999,
-        #                 info_map=info_map,
-        #             )
 
     def use_user_defined_ration(self, pen_available_feeds: list[Feed], temperature: float) -> None:
         """
