@@ -92,8 +92,8 @@ class SimulationEngine:
             self.herd_manager.herd_statistics,
             self.herd_manager.herd_reproduction_statistics,
             self.time,
-            self.herd_manager.heiferIIs,
-            self.herd_manager.cows,
+            self.herd_manager.heiferII_events_by_id,
+            self.herd_manager.cow_events_by_id,
         )
         available_feeds_on_final_day = [
             {k: v.value if isinstance(v, Enum) else v for k, v in feed.items()}

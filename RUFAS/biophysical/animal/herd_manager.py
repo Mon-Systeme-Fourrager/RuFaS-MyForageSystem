@@ -16,6 +16,7 @@ from RUFAS.biophysical.animal.data_types.animal_typed_dicts import NewBornCalfVa
 from RUFAS.biophysical.animal.data_types.herd_statistics import HerdStatistics
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 from RUFAS.biophysical.animal.data_types.daily_routines_output import DailyRoutinesOutput
+from RUFAS.biophysical.animal.data_types.milk_production import MilkProductionStatistics
 from RUFAS.biophysical.animal.data_types.reproduction import HerdReproductionStatistics
 from RUFAS.biophysical.animal.herd_factory import HerdFactory
 from RUFAS.biophysical.animal.milk.lactation_curve import LactationCurve
@@ -280,6 +281,68 @@ class HerdManager:
         """
         return len(self.heiferIIIs) + len(self.cows)
 
+    @property
+    def heiferII_events_by_id(self) -> dict[str, str]:
+        """
+        Returns a dictionary that maps unique identifiers for HeiferII objects to their corresponding events.
+
+        The unique identifier for each HeiferII object is a combination of its `animal_type.name` and `id`.
+
+        Returns
+        -------
+        dict[str, str]
+            A dictionary where each key is the unique identifier of a HeiferII,
+            and the value is the string representation of the events associated with that HeiferII.
+
+        """
+        return {f"{heiferII.animal_type.name}_{heiferII.id}": heiferII.events for heiferII in self.heiferIIs}
+
+    @property
+    def cow_events_by_id(self) -> dict[str, str]:
+        """
+        Returns a dictionary that maps unique identifiers for Cow objects to their corresponding events.
+
+        The unique identifier for each Cow object is a combination of its `animal_type.name` and `id`.
+
+        Returns
+        -------
+        dict[str, str]
+            A dictionary where each key is the unique identifier of a Cow,
+            and the value is the string representation of the events associated with that Cow.
+
+        """
+        return {f"{cow.animal_type.name}_{cow.id}": cow.events for cow in self.cows}
+
+    @property
+    def daily_milk_report(self) -> list[MilkProductionStatistics]:
+        """
+        Returns a list of MilkProductionStatistics for each lactating cow in the herd.
+
+        Returns
+        -------
+        list[MilkProductionStatistics]
+            A list of MilkProductionStatistics for all lactating cows.
+
+        """
+        return [cow.milk_statistics for cow in self.cows if cow.is_milking]
+
+    @property
+    def average_herd_305_days_milk_production(self) -> float:
+        """
+        Calculates the herd average total past 305-day milk production.
+
+        Returns
+        -------
+        float
+            The herd mean of latest_milk_production_305days.
+        """
+        lactating_cow_305_days_milk_production = list(filter(lambda x: x > 0, [
+            cow.milk_production.current_lactation_305_day_milk_produced for cow in self.cows if cow.is_milking
+        ]))
+        return sum(lactating_cow_305_days_milk_production) / len(lactating_cow_305_days_milk_production) if len(
+            lactating_cow_305_days_milk_production) > 0 else 0.0
+
+
     def collect_daily_feed_request(self) -> RequestedFeed:
         """
         Collects total amount of feeds needed for all animals on the current day.
@@ -516,9 +579,13 @@ class HerdManager:
 
         self.update_herd_statistics()
 
+        AnimalModuleReporter.report_daily_animal_population(self.herd_statistics, time.simulation_day)
+        AnimalModuleReporter.report_herd_statistics_data(self.herd_statistics, time.simulation_day)
         AnimalModuleReporter.report_manure_excretions(animal_manure_excretions_by_pen, time.simulation_day)
         AnimalModuleReporter.report_manure_streams(herd_manager_output, time.simulation_day)
         AnimalModuleReporter.report_enteric_methane_emission(enteric_methane_emission_by_pen)
+        AnimalModuleReporter.report_milk(self.daily_milk_report, time.simulation_day)
+        AnimalModuleReporter.report_305d_milk(self.average_herd_305_days_milk_production)
         AnimalModuleReporter.report_daily_reports(self, time.simulation_day)
 
         return herd_manager_output
