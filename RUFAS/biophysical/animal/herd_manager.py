@@ -179,13 +179,6 @@ class HerdManager:
             AnimalType.LAC_COW: 0
         }
 
-        # Track initial populations and prepare death counters
-        self.initial_population_by_stage: dict[AnimalType, int] = {
-            stage: len(animals)
-            for stage, animals in self.animals_by_type.items()
-        }
-        self.deaths_by_stage: dict[AnimalType, int] = defaultdict(int)
-
     @property
     def animals_by_type(self) -> dict[AnimalType, list[Animal]]:
         """
