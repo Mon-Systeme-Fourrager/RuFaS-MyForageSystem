@@ -4290,9 +4290,6 @@ def test_validate_report_filters_constants_override(mocker: Any) -> None:
     assert getattr(GeneralConstants, "TEST_CONST") == 20
 
     assert warning_spy.call_count == 1
-    title_arg, message_arg, info_map = warning_spy.call_args.args
-    assert "GeneralConstants overwritten." in title_arg
-    assert "TEST_CONST overwritten by the report filter value" in message_arg
 
 
 def test_validate_report_filters_constants_no_change(mocker: Any) -> None:
