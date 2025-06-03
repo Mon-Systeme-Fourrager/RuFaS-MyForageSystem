@@ -136,10 +136,9 @@ class HerdManager:
         self.pasture_concentrate = animal_config_data["pasture_concentrate"]
 
         self.is_ration_defined_by_user = is_ration_defined_by_user
-        if self.is_ration_defined_by_user:
-            ration_feed_config = self.im.get_data("feed")
-            UserDefinedRationManager.set_user_defined_rations(ration_feed_config)
-            self.set_milk_type_in_calf_ration_manager()
+        ration_feed_config = self.im.get_data("feed")
+        UserDefinedRationManager.set_user_defined_rations(ration_feed_config)
+        self.set_milk_type_in_calf_ration_manager()
         self._max_daily_feeds: dict[RUFAS_ID, float] = {}
 
         allowances = self.im.get_data("feed.allowances")
@@ -801,9 +800,13 @@ class HerdManager:
             pen_with_min_stocking_density.set_animal_nutritional_requirements(
                 temperature=current_day_conditions.mean_air_temperature, available_feeds=available_feeds
             )
+            user_defined_ration_feed_ids = UserDefinedRationManager.get_user_defined_ration_feeds(
+                pen_with_min_stocking_density.animal_combination
+            )
+            pen_available_feeds = self._find_pen_available_feeds(available_feeds, user_defined_ration_feed_ids)
             self._reformulate_ration_single_pen(
                 pen=pen_with_min_stocking_density,
-                available_feeds=available_feeds,
+                pen_available_feeds=pen_available_feeds,
                 current_temperature=current_day_conditions.mean_air_temperature,
                 total_inventory=total_inventory,
             )
@@ -1287,6 +1290,12 @@ class HerdManager:
             total_inventory.available_feeds.get(rufas_id, 0.0) / total_animal_population / days_until_next_harvest
         )
 
+    def _find_pen_available_feeds(
+        self, all_available_feeds: list[Feed], user_defined_ration_feed_ids: list[RUFAS_ID]
+    ) -> list[Feed]:
+        """Find the available feeds for the pen."""
+        return [feed for feed in all_available_feeds if feed.rufas_id in user_defined_ration_feed_ids]
+
     def formulate_rations(
         self,
         available_feeds: list[Feed],
@@ -1325,12 +1334,16 @@ class HerdManager:
             if not pen.is_populated:
                 pen.ration = {}
                 continue
-            self._reformulate_ration_single_pen(pen, available_feeds, current_temperature, total_inventory)
+            user_defined_ration_feed_ids = UserDefinedRationManager.get_user_defined_ration_feeds(
+                pen.animal_combination
+            )
+            pen_available_feeds = self._find_pen_available_feeds(available_feeds, user_defined_ration_feed_ids)
+            self._reformulate_ration_single_pen(pen, pen_available_feeds, current_temperature, total_inventory)
             total_requested_feed += pen.get_requested_feed(ration_interval_length)
         return total_requested_feed
 
     def _reformulate_ration_single_pen(
-        self, pen: Pen, available_feeds: list[Feed], current_temperature: float, total_inventory: TotalInventory
+        self, pen: Pen, pen_available_feeds: list[Feed], current_temperature: float, total_inventory: TotalInventory
     ) -> None:
         """
         Reformulates ration for a single pen.
@@ -1339,19 +1352,26 @@ class HerdManager:
         ----------
         pen : Pen
             Pen that requires ration reformulation.
-        available_feeds : List[Feed]
-            List of available feeds.
+        pen_available_feeds : List[Feed]
+            List of available feeds in this pen.
         current_temperature : float
             Current temperature (C).
         total_inventory : TotalInventory
             Inventory currently available or projected to be available at a future date.
 
         """
-        if self.is_ration_defined_by_user is True:
-            pen.use_user_defined_ration(available_feeds, current_temperature)
+        if self.is_ration_defined_by_user is True or pen.animal_combination == AnimalCombination.CALF:
+            pen.use_user_defined_ration(pen_available_feeds, current_temperature)
         else:
+            if pen.animal_combination == AnimalCombination.LAC_COW and pen.average_milk_production == 0.0:
+                for animal in pen.animals_in_pen:
+                    pen.animals_in_pen[animal].daily_milking_update_without_history()
             pen.formulate_optimized_ration(
-                available_feeds, self._max_daily_feeds, self.advance_purchase_allowance, total_inventory
+                pen_available_feeds,
+                current_temperature,
+                self._max_daily_feeds,
+                self.advance_purchase_allowance,
+                total_inventory,
             )
 
     def update_herd_statistics(self) -> None:
@@ -1429,17 +1449,23 @@ class HerdManager:
         parity_1_cows = [cow for cow in self.cows if cow.reproduction.calves == 1]
         parity_2_cows = [cow for cow in self.cows if cow.reproduction.calves == 2]
         parity_3_cows = [cow for cow in self.cows if cow.reproduction.calves == 3]
+        parity_4_cows = [cow for cow in self.cows if cow.reproduction.calves == 4]
+        parity_5_cows = [cow for cow in self.cows if cow.reproduction.calves == 5]
         parity_greater_than_3_cows = [cow for cow in self.cows if cow.reproduction.calves > 3]
         self.herd_statistics.num_cow_for_parity = {
             "1": len(parity_1_cows),
             "2": len(parity_2_cows),
             "3": len(parity_3_cows),
+            "4": len(parity_4_cows),
+            "5": len(parity_5_cows),
             "greater_than_3": len(parity_greater_than_3_cows),
         }
         self.herd_statistics.avg_age_for_parity = {
             "1": sum([cow.days_born for cow in parity_1_cows]) / len(parity_1_cows) if len(parity_1_cows) > 0 else 0,
             "2": sum([cow.days_born for cow in parity_2_cows]) / len(parity_2_cows) if len(parity_2_cows) > 0 else 0,
             "3": sum([cow.days_born for cow in parity_3_cows]) / len(parity_3_cows) if len(parity_3_cows) > 0 else 0,
+            "4": sum([cow.days_born for cow in parity_4_cows]) / len(parity_4_cows) if len(parity_4_cows) > 0 else 0,
+            "5": sum([cow.days_born for cow in parity_5_cows]) / len(parity_5_cows) if len(parity_5_cows) > 0 else 0,
             "greater_than_3": (
                 sum([cow.days_born for cow in parity_greater_than_3_cows]) / len(parity_greater_than_3_cows)
                 if len(parity_greater_than_3_cows) > 0
@@ -1450,6 +1476,8 @@ class HerdManager:
         parity_1_calving_age = [cow.events.get_most_recent_date(animal_constants.NEW_BIRTH) for cow in parity_1_cows]
         parity_2_calving_age = [cow.events.get_most_recent_date(animal_constants.NEW_BIRTH) for cow in parity_2_cows]
         parity_3_calving_age = [cow.events.get_most_recent_date(animal_constants.NEW_BIRTH) for cow in parity_3_cows]
+        parity_4_calving_age = [cow.events.get_most_recent_date(animal_constants.NEW_BIRTH) for cow in parity_4_cows]
+        parity_5_calving_age = [cow.events.get_most_recent_date(animal_constants.NEW_BIRTH) for cow in parity_5_cows]
         parity_greater_than_3_calving_age = [
             cow.events.get_most_recent_date(animal_constants.NEW_BIRTH) for cow in parity_greater_than_3_cows
         ]
@@ -1457,6 +1485,8 @@ class HerdManager:
         parity_1_calving_age = [calving_age for calving_age in parity_1_calving_age if calving_age > 0]
         parity_2_calving_age = [calving_age for calving_age in parity_2_calving_age if calving_age > 0]
         parity_3_calving_age = [calving_age for calving_age in parity_3_calving_age if calving_age > 0]
+        parity_4_calving_age = [calving_age for calving_age in parity_4_calving_age if calving_age > 0]
+        parity_5_calving_age = [calving_age for calving_age in parity_5_calving_age if calving_age > 0]
         parity_greater_than_3_calving_age = [
             calving_age for calving_age in parity_greater_than_3_calving_age if calving_age > 0
         ]
@@ -1464,6 +1494,8 @@ class HerdManager:
             "1": (sum(parity_1_calving_age) / len(parity_1_calving_age)) if len(parity_1_calving_age) > 0 else 0,
             "2": (sum(parity_2_calving_age) / len(parity_2_calving_age)) if len(parity_2_calving_age) > 0 else 0,
             "3": (sum(parity_3_calving_age) / len(parity_3_calving_age)) if len(parity_3_calving_age) > 0 else 0,
+            "4": (sum(parity_4_calving_age) / len(parity_4_calving_age)) if len(parity_3_calving_age) > 0 else 0,
+            "5": (sum(parity_5_calving_age) / len(parity_5_calving_age)) if len(parity_5_calving_age) > 0 else 0,
             "greater_than_3": (
                 (sum(parity_greater_than_3_calving_age) / len(parity_greater_than_3_calving_age))
                 if len(parity_greater_than_3_calving_age) > 0
@@ -1479,6 +1511,12 @@ class HerdManager:
         ]
         parity_3_calving_to_pregnancy_time = [
             cow.reproduction.reproduction_statistics.calving_to_pregnancy_time for cow in parity_3_cows
+        ]
+        parity_4_calving_to_pregnancy_time = [
+            cow.reproduction.reproduction_statistics.calving_to_pregnancy_time for cow in parity_4_cows
+        ]
+        parity_5_calving_to_pregnancy_time = [
+            cow.reproduction.reproduction_statistics.calving_to_pregnancy_time for cow in parity_5_cows
         ]
         parity_greater_than_3_calving_to_pregnancy_time = [
             cow.reproduction.reproduction_statistics.calving_to_pregnancy_time for cow in parity_greater_than_3_cows
@@ -1497,6 +1535,16 @@ class HerdManager:
         parity_3_calving_to_pregnancy_time = [
             calving_to_pregnancy_time
             for calving_to_pregnancy_time in parity_3_calving_to_pregnancy_time
+            if calving_to_pregnancy_time > 0
+        ]
+        parity_4_calving_to_pregnancy_time = [
+            calving_to_pregnancy_time
+            for calving_to_pregnancy_time in parity_4_calving_to_pregnancy_time
+            if calving_to_pregnancy_time > 0
+        ]
+        parity_5_calving_to_pregnancy_time = [
+            calving_to_pregnancy_time
+            for calving_to_pregnancy_time in parity_5_calving_to_pregnancy_time
             if calving_to_pregnancy_time > 0
         ]
         parity_greater_than_3_calving_to_pregnancy_time = [
@@ -1518,6 +1566,16 @@ class HerdManager:
             "3": (
                 (sum(parity_3_calving_to_pregnancy_time) / len(parity_3_calving_to_pregnancy_time))
                 if len(parity_3_calving_to_pregnancy_time) > 0
+                else 0
+            ),
+            "4": (
+                (sum(parity_4_calving_to_pregnancy_time) / len(parity_4_calving_to_pregnancy_time))
+                if len(parity_4_calving_to_pregnancy_time) > 0
+                else 0
+            ),
+            "5": (
+                (sum(parity_5_calving_to_pregnancy_time) / len(parity_5_calving_to_pregnancy_time))
+                if len(parity_5_calving_to_pregnancy_time) > 0
                 else 0
             ),
             "greater_than_3": (
