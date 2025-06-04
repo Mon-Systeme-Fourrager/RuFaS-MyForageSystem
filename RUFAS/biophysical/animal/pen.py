@@ -123,6 +123,8 @@ class Pen:
         Average surpluses and/or deficits of nutrients supplied to animals in the pen.
     allocated_feeds : set
         Set of IDs for the feeds allocated to this pen.
+    om : OutputManager
+        The output manager instance used to store and manage output data.
     """
 
     def __init__(
@@ -827,7 +829,7 @@ class Pen:
                 feeds_used=feeds_used, ration_formulation=ration_formulation, body_weight=animal.body_weight
             )
 
-    def formulate_optimized_ration(
+    def formulate_optimized_ration(  # noqa: C901
         self,
         pen_available_feeds: list[Feed],
         temperature: float,
@@ -873,6 +875,7 @@ class Pen:
                 pen_available_feeds, temperature, previous_ration
             )
 
+
             if solution and not solution.success:
                 self.ration_optimizer.handle_failed_constraints(
                     num_attempts=num_attempts,
@@ -896,7 +899,6 @@ class Pen:
             print(self.animal_combination)
             print(f"num_attempts = {num_attempts}")
             self._apply_successful_solution(solution, pen_available_feeds)
-
         elif self.ration == {}:
             self.om.add_error(
                 "No previous ration available",
@@ -904,8 +906,16 @@ class Pen:
                 f"Possible solution is to provide additional feed ingredients to {self.animal_combination.name}.",
                 info_map,
             )
-
             raise ValueError("No previous ration available")
+        else:
+            self.om.add_log(
+                "Previous ration used because automated ration formulation failed for non lactating cow pen.",
+                f"Automated ration formulation for a {self.animal_combination.name} pen failed."
+                "Used most recently formulated ration instead."
+                f"If this was unexpected, check failed_constraint_summary_for_pen_{self.id} to see what "
+                "caused formulation to fail.",
+                info_map,
+            )
 
     def _attempt_formulation(
         self, pen_feeds, temperature, previous_ration
@@ -956,6 +966,7 @@ class Pen:
                 info_map,
             )
             raise ValueError("Milk production reduction limit reached.")
+
 
     def use_user_defined_ration(self, pen_available_feeds: list[Feed], temperature: float) -> None:
         """
