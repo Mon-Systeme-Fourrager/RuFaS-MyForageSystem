@@ -64,7 +64,6 @@ class RationConfig:
         """
         self.animal_requirements = animal_requirements
         self.pen_average_body_weight = pen_average_body_weight
-        self.print_print = False
 
         self.feeds_used = pen_available_feeds
 
@@ -696,13 +695,17 @@ class RationOptimizer:
         requirements: NutritionRequirements,
         pen_available_feeds: List[Feed],
         animal_combination: AnimalCombination,
-        previous_ration: Dict[RUFAS_ID | str, float | str] | None = None,
+        previous_ration: Dict[RUFAS_ID, float] | None = None,
+        user_defined_ration_dictionary: Dict[RUFAS_ID, float] | None = None,
+        user_defined_ration_tolerance: float = None
     ) -> Tuple[OptimizeResult | None, RationConfig]:
         """
         Optimize
 
         Parameters
         ----------
+        is_ration_defined_by_user : bool
+            True if user defined ration methodology to be used.
         pen_average_body_weight
         requirements
         pen_available_feeds
@@ -717,7 +720,14 @@ class RationOptimizer:
 
         x0 = np.array(self._build_initial_value(previous_ration, ration_config), dtype=float)
 
-        bounds = self._build_bounds(ration_config)
+        if user_defined_ration_dictionary:
+            bounds = self._build_bounds_user_defined_ration(
+                ration_config=ration_config,
+                user_defined_ration_dictionary= user_defined_ration_dictionary,
+                user_defined_ration_tolerance=user_defined_ration_tolerance
+            )
+        else:
+            bounds = self._build_bounds(ration_config)
 
         for i in range(0, len(x0)):
             if x0[i] < bounds[i][0] or x0[i] > bounds[i][1]:
@@ -752,12 +762,45 @@ class RationOptimizer:
         return [1.0] + [random.random() * 10 for _ in range(n - 1)]
 
     @staticmethod
-    def _build_bounds(ration_config: RationConfig) -> List[Tuple[float, float]]:
+    def _build_bounds(ration_config: RationConfig, ) -> List[Tuple[float, float]]:
         """Zips min/max lists into solver bounds."""
         return list(zip(
             ration_config.feed_minimum_list,
             ration_config.feed_maximum_list
-        ))
+            ))
+
+    @staticmethod
+    def _build_bounds_user_defined_ration(
+        ration_config: RationConfig,
+        user_defined_ration_dictionary: dict[RUFAS_ID, float],
+        user_defined_ration_tolerance: float) -> List[Tuple[float, float]]:
+        feed_bound_list = list(zip(
+            ration_config.feed_minimum_list,
+            ration_config.feed_maximum_list
+            ))
+        user_defined_boundlist = []
+        udr_tolerance = user_defined_ration_tolerance
+        ration_key_list = sorted([int(key) for key in user_defined_ration_dictionary.keys()])
+        for key in ration_key_list:
+            target_lower = (
+                user_defined_ration_dictionary[key]
+                / 100
+                * (1 - udr_tolerance)
+                * (ration_config.animal_requirements.dry_matter * 1.1)
+            )
+            target_upper = (
+                user_defined_ration_dictionary[key]
+                / 100
+                * (1 + udr_tolerance)
+                * (ration_config.animal_requirements.dry_matter * 1.1 + 0.0001)
+            )
+            targetbounds = (max(0.0, target_lower), target_upper)
+            user_defined_boundlist.append(targetbounds)
+
+        user_defined_boundlist_trimmed = [
+            (max(t1[0], t2[0]), min(t1[1], t2[1]))
+            for t1, t2 in zip(feed_bound_list, user_defined_boundlist)]
+        return user_defined_boundlist_trimmed
 
     def _select_constraints(
         self,
