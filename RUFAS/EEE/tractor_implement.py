@@ -1,4 +1,5 @@
 from RUFAS.data_structures.tillage_implements import FieldOperationEvent, TractorSize, TillageImplement, OperationType
+from RUFAS.general_constants import GeneralConstants
 from RUFAS.util import Utility
 from RUFAS.input_manager import InputManager
 
@@ -68,7 +69,7 @@ class TractorImplement:
                     OperationType.LIQUID_MANURE_APPLICATION_BELOW_SURFACE,
                     OperationType.LIQUID_MANURE_APPLICATION_SURFACE,
                 ]:
-                    self.depth_cm = application_depth
+                    self.depth_cm = application_depth * GeneralConstants.MM_TO_CM
                 else:
                     self.depth_cm = data_entry["Depth"]
                 self.is_depth_relevant = data_entry["is depth relevant"]
