@@ -2058,8 +2058,8 @@ class Reproduction:
             )
 
         elif (
-                AnimalConfig.cow_resynch_method == CowReSynchSubProtocol.NONE
-                and AnimalConfig.dry_off_day_of_pregnancy <= AnimalConfig.third_pregnancy_check_day
+            AnimalConfig.cow_resynch_method == CowReSynchSubProtocol.NONE
+            and AnimalConfig.dry_off_day_of_pregnancy <= AnimalConfig.third_pregnancy_check_day
         ):
             self.do_not_breed = True
 
