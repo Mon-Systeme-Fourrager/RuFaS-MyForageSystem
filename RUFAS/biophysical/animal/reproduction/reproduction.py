@@ -2015,15 +2015,15 @@ class Reproduction:
 
         self.num_conception_rate_decreases += 1
         if (
-                AnimalConfig.dry_off_day_of_pregnancy <= AnimalConfig.third_pregnancy_check_day
-                and not reproduction_data_stream.is_milking
+            AnimalConfig.dry_off_day_of_pregnancy <= AnimalConfig.third_pregnancy_check_day
+            and not reproduction_data_stream.is_milking
         ):
             self.do_not_breed = True
             return reproduction_data_stream
 
         if (
-                self.cow_reproduction_program == CowReproductionProtocol.ED
-                or AnimalConfig.cow_resynch_method == CowReSynchSubProtocol.NONE
+            self.cow_reproduction_program == CowReproductionProtocol.ED
+            or AnimalConfig.cow_resynch_method == CowReSynchSubProtocol.NONE
         ):
             if reproduction_data_stream.days_born > self.estrus_day:  # No estrus day scheduled yet
                 self.repro_state_manager.enter(ReproStateEnum.WAITING_FULL_ED_CYCLE)
