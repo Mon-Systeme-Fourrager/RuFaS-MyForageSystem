@@ -9,8 +9,11 @@ from RUFAS.biophysical.animal.data_types.animal_population import AnimalPopulati
 from RUFAS.biophysical.animal.data_types.animal_typed_dicts import SoldAnimalTypedDict
 from RUFAS.biophysical.animal.data_types.herd_statistics import HerdStatistics
 from RUFAS.biophysical.animal.data_types.milk_production import MilkProductionStatistics
-from RUFAS.biophysical.animal.data_types.nutrition_data_structures import NutritionSupply, NutritionRequirements, \
-    NutritionEvaluationResults
+from RUFAS.biophysical.animal.data_types.nutrition_data_structures import (
+    NutritionSupply,
+    NutritionRequirements,
+    NutritionEvaluationResults,
+)
 from RUFAS.biophysical.animal.data_types.reproduction import HerdReproductionStatistics
 from RUFAS.biophysical.animal.milk.milk_production import MilkProduction
 from RUFAS.data_structures.animal_manure_excretions import AnimalManureExcretions
@@ -177,12 +180,12 @@ class AnimalModuleReporter:
 
     @classmethod
     def report_ration_per_animal(
-            cls,
-            pen_base_name: str,
-            ration_per_animal: dict[RUFAS_ID, float],
-            total_dry_matter: float,
-            num_animals: int,
-            simulation_day: int
+        cls,
+        pen_base_name: str,
+        ration_per_animal: dict[RUFAS_ID, float],
+        total_dry_matter: float,
+        num_animals: int,
+        simulation_day: int,
     ) -> None:
         """
         For each pen, adds the average ration per animal to the OutputManager.
@@ -204,7 +207,7 @@ class AnimalModuleReporter:
             "class": AnimalModuleReporter.__name__,
             "function": AnimalModuleReporter.report_ration_per_animal.__name__,
             "simulation_day": simulation_day,
-            "number_animals_in_pen": num_animals
+            "number_animals_in_pen": num_animals,
         }
 
         ration_amounts_with_str_keys = {str(key): amount for key, amount in ration_per_animal.items()}
@@ -217,11 +220,7 @@ class AnimalModuleReporter:
 
     @classmethod
     def report_nutrient_amounts(
-            cls,
-            pen_base_name: str,
-            average_nutrition_supply: NutritionSupply,
-            num_animals: int,
-            simulation_day: int
+        cls, pen_base_name: str, average_nutrition_supply: NutritionSupply, num_animals: int, simulation_day: int
     ) -> None:
         """Reports the amounts of nutrients in the ration."""
         info_map = {
@@ -229,7 +228,7 @@ class AnimalModuleReporter:
             "function": AnimalModuleReporter.report_nutrient_amounts.__name__,
             "simulation_day": simulation_day,
             "units": NutritionSupply.UNITS,
-            "number_animals_in_pen": num_animals
+            "number_animals_in_pen": num_animals,
         }
 
         nutrient_amounts = {
@@ -256,23 +255,19 @@ class AnimalModuleReporter:
             "NE_maintenance_and_activity": average_nutrition_supply.maintenance_energy,
             "NE_lactation": average_nutrition_supply.lactation_energy,
             "NE_growth": average_nutrition_supply.growth_energy,
-            "metabolizable_protein": average_nutrition_supply.metabolizable_protein
+            "metabolizable_protein": average_nutrition_supply.metabolizable_protein,
         }
-        cls._om.add_variable(
-            f"ration_nutrient_amount_for_{pen_base_name}",
-            nutrient_amounts,
-            info_map
-        )
+        cls._om.add_variable(f"ration_nutrient_amount_for_{pen_base_name}", nutrient_amounts, info_map)
 
     @classmethod
     def report_average_nutrient_requirements(
-            cls,
-            pen_base_name: str,
-            average_nutrition_requirements: NutritionRequirements,
-            average_body_weight: float,
-            average_milk_production_reduction: float,
-            num_animals: int,
-            simulation_day: int
+        cls,
+        pen_base_name: str,
+        average_nutrition_requirements: NutritionRequirements,
+        average_body_weight: float,
+        average_milk_production_reduction: float,
+        num_animals: int,
+        simulation_day: int,
     ) -> None:
         """
         Adds the average ration per animal of a pen to the OutputManager.
@@ -313,10 +308,7 @@ class AnimalModuleReporter:
 
     @classmethod
     def report_average_nutrient_evaluation_results(
-            cls,
-            pen_base_name: str,
-            average_nutrition_evaluation: NutritionEvaluationResults,
-            simulation_day: int
+        cls, pen_base_name: str, average_nutrition_evaluation: NutritionEvaluationResults, simulation_day: int
     ) -> None:
         """
         Reports the average nutrient evaluation results for a pen.
@@ -330,7 +322,7 @@ class AnimalModuleReporter:
         info_map = {
             "class": AnimalModuleReporter.__name__,
             "function": AnimalModuleReporter.report_average_nutrient_evaluation_results.__name__,
-            "simulation_day": simulation_day
+            "simulation_day": simulation_day,
         }
 
         nutrient_evaluation_results = {
@@ -349,7 +341,7 @@ class AnimalModuleReporter:
         cls._om.add_variable(
             f"avg_eval_results_for_{pen_base_name}",
             nutrient_evaluation_results,
-            {**info_map, "units": NutritionEvaluationResults.UNITS}
+            {**info_map, "units": NutritionEvaluationResults.UNITS},
         )
 
         cls._om.add_variable(
@@ -360,7 +352,7 @@ class AnimalModuleReporter:
 
     @classmethod
     def report_me_diet(
-            cls, pen_base_name: str, metabolizable_energy: float, num_animals: int, simulation_day: int
+        cls, pen_base_name: str, metabolizable_energy: float, num_animals: int, simulation_day: int
     ) -> None:
         """
         Report the total metabolizable energy of a pen's average ration to the Output Manager as "MEdiet".
@@ -382,7 +374,11 @@ class AnimalModuleReporter:
             "units": units,
         }
 
-        cls._om.add_variable(f"MEdiet_for_{pen_base_name}", metabolizable_energy, info_map,)
+        cls._om.add_variable(
+            f"MEdiet_for_{pen_base_name}",
+            metabolizable_energy,
+            info_map,
+        )
 
     @classmethod
     def report_daily_ration(cls, herd_manager, simulation_day: int) -> None:
@@ -645,7 +641,7 @@ class AnimalModuleReporter:
                     0,
                     simulation_day,
                     info_map,
-                    pen_manure_data_units[manure_property]
+                    pen_manure_data_units[manure_property],
                 )
                 om.add_variable(
                     f"{base_name}_{str(manure_property)}",
@@ -929,7 +925,9 @@ class AnimalModuleReporter:
             "simulation_day": simulation_day,
         }
         for pen in pen_list:
-            variable_to_add = f"{class_name}.{function_name}.number_of_animals_in_pen_{pen.id}_{pen.animal_combination.name}"
+            variable_to_add = (
+                f"{class_name}.{function_name}.number_of_animals_in_pen_{pen.id}_{pen.animal_combination.name}"
+            )
             reference_variable = f"{class_name}.{function_name}.number_of_animals_in_pen_0_CALF"
             AnimalModuleReporter.data_padder(
                 reference_variable, variable_to_add, 0, simulation_day, info_map, MeasurementUnits.ANIMALS

@@ -1923,7 +1923,7 @@ class HerdManager:
                     pen.average_body_weight,
                     pen.average_milk_production_reduction,
                     num_animals,
-                    simulation_day
+                    simulation_day,
                 )
                 AnimalModuleReporter.report_average_nutrient_evaluation_results(
                     pen_base_name, pen.average_nutrition_evaluation, simulation_day
