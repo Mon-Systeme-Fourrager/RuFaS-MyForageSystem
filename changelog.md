@@ -183,7 +183,7 @@ v0.9.2
 - [2317](https://github.com/RuminantFarmSystems/MASM/pull/2317) - [minor change] [Animal][Manure] Moves the bedding calculations into the Animal module.
 - [2388](https://github.com/RuminantFarmSystems/MASM/pull/2388) - [minor change] [Manure] Enacts and incorporates refreshed daily manure processing functionality.
 - [2348](https://github.com/RuminantFarmSystems/MASM/pull/2348) - [minor change] [Animal][Metadata][Manure] Metadata Update for Animal Manure Connection.
-
+- [2452](https://github.com/RuminantFarmSystems/MASM/pull/2452) - [minor change] [Wiki]Updated external documents.
 
 ### v0.9.2
 
