@@ -201,7 +201,9 @@ class FeedManager:
             "units": MeasurementUnits.DRY_KILOGRAMS,
         }
         for rufas_id, mass in feed_report.items():
-            self._om.add_variable(f"stored_feed_{rufas_id}", [mass, time.simulation_day], {**info_map, "rufas_id": rufas_id, "mass": mass})
+            self._om.add_variable(
+                f"stored_feed_{rufas_id}", [mass, time.simulation_day], {**info_map, "rufas_id": rufas_id, "mass": mass}
+            )
 
     def manage_daily_feed_request(self, requested_feed: RequestedFeed, time: RufasTime) -> bool:
         """Returns true if requested feeds can be provided, either through on-farm feeds or by purchasing."""
@@ -446,8 +448,9 @@ class FeedManager:
             )
             self._store_purchased_feed(rufas_id, purchase_amount, time, purchase_type)
 
-    def _adjust_for_shrink(self, purchased_feed: PurchasedFeed, purchase_type: str, simulation_day: int,
-                           shrink_factor: float = 0.1) -> PurchasedFeed:
+    def _adjust_for_shrink(
+        self, purchased_feed: PurchasedFeed, purchase_type: str, simulation_day: int, shrink_factor: float = 0.1
+    ) -> PurchasedFeed:
         """
         Adjusts the purchased feed to account for shrink loss in storage.
 
@@ -491,8 +494,9 @@ class FeedManager:
             storage_time=purchased_feed.storage_time,
         )
 
-    def _store_purchased_feed(self, rufas_id: RUFAS_ID, purchase_amount: float, time: RufasTime,
-                              purchase_type: str) -> None:
+    def _store_purchased_feed(
+        self, rufas_id: RUFAS_ID, purchase_amount: float, time: RufasTime, purchase_type: str
+    ) -> None:
         """
         Stores feeds which have been purchased and adjusts for shrink.
 
@@ -540,8 +544,7 @@ class FeedManager:
 
         for rufas_id, amount in feeds_to_deduct.items():
             available_feeds = [
-                feed for feed in all_available_feeds
-                if self._check_feed_availability(feeds_to_deduct, rufas_id, feed)
+                feed for feed in all_available_feeds if self._check_feed_availability(feeds_to_deduct, rufas_id, feed)
             ]
 
             for feed in available_feeds:
@@ -550,15 +553,17 @@ class FeedManager:
 
                 if isinstance(feed, PurchasedFeed):
                     feed.remove_dry_matter_mass(amount_to_deduct)
-                    total_purchased_feed_deductions[rufas_id] = \
+                    total_purchased_feed_deductions[rufas_id] = (
                         total_purchased_feed_deductions.get(rufas_id, 0.0) + amount_to_deduct
+                    )
                 else:
                     feed.remove_feed_mass(amount_to_deduct)
                     harvested_rufas_id = self._select_rufas_id_for_harvested_crop(
                         feed.rufas_ids, list(feeds_to_deduct.keys())
                     )
-                    total_farmgrown_feed_deductions[harvested_rufas_id] = \
+                    total_farmgrown_feed_deductions[harvested_rufas_id] = (
                         total_farmgrown_feed_deductions.get(harvested_rufas_id, 0.0) + amount_to_deduct
+                    )
 
                 if amount == 0.0:
                     break
