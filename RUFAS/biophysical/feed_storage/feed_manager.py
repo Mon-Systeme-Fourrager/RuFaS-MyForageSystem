@@ -512,7 +512,10 @@ class FeedManager:
             Type of purchase being made, used for output variable naming.
         """
         purchased_feed = PurchasedFeed(rufas_id, purchase_amount, time.current_date.date())
-        shrink_adjusted_purchased_feed = self._adjust_for_shrink(purchased_feed, purchase_type, time.simulation_day)
+        if purchase_type == "ration_interval":
+            shrink_adjusted_purchased_feed = self._adjust_for_shrink(purchased_feed, purchase_type, time.simulation_day)
+        else:
+            shrink_adjusted_purchased_feed = purchased_feed
         self.purchased_feed_storage.receive_feed(shrink_adjusted_purchased_feed)
 
     def _deduct_feeds_from_inventory(self, feeds_to_deduct: dict[RUFAS_ID, float], simulation_day: int) -> None:
