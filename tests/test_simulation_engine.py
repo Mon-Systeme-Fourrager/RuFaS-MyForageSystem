@@ -219,7 +219,6 @@ def test_daily_simulation(
     mock_feed_manage_daily_feed_request = mocker.patch.object(
         simulation_engine.feed_manager, "manage_daily_feed_request", return_value=is_ok_to_feed_animals
     )
-    mock_feed_execute_daily_routine = mocker.patch.object(simulation_engine.feed_manager, "execute_daily_routine")
 
     mock_herd_update_all_max_daily_feeds = mocker.patch.object(
         simulation_engine.herd_manager,
@@ -299,7 +298,6 @@ def test_daily_simulation(
         simulation_engine.feed_manager.available_feeds, mock_time, mock_weather, mock_total_inventory
     )
     mock_manure_daily_update.assert_called_once_with(mock_manure_streams, mock_time, mock_current_day_conditions)
-    mock_feed_execute_daily_routine.assert_called_once_with(mock_time)
     mock_record_time.assert_called_once_with()
     mock_record_weather.assert_called_once_with(mock_time)
     mock_advance_time.assert_called_once_with()

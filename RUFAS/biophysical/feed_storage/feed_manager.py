@@ -184,7 +184,7 @@ class FeedManager:
     def report_stored_feeds(self, time: RufasTime) -> None:
         """Outputs total amounts of feeds currently stored by the FeedManager."""
         feed_report: dict[RUFAS_ID, float] = self.purchased_feed_storage.create_consolidated_feed_report()
-        available_feed_ids = [feed.rufas_id for feed in self.available_feeds]
+        available_feed_ids = [feed.rufas_id for feed in self._available_feeds]
         for storage in self.active_storages.values():
             for crop in storage.stored:
                 rufas_id = self._select_rufas_id_for_harvested_crop(crop.rufas_ids, available_feed_ids)
@@ -202,7 +202,7 @@ class FeedManager:
         }
         for rufas_id, mass in feed_report.items():
             self._om.add_variable(
-                f"stored_feed_{rufas_id}", [mass, time.simulation_day], {**info_map, "rufas_id": rufas_id, "mass": mass}
+                f"stored_feed_{rufas_id}", mass, {**info_map, "rufas_id": rufas_id, "mass": mass}
             )
 
     def manage_daily_feed_request(self, requested_feed: RequestedFeed, time: RufasTime) -> bool:
@@ -213,7 +213,7 @@ class FeedManager:
         for feed_id, amount_requested in requested_feed.requested_feed.items():
             self._om.add_variable(
                 f"{feed_id}_requested_amount",
-                [amount_requested, time.simulation_day],
+                amount_requested,
                 {
                     "class": self.__class__.__name__,
                     "function": self.manage_daily_feed_request.__name__,
@@ -224,7 +224,7 @@ class FeedManager:
             available_amount = current_feed_totals[feed_id]
             self._om.add_variable(
                 f"{feed_id}_available_amount",
-                [available_amount, time.simulation_day],
+                available_amount,
                 {
                     "class": self.__class__.__name__,
                     "function": self.manage_daily_feed_request.__name__,
@@ -447,7 +447,7 @@ class FeedManager:
             )
             self._om.add_variable(
                 f"{purchase_type}_{rufas_id}_amount_purchased",
-                [purchase_amount, time.simulation_day],
+                purchase_amount,
                 info_map | {"units": MeasurementUnits.KILOGRAMS},
             )
             self._store_purchased_feed(rufas_id, purchase_amount, time, purchase_type)
@@ -481,9 +481,10 @@ class FeedManager:
         # TODO get shrink factor from appropriate feed library source when that data becomes available.
         # Default 10% shrink factor for all purchased feeds for now.
         adjusted_mass = purchased_feed.dry_matter_mass * (1 - shrink_factor)
+        loss_to_shrink = purchased_feed.dry_matter_mass - adjusted_mass
         self._om.add_variable(
             f"{purchase_type}_purchased_feed_{purchased_feed.rufas_id}_amount_lost_to_shrink",
-            [purchased_feed.dry_matter_mass - adjusted_mass, simulation_day],
+            loss_to_shrink,
             {
                 "class": self.__class__.__name__,
                 "function": self._adjust_for_shrink.__name__,
@@ -581,7 +582,7 @@ class FeedManager:
         for feed_id, amount_deducted in total_farmgrown_feed_deductions.items():
             self._om.add_variable(
                 f"farmgrown_feed_{feed_id}_total_amount_deducted",
-                [amount_deducted, simulation_day],
+                amount_deducted,
                 {
                     "class": self.__class__.__name__,
                     "function": self._deduct_feeds_from_inventory.__name__,
@@ -593,7 +594,7 @@ class FeedManager:
         for feed_id, amount_deducted in total_purchased_feed_deductions.items():
             self._om.add_variable(
                 f"purchased_feed_{feed_id}_total_amount_deducted",
-                [amount_deducted, simulation_day],
+                amount_deducted,
                 {
                     "class": self.__class__.__name__,
                     "function": self._deduct_feeds_from_inventory.__name__,
