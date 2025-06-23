@@ -191,6 +191,8 @@ v0.9.2
 - [2454](https://github.com/RuminantFarmSystems/RuFaS/pull/2453) - [minor change] [Code Owners] Add Contributors file.
 - [2455](https://github.com/RuminantFarmSystems/RuFaS/pull/2453) - [minor change] [Code Owners] Update ReadMe file.
 - [2456](https://github.com/RuminantFarmSystems/RuFaS/pull/2456) - [minor change] [Animal] Updated milking fraction value, parity 5 default.
+- [2426](https://github.com/RuminantFarmSystems/RuFaS/pull/2426) - [minor change] [Animal] Adds a warning when the days_in_preg_when_dry is set to less than or equal to the 3rd preg check day.
+
 
 ### v0.9.2
 
