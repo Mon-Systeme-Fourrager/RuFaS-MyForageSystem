@@ -622,9 +622,7 @@ def test_purchase_feed(feed_manager: FeedManager, mock_available_feeds: list[Fee
     mock_store_purchased_feed = mocker.patch.object(feed_manager, "_store_purchased_feed")
 
     feed_manager.purchase_feed(
-        feeds_to_purchase,
-        MagicMock(auto_spec=RufasTime, simulation_day=42),
-        purchase_type="test_purchase"
+        feeds_to_purchase, MagicMock(auto_spec=RufasTime, simulation_day=42), purchase_type="test_purchase"
     )
 
     assert mock_om_add_variable.call_count == 10
@@ -646,9 +644,7 @@ def test_purchase_feed_error(
 
     with pytest.raises(ValueError, match="Trying to purchase unavailable feed 7"):
         feed_manager.purchase_feed(
-            feeds_to_purchase,
-            MagicMock(auto_spec=RufasTime, simulation_day=42),
-            purchase_type="test_purchase"
+            feeds_to_purchase, MagicMock(auto_spec=RufasTime, simulation_day=42), purchase_type="test_purchase"
         )
 
 
@@ -658,12 +654,17 @@ def test_report_daily_purchases(feed_manager, mocker):
     feed_manager._rufas_ids_purchased_today = {101, 102}
     feed_manager._daily_purchases = []
     purchase_types: list[str] = list(get_args(PurchaseType))
-    feed_manager._daily_purchases.extend([
-        _FeedPurchase(rufas_id=101, amount_purchased=10.0, purchase_type=purchase_types[0]),
-        _FeedPurchase(rufas_id=101, amount_purchased=5.0, purchase_type=purchase_types[1]
-                      if len(purchase_types) > 1 else purchase_types[0]),
-        _FeedPurchase(rufas_id=102, amount_purchased=20.0, purchase_type=purchase_types[0]),
-    ])
+    feed_manager._daily_purchases.extend(
+        [
+            _FeedPurchase(rufas_id=101, amount_purchased=10.0, purchase_type=purchase_types[0]),
+            _FeedPurchase(
+                rufas_id=101,
+                amount_purchased=5.0,
+                purchase_type=purchase_types[1] if len(purchase_types) > 1 else purchase_types[0],
+            ),
+            _FeedPurchase(rufas_id=102, amount_purchased=20.0, purchase_type=purchase_types[0]),
+        ]
+    )
 
     feed_manager._om = mocker.MagicMock(spec=OutputManager)
     mock_add_variable = mocker.patch.object(feed_manager._om, "add_variable")
