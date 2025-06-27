@@ -135,8 +135,10 @@ def test_convert_decision_vec_to_feeds(ration_config: RationConfig) -> None:
 
 def test_make_ration_from_solution(mock_feed: Feed) -> None:
     """Test conversion of optimization result to ration dictionary."""
+
     class DummySolution:
         x = [3.0]
+
     result = RationOptimizer.make_ration_from_solution([mock_feed], DummySolution())
     assert result["feed1"] == 3.0
 
@@ -212,10 +214,7 @@ def test_constraints_run(mock_calc: NutritionSupplyCalculator, full_config: Rati
 def test_is_constraint_violated(full_config: RationConfig) -> None:
     """Test if a single violated constraint is detected."""
     vec = np.array([5.0])
-    constraint = {
-        "type": "ineq",
-        "fun": lambda x, cfg: -1.0
-    }
+    constraint = {"type": "ineq", "fun": lambda x, cfg: -1.0}
     violated = RationOptimizer.is_constraint_violated(vec, constraint, full_config)
     assert violated is True
 
@@ -223,9 +222,6 @@ def test_is_constraint_violated(full_config: RationConfig) -> None:
 def test_find_failed_constraints(full_config: RationConfig) -> None:
     """Test identification of failed constraints from a set."""
     vec = np.array([5.0])
-    constraints = [
-        {"type": "ineq", "fun": lambda x, cfg: -1.0},
-        {"type": "ineq", "fun": lambda x, cfg: 1.0}
-    ]
+    constraints = [{"type": "ineq", "fun": lambda x, cfg: -1.0}, {"type": "ineq", "fun": lambda x, cfg: 1.0}]
     failed = RationOptimizer.find_failed_constraints(vec, constraints, full_config)
     assert len(failed) == 1
