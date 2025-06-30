@@ -898,7 +898,7 @@ def test_request_nutrients(mocker: MockerFixture, animals_simulated: bool, use_s
                 result, mock_nutrient_request
             )
             mock_field_request.assert_called_once()
-            mock_record.assert_any_call(supplemental_result, "off_farm_manure")
+            mock_record.assert_any_call(supplemental_result, "off_farm_manure", mock_time)
             combined_result = result + supplemental_result
             assert actual_results == combined_result
     else:
