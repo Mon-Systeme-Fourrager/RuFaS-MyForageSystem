@@ -19,10 +19,10 @@
       ]
     },
     {
-      "processor_name": "closeup_manual_scraper",
+      "processor_name": "closeup_feed_alley_scraper",
       "destinations": [
         {
-          "receiving_processor_name": "compost",
+          "receiving_processor_name": "anaerobic_lagoon",
           "proportion": 1.0
         }
       ]
@@ -55,6 +55,10 @@
     },
     {
       "processor_name": "growing_open_lot",
+      "destinations": []
+    },
+    {
+      "processor_name": "closeup_open_lot",
       "destinations": []
     },
     {

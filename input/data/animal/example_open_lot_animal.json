@@ -209,10 +209,16 @@
 			"max_stocking_density": 1.2,
 			"manure_streams": [
 				{
-					"stream_name": "closeup_pen",
-					"bedding_name": "closeup_sawdust",
-					"stream_proportion": 1.0,
-					"first_processor": "closeup_manual_scraper"
+					"stream_name": "closeup_feed_alley",
+					"bedding_name": "none (no bedding)",
+					"stream_proportion": 0.796,
+					"first_processor": "closeup_feed_alley_scraper"
+				},
+				{
+					"stream_name": "closeup_lot",
+					"bedding_name": "none (no bedding)",
+					"stream_proportion": 0.204,
+					"first_processor": "closeup_open_lot"
 				}
 			]
 		},
