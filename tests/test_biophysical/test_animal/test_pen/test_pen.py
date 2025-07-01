@@ -29,8 +29,6 @@ from RUFAS.data_structures.feed_storage_to_animal_connection import (
     RUFAS_ID,
     RequestedFeed,
     Feed,
-    AdvancePurchaseAllowance,
-    TotalInventory,
 )
 from RUFAS.enums import AnimalCombination
 from RUFAS.input_manager import InputManager
@@ -662,11 +660,17 @@ def test_add_new_animals(pen: Pen, animals_in_pen: dict[int, Animal], mocker: Mo
         feeds_used=[MagicMock(spec=Feed)],
         body_weight=10,
     )
+    animal_3.nutrients = MagicMock(auto_spec=Nutrients)
+    animal_4.nutrients = MagicMock(auto_spec=Nutrients)
+    mocker.patch.object(animal_3.nutrients, "set_dry_matter_intake")
+    mocker.patch.object(animal_3.nutrients, "set_phosphorus_intake")
+    mocker.patch.object(animal_4.nutrients, "set_dry_matter_intake")
+    mocker.patch.object(animal_4.nutrients, "set_phosphorus_intake")
 
     new_animals = [animal_3, animal_4]
     pen.animals_in_pen = animals_in_pen
     mock_add = mocker.patch.object(pen, "insert_single_animal_into_animals_in_pen_map")
-    mock_supply_2 = MagicMock(spec=NutritionSupply)
+    mock_supply_2 = MagicMock(auto_spec=NutritionSupply)
     mock_set_nutrition_requirements_4 = mocker.patch.object(animal_4, "set_nutrition_requirements")
     mock_set_nutrition_requirements_3 = mocker.patch.object(animal_3, "set_nutrition_requirements")
     mock_calculate = mocker.patch.object(

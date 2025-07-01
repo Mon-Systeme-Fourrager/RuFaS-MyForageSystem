@@ -27,6 +27,7 @@ from RUFAS.biophysical.animal.nutrients.nutrition_supply_calculator import Nutri
 from RUFAS.biophysical.animal.ration.user_defined_ration_manager import UserDefinedRationManager
 from RUFAS.data_structures.feed_storage_to_animal_connection import RUFAS_ID, Feed
 from RUFAS.enums import AnimalCombination
+from RUFAS.general_constants import GeneralConstants
 from RUFAS.input_manager import InputManager
 from RUFAS.output_manager import OutputManager
 
@@ -149,7 +150,7 @@ class Pen:
         self.average_nutrition_evaluation: NutritionEvaluationResults = (
             NutritionEvaluationResults.make_empty_evaluation_results()
         )
-        self.allocated_feeds = set()
+        self.allocated_feeds: set[int] = set()
         self.om = OutputManager()
 
     @property
@@ -500,6 +501,8 @@ class Pen:
                 feeds_used=available_feeds, ration_formulation=self.ration, body_weight=animal.body_weight
             )
             animal.nutrition_supply = nutrient_supply
+            animal.nutrients.set_dry_matter_intake(nutrient_supply.dry_matter)
+            animal.nutrients.set_phosphorus_intake(nutrient_supply.phosphorus)
 
     def insert_animals_into_animals_in_pen_map(self, animals: list[Animal]) -> None:
         """
@@ -641,8 +644,8 @@ class Pen:
             water=pen_animal_excretions.manure_mass - pen_animal_excretions.total_solids,
             ammoniacal_nitrogen=pen_animal_excretions.manure_total_ammoniacal_nitrogen,
             nitrogen=pen_animal_excretions.manure_nitrogen,
-            phosphorus=pen_animal_excretions.phosphorus,
-            potassium=pen_animal_excretions.potassium,
+            phosphorus=pen_animal_excretions.phosphorus * GeneralConstants.GRAMS_TO_KG,
+            potassium=pen_animal_excretions.potassium * GeneralConstants.GRAMS_TO_KG,
             ash=0,
             non_degradable_volatile_solids=pen_animal_excretions.non_degradable_volatile_solids,
             degradable_volatile_solids=pen_animal_excretions.degradable_volatile_solids,
@@ -854,6 +857,8 @@ class Pen:
             animal.nutrition_supply = NutritionSupplyCalculator.calculate_nutrient_supply(
                 feeds_used=feeds_used, ration_formulation=ration_formulation, body_weight=animal.body_weight
             )
+            animal.nutrients.set_dry_matter_intake(animal.nutrition_supply.dry_matter)
+            animal.nutrients.set_phosphorus_intake(animal.nutrition_supply.phosphorus)
 
     def formulate_optimized_ration(  # noqa: C901
         self,
