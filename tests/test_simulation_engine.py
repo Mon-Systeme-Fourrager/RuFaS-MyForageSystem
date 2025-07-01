@@ -462,7 +462,6 @@ def test_initialize_simulation(is_end_to_end_test_run: bool, mocker: MockerFixtu
 
     mock_feed_manager = MagicMock(auto_spec=FeedManager)
     mock_feed_manager_init = mocker.patch("RUFAS.simulation_engine.FeedManager", return_value=mock_feed_manager)
-    mock_feed_manager_setup_stored_feeds = mocker.patch.object(mock_feed_manager, "setup_stored_feeds")
 
     mock_herd_manager = MagicMock(auto_spec=HerdManager)
     mock_herd_manager_init = mocker.patch("RUFAS.simulation_engine.HerdManager", return_value=mock_herd_manager)
