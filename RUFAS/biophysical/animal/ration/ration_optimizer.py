@@ -226,7 +226,7 @@ class RationOptimizer:
             RationOptimizer._calculate_NE_parameters(decision_vector, ration_configuration)
         )
 
-        maintenance_energy_supply = NutritionSupplyCalculator._calculate_actual_maintenance_net_energy(
+        maintenance_energy_supply = NutritionSupplyCalculator.calculate_actual_maintenance_net_energy(
             feeds=feeds, actual_metabolizable_energy=actual_metabolizable_energy
         )
 
@@ -234,7 +234,7 @@ class RationOptimizer:
             feeds=feeds, actual_metabolizable_energy=actual_metabolizable_energy
         )
 
-        lactation_energy_supply = NutritionSupplyCalculator._calculate_actual_lactation_net_energy(
+        lactation_energy_supply = NutritionSupplyCalculator.calculate_actual_lactation_net_energy(
             feeds=feeds,
             actual_metabolizable_energy=actual_metabolizable_energy,
             actual_digestible_energy=actual_digestible_energy,
@@ -269,7 +269,7 @@ class RationOptimizer:
         feeds, intake_nutrient_discount, actual_digestible_energy, actual_metabolizable_energy = (
             RationOptimizer._calculate_NE_parameters(decision_vector, ration_configuration)
         )
-        actual_maintenance_net_energy_supply = NutritionSupplyCalculator._calculate_actual_maintenance_net_energy(
+        actual_maintenance_net_energy_supply = NutritionSupplyCalculator.calculate_actual_maintenance_net_energy(
             actual_metabolizable_energy=actual_metabolizable_energy, feeds=feeds
         )
 
@@ -303,7 +303,7 @@ class RationOptimizer:
             RationOptimizer._calculate_NE_parameters(decision_vector, ration_configuration)
         )
 
-        actual_lactation_net_energy_supply = NutritionSupplyCalculator._calculate_actual_lactation_net_energy(
+        actual_lactation_net_energy_supply = NutritionSupplyCalculator.calculate_actual_lactation_net_energy(
             feeds=feeds,
             actual_metabolizable_energy=actual_metabolizable_energy,
             actual_digestible_energy=actual_digestible_energy,

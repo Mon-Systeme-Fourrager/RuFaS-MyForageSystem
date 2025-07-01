@@ -184,15 +184,15 @@ def test_objective(ration_config: RationConfig) -> None:
 def test_constraints_run(mock_calc: NutritionSupplyCalculator, full_config: RationConfig) -> None:
     """Test all constraints evaluate correctly with mocked inputs."""
     vec = np.array([20.0])
-    mock_calc._calculate_nutrient_intake_discount.return_value = 0.9
-    mock_calc._calculate_actual_metabolizable_energy.return_value = {"feed1": 1.0}
-    mock_calc._calculate_actual_maintenance_net_energy.return_value = 10.0
-    mock_calc._calculate_actual_growth_net_energy.return_value = 10.0
-    mock_calc._calculate_actual_lactation_net_energy.return_value = 10.0
-    mock_calc._calculate_metabolizable_protein_supply.return_value = 1000
-    mock_calc._calculate_calcium_supply.return_value = 25
-    mock_calc._calculate_phosphorus_supply.return_value = 7
-    mock_calc._calculate_forage_neutral_detergent_fiber_content.return_value = 5.0
+    mock_calc.calculate_nutrient_intake_discount.return_value = 0.9
+    mock_calc.calculate_actual_metabolizable_energy.return_value = {"feed1": 1.0}
+    mock_calc.calculate_actual_maintenance_net_energy.return_value = 10.0
+    mock_calc.calculate_actual_growth_net_energy.return_value = 10.0
+    mock_calc.calculate_actual_lactation_net_energy.return_value = 10.0
+    mock_calc.calculate_metabolizable_protein_supply.return_value = 1000
+    mock_calc.calculate_calcium_supply.return_value = 25
+    mock_calc.calculate_phosphorus_supply.return_value = 7
+    mock_calc.calculate_forage_neutral_detergent_fiber_content.return_value = 5.0
 
     assert RationOptimizer.NE_total_constraint(vec, full_config) >= 0
     assert RationOptimizer.NE_maintenance_and_activity_constraint(vec, full_config) >= 0
