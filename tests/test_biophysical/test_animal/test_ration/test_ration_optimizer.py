@@ -2,6 +2,8 @@ import pytest
 import numpy as np
 from unittest.mock import MagicMock, patch
 
+from pytest_mock import MockerFixture
+
 from RUFAS.biophysical.animal.nutrients.nutrition_supply_calculator import NutritionSupplyCalculator
 from RUFAS.biophysical.animal.ration.ration_optimizer import RationOptimizer, RationConfig
 from RUFAS.enums import AnimalCombination
@@ -83,7 +85,7 @@ def full_mock_feed() -> Feed:
 
 
 @pytest.fixture
-def full_mock_requirements():
+def full_mock_requirements() -> NutritionRequirements:
     req = MagicMock(spec=NutritionRequirements)
     req.total_energy_requirement = 5
     req.maintenance_energy = 2
@@ -100,12 +102,12 @@ def full_mock_requirements():
 
 
 @pytest.fixture
-def full_config(full_mock_feed, full_mock_requirements):
+def full_config(full_mock_feed: Feed, full_mock_requirements: NutritionRequirements) -> RationConfig:
     return RationConfig(full_mock_requirements, [full_mock_feed], pen_average_body_weight=600)
 
 
 @pytest.fixture
-def optimizer():
+def optimizer() -> RationOptimizer:
     return RationOptimizer()
 
 
@@ -118,7 +120,7 @@ def test_ration_config_initialization(mock_feed: Feed, mock_requirements: Nutrit
     """Test initialization of RationConfig and derived attributes."""
     config = RationConfig(mock_requirements, [mock_feed], 600)
     assert config.animal_requirements == mock_requirements
-    assert config.feeds_used[0].rufas_id == "feed1"
+    assert str(config.feeds_used[0].rufas_id) == "feed1"
     assert config.price_list == [2.0]
     assert config.feed_minimum_list == [0.0]
     assert config.feed_maximum_list == [10.0]
@@ -130,7 +132,7 @@ def test_convert_decision_vec_to_feeds(ration_config: RationConfig) -> None:
     feeds = RationOptimizer.convert_decision_vec_to_feeds(ration_config, vec)
     assert len(feeds) == 1
     assert feeds[0].amount == 5.0
-    assert feeds[0].info.rufas_id == "feed1"
+    assert str(feeds[0].info.rufas_id) == "feed1"
 
 
 def test_make_ration_from_solution(mock_feed: Feed) -> None:
@@ -152,7 +154,7 @@ def test_build_initial_value_no_previous(ration_config: RationConfig) -> None:
 
 def test_build_initial_value_with_previous() -> None:
     """Test building initial values using a previous solution."""
-    prev = {"feed1": 2.0}
+    prev: dict[int | str, float | str] = {"feed1": 2.0}
     config = MagicMock()
     result = RationOptimizer._build_initial_value(prev, config)
     assert result == [2.0]
@@ -181,18 +183,20 @@ def test_objective(ration_config: RationConfig) -> None:
 
 
 @patch("RUFAS.biophysical.animal.nutrients.nutrition_supply_calculator.NutritionSupplyCalculator")
-def test_constraints_run(mock_calc: NutritionSupplyCalculator, full_config: RationConfig) -> None:
+def test_constraints_run(mock_calc: NutritionSupplyCalculator,
+                         full_config: RationConfig,
+                         mocker: MockerFixture) -> None:
     """Test all constraints evaluate correctly with mocked inputs."""
     vec = np.array([20.0])
-    mock_calc.calculate_nutrient_intake_discount.return_value = 0.9
-    mock_calc.calculate_actual_metabolizable_energy.return_value = {"feed1": 1.0}
-    mock_calc.calculate_actual_maintenance_net_energy.return_value = 10.0
-    mock_calc.calculate_actual_growth_net_energy.return_value = 10.0
-    mock_calc.calculate_actual_lactation_net_energy.return_value = 10.0
-    mock_calc.calculate_metabolizable_protein_supply.return_value = 1000
-    mock_calc.calculate_calcium_supply.return_value = 25
-    mock_calc.calculate_phosphorus_supply.return_value = 7
-    mock_calc.calculate_forage_neutral_detergent_fiber_content.return_value = 5.0
+    mocker.patch.object(mock_calc, "calculate_nutrient_intake_discount", return_value=0.9)
+    mocker.patch.object(mock_calc, "calculate_actual_metabolizable_energy", return_value={"feed1": 1.0})
+    mocker.patch.object(mock_calc, "calculate_actual_maintenance_net_energy", return_value=10.0)
+    mocker.patch.object(mock_calc, "calculate_actual_growth_net_energy", return_value=10.0)
+    mocker.patch.object(mock_calc, "calculate_actual_lactation_net_energy", return_value=10.0)
+    mocker.patch.object(mock_calc, "calculate_metabolizable_protein_supply", return_value=1000)
+    mocker.patch.object(mock_calc, "calculate_calcium_supply", return_value=25)
+    mocker.patch.object(mock_calc, "calculate_phosphorus_supply", return_value=7)
+    mocker.patch.object(mock_calc, "calculate_forage_neutral_detergent_fiber_content", return_value=5.0)
 
     assert RationOptimizer.NE_total_constraint(vec, full_config) >= 0
     assert RationOptimizer.NE_maintenance_and_activity_constraint(vec, full_config) >= 0
