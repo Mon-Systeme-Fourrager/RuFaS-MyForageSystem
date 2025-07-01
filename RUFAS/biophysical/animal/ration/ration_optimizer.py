@@ -175,7 +175,7 @@ class RationOptimizer:
         cls,
         pen_available_feeds: List[Feed],
         solution: OptimizeResult,
-    ) -> dict[int, float | str]:
+    ) -> dict[str, float | str]:
         """
         Generates ration from scipy result.
 
@@ -847,7 +847,7 @@ class RationOptimizer:
     @staticmethod
     def is_constraint_violated(
         solution_x: npt.NDArray[np.float64],
-        constraint: dict[str, Callable[[Any, Any], float] | tuple[RationConfig] | str] | str,
+        constraint: dict[str, Callable[[Any, Any], float] | tuple[RationConfig] | str],
         ration_config: RationConfig,
     ) -> bool:
         """
@@ -879,11 +879,11 @@ class RationOptimizer:
     @staticmethod
     def find_failed_constraints(
         solution_x: npt.NDArray[np.float64],
-        constraints: list[dict[str, Callable[[Any, Any], float] | tuple[RationConfig] | str] | str],
+        constraints: list[Any],
         ration_config: RationConfig,
-    ) -> List[Dict[str, Callable[[Any, Any], float]]]:
+    ) -> list[dict[str, Callable[[Any, Any], float]]]:
         """
-        Returns list of constraints that were not met during optmization step.
+        Returns list of constraints that were not met during optimization step.
 
         Parameters
         ----------
