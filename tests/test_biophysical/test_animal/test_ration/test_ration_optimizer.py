@@ -309,11 +309,7 @@ def test_ndf_constraint_lower_non_zero_intake(mocker: MockerFixture) -> None:
     decision_vector = np.array([1.0, 2.0, 3.0])
     config = MagicMock(RationConfig)
 
-    mock_calc = mocker.patch.object(
-        RationOptimizer,
-        "_calculate_NDF_constraints",
-        return_value=0.42
-    )
+    mock_calc = mocker.patch.object(RationOptimizer, "_calculate_NDF_constraints", return_value=0.42)
 
     result = RationOptimizer.NDF_constraint_lower(decision_vector, config)
 
@@ -335,11 +331,7 @@ def test_ndf_constraint_upper_non_zero_intake(mocker: MockerFixture) -> None:
     decision_vector = np.array([1.0, 2.0, 3.0])
     config = MagicMock(RationConfig)
 
-    mock_calc = mocker.patch.object(
-        RationOptimizer,
-        "_calculate_NDF_constraints",
-        return_value=0.42
-    )
+    mock_calc = mocker.patch.object(RationOptimizer, "_calculate_NDF_constraints", return_value=0.42)
 
     result = RationOptimizer.NDF_constraint_upper(decision_vector, config)
 
@@ -363,16 +355,8 @@ def test_forage_ndf_constraint_non_zero_intake(mocker: MockerFixture) -> None:
     config = MagicMock(RationConfig)
     mock_feeds = MagicMock()
 
-    mocker.patch.object(
-        RationOptimizer,
-        "convert_decision_vec_to_feeds",
-        return_value=mock_feeds
-    )
-    mocker.patch.object(
-        NutritionSupplyCalculator,
-        "calculate_forage_neutral_detergent_fiber_content",
-        return_value=1.8
-    )
+    mocker.patch.object(RationOptimizer, "convert_decision_vec_to_feeds", return_value=mock_feeds)
+    mocker.patch.object(NutritionSupplyCalculator, "calculate_forage_neutral_detergent_fiber_content", return_value=1.8)
 
     result = RationOptimizer.forage_NDF_constraint(decision_vector, config)
     assert result == 15.0
@@ -396,10 +380,7 @@ def test_fat_constraint_non_zero_intake() -> None:
 
     result = RationOptimizer.fat_constraint(decision_vector, config)
 
-    assert result == pytest.approx(
-        7.0 - 0.0333333333,
-        rel=1e-6
-    )
+    assert result == pytest.approx(7.0 - 0.0333333333, rel=1e-6)
 
 
 def test_fat_constraint_zero_intake() -> None:
@@ -437,11 +418,7 @@ def test_attempt_optimization_success(mocker: MockerFixture) -> None:
     mocker.patch("RUFAS.biophysical.animal.ration.ration_optimizer.minimize", return_value=mock_result)
 
     result, config = optimizer.attempt_optimization(
-        pen_average_body_weight,
-        requirements,
-        feeds,
-        animal_comb,
-        previous_ration
+        pen_average_body_weight, requirements, feeds, animal_comb, previous_ration
     )
 
     assert result == mock_result
