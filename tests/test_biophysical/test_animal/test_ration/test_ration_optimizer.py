@@ -194,9 +194,9 @@ def test_objective(ration_config: RationConfig) -> None:
 
 
 @patch("RUFAS.biophysical.animal.nutrients.nutrition_supply_calculator.NutritionSupplyCalculator")
-def test_constraints_run(mock_calc: NutritionSupplyCalculator,
-                         full_config: RationConfig,
-                         mocker: MockerFixture) -> None:
+def test_constraints_run(
+    mock_calc: NutritionSupplyCalculator, full_config: RationConfig, mocker: MockerFixture
+) -> None:
     """Test all constraints evaluate correctly with mocked inputs."""
     vec = np.array([20.0])
     mocker.patch.object(mock_calc, "calculate_nutrient_intake_discount", return_value=0.9)
