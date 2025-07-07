@@ -17,6 +17,7 @@ from SALib.sample import morris as morris_sampler
 from RUFAS.biophysical.animal.herd_factory import HerdFactory
 from RUFAS.data_collection_app_updater import DataCollectionAppUpdater
 from RUFAS.e2e_test_results_handler import E2ETestResultsHandler
+from RUFAS.general_constants import GeneralConstants
 from RUFAS.input_manager import InputManager
 from RUFAS.output_manager import LogVerbosity, OutputManager
 from RUFAS.simulation_engine import SimulationEngine
@@ -128,6 +129,13 @@ class TaskManager:
         }
         self.output_manager.add_log("Task Manager Start", "Task Manager Started.", info_map)
         is_data_valid = self.input_manager.start_data_processing(metadata_path)
+        task_config: dict[str, Any] = self.input_manager.get_data("tasks")
+        for task in task_config.get("tasks", []):
+            filters_path = Path(task["filters_directory"])
+            self.output_manager.validate_filter_content(filters_path)
+
+        print(str(GeneralConstants.PROTEIN_TO_NITROGEN) + "TM") #6.18
+
         if not is_data_valid:
             TaskManager.handle_post_processing(
                 args={
@@ -142,10 +150,6 @@ class TaskManager:
                 should_flush_im_pool=True,
             )
             raise Exception("Task Manager's input data is invalid.")
-        task_config: dict[str, Any] = self.input_manager.get_data("tasks")
-        for task in task_config.get("tasks", []):
-            filters_path = Path(task["filters_directory"])
-            self.output_manager.validate_filter_content(filters_path)
 
         workers: int = task_config["parallel_workers"]
         self.output_manager.add_log(
@@ -718,6 +722,7 @@ class TaskManager:
         should_flush_im_pool: bool
             Whether to flush the input manager pool.
         """
+        print(str(GeneralConstants.PROTEIN_TO_NITROGEN) + "In handle post processing")
         info_map = {
             "class": TaskManager.__name__,
             "function": TaskManager.handle_post_processing.__name__,
