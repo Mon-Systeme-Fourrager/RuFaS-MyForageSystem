@@ -349,6 +349,15 @@ class HerdStatistics:
         self.avg_cow_culling_age = 0.0
         self.avg_mature_body_weight = 0.0
 
+        # self.animals_deaths_by_stage: dict[AnimalType, int] = {
+        #     AnimalType.CALF: 0,
+        #     AnimalType.HEIFER_I: 0,
+        #     AnimalType.HEIFER_II: 0,
+        #     AnimalType.HEIFER_III: 0,
+        #     AnimalType.LAC_COW: 0,
+        #     AnimalType.DRY_COW: 0,
+        # }
+
     def reset_parity(self) -> None:
         """Resets parity-based attributes."""
         for parity in self.num_cow_for_parity:
