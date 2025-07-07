@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from random import shuffle
-from typing import Any, List
+from typing import Any
 
 import matplotlib.pyplot as plt
 
@@ -185,16 +185,16 @@ class AnimalPopulation:
             + self.heiferIIs
             + self.heiferIIIs
             + self.cows
-            + self.get_cows_by_parity_and_milking(1, True)
-            + self.get_cows_by_parity_and_milking(2, True)
-            + self.get_cows_by_parity_and_milking(3, True)
-            + self.get_cows_by_parity_and_milking(4, True)
-            + self.get_cows_by_parity_and_milking(5, True)
-            + self.get_cows_by_parity_and_milking(1, False)
-            + self.get_cows_by_parity_and_milking(2, False)
-            + self.get_cows_by_parity_and_milking(3, False)
-            + self.get_cows_by_parity_and_milking(4, False)
-            + self.get_cows_by_parity_and_milking(5, False)
+            + self.filter_cow_status(1, True)
+            + self.filter_cow_status(2, True)
+            + self.filter_cow_status(3, True)
+            + self.filter_cow_status(4, True)
+            + self.filter_cow_status(5, True)
+            + self.filter_cow_status(1, False)
+            + self.filter_cow_status(2, False)
+            + self.filter_cow_status(3, False)
+            + self.filter_cow_status(4, False)
+            + self.filter_cow_status(5, False)
             + self.replacement
         )
         ids = [animal.id for animal in all_animals]
@@ -210,34 +210,34 @@ class AnimalPopulation:
             "heiferIIIs": [dict(heiferIII.get_animal_values()) for heiferIII in self.heiferIIIs],
             "cows": [dict(cow.get_animal_values()) for cow in self.cows],
             "cows_parity_1_milking": [
-                dict(cow.get_animal_values()) for cow in self.get_cows_by_parity_and_milking(1, True)
+                dict(cow.get_animal_values()) for cow in self.filter_cow_status(1, True)
             ],
             "cows_parity_2_milking": [
-                dict(cow.get_animal_values()) for cow in self.get_cows_by_parity_and_milking(2, True)
+                dict(cow.get_animal_values()) for cow in self.filter_cow_status(2, True)
             ],
             "cows_parity_3_milking": [
-                dict(cow.get_animal_values()) for cow in self.get_cows_by_parity_and_milking(3, True)
+                dict(cow.get_animal_values()) for cow in self.filter_cow_status(3, True)
             ],
             "cows_parity_4_milking": [
-                dict(cow.get_animal_values()) for cow in self.get_cows_by_parity_and_milking(4, True)
+                dict(cow.get_animal_values()) for cow in self.filter_cow_status(4, True)
             ],
             "cows_parity_5_milking": [
-                dict(cow.get_animal_values()) for cow in self.get_cows_by_parity_and_milking(5, True)
+                dict(cow.get_animal_values()) for cow in self.filter_cow_status(5, True)
             ],
             "cows_parity_1_not_milking": [
-                dict(cow.get_animal_values()) for cow in self.get_cows_by_parity_and_milking(1, False)
+                dict(cow.get_animal_values()) for cow in self.filter_cow_status(1, False)
             ],
             "cows_parity_2_not_milking": [
-                dict(cow.get_animal_values()) for cow in self.get_cows_by_parity_and_milking(2, False)
+                dict(cow.get_animal_values()) for cow in self.filter_cow_status(2, False)
             ],
             "cows_parity_3_not_milking": [
-                dict(cow.get_animal_values()) for cow in self.get_cows_by_parity_and_milking(3, False)
+                dict(cow.get_animal_values()) for cow in self.filter_cow_status(3, False)
             ],
             "cows_parity_4_not_milking": [
-                dict(cow.get_animal_values()) for cow in self.get_cows_by_parity_and_milking(4, False)
+                dict(cow.get_animal_values()) for cow in self.filter_cow_status(4, False)
             ],
             "cows_parity_5_not_milking": [
-                dict(cow.get_animal_values()) for cow in self.get_cows_by_parity_and_milking(5, False)
+                dict(cow.get_animal_values()) for cow in self.filter_cow_status(5, False)
             ],
             "replacement": [dict(replacement.get_animal_values()) for replacement in self.replacement],
         }
@@ -340,7 +340,7 @@ class AnimalPopulation:
             shuffle(self.replacement)
         return self.replacement
 
-    def get_cows_by_parity_and_milking(self, parity: int, is_milking: bool, days_born: int = 0) -> list[Animal]:
+    def filter_cow_status(self, parity: int, is_milking: bool, days_born: int = 0) -> list[Animal]:
         """
         Get the list of cows with the provided parity and milking condition
         Parameters
@@ -363,7 +363,6 @@ class AnimalPopulation:
             for cow in self.cows
             if cow.calves == parity and cow.is_milking == is_milking and cow.days_born >= days_born
         ]
-
 
     @staticmethod
     def _average(data: list[int | float]) -> float:
