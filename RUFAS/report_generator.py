@@ -156,7 +156,7 @@ class ReportGenerator:
         """
         Initializes the ReportGenerator.
         """
-
+        print(str(GeneralConstants.PROTEIN_TO_NITROGEN) + "RG")
         self.reports: dict[str, dict[str, list[Any]]] = {}
         self.time = time
 
