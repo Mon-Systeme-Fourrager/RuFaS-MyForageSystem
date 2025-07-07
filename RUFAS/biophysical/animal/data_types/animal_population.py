@@ -341,45 +341,6 @@ class AnimalPopulation:
         return [cow for cow in self.cows if cow.calves == parity and cow.is_milking == is_milking and cow.days_born >=
                 days_born]
 
-    @property
-    def cows_parity_1_milking(self) -> List[Animal]:
-        return [cow for cow in self.cows if cow.calves == 1 and cow.is_milking]
-
-    @property
-    def cows_parity_1_not_milking(self) -> List[Animal]:
-        return [cow for cow in self.cows if cow.calves == 1 and not cow.is_milking]
-
-    @property
-    def cows_parity_2_milking(self) -> List[Animal]:
-        return [cow for cow in self.cows if cow.calves == 2 and cow.is_milking]
-
-    @property
-    def cows_parity_2_not_milking(self) -> List[Animal]:
-        return [cow for cow in self.cows if cow.calves == 2 and not cow.is_milking]
-
-    @property
-    def cows_parity_3_milking(self) -> List[Animal]:
-        return [cow for cow in self.cows if cow.calves == 3 and cow.is_milking]
-
-    @property
-    def cows_parity_3_not_milking(self) -> List[Animal]:
-        return [cow for cow in self.cows if cow.calves == 3 and not cow.is_milking]
-
-    @property
-    def cows_parity_4_milking(self) -> List[Animal]:
-        return [cow for cow in self.cows if cow.calves == 4 and cow.is_milking]
-
-    @property
-    def cows_parity_4_not_milking(self) -> List[Animal]:
-        return [cow for cow in self.cows if cow.calves == 4 and not cow.is_milking]
-
-    @property
-    def cows_parity_5_milking(self) -> List[Animal]:
-        return [cow for cow in self.cows if cow.calves == 5 and cow.is_milking]
-
-    @property
-    def cows_parity_5_not_milking(self) -> List[Animal]:
-        return [cow for cow in self.cows if cow.calves == 5 and not cow.is_milking]
 
     @staticmethod
     def _average(data: list[int | float]) -> float:
