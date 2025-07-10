@@ -338,9 +338,14 @@ class FeedManager:
         current_feed_totals = self._query_available_feed_totals(list(requested_feeds.requested_feed.keys()))
         feeds_to_purchase = {id: 0.0 for id in requested_feeds.requested_feed.keys()}
         for feed_id, amount_requested in requested_feeds.requested_feed.items():
+            feed_info = next(
+                (available_feed for available_feed in self.available_feeds if available_feed.rufas_id == feed_id), None
+            )
+            if feed_info is None:
+                raise ValueError(f"Trying to purchase unavailable feed {feed_id} during ration interval purchases.")
             available_amount = current_feed_totals[feed_id]
 
-            amount_to_purchase = max(amount_requested - available_amount, 0.0)
+            amount_to_purchase = max(amount_requested - available_amount, 0.0) * (1 + feed_info.buffer)
             feeds_to_purchase[feed_id] = amount_to_purchase
 
         self.purchase_feed(feeds_to_purchase, time, purchase_type="ration_interval")
