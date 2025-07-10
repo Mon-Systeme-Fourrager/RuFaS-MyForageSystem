@@ -5,7 +5,7 @@
     "manure_management_specification": "manure_schedule_2",
     "tillage_management_specification": "tillage_schedule_2",
     "field_size": 35.0,
-    "absolute_latitude": 43.5,
+    "absolute_latitude": 42.07,
     "longitude": -89.4,
     "minimum_daylength": 9.0,
     "seasonal_high_water_table": false,
