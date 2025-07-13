@@ -407,13 +407,20 @@ class TaskManager:
         return single_run_args
 
     def _run_tasks(
-        self, single_run_args: List[Dict[str, Any]], produce_graphics: bool, metadata_depth_limit: int, workers: int,
-        metadata_path: Path
+        self,
+        single_run_args: List[Dict[str, Any]],
+        produce_graphics: bool,
+        metadata_depth_limit: int,
+        workers: int,
+        metadata_path: Path,
     ) -> None:
         """Runs the tasks based on the provided arguments."""
         task_with_args = partial(
-            self.task, produce_graphics=produce_graphics, metadata_depth_limit=metadata_depth_limit, workers=workers,
-            metadata_path=metadata_path
+            self.task,
+            produce_graphics=produce_graphics,
+            metadata_depth_limit=metadata_depth_limit,
+            workers=workers,
+            metadata_path=metadata_path,
         )
         results = self.pool.imap(task_with_args, single_run_args)
         failed = []
@@ -441,8 +448,11 @@ class TaskManager:
 
     @staticmethod
     def task(
-        args: Dict[str, Any], produce_graphics: bool, workers: int, metadata_depth_limit: int | None,
-        metadata_path: Path
+        args: Dict[str, Any],
+        produce_graphics: bool,
+        workers: int,
+        metadata_depth_limit: int | None,
+        metadata_path: Path,
     ) -> str | None:
         """Executes a single task with specified arguments."""
         info_map = {
