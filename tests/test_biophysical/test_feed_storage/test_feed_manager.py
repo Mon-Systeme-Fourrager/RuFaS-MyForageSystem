@@ -476,8 +476,9 @@ def test_manage_planning_cycle_purchases(feed_manager: FeedManager, mocker: Mock
     mock_purchase_feed.assert_called_once_with(expected_feeds_to_purchase, mock_time, purchase_type="planning_cycle")
 
 
-def test_manage_ration_interval_purchases(feed_manager: FeedManager, mocker: MockerFixture,
-                                          mock_available_feeds: list[Any]) -> None:
+def test_manage_ration_interval_purchases(
+    feed_manager: FeedManager, mocker: MockerFixture, mock_available_feeds: list[Any]
+) -> None:
     """Test that requests for feed made at beginning of a ration interval are handled correctly."""
     mock_purchase_feed = mocker.patch.object(feed_manager, "purchase_feed")
     mocker.patch.object(
@@ -871,7 +872,7 @@ def test_setup_available_feeds(
         "on_farm_cost": 0.01,
         "purchase_cost": 1.0,
         "shrink_factor": 0.0,
-        "buffer": 0.0
+        "buffer": 0.0,
     } | feed_lib[1]
     second_expected_call_args = {
         "rufas_id": 2,
@@ -879,7 +880,7 @@ def test_setup_available_feeds(
         "on_farm_cost": 0.02,
         "purchase_cost": 2.0,
         "shrink_factor": 0.0,
-        "buffer": 0.0
+        "buffer": 0.0,
     } | feed_lib[2]
     expected_calls = [mocker.call(**first_expected_call_args), mocker.call(**second_expected_call_args)]
     feed_rep_init = mocker.patch.object(feed_rep, "__init__", return_value=None)
