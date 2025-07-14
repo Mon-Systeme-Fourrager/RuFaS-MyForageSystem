@@ -298,19 +298,6 @@ def test_find_failed_constraints(full_config: RationConfig) -> None:
     assert len(failed) == 1
 
 
-def test_ndf_constraint_lower_non_zero_intake(mocker: MockerFixture) -> None:
-    """Tests ndf_constraint_lower for non-zero intake."""
-    decision_vector = np.array([1.0, 2.0, 3.0])
-    config = MagicMock(RationConfig)
-
-    mock_calc = mocker.patch.object(RationOptimizer, "_calculate_NDF_constraints", return_value=0.42)
-
-    result = RationOptimizer.NDF_constraint_lower(decision_vector, config)
-
-    mock_calc.assert_called_once_with(decision_vector, config, 6.0)
-    assert result == 0.42
-
-
 def test_ndf_constraint_lower_zero_intake() -> None:
     """Tests ndf_constraint_lower for zero intake."""
     decision_vector = np.array([0.0, 0.0, 0.0])
@@ -318,19 +305,6 @@ def test_ndf_constraint_lower_zero_intake() -> None:
     result = RationOptimizer.NDF_constraint_lower(decision_vector, config)
 
     assert result == -1.0
-
-
-def test_ndf_constraint_upper_non_zero_intake(mocker: MockerFixture) -> None:
-    """Tests ndf_constraint_upper for non-zero intake."""
-    decision_vector = np.array([1.0, 2.0, 3.0])
-    config = MagicMock(RationConfig)
-
-    mock_calc = mocker.patch.object(RationOptimizer, "_calculate_NDF_constraints", return_value=0.42)
-
-    result = RationOptimizer.NDF_constraint_upper(decision_vector, config)
-
-    mock_calc.assert_called_once_with(decision_vector, config, 6.0)
-    assert result == -0.42
 
 
 def test_ndf_constraint_upper_zero_intake() -> None:

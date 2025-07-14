@@ -527,8 +527,8 @@ class RationOptimizer:
         ----------
         decision_vector : numpy.ndarray
             The decision vector used in the scipy minimize method.
-        ration_configuration: RationConfig object
-            Attributes are animal requirement and feed supply information required for optimization.
+        ration_config: RationConfig object
+            Attributes are animal requirement and feed supply information required for optimization
 
         Returns
         -------
@@ -537,9 +537,13 @@ class RationOptimizer:
 
         """
         dry_matter_intake = sum(decision_vector)
-
         if dry_matter_intake != 0:
-            return RationOptimizer._calculate_NDF_constraints(decision_vector, ration_configuration, dry_matter_intake)
+            return float(
+                (
+                    (sum(np.multiply(decision_vector, ration_configuration.NDF_list)) / dry_matter_intake)
+                    - AnimalModuleConstants.MINIMUM_RATION_NDF
+                )
+            )
         else:
             return -1.0
 
@@ -553,8 +557,8 @@ class RationOptimizer:
         ----------
         decision_vector : numpy.ndarray
             The decision vector used in the scipy minimize method.
-        ration_configuration: RationConfig object
-            Attributes are animal requirement and feed supply information required for optimization.
+        ration_config: RationConfig object
+            Attributes are animal requirement and feed supply information required for optimization
 
         Returns
         -------
@@ -564,40 +568,14 @@ class RationOptimizer:
         """
         dry_matter_intake = sum(decision_vector)
         if dry_matter_intake != 0:
-            return (
-                RationOptimizer._calculate_NDF_constraints(decision_vector, ration_configuration, dry_matter_intake)
-                * -1
+            return float(
+                (
+                    -(sum(np.multiply(decision_vector, ration_configuration.NDF_list)) / dry_matter_intake)
+                    + AnimalModuleConstants.MAXIMUM_RATION_NDF
+                )
             )
         else:
             return -1.0
-
-    @staticmethod
-    def _calculate_NDF_constraints(
-        decision_vector: npt.NDArray[np.float64], ration_configuration: RationConfig, dry_matter_intake: int
-    ) -> float:
-        """
-
-        Parameters
-        ----------
-        decision_vector : numpy.ndarray
-            The decision vector used in the scipy minimize method.
-        ration_configuration: RationConfig object
-            Attributes are animal requirement and feed supply information required for optimization.
-        dry_matter_intake : int
-            Amount of dry matter intake.
-
-        Returns
-        -------
-        float
-            The NDF constraint when there's dry matter intake.
-
-        """
-        return float(
-            (
-                (sum(np.multiply(decision_vector, ration_configuration.NDF_list)) / dry_matter_intake)
-                - AnimalModuleConstants.MINIMUM_RATION_NDF
-            )
-        )
 
     @staticmethod
     def forage_NDF_constraint(decision_vector: npt.NDArray[np.float64], ration_configuration: RationConfig) -> float:
