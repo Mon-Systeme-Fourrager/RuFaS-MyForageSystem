@@ -251,7 +251,8 @@ class E2ETestResultsHandler:
         """Retrieves the paths to test results and associated information from the InputManager."""
         im = InputManager()
         result_paths: list[dict[str, str]] = im.get_data(
-            f"end_to_end_testing_result_paths.end_to_end_test_result_paths.{output_prefix}")
+            f"end_to_end_testing_result_paths.end_to_end_test_result_paths.{output_prefix}"
+        )
         test_result_paths: list[ResultPathType] = []
         for path_set in result_paths:
             test_result_paths.append(
