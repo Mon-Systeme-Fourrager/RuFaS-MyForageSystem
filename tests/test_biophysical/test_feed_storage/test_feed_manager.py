@@ -522,6 +522,36 @@ def test_query_available_feed_totals(feed_manager: FeedManager, mocker: MockerFi
     assert result == expected_feed_totals
 
 
+def test_query_available_feed_totals_with_projection(feed_manager: FeedManager, mocker: MockerFixture) -> None:
+    """Test that totals of available feeds are calculated correctly."""
+    mock_all_farmgrown_feeds_held: list[HarvestedCrop] = [
+        feed_1 := MagicMock(auto_spec=HarvestedCrop),
+        feed_2 := MagicMock(auto_spec=HarvestedCrop),
+        feed_3 := MagicMock(auto_spec=HarvestedCrop),
+    ]
+    feed_1.rufas_ids, feed_2.rufas_ids, feed_3.rufas_ids = ([1, 5, 7], [2, 4, 6], [3, 8, 10])
+    feed_1.dry_matter_mass, feed_2.dry_matter_mass, feed_3.dry_matter_mass = (1.1, 2.2, 3.3)
+
+    mocker.patch.object(feed_manager, "_select_rufas_id_for_harvested_crop", side_effect=[1, 2, None])
+
+    feed_manager.purchased_feed_storage = PurchasedFeedStorage()
+    feed_manager.purchased_feed_storage.receive_feed(
+        PurchasedFeed(rufas_id=2, dry_matter_mass=2.2, storage_time=datetime.today().date())
+    )
+    feed_manager.purchased_feed_storage.receive_feed(
+        PurchasedFeed(rufas_id=5, dry_matter_mass=5.5, storage_time=datetime.today().date())
+    )
+
+    expected_feed_totals = {1: 2.1, 2: 12.2, 3: 1.0}
+    time = MagicMock(RufasTime)
+    feed = [PurchasedFeed(1, 1, time), PurchasedFeed(2, 10, time), PurchasedFeed(3, 1, time)]
+
+    result = feed_manager._query_available_feed_totals([1, 2, 3], mock_all_farmgrown_feeds_held,
+                                                       projected_shrunk_storage=feed)
+
+    assert result == expected_feed_totals
+
+
 def test_query_available_feed_totals_no_stored_crops_input(feed_manager: FeedManager, mocker: MockerFixture) -> None:
     """Test that totals of available feeds are calculated correctly when user did not specify the stored_crops input."""
     feed_1, feed_2, feed_3 = (MagicMock(auto_spec=HarvestedCrop) for _ in range(3))

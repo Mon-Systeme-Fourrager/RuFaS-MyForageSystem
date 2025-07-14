@@ -242,7 +242,6 @@ class FeedManager:
             ) <= self.runtime_purchase_allowance.allowances[feed_id] + tolerance
             is_request_unfulfillable = not is_fulfillable_with_inventory and not is_fulfillable_with_purchase
             if is_request_unfulfillable:
-                print("Reformulation happening!!!!!!!!!!!")
                 return False
             self._om.add_variable(
                 f"{feed_id}_requested_amount",

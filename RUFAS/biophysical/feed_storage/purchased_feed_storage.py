@@ -45,6 +45,7 @@ class PurchasedFeedStorage:
     def project_shrinkage(self, days_interval: int, available_feeds: list[NASEMFeed | NRCFeed]) -> list[PurchasedFeed]:
         """Project the stored purchased feed shrinkage."""
         copied_stored = deepcopy(self.stored)
+        print(self.stored, copied_stored)
         for feed in copied_stored:
             feed_id = feed.rufas_id
             feed_info = next(
