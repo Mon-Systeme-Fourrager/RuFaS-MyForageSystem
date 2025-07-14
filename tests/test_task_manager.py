@@ -407,7 +407,7 @@ def test_handle_end_to_end_testing(
     args = {
         "json_output_directory": "json_path",
         "convert_variable_table_path": "compare_path",
-        "output_prefix": "dummy_prefix"
+        "output_prefix": "dummy_prefix",
     }
     compare_outputs = mocker.patch(
         "RUFAS.e2e_test_results_handler.E2ETestResultsHandler.compare_actual_and_expected_test_results"
@@ -426,7 +426,8 @@ def test_handle_end_to_end_testing(
         should_flush_im_pool=True,
     )
     compare_outputs.assert_called_once_with(
-        args["json_output_directory"], args["convert_variable_table_path"], args["output_prefix"])
+        args["json_output_directory"], args["convert_variable_table_path"], args["output_prefix"]
+    )
     assert add_log.call_count == 2
     assert post_processing.call_count == 1
 
