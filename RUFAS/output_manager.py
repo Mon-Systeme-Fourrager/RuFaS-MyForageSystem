@@ -1192,7 +1192,7 @@ class OutputManager(object):
         else:
             raise NotADirectoryError("The specified path must be a directory")
 
-    def _load_filter_file_content(self, path: Path) -> tuple[list[dict[str, str | int]], str | None]:
+    def _load_filter_file_content(self, path: Path) -> tuple[list[dict[str, Any]], str | None]:
         """
         Loads and processes the content of a filter file from the specified path.
 
