@@ -200,18 +200,7 @@ class FeedManager:
 
     def process_shrinkage(self, time: RufasTime) -> None:
         """Process the shrinkage of purchased feed."""
-        for feed in self.purchased_feed_storage.stored:
-            feed_id = feed.rufas_id
-            feed_info = next(
-                (available_feed for available_feed in self.available_feeds if available_feed.rufas_id == feed_id), None
-            )
-            if feed_info is None:
-                raise ValueError(f"Trying to shrink unavailable feed {feed_id} during purchased feed shrinkage.")
-
-            shrink_factor = feed_info.shrink_factor
-            delta = time.current_date.date() - feed.storage_time
-            if delta.days > 3:
-                feed.dry_matter_mass = feed.dry_matter_mass * (1 - shrink_factor)
+        self.purchased_feed_storage.process_shrinkage(time=time, available_feeds=self.available_feeds)
 
     def execute_daily_routine(self, time: RufasTime) -> None:
         """Executes daily routine of the Feed Manager."""
@@ -253,6 +242,7 @@ class FeedManager:
             ) <= self.runtime_purchase_allowance.allowances[feed_id] + tolerance
             is_request_unfulfillable = not is_fulfillable_with_inventory and not is_fulfillable_with_purchase
             if is_request_unfulfillable:
+                print("Reformulation happening!!!!!!!!!!!")
                 return False
             self._om.add_variable(
                 f"{feed_id}_requested_amount",
@@ -322,7 +312,12 @@ class FeedManager:
 
         available_feed_rufas_ids = [feed.rufas_id for feed in self._available_feeds]
 
-        available_feed_totals = self._query_available_feed_totals(available_feed_rufas_ids, projected_crops)
+        projected_shrinkage = self.purchased_feed_storage.project_shrinkage(days_in_the_future,
+                                                                            self._available_feeds)
+
+        available_feed_totals = self._query_available_feed_totals(available_feed_rufas_ids,
+                                                                  projected_crops,
+                                                                  projected_shrinkage)
 
         inventory: dict[RUFAS_ID, float] = {}
         for feed in self._available_feeds:
@@ -362,7 +357,8 @@ class FeedManager:
         self.purchase_feed(feeds_to_purchase, time, purchase_type="ration_interval")
 
     def _query_available_feed_totals(
-        self, query_feed_ids: list[RUFAS_ID], stored_crops: list[HarvestedCrop] | None = None
+        self, query_feed_ids: list[RUFAS_ID], stored_crops: list[HarvestedCrop] | None = None,
+            projected_shrunk_storage: list[PurchasedFeed] | None = None
     ) -> dict[RUFAS_ID, float]:
         """
         Gets the current dry matter mass of each feed ID currently in storage.
@@ -373,6 +369,9 @@ class FeedManager:
             List of RuFaS Feed IDs to get amounts of feed stored for.
         stored_crops : list[HarvestedCrop] | None, default None
             Stored crops to tally feed amounts from. If None, tallies feed amounts from all feeds currently stored.
+        projected_shrunk_storage : list[PurchasedFeed] , default None
+            The projected amount of feed after shrinkage.
+             If None, tallies feed amounts from purchased feeds currently stored.
 
         Returns
         -------
@@ -395,7 +394,12 @@ class FeedManager:
                 continue
             feed_totals[feed_id] += farmgrown_feed.dry_matter_mass
 
-        for purchased_feed in self.purchased_feed_storage.stored:
+        if projected_shrunk_storage is None:
+            purchased_feed_storage = self.purchased_feed_storage.stored
+        else:
+            purchased_feed_storage = projected_shrunk_storage
+
+        for purchased_feed in purchased_feed_storage:
             if purchased_feed.rufas_id in feed_totals:
                 feed_totals[purchased_feed.rufas_id] += purchased_feed.dry_matter_mass
 
