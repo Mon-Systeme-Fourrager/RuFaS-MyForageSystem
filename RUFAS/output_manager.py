@@ -1192,7 +1192,7 @@ class OutputManager(object):
         else:
             raise NotADirectoryError("The specified path must be a directory")
 
-    def _load_filter_file_content(self, path: Path) -> tuple[list[dict[str, str | int]], str | None]:
+    def _load_filter_file_content(self, path: Path) -> tuple[list[dict[str, Any]], str | None]:
         """
         Loads and processes the content of a filter file from the specified path.
 
@@ -2413,6 +2413,38 @@ class OutputManager(object):
             else:
                 validator = key_validators[key]
                 validator(value, key, filter_name)
+
+    def validate_filter_constant_content(self, filters_dir_path: Path) -> None:
+        """
+        Validates the content of the filters, including keys and values.
+
+        Parameters
+        ----------
+        filters_dir_path : Path
+            Path of the directory containing the files containing the keys for filtering.
+
+        """
+        list_of_filter_files = self._list_filter_files_in_dir(filters_dir_path)
+        for filter_file in list_of_filter_files:
+            input_path = filters_dir_path / filter_file
+            filter_contents, direction = self._load_filter_file_content(input_path)
+            for filter_content in filter_contents:
+                if "constants" in filter_content:
+                    consts = filter_content["constants"]
+                    for const_name, user_value in consts.items():
+                        if hasattr(GeneralConstants, const_name):
+                            current_value = getattr(GeneralConstants, const_name)
+                            if user_value != current_value:
+                                setattr(GeneralConstants, const_name, user_value)
+                                self.add_warning(
+                                    "GeneralConstants overwritten.",
+                                    f"{const_name} overwritten by the report filter value,"
+                                    f" the value is now set to {user_value}",
+                                    info_map={
+                                        "class": self.__class__.__name__,
+                                        "function": self.validate_filter_content.__name__,
+                                    },
+                                )
 
     def validate_direction(self, value: Any, content_name: str, filter_name: str) -> None:
         """
