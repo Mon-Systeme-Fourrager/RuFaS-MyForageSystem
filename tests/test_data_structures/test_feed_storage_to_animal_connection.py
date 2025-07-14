@@ -119,7 +119,7 @@ def mock_NASEM_feed() -> dict[str, Any]:
         "Abs_manganesum": 0.95,
         "Abs_zinc": 0.96,
         "buffer": 0.0,
-        "shrink_factor": 0.0
+        "shrink_factor": 0.0,
     }
 
 
