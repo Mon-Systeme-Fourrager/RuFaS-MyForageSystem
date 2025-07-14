@@ -221,8 +221,8 @@ class RationOptimizer:
             Non-negative value indicates that supply meets or exceeds the requirement for total net energy.
 
         """
-        feeds, _, actual_digestible_energy, actual_metabolizable_energy = (
-            RationOptimizer._calculate_NE_parameters(decision_vector, ration_configuration)
+        feeds, _, actual_digestible_energy, actual_metabolizable_energy = RationOptimizer._calculate_NE_parameters(
+            decision_vector, ration_configuration
         )
 
         maintenance_energy_supply = NutritionSupplyCalculator.calculate_actual_maintenance_net_energy(
@@ -265,8 +265,8 @@ class RationOptimizer:
             Non-negative value indicates that supply is greater than the requirements for maintenance and activity.
 
         """
-        feeds, _, _, actual_metabolizable_energy = (
-            RationOptimizer._calculate_NE_parameters(decision_vector, ration_configuration)
+        feeds, _, _, actual_metabolizable_energy = RationOptimizer._calculate_NE_parameters(
+            decision_vector, ration_configuration
         )
         actual_maintenance_net_energy_supply = NutritionSupplyCalculator.calculate_actual_maintenance_net_energy(
             actual_metabolizable_energy=actual_metabolizable_energy, feeds=feeds
@@ -298,8 +298,8 @@ class RationOptimizer:
             Non-negative value indicates that supply is greater than the requirements for lactation.
 
         """
-        feeds, _, actual_digestible_energy, actual_metabolizable_energy = (
-            RationOptimizer._calculate_NE_parameters(decision_vector, ration_configuration)
+        feeds, _, actual_digestible_energy, actual_metabolizable_energy = RationOptimizer._calculate_NE_parameters(
+            decision_vector, ration_configuration
         )
 
         actual_lactation_net_energy_supply = NutritionSupplyCalculator.calculate_actual_lactation_net_energy(
@@ -333,8 +333,8 @@ class RationOptimizer:
             Non-negative value indicates that supply is greater than the requirements for growth.
 
         """
-        feeds, _, _, actual_metabolizable_energy = (
-            RationOptimizer._calculate_NE_parameters(decision_vector, ration_configuration)
+        feeds, _, _, actual_metabolizable_energy = RationOptimizer._calculate_NE_parameters(
+            decision_vector, ration_configuration
         )
 
         actual_growth_net_energy_supply = NutritionSupplyCalculator.calculate_actual_growth_net_energy(
@@ -778,9 +778,9 @@ class RationOptimizer:
         return optimized_ration_attempt, ration_config
 
     @staticmethod
-    def _check_initial_bounds(bounds: list[tuple[float, float]],
-                              initial_decision_vector: np.ndarray[tuple[int, ...], np.dtype]
-                              ) -> np.ndarray[tuple[int, ...], np.dtype]:
+    def _check_initial_bounds(
+        bounds: list[tuple[float, float]], initial_decision_vector: np.ndarray[tuple[int, ...], np.dtype]
+    ) -> np.ndarray[tuple[int, ...], np.dtype]:
         for i in range(0, len(initial_decision_vector)):
             if initial_decision_vector[i] < bounds[i][0] or initial_decision_vector[i] > bounds[i][1]:
                 initial_decision_vector[i] = np.clip(initial_decision_vector[i], bounds[i][0], bounds[i][1])
