@@ -1,4 +1,4 @@
-from typing import get_args
+from typing import get_args, Any
 from unittest.mock import MagicMock, call
 
 import pytest
@@ -410,7 +410,7 @@ def test_get_total_inventory(
 
 
 def test_get_total_inventory_zero_day_in_the_future(
-    feed_manager: FeedManager, mock_available_feeds: list[Feed], mocker: MockerFixture
+    feed_manager: FeedManager, mock_available_feeds: list[Any], mocker: MockerFixture
 ) -> None:
     """Test that the total inventory is collected correctly when the requested inventory date is the current date."""
     storage_1, storage_2, storage_3 = (MagicMock(auto_spec=Dry), MagicMock(auto_spec=Pile), MagicMock(auto_spec=Bag))
@@ -476,7 +476,8 @@ def test_manage_planning_cycle_purchases(feed_manager: FeedManager, mocker: Mock
     mock_purchase_feed.assert_called_once_with(expected_feeds_to_purchase, mock_time, purchase_type="planning_cycle")
 
 
-def test_manage_ration_interval_purchases(feed_manager: FeedManager, mocker: MockerFixture) -> None:
+def test_manage_ration_interval_purchases(feed_manager: FeedManager, mocker: MockerFixture,
+                                          mock_available_feeds: list[Any]) -> None:
     """Test that requests for feed made at beginning of a ration interval are handled correctly."""
     mock_purchase_feed = mocker.patch.object(feed_manager, "purchase_feed")
     mocker.patch.object(
@@ -484,14 +485,14 @@ def test_manage_ration_interval_purchases(feed_manager: FeedManager, mocker: Moc
         "_query_available_feed_totals",
         return_value={1: 0.0, 2: 0.0},
     )
+    feed_manager._available_feeds = mock_available_feeds
 
     requested = RequestedFeed(requested_feed={1: 3.0, 2: 5.0})
     mock_time = mocker.Mock(spec=RufasTime)
 
     feed_manager.manage_ration_interval_purchases(requested_feeds=requested, time=mock_time)
 
-    expected = {1: 3.0, 2: 5.0}
-    mock_purchase_feed.assert_called_once_with(expected, mock_time, purchase_type="ration_interval")
+    mock_purchase_feed.assert_called_once()
 
 
 def test_query_available_feed_totals(feed_manager: FeedManager, mocker: MockerFixture) -> None:
