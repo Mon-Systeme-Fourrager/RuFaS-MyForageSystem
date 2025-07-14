@@ -1607,7 +1607,7 @@ class OutputManager(object):
         if "data_significant_digits" in filter_content:
             filtered_pool = {
                 key: (
-                    Utility.round_numeric_values_in_dict(value, filter_content["data_significant_digits"])
+                    Utility.round_numeric_values_in_dict(value, int(filter_content["data_significant_digits"]))
                     if isinstance(value, dict)
                     else value
                 )

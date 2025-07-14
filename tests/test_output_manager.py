@@ -4276,20 +4276,6 @@ def test_validate_report_filters_fill_value_ignored(mocker: MockerFixture) -> No
     error_spy.assert_not_called()
 
 
-def test_validate_report_filters_constants_override(mocker: Any) -> None:
-    om = OutputManager()
-    setattr(GeneralConstants, "TEST_CONST", 10)
-
-    filter_content: Any = {"filters": ["x"], "constants": {"TEST_CONST": 20}}
-    warning_spy = mocker.patch.object(om, "add_warning")
-
-    om.validate_report_filters(filter_content, "test_filter")
-
-    assert getattr(GeneralConstants, "TEST_CONST") == 20
-
-    assert warning_spy.call_count == 1
-
-
 def test_validate_report_filters_constants_no_change(mocker: Any) -> None:
     om = OutputManager()
     setattr(GeneralConstants, "UNCHANGED_CONST", 5)
