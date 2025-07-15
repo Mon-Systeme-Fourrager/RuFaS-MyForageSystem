@@ -1135,7 +1135,6 @@ class InputManager:
         self.om.create_directory(path)
         self.om.dict_to_file_json(self.__get_data_logs_pool, file_path)
 
-
     def dump_delete_data_logs(self, path: Path) -> None:
         """
         Dumps the stored get data logs to a JSON file at the specified path.
