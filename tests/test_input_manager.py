@@ -2455,7 +2455,7 @@ def test_parse_metadata_properties(
 ) -> None:
     """Tests _parse_metadata_properties() function in InputManager."""
 
-    def side_effect_check_property_type_primitive(value) -> bool:
+    def side_effect_check_property_type_primitive(value: Any) -> bool:
         """Function to mock check_property_type_primitive dynamically."""
         return value.get("type") in ["string", "number"]
 
@@ -3157,7 +3157,7 @@ def test_delete_data_with_invalid_data_address(
     im.pool = pool.copy()
     im.meta_data = metadata.copy()
     mocker.patch.object(im.data_validator, "extract_value_by_key_list", side_effect=KeyError("missing"))
-    mocker.spy(im.om, "add_error")
+    mock_add_error = mocker.patch.object(im.om, "add_error", autospec=True)
 
     result = im.delete_data("c.nested.unknown")
 
@@ -3165,30 +3165,33 @@ def test_delete_data_with_invalid_data_address(
     assert pool["c"]["nested"]["level1"] == 3
     blob_key = metadata["files"]["c"]["properties"]
     assert "level1" in metadata["properties"][blob_key]["nested"]
-    im.om.add_error.assert_called_once()
-    args, kwargs = im.om.add_error.call_args
+    mock_add_error.assert_called_once()
+    args, kwargs = mock_add_error.call_args
     assert "Validation: data not found" in args[0]
 
 
 def test_delete_data_metadata_not_found(
-    simple_pool_and_meta: tuple[dict[Any, Any], dict[Any, Any]], mocker: MockerFixture
+    simple_pool_and_meta: tuple[dict[Any, Any], dict[Any, Any]],
+    mocker: MockerFixture
 ) -> None:
     """delete_data should remove data, return True, but log metadata-not-found if metadata path missing."""
     pool, metadata = simple_pool_and_meta
 
     im = InputManager()
     im.pool = pool
-    blob_key = metadata["files"]["c"]["properties"]
-    metadata["properties"][blob_key].pop("nested")
     im.meta_data = metadata
 
+    blob_key = metadata["files"]["c"]["properties"]
+    metadata["properties"][blob_key].pop("nested", None)
+
     mocker.patch.object(im.data_validator, "extract_value_by_key_list", return_value=pool["c"]["nested"])
-    mocker.spy(im.om, "add_error")
+    mock_add_error = mocker.patch.object(im.om, "add_error", autospec=True)
 
     result = im.delete_data("c.nested.another")
 
     assert result is True
-    assert "another" not in im.pool["c"]["nested"]
-    im.om.add_error.assert_called_once()
-    args, kwargs = im.om.add_error.call_args
-    assert "Validation: metadata not found" in args[0]
+    assert "another" not in pool["c"]["nested"]
+
+    mock_add_error.assert_called_once()
+    args, kwargs = mock_add_error.call_args
+    assert args[0] == "Validation: metadata not found"
