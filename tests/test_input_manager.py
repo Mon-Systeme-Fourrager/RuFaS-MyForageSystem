@@ -1014,7 +1014,7 @@ def test_get_metadata_raises_exception(
 
 
 def test_get_data_by_properties_no_data(
-    mock_input_manager: InputManager, input_manager_original_method_states: Dict[str, Callable], mocker: MockerFixture
+    mock_input_manager: InputManager, input_manager_original_method_states: Dict[str, Any], mocker: MockerFixture
 ) -> None:
     """Tests that error is handled properly when get_metadata() raises KeyError."""
     mock_input_manager.get_metadata = MagicMock(side_effect=KeyError)
