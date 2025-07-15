@@ -311,7 +311,9 @@ class FeedManager:
 
         available_feed_rufas_ids = [feed.rufas_id for feed in self._available_feeds]
 
-        projected_shrunk_purchased_feeds = self.purchased_feed_storage.project_shrinkage(days_in_the_future, self._available_feeds)
+        projected_shrunk_purchased_feeds = self.purchased_feed_storage.project_shrinkage(
+            days_in_the_future, self._available_feeds
+        )
 
         available_feed_totals = self._query_available_feed_totals(
             available_feed_rufas_ids, projected_crops, projected_shrunk_purchased_feeds
