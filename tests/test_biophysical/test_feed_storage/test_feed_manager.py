@@ -403,7 +403,7 @@ def test_get_total_inventory(
     )
 
     mock_query_available_feed_totals.assert_called_once_with(
-        expected_available_feed_rufas_ids, expected_projected_crops, []
+        expected_available_feed_rufas_ids, expected_projected_crops
     )
     assert result.available_feeds == expected_inventory
     assert result.inventory_date == inventory_date
@@ -438,7 +438,7 @@ def test_get_total_inventory_zero_day_in_the_future(
     )
 
     mock_query_available_feed_totals.assert_called_once_with(
-        expected_available_feed_rufas_ids, expected_projected_crops, []
+        expected_available_feed_rufas_ids, expected_projected_crops
     )
     assert result.available_feeds == expected_inventory
     assert result.inventory_date == inventory_date
@@ -519,37 +519,6 @@ def test_query_available_feed_totals(feed_manager: FeedManager, mocker: MockerFi
     expected_feed_totals = {1: 1.1, 2: 4.4, 3: 0.0}
 
     result = feed_manager._query_available_feed_totals([1, 2, 3], mock_all_farmgrown_feeds_held)
-
-    assert result == expected_feed_totals
-
-
-def test_query_available_feed_totals_with_projection(feed_manager: FeedManager, mocker: MockerFixture) -> None:
-    """Test that totals of available feeds are calculated correctly."""
-    mock_all_farmgrown_feeds_held: list[HarvestedCrop] = [
-        feed_1 := MagicMock(auto_spec=HarvestedCrop),
-        feed_2 := MagicMock(auto_spec=HarvestedCrop),
-        feed_3 := MagicMock(auto_spec=HarvestedCrop),
-    ]
-    feed_1.rufas_ids, feed_2.rufas_ids, feed_3.rufas_ids = ([1, 5, 7], [2, 4, 6], [3, 8, 10])
-    feed_1.dry_matter_mass, feed_2.dry_matter_mass, feed_3.dry_matter_mass = (1.1, 2.2, 3.3)
-
-    mocker.patch.object(feed_manager, "_select_rufas_id_for_harvested_crop", side_effect=[1, 2, None])
-
-    feed_manager.purchased_feed_storage = PurchasedFeedStorage()
-    feed_manager.purchased_feed_storage.receive_feed(
-        PurchasedFeed(rufas_id=2, dry_matter_mass=2.2, storage_time=datetime.today().date())
-    )
-    feed_manager.purchased_feed_storage.receive_feed(
-        PurchasedFeed(rufas_id=5, dry_matter_mass=5.5, storage_time=datetime.today().date())
-    )
-
-    expected_feed_totals = {1: 2.1, 2: 12.2, 3: 1.0}
-    time = MagicMock(RufasTime)
-    feed = [PurchasedFeed(1, 1, time), PurchasedFeed(2, 10, time), PurchasedFeed(3, 1, time)]
-
-    result = feed_manager._query_available_feed_totals(
-        [1, 2, 3], mock_all_farmgrown_feeds_held, projected_shrunk_storage=feed
-    )
 
     assert result == expected_feed_totals
 
@@ -863,8 +832,8 @@ def test_setup_available_feeds(
     mocker.patch.object(feed_manager, "_process_feed_library", return_value=feed_lib)
     feed_config = {
         "purchased_feeds": [
-            {"purchased_feed": 1, "purchased_feed_cost": 1.0, "shrink_factor": 0.0, "buffer": 0.0},
-            {"purchased_feed": 2, "purchased_feed_cost": 2.0, "shrink_factor": 0.0, "buffer": 0.0},
+            {"purchased_feed": 1, "purchased_feed_cost": 1.0, "buffer": 0.0},
+            {"purchased_feed": 2, "purchased_feed_cost": 2.0, "buffer": 0.0},
         ]
     }
     first_expected_call_args = {
@@ -872,7 +841,6 @@ def test_setup_available_feeds(
         "amount_available": 0.0,
         "on_farm_cost": 0.01,
         "purchase_cost": 1.0,
-        "shrink_factor": 0.0,
         "buffer": 0.0,
     } | feed_lib[1]
     second_expected_call_args = {
@@ -880,7 +848,6 @@ def test_setup_available_feeds(
         "amount_available": 0.0,
         "on_farm_cost": 0.02,
         "purchase_cost": 2.0,
-        "shrink_factor": 0.0,
         "buffer": 0.0,
     } | feed_lib[2]
     expected_calls = [mocker.call(**first_expected_call_args), mocker.call(**second_expected_call_args)]
@@ -943,14 +910,3 @@ def test_process_feed_library(
         },
     }
     get_data.assert_called_once_with(expected)
-
-
-def test_process_shrinkage(feed_manager: FeedManager, mocker: MockerFixture, mock_available_feeds: list[Any]) -> None:
-    """Tests the function process_shrinkage()."""
-    time = MagicMock(spec=RufasTime)
-    feed_manager._available_feeds = mock_available_feeds
-    mock_process = mocker.patch.object(PurchasedFeedStorage, "process_shrinkage")
-
-    feed_manager.process_shrinkage(time)
-
-    mock_process.assert_called_once()

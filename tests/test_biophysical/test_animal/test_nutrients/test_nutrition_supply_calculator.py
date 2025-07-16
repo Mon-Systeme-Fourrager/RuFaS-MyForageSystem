@@ -67,7 +67,6 @@ def mock_feeds() -> list[Feed]:
         on_farm_cost=0.2,
         purchase_cost=0.3,
         buffer=0.0,
-        shrink_factor=0.0,
     )
 
     feed2 = Feed(
@@ -107,7 +106,6 @@ def mock_feeds() -> list[Feed]:
         on_farm_cost=0.25,
         purchase_cost=0.35,
         buffer=0.0,
-        shrink_factor=0.0,
     )
 
     feed3 = Feed(
@@ -147,7 +145,6 @@ def mock_feeds() -> list[Feed]:
         on_farm_cost=0.3,
         purchase_cost=0.4,
         buffer=0.0,
-        shrink_factor=0.0,
     )
 
     return [feed1, feed2, feed3]
