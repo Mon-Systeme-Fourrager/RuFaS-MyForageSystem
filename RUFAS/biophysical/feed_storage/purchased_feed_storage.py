@@ -1,7 +1,7 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 
-from RUFAS.data_structures.feed_storage_to_animal_connection import RUFAS_ID
+from RUFAS.data_structures.feed_storage_to_animal_connection import RUFAS_ID, NRCFeed, NASEMFeed
 from RUFAS.output_manager import OutputManager
 from RUFAS.units import MeasurementUnits
 from RUFAS.rufas_time import RufasTime
