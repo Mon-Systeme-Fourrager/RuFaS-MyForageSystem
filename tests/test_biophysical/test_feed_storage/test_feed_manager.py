@@ -494,7 +494,7 @@ def test_manage_ration_interval_purchases(
 
     feed_manager.manage_ration_interval_purchases(requested_feeds=requested, time=mock_time)
 
-    mock_purchase_feed.assert_called_once_with({1: 6.0, 2: 15.0}, mock_time, purchase_type='ration_interval')
+    mock_purchase_feed.assert_called_once_with({1: 6.0, 2: 15.0}, mock_time, purchase_type="ration_interval")
 
 
 def test_query_available_feed_totals(feed_manager: FeedManager, mocker: MockerFixture) -> None:
