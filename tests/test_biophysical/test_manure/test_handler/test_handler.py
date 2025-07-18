@@ -4,6 +4,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 from RUFAS.biophysical.manure.handler.handler import Handler
+from RUFAS.biophysical.manure.handler.parlor_cleaning import ParlorCleaningHandler
 from RUFAS.biophysical.manure.processor import Processor
 from RUFAS.current_day_conditions import CurrentDayConditions
 from RUFAS.data_structures.animal_to_manure_connection import ManureStream, PenManureData, StreamType
@@ -15,15 +16,16 @@ from RUFAS.rufas_time import RufasTime
 @pytest.fixture
 def handler() -> Handler:
     """Default handler instance."""
-    return Handler("handler_name", "MANUAL_SCRAPER", 3, 0.8, False)
+    return Handler("handler_name", "ManualScraper", 3, 0.8, False)
 
 
-def test_process_manure_parlor_cleaning(handler: Handler, mocker: MockerFixture) -> None:
+def test_process_manure_parlor_cleaning(mocker: MockerFixture) -> None:
     """Tests the main process routine of handler related to parlor cleaning."""
+    handler = ParlorCleaningHandler("handler_name", "ParlorCleaning", 3, 0.8, False)
     mock_fresh_water_volume_used_for_milking = mocker.patch.object(
         handler, "determine_fresh_water_volume_used_for_milking", return_value=0.0
     )
-    handler.handler_type = "PARLOR_CLEANING"
+    handler.handler_type = "ParlorCleaning"
     pen = PenManureData(1, 12, AnimalCombination.LAC_COW, "freestall", 15, 13, StreamType.GENERAL)
     handler.manure_stream = ManureStream(
         water=0.0,
@@ -54,13 +56,12 @@ def test_process_manure_parlor_cleaning(handler: Handler, mocker: MockerFixture)
     result = handler.process_manure(conditions, time_obj)
     add_error_patch.assert_not_called()
     expected_total_cleaning_water_volume = (cleaning_water_return + 0.0) * GeneralConstants.LITERS_TO_CUBIC_METERS
-    assert add_variable_patch.call_count == 3
+    assert add_variable_patch.call_count == 17
     assert original_stream.pen_manure_data is not None
     cleaning_patch.assert_called_once_with(
         original_stream.pen_manure_data.num_animals,
         handler.cleaning_water_use_amount,
         handler.cleaning_water_recycle_fraction,
-        handler.use_parlor_flush,
     )
     temp_patch.assert_called_once_with(conditions.mean_air_temperature)
     expected_manure_water = (
@@ -116,13 +117,12 @@ def test_process_manure(handler: Handler, mocker: MockerFixture) -> None:
     result = handler.process_manure(conditions, time_obj)
     add_error_patch.assert_not_called()
     expected_total_cleaning_water_volume = (cleaning_water_return + 0.0) * GeneralConstants.LITERS_TO_CUBIC_METERS
-    assert add_variable_patch.call_count == 3
+    assert add_variable_patch.call_count == 15
     assert original_stream.pen_manure_data is not None
     cleaning_patch.assert_called_once_with(
         original_stream.pen_manure_data.num_animals,
         handler.cleaning_water_use_amount,
         handler.cleaning_water_recycle_fraction,
-        handler.use_parlor_flush,
     )
     temp_patch.assert_called_once_with(conditions.mean_air_temperature)
     expected_manure_water = (
@@ -235,7 +235,7 @@ def test_determine_handler_cleaning_water_volume_parlor_use_flush(
     handler: Handler,
 ) -> None:
     """Tests the calculation of cleaning water volume."""
-    handler.handler_type = "PARLOR_CLEANING"
+    handler.handler_type = "ParlorCleaning"
     handler.use_parlor_flush = True
     assert (
         handler.determine_handler_cleaning_water_volume(
@@ -256,7 +256,7 @@ def test_determine_handler_cleaning_water_volume_parlor_no_flush_(
     handler: Handler,
 ) -> None:
     """Tests the calculation of cleaning water volume."""
-    handler.handler_type = "PARLOR_CLEANING"
+    handler.handler_type = "ParlorCleaning"
     handler.use_parlor_flush = False
     assert (
         handler.determine_handler_cleaning_water_volume(
@@ -269,9 +269,10 @@ def test_determine_handler_cleaning_water_volume_parlor_no_flush_(
 @pytest.mark.parametrize(
     "parent_compatibility, pen_data, expected",
     [
-        (True, PenManureData(10, 15, AnimalCombination.LAC_COW, "abc", 15.2, 45, StreamType.GENERAL), False),
-        (False, None, False),
+        (True, PenManureData(10, 15, AnimalCombination.LAC_COW, "abc", 15.2, 45, StreamType.GENERAL), True),
+        (True, None, False),
         (True, PenManureData(10, 15, AnimalCombination.LAC_COW, "freestall", 15.2, 45, StreamType.GENERAL), True),
+        (False, PenManureData(10, 15, AnimalCombination.LAC_COW, "open lot", 15.2, 45, StreamType.GENERAL), False),
     ],
 )
 def test_check_manure_stream_compatibility(
