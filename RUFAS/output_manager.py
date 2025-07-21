@@ -2428,23 +2428,23 @@ class OutputManager(object):
         for filter_file in list_of_filter_files:
             input_path = filters_dir_path / filter_file
             filter_contents, direction = self._load_filter_file_content(input_path)
-            for filter_content in filter_contents:
-                if "constants" in filter_content:
-                    consts = filter_content["constants"]
-                    for const_name, user_value in consts.items():
-                        if hasattr(GeneralConstants, const_name):
-                            current_value = getattr(GeneralConstants, const_name)
-                            if user_value != current_value:
-                                setattr(GeneralConstants, const_name, user_value)
-                                self.add_warning(
-                                    "GeneralConstants overwritten.",
-                                    f"{const_name} overwritten by the report filter value,"
-                                    f" the value is now set to {user_value}",
-                                    info_map={
-                                        "class": self.__class__.__name__,
-                                        "function": self.validate_filter_content.__name__,
-                                    },
-                                )
+            for content in filter_contents:
+                for name, new_value in content.get("constants", {}).items():
+                    if not hasattr(GeneralConstants, name):
+                        continue
+                    old_value = getattr(GeneralConstants, name)
+                    if new_value == old_value:
+                        continue
+
+                    setattr(GeneralConstants, name, new_value)
+                    self.add_warning(
+                        "GeneralConstants overwritten.",
+                        f"{name} overwritten by report filter; now set to {new_value}",
+                        info_map={
+                            "class": self.__class__.__name__,
+                            "function": self.validate_filter_content.__name__,
+                        },
+                    )
 
     def validate_direction(self, value: Any, content_name: str, filter_name: str) -> None:
         """
