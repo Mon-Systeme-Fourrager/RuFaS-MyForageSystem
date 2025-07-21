@@ -70,6 +70,7 @@ def compost_bedded_pack_barn() -> CompostBeddedPackBarn:
     """Returns a fixture CBPB."""
     return CompostBeddedPackBarn(name="dummy_name", storage_time_period=18, surface_area=6.6)
 
+
 def test_process_manure_runs_no_annual_temperature(
     stored_manure: ManureStream,
     received_manure: ManureStream,
@@ -110,8 +111,9 @@ def test_process_manure_runs_no_annual_temperature(
         side_effect=mock_process_manure_side_effect,
     )
 
-    mock_conditions = mocker.MagicMock(spec=CurrentDayConditions, precipitation=5.0, mean_air_temperature=20.0,
-                                       annual_mean_air_temperature=None)
+    mock_conditions = mocker.MagicMock(
+        spec=CurrentDayConditions, precipitation=5.0, mean_air_temperature=20.0, annual_mean_air_temperature=None
+    )
     mock_time = mocker.MagicMock(spec=RufasTime)
     mock_time.simulation_day = 50
 
@@ -172,8 +174,9 @@ def test_process_manure_runs_expected_steps(
         side_effect=mock_process_manure_side_effect,
     )
 
-    mock_conditions = mocker.MagicMock(spec=CurrentDayConditions, precipitation=5.0, mean_air_temperature=20.0,
-                                       annual_mean_air_temperature=15)
+    mock_conditions = mocker.MagicMock(
+        spec=CurrentDayConditions, precipitation=5.0, mean_air_temperature=20.0, annual_mean_air_temperature=15
+    )
     mock_time = mocker.MagicMock(spec=RufasTime)
     mock_time.simulation_day = 50
 
