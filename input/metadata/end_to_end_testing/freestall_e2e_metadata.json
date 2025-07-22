@@ -49,20 +49,6 @@
       "type": "json",
       "properties": "lactation_properties"
     },
-    "Corn-Alf-Silage": {
-      "title": "Crop data",
-      "description": "Crop selection and detailed rotation schedules.",
-      "path": "input/data/crop/example_alf_hay_corn_grain_rotation.json",
-      "type": "json",
-      "properties": "crop_schedule_properties"
-    },
-    "crop_configurations": {
-      "title": "Crop Configurations",
-      "description": "Configurations for how crops grow and are managed.",
-      "path": "input/data/crop_configurations/default_crop_configs.json",
-      "type": "json",
-      "properties": "crop_configuration_properties"
-    },
     "economy": {
       "title": "Economy data",
       "description": "Energy prices used in the EEE module.",
@@ -126,10 +112,101 @@
       "type": "json",
       "properties": "manure_processor_connection_properties"
     },
+    "crop_configurations": {
+      "title": "Crop Configurations",
+      "description": "Configurations for how crops grow and are managed.",
+      "path": "input/data/crop_configurations/default_crop_configs.json",
+      "type": "json",
+      "properties": "crop_configuration_properties"
+    },
+    "field_1": {
+      "title": "Field specification",
+      "description": "Field characteristics and references to field management specifications.",
+      "path": "input/data/field/example_small_field_corn_alf_silage.json",
+      "type": "json",
+      "properties": "field_properties"
+    },
+    "soil_1": {
+      "title": "Soil data",
+      "description": "Characteristic soil information, including composition, slope, and layer details.",
+      "path": "input/data/soil/example_soil.json",
+      "type": "json",
+      "properties": "soil_profile_properties"
+    },
+    "Corn-Alf-Silage": {
+      "title": "Crop data",
+      "description": "Crop selection and detailed rotation schedules.",
+      "path": "input/data/crop/example_alf_corn_silage_rotation.json",
+      "type": "json",
+      "properties": "crop_schedule_properties"
+    },
+    "fertilizer_schedule_1": {
+      "title": "Fertilizer schedule.",
+      "description": "Fertilizer types available, and their application schedule.",
+      "path": "input/data/fertilizer_schedule/example_sm_alf_corn_fertilizer.json",
+      "type": "json",
+      "properties": "fertilizer_schedule_properties"
+    },
+    "manure_schedule_1": {
+      "title": "Manure schedule.",
+      "description": "Specifies manure applications to a field.",
+      "path": "input/data/manure_schedule/example_sm_corn_alf_manure_schedule.json",
+      "type": "json",
+      "properties": "manure_schedule_properties"
+    },
+    "tillage_schedule_1": {
+      "title": "Tillage schedule.",
+      "description": "Schedule of tillage applications for a field.",
+      "path": "input/data/tillage_schedule/no_till.json",
+      "type": "json",
+      "properties": "tillage_schedule_properties"
+    },
+    "field_2": {
+      "title": "Field specification",
+      "description": "Field characteristics and references to field management specifications.",
+      "path": "input/data/field/example_small_field_corn_grain_alf_hay.json",
+      "type": "json",
+      "properties": "field_properties"
+    },
+    "soil_2": {
+      "title": "Soil data",
+      "description": "Characteristic soil information, including composition, slope, and layer details.",
+      "path": "input/data/soil/example_soil_2.json",
+      "type": "json",
+      "properties": "soil_profile_properties"
+    },
+    "CornGrain-AlfHay": {
+      "title": "Crop data",
+      "description": "Crop selection and detailed rotation schedules.",
+      "path": "input/data/crop/example_alf_hay_corn_grain_rotation.json",
+      "type": "json",
+      "properties": "crop_schedule_properties"
+    },
+    "fertilizer_schedule_2": {
+      "title": "Fertilizer schedule.",
+      "description": "Fertilizer types available, and their application schedule.",
+      "path": "input/data/fertilizer_schedule/example_sm_alf_corn_fertilizer.json",
+      "type": "json",
+      "properties": "fertilizer_schedule_properties"
+    },
+    "manure_schedule_2": {
+      "title": "Manure schedule.",
+      "description": "Specifies manure applications to a field.",
+      "path": "input/data/manure_schedule/example_sm_corn_alf_manure_schedule.json",
+      "type": "json",
+      "properties": "manure_schedule_properties"
+    },
+    "tillage_schedule_2": {
+      "title": "Tillage schedule.",
+      "description": "Schedule of tillage applications for a field.",
+      "path": "input/data/tillage_schedule/no_till.json",
+      "type": "json",
+      "properties": "tillage_schedule_properties"
+    },
     "weather": {
       "title": "Weather data",
       "description": "Weather data used during the simulation, including date, precipitation, temperature, etc.",
-      "path": "input/data/weather/barnyard_weather.csv",
+      "path": "input/data/weather/example_temperate_weather.csv",
       "type": "csv",
       "properties": "weather_properties"
     },
@@ -160,41 +237,6 @@
       "path": "input/metadata/properties/default.json",
       "type": "json",
       "properties": "NA"
-    },
-    "soil_1": {
-      "title": "Soil data",
-      "description": "Characteristic soil information, including composition, slope, and layer details.",
-      "path": "input/data/soil/example_soil.json",
-      "type": "json",
-      "properties": "soil_profile_properties"
-    },
-    "fertilizer_schedule_1": {
-      "title": "Fertilizer schedule.",
-      "description": "Fertilizer types available, and their application schedule.",
-      "path": "input/data/fertilizer_schedule/example_alf_corn_fertilizer.json",
-      "type": "json",
-      "properties": "fertilizer_schedule_properties"
-    },
-    "manure_schedule_1": {
-      "title": "Manure schedule.",
-      "description": "Specifies manure applications to a field.",
-      "path": "input/data/manure_schedule/example_corn_alf_manure_schedule.json",
-      "type": "json",
-      "properties": "manure_schedule_properties"
-    },
-    "tillage_schedule_1": {
-      "title": "Tillage schedule.",
-      "description": "Schedule of tillage applications for a field.",
-      "path": "input/data/tillage_schedule/no_till.json",
-      "type": "json",
-      "properties": "tillage_schedule_properties"
-    },
-    "field": {
-      "title": "Field specification",
-      "description": "Field characteristics and references to field management specifications.",
-      "path": "input/data/field/example_field_1_corn_alf.json",
-      "type": "json",
-      "properties": "field_properties"
     },
     "feed_management": {
       "title": "Feed Management Dataset",
