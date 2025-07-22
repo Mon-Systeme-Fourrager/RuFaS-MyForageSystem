@@ -102,20 +102,6 @@ def feed_manager(mocker: MockerFixture, mock_available_feeds: list[Feed]) -> Fee
     return feed_manager
 
 
-# @pytest.fixture
-# def feed_manager(mocker: MockerFixture, mock_available_feeds: list[Feed]) -> FeedManager:
-#     """Pytest fixture to create a FeedManager instance for testing."""
-#     mocker.patch.object(FeedManager, "__init__", return_value=None)
-#     feed_manager = FeedManager(
-#         feed_config={},
-#         nutrient_standard=NutrientStandard.NASEM,
-#         crop_to_rufas_ids_mapping={"corn": [1, 2, 3], "alfalfa": [4, 5, 6]},
-#     )
-#     feed_manager.active_storages = {StorageType.PILE: Pile()}
-#     feed_manager.purchased_feed_storage = PurchasedFeedStorage(mock_available_feeds)
-#     return feed_manager
-
-
 @pytest.fixture
 def time() -> RufasTime:
     """RufasTime fixture for testing."""
@@ -179,8 +165,46 @@ def test_update_available_feed_amounts(
     } == expected_feeds_amount_available
 
 
+def test_report_feed_manager_balance(
+    feed_manager: FeedManager,
+    mocker: MockerFixture,
+) -> None:
+    """Test that feed manager reports correct balance data."""
+    feed_manager._feed_requests = {1: 10.0, 2: 20.0}
+    feed_manager._purchased_feeds_fed = {1: 5.0, 2: 15.0}
+    feed_manager._farmgrown_feeds_fed = {1: 3.0, 2: 4.0}
+    feed_manager._purchased_feeds = {1: 12.0, 2: 22.0}
+
+    add_var = mocker.patch.object(feed_manager._om, "add_variable")
+    mock_report_levels = mocker.patch.object(feed_manager, "report_feed_storage_levels")
+
+    simulation_day = 123
+    info_map = {
+        "class": "FeedManager",
+        "function": "report_feed_manager_balance",
+        "simulation_day": simulation_day,
+        "units": MeasurementUnits.KILOGRAMS,
+    }
+
+    feed_manager.report_feed_manager_balance(simulation_day)
+
+    expected_calls = [
+        call("feed_1_requested_to_date", 10.0, info_map),
+        call("feed_2_requested_to_date", 20.0, info_map),
+        call("purchased_feed_1_fed_to_date", 5.0, info_map),
+        call("purchased_feed_2_fed_to_date", 15.0, info_map),
+        call("farmgrown_feed_1_fed_to_date", 3.0, info_map),
+        call("farmgrown_feed_2_fed_to_date", 4.0, info_map),
+        call("purchased_feed_1_purchased_to_date", 12.0, info_map),
+        call("purchased_feed_2_purchased_to_date", 22.0, info_map),
+    ]
+
+    add_var.assert_has_calls(expected_calls, any_order=True)
+    mock_report_levels.assert_called_once_with(simulation_day, "balance_storage_levels")
+
+
 def test_translate_crop_config_name_to_rufas_id(
-    feed_manager: FeedManager, mock_available_feeds: list[Feed], mocker: MockerFixture
+    feed_manager: FeedManager,
 ) -> None:
     """Test that crop config names are correctly translated to RuFaS IDs."""
     feed_manager.crop_to_rufas_id = {"corn": 8, "alfalfa": 9}
@@ -280,7 +304,7 @@ def test_report_stored_farmgrown_feeds(
     )
     mock_crop_1.rufas_ids = [1, 6, 8]
     setattr(mock_crop_1, "dry_matter_mass", 10.0)
-    mock_crop_2.rufas_ids = [2, 5, 7]
+    mock_crop_2.rufas_ids = [1, 2, 5, 7]
     setattr(mock_crop_2, "dry_matter_mass", 10.0)
     mock_crop_3.rufas_ids = [9, 18, 27]
     setattr(mock_crop_3, "dry_matter_mass", 10.0)
@@ -615,6 +639,39 @@ def test_query_available_feeds_combinations(
     assert len(results) == 2
     assert results[0]["feed"] == CropCategory.CORN
     assert results[0]["amount"] == 300
+
+
+def test_query_available_purchased_feeds(
+    feed_manager: FeedManager,
+    mock_available_feeds: list[Feed],
+) -> None:
+    """Test that purchased feed availability is reported correctly."""
+    stored_purchased_feed_1 = MagicMock()
+    stored_purchased_feed_1.rufas_id = 1
+    stored_purchased_feed_1.dry_matter_mass = 100.0
+
+    stored_purchased_feed_3 = MagicMock()
+    stored_purchased_feed_3.rufas_id = 3
+    stored_purchased_feed_3.dry_matter_mass = 300.0
+
+    feed_manager.purchased_feed_storage.stored = [
+        stored_purchased_feed_1,
+        stored_purchased_feed_3,
+    ]
+
+    feed_manager._available_feeds = mock_available_feeds
+
+    result = feed_manager.query_available_purchased_feeds()
+
+    expected = {
+        1: 100.0,
+        2: 0.0,
+        3: 300.0,
+        4: 0.0,
+        5: 0.0,
+    }
+
+    assert result == expected
 
 
 def test_purchase_feed(feed_manager: FeedManager, mock_available_feeds: list[Feed], mocker: MockerFixture) -> None:
