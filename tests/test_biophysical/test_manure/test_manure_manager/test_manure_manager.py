@@ -919,23 +919,20 @@ def test_request_nutrients(
     mock_nutrient_request.use_supplemental_manure = use_supplemental_manure
     mock_nutrient_request.manure_type = ManureType.LIQUID
 
-    request_result = None if request_result_is_none else NutrientRequestResults(nitrogen=10.0, phosphorus=5.0,
-                                                                                total_manure_mass=50.0)
+    request_result = (
+        None
+        if request_result_is_none
+        else NutrientRequestResults(nitrogen=10.0, phosphorus=5.0, total_manure_mass=50.0)
+    )
     supplemental_result = NutrientRequestResults(nitrogen=5.0, phosphorus=2.5, total_manure_mass=25.0)
     mocker.patch.object(
-        ManureNutrientManager,
-        "handle_nutrient_request",
-        return_value=(request_result, not use_supplemental_manure)
+        ManureNutrientManager, "handle_nutrient_request", return_value=(request_result, not use_supplemental_manure)
     )
 
     mocker.patch.object(ManureManager, "_record_manure_request_results")
     mock_field_request = mocker.patch.object(FieldManureSupplier, "request_nutrients", return_value=supplemental_result)
     mock_remove = mocker.patch.object(ManureManager, "_remove_nutrients_from_storage")
-    mocker.patch.object(
-        manure_manager,
-        "_calculate_supplemental_manure_needed",
-        return_value="calculated_supplemental"
-    )
+    mocker.patch.object(manure_manager, "_calculate_supplemental_manure_needed", return_value="calculated_supplemental")
 
     # Act
     actual_results = manure_manager.request_nutrients(mock_nutrient_request, animals_simulated, mock_time)
@@ -997,7 +994,7 @@ def test_remove_nutrients_from_storage(
     [
         (100.0, 80.0, True, 50.0, 0.5, 50.0, 40, 50.0, 40.0),
         (120.0, 60.0, False, 24.0, 0.4, 72.0, 36.0, 48.0, 24.0),
-        (50.0, 30.0, True, 50.0, 1.0, 0.0, 0.0, 50.0, 30.0)
+        (50.0, 30.0, True, 50.0, 1.0, 0.0, 0.0, 50.0, 30.0),
     ],
 )
 def test_compute_stream_after_removal_with_real_manure_stream(
