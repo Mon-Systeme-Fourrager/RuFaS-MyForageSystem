@@ -129,7 +129,7 @@ class ManureNutrientManager:
             [nitrogen_derived_manure_mass, phosphorus_derived_manure_mass]
         )
         info_map = {"class": self.__class__.__name__, "function": self._evaluate_nutrient_request.__name__}
-        if math.isclose(projected_manure_mass, 0.0, abs_tol=1e-6):
+        if math.isclose(projected_manure_mass, 0.0, abs_tol=1e-5):
             self.om.add_warning(
                 "Unable to fulfill request with on-farm manure", "Projected manure mass is zero kg.", info_map
             )
