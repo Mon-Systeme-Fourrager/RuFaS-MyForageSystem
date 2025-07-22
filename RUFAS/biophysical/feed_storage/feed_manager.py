@@ -568,15 +568,19 @@ class FeedManager:
                         total_purchased_feed_deductions.get(rufas_id, 0.0) + amount_to_deduct
                     )
                     self._purchased_feeds_fed[rufas_id] += amount_to_deduct
-                else:
+                elif isinstance(feed, HarvestedCrop):
                     feed.remove_feed_mass(amount_to_deduct)
                     harvested_rufas_id = self._select_rufas_id_for_harvested_crop(
                         feed.rufas_ids, list(feeds_to_deduct.keys())
                     )
+                    if harvested_rufas_id is None:
+                        raise ValueError("Could not resolve a valid harvested_rufas_id from feed.rufas_ids")
                     total_farmgrown_feed_deductions[harvested_rufas_id] = (
                         total_farmgrown_feed_deductions.get(harvested_rufas_id, 0.0) + amount_to_deduct
                     )
                     self._farmgrown_feeds_fed[harvested_rufas_id] += amount_to_deduct
+                else:
+                    raise TypeError(f"Unsupported feed type: {type(feed)}")
 
                 if amount == 0.0:
                     break
