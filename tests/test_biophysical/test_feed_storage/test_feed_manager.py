@@ -642,8 +642,9 @@ def test_query_available_feeds_combinations(
     assert results[0]["amount"] == 300
 
 
-def test_purchase_feed(feed_manager: FeedManager, mock_available_feeds: list[NASEMFeed | NRCFeed],
-                       mocker: MockerFixture) -> None:
+def test_purchase_feed(
+    feed_manager: FeedManager, mock_available_feeds: list[NASEMFeed | NRCFeed], mocker: MockerFixture
+) -> None:
     """Test that feeds are purchased correctly."""
     feeds_to_purchase = {1: 1.1, 2: 2.2, 3: 3.3, 4: 4.4, 5: 5.5}
     feed_manager._available_feeds = mock_available_feeds
