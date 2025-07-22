@@ -138,29 +138,13 @@ class FeedManager:
             "units": MeasurementUnits.KILOGRAMS,
         }
         for rufas_id, amount in self._feed_requests.items():
-            self._om.add_variable(
-                f"feed_{rufas_id}_requested_to_date",
-                amount,
-                info_map
-            )
+            self._om.add_variable(f"feed_{rufas_id}_requested_to_date", amount, info_map)
         for rufas_id, amount in self._purchased_feeds_fed.items():
-            self._om.add_variable(
-                f"purchased_feed_{rufas_id}_fed_to_date",
-                amount,
-                info_map
-            )
+            self._om.add_variable(f"purchased_feed_{rufas_id}_fed_to_date", amount, info_map)
         for rufas_id, amount in self._farmgrown_feeds_fed.items():
-            self._om.add_variable(
-                f"farmgrown_feed_{rufas_id}_fed_to_date",
-                amount,
-                info_map
-            )
+            self._om.add_variable(f"farmgrown_feed_{rufas_id}_fed_to_date", amount, info_map)
         for rufas_id, amount in self._purchased_feeds.items():
-            self._om.add_variable(
-                f"purchased_feed_{rufas_id}_purchased_to_date",
-                amount,
-                info_map
-            )
+            self._om.add_variable(f"purchased_feed_{rufas_id}_purchased_to_date", amount, info_map)
         self.report_feed_storage_levels(simulation_day, "balance_storage_levels")
 
     def update_available_feed_amounts(self) -> None:

@@ -21,6 +21,7 @@ class PurchasedFeed:
         Date on which this feed was purchased.
 
     """
+
     rufas_id: RUFAS_ID
     dry_matter_mass: float
     storage_time: date
