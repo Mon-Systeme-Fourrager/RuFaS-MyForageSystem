@@ -946,7 +946,7 @@ class ManureManager:
         removed: dict[str, Any] = {}
 
         original_limiting_nutrients_in_storage = getattr(stored_manure, limiting)
-        if math.isclose(nutrient_removal_proportion, 1.0, abs_tol=1e-3):
+        if math.isclose(nutrient_removal_proportion, 1.0, abs_tol=1e-5):
             limiting_nutrients_to_remove = original_limiting_nutrients_in_storage
         else:
             limiting_nutrients_to_remove = original_limiting_nutrients_in_storage * nutrient_removal_proportion
@@ -960,7 +960,7 @@ class ManureManager:
                 nutrient_removal_proportion, original_amount
             )
             removed[field] = removal_amount
-            updates[field] = round(original_amount - removal_amount, 3)
+            updates[field] = round(original_amount - removal_amount, 5)
 
         new_stream = replace(stored_manure, **updates)
         return new_stream, removed
@@ -986,7 +986,7 @@ class ManureManager:
             The amount of non-limiting nutrients to remove in each storage (kg).
 
         """
-        return round(limiting_nutrient_proportion_to_be_removed * non_limiting_nutrients_amount, 3)
+        return round(limiting_nutrient_proportion_to_be_removed * non_limiting_nutrients_amount, 5)
 
     @staticmethod
     def _determine_limiting_nutrient(
@@ -1047,7 +1047,7 @@ class ManureManager:
             The proportion of limiting nutrient to remove from each storage.
 
         """
-        if math.isclose(limited_nutrient_available, 0.0, abs_tol=1e-6):
+        if math.isclose(limited_nutrient_available, 0.0, abs_tol=1e-5):
             return 0.0
         else:
             return min(limiting_nutrient_requested_mass / limited_nutrient_available, 1)
@@ -1146,8 +1146,8 @@ class ManureManager:
             0, nutrient_request.phosphorus - (on_farm_manure.phosphorus if on_farm_manure else 0)
         )
 
-        if math.isclose(remaining_nitrogen, 0.0, abs_tol=1e-6) and math.isclose(
-            remaining_phosphorus, 0.0, abs_tol=1e-6
+        if math.isclose(remaining_nitrogen, 0.0, abs_tol=1e-5) and math.isclose(
+            remaining_phosphorus, 0.0, abs_tol=1e-5
         ):
             return NutrientRequest(
                 nitrogen=0.0,
