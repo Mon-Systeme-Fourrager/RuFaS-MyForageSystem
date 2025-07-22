@@ -209,16 +209,28 @@ class AnimalPopulation:
             "heiferIIs": [dict(heiferII.get_animal_values()) for heiferII in self.heiferIIs],
             "heiferIIIs": [dict(heiferIII.get_animal_values()) for heiferIII in self.heiferIIIs],
             "cows": [dict(cow.get_animal_values()) for cow in self.cows],
-            "cows_parity_1_milking": [dict(cow.get_animal_values()) for cow in self.filter_cow_status(1, True)],
-            "cows_parity_2_milking": [dict(cow.get_animal_values()) for cow in self.filter_cow_status(2, True)],
-            "cows_parity_3_milking": [dict(cow.get_animal_values()) for cow in self.filter_cow_status(3, True)],
-            "cows_parity_4_milking": [dict(cow.get_animal_values()) for cow in self.filter_cow_status(4, True)],
-            "cows_parity_5_milking": [dict(cow.get_animal_values()) for cow in self.filter_cow_status(5, True)],
-            "cows_parity_1_not_milking": [dict(cow.get_animal_values()) for cow in self.filter_cow_status(1, False)],
-            "cows_parity_2_not_milking": [dict(cow.get_animal_values()) for cow in self.filter_cow_status(2, False)],
-            "cows_parity_3_not_milking": [dict(cow.get_animal_values()) for cow in self.filter_cow_status(3, False)],
-            "cows_parity_4_not_milking": [dict(cow.get_animal_values()) for cow in self.filter_cow_status(4, False)],
-            "cows_parity_5_not_milking": [dict(cow.get_animal_values()) for cow in self.filter_cow_status(5, False)],
+            "cows_parity_1_milking": [dict(cow.get_animal_values()) for cow in self.filter_cow_status(parity=1,
+                                                                                                      is_milking=True)],
+            "cows_parity_2_milking": [dict(cow.get_animal_values()) for cow in self.filter_cow_status(parity=2,
+                                                                                                      is_milking=True)],
+            "cows_parity_3_milking": [dict(cow.get_animal_values()) for cow in self.filter_cow_status(parity=3,
+                                                                                                      is_milking=True)],
+            "cows_parity_4_milking": [dict(cow.get_animal_values()) for cow in self.filter_cow_status(parity=4,
+                                                                                                      is_milking=True)],
+            "cows_parity_5_milking": [dict(cow.get_animal_values()) for cow in self.filter_cow_status(parity=5,
+                                                                                                      is_milking=True)],
+            "cows_parity_1_not_milking": [
+                dict(cow.get_animal_values()) for cow in self.filter_cow_status(parity=1,
+                                                                                is_milking=False)],
+            "cows_parity_2_not_milking": [
+                dict(cow.get_animal_values()) for cow in self.filter_cow_status(parity=2,
+                                                                                is_milking=False)],
+            "cows_parity_3_not_milking": [dict(cow.get_animal_values()) for cow in
+                                          self.filter_cow_status(parity=3, is_milking=False)],
+            "cows_parity_4_not_milking": [dict(cow.get_animal_values()) for cow in
+                                          self.filter_cow_status(parity=4, is_milking=False)],
+            "cows_parity_5_not_milking": [dict(cow.get_animal_values()) for cow in
+                                          self.filter_cow_status(parity=5, is_milking=False)],
             "replacement": [dict(replacement.get_animal_values()) for replacement in self.replacement],
         }
 
@@ -246,7 +258,7 @@ class AnimalPopulation:
 
         Returns
         -------
-        list[Calf]
+        list[Animal]
             A list of Calf instances.
         """
         if self.order_by_random:
@@ -259,7 +271,7 @@ class AnimalPopulation:
 
         Returns
         -------
-        list[HeiferI]
+        list[Animal]
             A list of HeiferI instances.
         """
         if self.order_by_random:
@@ -273,7 +285,7 @@ class AnimalPopulation:
 
         Returns
         -------
-        list[HeiferII]
+        list[Animal]
             A list of HeiferII instances.
         """
         if self.order_by_random:
@@ -287,7 +299,7 @@ class AnimalPopulation:
 
         Returns
         -------
-        list[HeiferIII]
+        list[Animal]
             A list of HeiferIII instances.
         """
         if self.order_by_random:
@@ -300,7 +312,7 @@ class AnimalPopulation:
 
         Returns
         -------
-        list[Cow]
+        list[Animal]
             A list of Cow instances.
         """
         if self.order_by_random:
@@ -313,7 +325,7 @@ class AnimalPopulation:
 
         Returns
         -------
-        list[Cow]
+        list[Animal]
             A list of replacement Cow instances.
         """
         if self.order_by_random:
