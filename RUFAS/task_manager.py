@@ -1,9 +1,12 @@
+from importlib.metadata import PackageNotFoundError, version as get_installed_version
 import multiprocessing
 import random
 import sys
+import time
 import traceback
 from enum import Enum
 from functools import partial
+from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 from pathlib import Path
@@ -120,6 +123,10 @@ class TaskManager:
             is_end_to_end_testing_run=False,
         )
         self.check_python_version()
+        start = time.perf_counter()
+        self.check_dependencies()
+        end = time.perf_counter()
+        print(f"[INFO] Dependency check took {end - start:.2f} seconds.")
         rufas_version = self.get_rufas_version()
         self.output_manager.print_credits(rufas_version)
         info_map = {
@@ -213,6 +220,52 @@ class TaskManager:
             )
             return "Unknown"
         return str(rufas_version)
+
+    def check_dependencies(self) -> None:
+        """
+        Checks if the required dependencies are installed.
+
+        Raises
+        ------
+        ImportError
+            If a required dependency is not installed.
+        """
+        try:
+            import tomllib
+            with open(PYPROJECT_FILE_PATH, "rb") as pyproject_file:
+                project_data = tomllib.load(pyproject_file)
+
+            dependencies = project_data.get("project", {}).get("dependencies", [])
+            for dependency in dependencies:
+                requirement = Requirement(dependency)
+                package_name = requirement.name
+
+                try:
+                    installed_version = get_installed_version(package_name)
+                except PackageNotFoundError:
+                    self.output_manager.add_error(
+                        "Missing dependency",
+                        f"Required package '{package_name}' is not installed. Suggest running 'pip install .'"
+                        " to install all dependencies at required minimum levels.",
+                        {"class": TaskManager.__name__, "function": TaskManager.check_dependencies.__name__},
+                    )
+                    raise RuntimeError(f"[ERROR] Required package '{package_name}' is not installed.")
+
+                if requirement.specifier and not requirement.specifier.contains(installed_version):
+                    self.output_manager.add_error(
+                        "Dependency version doesn't meet requirements",
+                        f"Required package '{package_name}' version does not match. Installed: {installed_version}, "
+                        f"Required: {requirement.specifier}. Suggest running 'pip install .' to install all"
+                        " dependencies at required minimum levels.",
+                        {"class": TaskManager.__name__, "function": TaskManager.check_dependencies.__name__},
+                    )
+                    raise RuntimeError(
+                        f"[ERROR] {package_name}=={installed_version} does not satisfy required version:"
+                        f" {requirement.specifier}"
+                    )
+
+        except ImportError as e:
+            raise ImportError(f"Required dependency is missing. Please install it. Error: {e}")
 
     def check_python_version(self) -> None:
         """
