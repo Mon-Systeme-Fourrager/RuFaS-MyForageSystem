@@ -111,7 +111,7 @@ class BeddedPack(Storage):
             ManureConstants.LEACHING_COEFFICIENT, self._manure_to_process.nitrogen
         )
         storage_ammonia_N = self._calculate_cbpb_ammonia_emission(
-            received_nitrogen=self._manure_to_process.nitrogen, is_bedding_tilled=True
+            received_nitrogen=self._manure_to_process.nitrogen, is_bedding_tilled=self.is_mixed
         )
         self._apply_nitrogen_losses(storage_nitrous_oxide_N, storage_ammonia_N, storage_N_loss_from_leaching)
         self._manure_to_process.volume = self._manure_to_process.mass / ManureConstants.SOLID_MANURE_DENSITY
