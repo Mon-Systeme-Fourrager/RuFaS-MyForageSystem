@@ -3,7 +3,7 @@ from copy import copy
 import pytest
 from pytest_mock import MockerFixture
 
-from RUFAS.biophysical.manure.storage.compost_bedded_pack_barn import CompostBeddedPackBarn
+from RUFAS.biophysical.manure.storage.bedded_pack import BeddedPack
 from RUFAS.biophysical.manure.storage.solids_storage_calculator import SolidsStorageCalculator
 from RUFAS.biophysical.manure.storage.storage_cover import StorageCover
 from RUFAS.current_day_conditions import CurrentDayConditions
@@ -16,7 +16,7 @@ from RUFAS.rufas_time import RufasTime
 def test_cbpb_init(mocker: MockerFixture) -> None:
     """Tests the initialization of CBPB by mocking the parent class initialization."""
     mock_processor_init = mocker.patch("RUFAS.biophysical.manure.storage.storage.Storage.__init__", return_value=None)
-    CompostBeddedPackBarn(
+    BeddedPack(
         name=(dummy_name := "dummy_name"), storage_time_period=(dummy_storage_time_period := 18), surface_area=10
     )
 
@@ -66,15 +66,15 @@ def received_manure() -> ManureStream:
 
 
 @pytest.fixture
-def compost_bedded_pack_barn() -> CompostBeddedPackBarn:
+def compost_bedded_pack_barn() -> BeddedPack:
     """Returns a fixture CBPB."""
-    return CompostBeddedPackBarn(name="dummy_name", storage_time_period=18, surface_area=6.6)
+    return BeddedPack(name="dummy_name", storage_time_period=18, surface_area=6.6)
 
 
 def test_process_manure_runs_no_annual_temperature(
     stored_manure: ManureStream,
     received_manure: ManureStream,
-    compost_bedded_pack_barn: CompostBeddedPackBarn,
+    compost_bedded_pack_barn: BeddedPack,
     mocker: MockerFixture,
 ) -> None:
     """Test that the process_manure method runs the expected steps."""
@@ -137,7 +137,7 @@ def test_process_manure_runs_no_annual_temperature(
 def test_process_manure_runs_expected_steps(
     stored_manure: ManureStream,
     received_manure: ManureStream,
-    compost_bedded_pack_barn: CompostBeddedPackBarn,
+    compost_bedded_pack_barn: BeddedPack,
     mocker: MockerFixture,
 ) -> None:
     """Test that the process_manure method runs the expected steps."""
@@ -198,7 +198,7 @@ def test_process_manure_runs_expected_steps(
 
 
 def test_apply_dry_matter_loss_valid(
-    compost_bedded_pack_barn: CompostBeddedPackBarn,
+    compost_bedded_pack_barn: BeddedPack,
     stored_manure: ManureStream,
     received_manure: ManureStream,
     mocker: MockerFixture,
@@ -227,7 +227,7 @@ def test_apply_dry_matter_loss_valid(
 
 
 def test_apply_dry_matter_loss_raises_value_error(
-    compost_bedded_pack_barn: CompostBeddedPackBarn,
+    compost_bedded_pack_barn: BeddedPack,
     stored_manure: ManureStream,
     received_manure: ManureStream,
     mocker: MockerFixture,
@@ -262,7 +262,7 @@ def test_apply_dry_matter_loss_raises_value_error(
 
 
 def test_apply_nitrogen_losses_valid(
-    compost_bedded_pack_barn: CompostBeddedPackBarn, received_manure: ManureStream
+    compost_bedded_pack_barn: BeddedPack, received_manure: ManureStream
 ) -> None:
     """Ensure nitrogen losses are applied correctly without error."""
     compost_bedded_pack_barn._manure_to_process = copy(received_manure)
@@ -284,7 +284,7 @@ def test_apply_nitrogen_losses_valid(
 
 
 def test_apply_nitrogen_losses_raises_value_error_for_nitrogen_losses(
-    compost_bedded_pack_barn: CompostBeddedPackBarn,
+    compost_bedded_pack_barn: BeddedPack,
     received_manure: ManureStream,
     mocker: MockerFixture,
 ) -> None:
@@ -314,13 +314,13 @@ def test_apply_nitrogen_losses_raises_value_error_for_nitrogen_losses(
     ],
 )
 def test_nitrous_oxide_emission(
-    compost_bedded_pack_barn: CompostBeddedPackBarn, received_nitrogen: float, is_tilled: bool, expected: float
+    compost_bedded_pack_barn: BeddedPack, received_nitrogen: float, is_tilled: bool, expected: float
 ) -> None:
     result: float = compost_bedded_pack_barn._calculate_cbpb_nitrous_oxide_emission(received_nitrogen, is_tilled)
     assert result == pytest.approx(expected, rel=1e-6)
 
 
-def test_nitrous_oxide_negative_input(compost_bedded_pack_barn: CompostBeddedPackBarn) -> None:
+def test_nitrous_oxide_negative_input(compost_bedded_pack_barn: BeddedPack) -> None:
     with pytest.raises(ValueError, match="Daily nitrogen input mass must be non-negative: -1.0"):
         compost_bedded_pack_barn._calculate_cbpb_nitrous_oxide_emission(-1.0, True)
 
@@ -333,12 +333,12 @@ def test_nitrous_oxide_negative_input(compost_bedded_pack_barn: CompostBeddedPac
     ],
 )
 def test_ammonia_emission(
-    compost_bedded_pack_barn: CompostBeddedPackBarn, received_nitrogen: float, is_tilled: bool, expected: float
+    compost_bedded_pack_barn: BeddedPack, received_nitrogen: float, is_tilled: bool, expected: float
 ) -> None:
     result: float = compost_bedded_pack_barn._calculate_cbpb_ammonia_emission(received_nitrogen, is_tilled)
     assert result == pytest.approx(expected, rel=1e-6)
 
 
-def test_ammonia_negative_input(compost_bedded_pack_barn: CompostBeddedPackBarn) -> None:
+def test_ammonia_negative_input(compost_bedded_pack_barn: BeddedPack) -> None:
     with pytest.raises(ValueError, match="Daily nitrogen input mass must be non-negative: -1.0"):
         compost_bedded_pack_barn._calculate_cbpb_ammonia_emission(-1.0, False)

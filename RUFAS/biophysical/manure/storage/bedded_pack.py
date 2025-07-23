@@ -11,13 +11,14 @@ from RUFAS.rufas_time import RufasTime
 from RUFAS.units import MeasurementUnits
 
 
-class CompostBeddedPackBarn(Storage):
+class BeddedPack(Storage):
     def __init__(
         self,
         name: str,
         storage_time_period: int | None,
         surface_area: float = inf,
         cover: StorageCover = StorageCover.NO_COVER,
+        # add another input for mixing packed_mixed (bool)
     ):
         super().__init__(
             name=name,
@@ -50,6 +51,7 @@ class CompostBeddedPackBarn(Storage):
         manure_annual_temperature = current_day_conditions.annual_mean_air_temperature
 
         if manure_annual_temperature:
+            # replace with the new calculation method
             storage_methane = SolidsStorageCalculator.calculate_ifsm_methane_emission(
                 self._manure_to_process.total_volatile_solids,
                 self._determine_barn_temperature(manure_annual_temperature),
