@@ -1853,7 +1853,7 @@ def test_check_dependencies(
     missing_package: str | None,
     expected_error: type[Exception] | None,
     error_message_part: str | None,
-    mocker: MockerFixture
+    mocker: MockerFixture,
 ) -> None:
     """Test the check_dependencies method of TaskManager."""
     task_manager = TaskManager()
@@ -1862,9 +1862,12 @@ def test_check_dependencies(
     mock_tomllib_load = mocker.patch("tomllib.load")
     mock_tomllib_load.return_value = {"project": {"dependencies": dependencies}}
 
-    mocker.patch("RUFAS.task_manager.get_installed_version", side_effect=lambda pkg: (
-        (_ for _ in ()).throw(PackageNotFoundError()) if pkg == missing_package else installed_versions[pkg]
-    ))
+    mocker.patch(
+        "RUFAS.task_manager.get_installed_version",
+        side_effect=lambda pkg: (
+            (_ for _ in ()).throw(PackageNotFoundError()) if pkg == missing_package else installed_versions[pkg]
+        ),
+    )
 
     if expected_error:
         with pytest.raises(expected_error, match=error_message_part):
