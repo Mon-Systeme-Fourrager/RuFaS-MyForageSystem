@@ -1,4 +1,7 @@
 from copy import copy
+from enum import Enum
+
+import math
 from math import inf
 
 from RUFAS.biophysical.manure.manure_constants import ManureConstants
@@ -7,18 +10,43 @@ from RUFAS.biophysical.manure.storage.storage import Storage
 from RUFAS.biophysical.manure.storage.storage_cover import StorageCover
 from RUFAS.current_day_conditions import CurrentDayConditions
 from RUFAS.data_structures.animal_to_manure_connection import ManureStream
+from RUFAS.general_constants import GeneralConstants
 from RUFAS.rufas_time import RufasTime
 from RUFAS.units import MeasurementUnits
+
+
+class Mixing(Enum):
+    MIXED   = True
+    UNMIXED = False
+
+
+
+BEDDED_PACK_MCF_TABLE: dict[Mixing, dict[tuple[float, float], float]] = {
+    Mixing.MIXED: {
+        ( -math.inf,   4.6 ):  0.5,
+        (  4.7,        5.8 ):  0.5,
+        (  5.8,       13.9 ):  1.0,
+        ( 14.0,       25.1 ):  1.0,
+        (5.2, math.inf):  1.5,
+    },
+    Mixing.UNMIXED: {
+        ( -math.inf,   4.6 ): 21.0,
+        (  4.7,        5.8 ): 26.0,
+        (  5.8,       13.9 ): 37.0,
+        ( 14.0,       25.1 ): 41.0,
+        ( 25.2,   math.inf ): 74.0,
+    },
+}
 
 
 class BeddedPack(Storage):
     def __init__(
         self,
         name: str,
+        is_mixed: bool,
         storage_time_period: int | None,
         surface_area: float = inf,
-        cover: StorageCover = StorageCover.NO_COVER,
-        # add another input for mixing packed_mixed (bool)
+        cover: StorageCover = StorageCover.NO_COVER
     ):
         super().__init__(
             name=name,
@@ -27,6 +55,7 @@ class BeddedPack(Storage):
             storage_time_period=storage_time_period,
             surface_area=surface_area,
         )
+        self.is_mixed = is_mixed
 
     def process_manure(self, current_day_conditions: CurrentDayConditions, time: RufasTime) -> dict[str, ManureStream]:
         """
@@ -51,8 +80,7 @@ class BeddedPack(Storage):
         manure_annual_temperature = current_day_conditions.annual_mean_air_temperature
 
         if manure_annual_temperature:
-            # replace with the new calculation method
-            storage_methane = SolidsStorageCalculator.calculate_ifsm_methane_emission(
+            storage_methane = BeddedPack.calculate_bedded_pack_methane_emission(
                 self._manure_to_process.total_volatile_solids,
                 self._determine_barn_temperature(manure_annual_temperature),
             )
@@ -76,7 +104,7 @@ class BeddedPack(Storage):
         self._apply_dry_matter_loss(storage_methane, carbon_decomposition)
 
         storage_nitrous_oxide_N = self._calculate_cbpb_nitrous_oxide_emission(
-            received_nitrogen=self._manure_to_process.nitrogen, is_bedding_tilled=True
+            received_nitrogen=self._manure_to_process.nitrogen, is_bedding_tilled=self.is_mixed
         )
         storage_N_loss_from_leaching = SolidsStorageCalculator.calculate_nitrogen_loss_to_leaching(
             ManureConstants.LEACHING_COEFFICIENT, self._manure_to_process.nitrogen
@@ -295,3 +323,60 @@ class BeddedPack(Storage):
             coefficient = ManureConstants.AMMONIA_EMISSION_COEFFICIENT_WITH_UNTILLED_BEDDING
 
         return coefficient * received_nitrogen
+
+    @staticmethod
+    def calculate_bedded_pack_methane_emission(manure_volatile_solids: float, manure_temperature: float) -> float:
+        """
+        Calculates emission of methane on the current day using an adaptation of the tier 2 approach
+        of the IPCC (2006), based on a temperature-dependent methane conversion factor.
+
+        Parameters
+        ----------
+        manure_volatile_solids : float
+            The volatile solids (kg).
+
+        manure_temperature : float
+            The annual average temperature of the barn (Celsius).
+
+        Returns
+        -------
+        float
+            The calculated methane emissions for the given ambient barn temperature (kg).
+
+        """
+        if manure_volatile_solids < 0:
+            raise ValueError(f"Manure volatile solids mass must be positive. Received {manure_volatile_solids}.")
+        Bo = ManureConstants.ACHIEVABLE_METHANE_EMISSION
+        methane_conversion_factor = BeddedPack.calculate_bedded_pack_methane_conversion_factor(manure_temperature)
+        methane_emissions_in_kg = (
+            manure_volatile_solids * Bo * GeneralConstants.METHANE_FACTOR * methane_conversion_factor
+        ) / 100
+        return methane_emissions_in_kg
+
+    @staticmethod
+    def calculate_bedded_pack_methane_conversion_factor(is_mixed: bool, manure_temperature: float) -> float:
+        """
+        Calculate the Methane Conversion Factor (MCF) for the open lots treatment using the following function:
+
+        Parameters
+        ----------
+        is_mixed : bool
+            Indicates whether this bedded pack is mixed or not.
+        manure_temperature : float
+            The annual average temperature of the barn (Celsius).
+
+        Returns
+        -------
+        float
+            The calculated Methane Conversion Factor (MCF) for the given ambient barn temperature (unitless).
+
+        References
+        ----------
+        2024 USDA GHG inventory methods tables 4-9.
+
+        """
+        mix = Mixing.MIXED if is_mixed else Mixing.UNMIXED
+        for (lower_bound, upper_bound), mcf in BEDDED_PACK_MCF_TABLE[mix].items():
+            if lower_bound <= manure_temperature <= upper_bound:
+                return mcf
+        raise ValueError(f"Temperature {manure_temperature}°C out of any defined bin")

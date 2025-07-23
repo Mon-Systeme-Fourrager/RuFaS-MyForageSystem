@@ -38,7 +38,7 @@ class ProcessorType(Enum):
     SlurryStorageUnderfloor = SlurryStorageUnderfloor
 
     Composting = Composting
-    CompostBeddedPackBarn = BeddedPack
+    BeddedPack = BeddedPack
     OpenLot = OpenLot
 
     @classmethod
