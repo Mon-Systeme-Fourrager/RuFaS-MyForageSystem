@@ -376,7 +376,7 @@ class BeddedPack(Storage):
 
         References
         ----------
-        2024 USDA GHG inventory methods tables 4-9.
+        2024 USDA GHG inventory methods table 4-9.
 
         """
         mix = Mixing.MIXED if is_mixed else Mixing.UNMIXED
