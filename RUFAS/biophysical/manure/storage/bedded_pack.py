@@ -352,15 +352,15 @@ class BeddedPack(Storage):
         Bo = ManureConstants.ACHIEVABLE_METHANE_EMISSION
         methane_conversion_factor = BeddedPack.calculate_bedded_pack_methane_conversion_factor(is_mixed,
                                                                                                manure_temperature)
-        methane_emissions_in_kg = (
-                                      manure_volatile_solids * Bo * GeneralConstants.METHANE_FACTOR * methane_conversion_factor
-                                  ) / 100
+        methane_emissions_in_kg =\
+            (manure_volatile_solids * Bo * GeneralConstants.METHANE_FACTOR * methane_conversion_factor) / 100
         return methane_emissions_in_kg
 
     @staticmethod
     def calculate_bedded_pack_methane_conversion_factor(is_mixed: bool, manure_temperature: float) -> float:
         """
-        Calculates the Methane Conversion Factor (MCF) for the bedded pack based on annual temperature and whether or not the bedded pack is mixed. 
+        Calculates the Methane Conversion Factor (MCF) for the bedded pack based on annual temperature and
+        whether or not the bedded pack is mixed.
 
         Parameters
         ----------
