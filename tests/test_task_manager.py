@@ -1821,7 +1821,7 @@ def test_handle_data_collection_app_update(mocker: MockerFixture, task_manager: 
 @pytest.mark.parametrize(
     "dependencies, installed_versions, missing_package, expected_error, error_message_part",
     [
-        # ✅ Case 1: all dependencies are satisfied
+        # Case 1: all dependencies are satisfied
         (
             ["numpy==2.2.0"],
             {"numpy": "2.2.0"},
@@ -1829,7 +1829,7 @@ def test_handle_data_collection_app_update(mocker: MockerFixture, task_manager: 
             None,
             None,
         ),
-        # ❌ Case 2: missing package
+        # Case 2: missing package
         (
             ["numpy>=1.24.0"],
             {},
@@ -1837,7 +1837,7 @@ def test_handle_data_collection_app_update(mocker: MockerFixture, task_manager: 
             RuntimeError,
             "Required package 'numpy' is not installed",
         ),
-        # ❌ Case 3: wrong version
+        # Case 3: wrong version
         (
             ["numpy>=2.0.0"],
             {"numpy": "1.24.0"},
