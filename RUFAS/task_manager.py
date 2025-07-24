@@ -2,7 +2,6 @@ from importlib.metadata import PackageNotFoundError, version as get_installed_ve
 import multiprocessing
 import random
 import sys
-import time
 import traceback
 from enum import Enum
 from functools import partial
@@ -123,10 +122,7 @@ class TaskManager:
             is_end_to_end_testing_run=False,
         )
         self.check_python_version()
-        start = time.perf_counter()
         self.check_dependencies()
-        end = time.perf_counter()
-        print(f"[INFO] Dependency check took {end - start:.2f} seconds.")
         rufas_version = self.get_rufas_version()
         self.output_manager.print_credits(rufas_version)
         info_map = {
