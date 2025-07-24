@@ -360,7 +360,7 @@ class BeddedPack(Storage):
     @staticmethod
     def calculate_bedded_pack_methane_conversion_factor(is_mixed: bool, manure_temperature: float) -> float:
         """
-        Calculate the Methane Conversion Factor (MCF) for the open lots treatment using the following function:
+        Calculates the Methane Conversion Factor (MCF) for the bedded pack based on annual temperature and whether or not the bedded pack is mixed. 
 
         Parameters
         ----------
