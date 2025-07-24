@@ -15,7 +15,7 @@ from RUFAS.rufas_time import RufasTime
 
 
 def test_bedded_pack_init(mocker: MockerFixture) -> None:
-    """Tests the initialization of CBPB by mocking the parent class initialization."""
+    """Tests the initialization of bedded pack by mocking the parent class initialization."""
     mock_processor_init = mocker.patch("RUFAS.biophysical.manure.storage.storage.Storage.__init__", return_value=None)
     BeddedPack(
         name=(dummy_name := "dummy_name"),
@@ -71,7 +71,7 @@ def received_manure() -> ManureStream:
 
 @pytest.fixture
 def bedded_pack() -> BeddedPack:
-    """Returns a fixture CBPB."""
+    """Returns a fixture bedded pack."""
     return BeddedPack(name="dummy_name", is_mixed=True, storage_time_period=18, surface_area=6.6)
 
 
@@ -93,13 +93,13 @@ def test_process_manure_runs_no_annual_temperature(
     )
     mock_apply_dml = mocker.patch.object(bedded_pack, "_apply_dry_matter_loss")
     mock_calc_n2o = mocker.patch.object(
-        bedded_pack, "_calculate_cbpb_nitrous_oxide_emission", return_value=0.5
+        bedded_pack, "_calculate_bedded_pack_nitrous_oxide_emission", return_value=0.5
     )
     mock_calc_leaching = mocker.patch.object(
         SolidsStorageCalculator, "calculate_nitrogen_loss_to_leaching", return_value=0.5
     )
     mock_calc_ammonia = mocker.patch.object(
-        bedded_pack, "_calculate_cbpb_ammonia_emission", return_value=0.5
+        bedded_pack, "_calculate_bedded_pack_ammonia_emission", return_value=0.5
     )
     mock_apply_n_loss = mocker.patch.object(bedded_pack, "_apply_nitrogen_losses")
     mock_report_output = mocker.patch.object(bedded_pack, "_report_processor_output")
@@ -156,13 +156,13 @@ def test_process_manure_runs_expected_steps(
     )
     mock_apply_dml = mocker.patch.object(bedded_pack, "_apply_dry_matter_loss")
     mock_calc_n2o = mocker.patch.object(
-        bedded_pack, "_calculate_cbpb_nitrous_oxide_emission", return_value=0.5
+        bedded_pack, "_calculate_bedded_pack_nitrous_oxide_emission", return_value=0.5
     )
     mock_calc_leaching = mocker.patch.object(
         SolidsStorageCalculator, "calculate_nitrogen_loss_to_leaching", return_value=0.5
     )
     mock_calc_ammonia = mocker.patch.object(
-        bedded_pack, "_calculate_cbpb_ammonia_emission", return_value=0.5
+        bedded_pack, "_calculate_bedded_pack_ammonia_emission", return_value=0.5
     )
     mock_apply_n_loss = mocker.patch.object(bedded_pack, "_apply_nitrogen_losses")
     mock_report_output = mocker.patch.object(bedded_pack, "_report_processor_output")
@@ -320,13 +320,13 @@ def test_apply_nitrogen_losses_raises_value_error_for_nitrogen_losses(
 def test_nitrous_oxide_emission(
         bedded_pack: BeddedPack, received_nitrogen: float, is_tilled: bool, expected: float
 ) -> None:
-    result: float = bedded_pack._calculate_cbpb_nitrous_oxide_emission(received_nitrogen, is_tilled)
+    result: float = bedded_pack._calculate_bedded_pack_nitrous_oxide_emission(received_nitrogen, is_tilled)
     assert result == pytest.approx(expected, rel=1e-6)
 
 
 def test_nitrous_oxide_negative_input(bedded_pack: BeddedPack) -> None:
     with pytest.raises(ValueError, match="Daily nitrogen input mass must be non-negative: -1.0"):
-        bedded_pack._calculate_cbpb_nitrous_oxide_emission(-1.0, True)
+        bedded_pack._calculate_bedded_pack_nitrous_oxide_emission(-1.0, True)
 
 
 @pytest.mark.parametrize(
@@ -339,13 +339,13 @@ def test_nitrous_oxide_negative_input(bedded_pack: BeddedPack) -> None:
 def test_ammonia_emission(
         bedded_pack: BeddedPack, received_nitrogen: float, is_tilled: bool, expected: float
 ) -> None:
-    result: float = bedded_pack._calculate_cbpb_ammonia_emission(received_nitrogen, is_tilled)
+    result: float = bedded_pack._calculate_bedded_pack_ammonia_emission(received_nitrogen, is_tilled)
     assert result == pytest.approx(expected, rel=1e-6)
 
 
 def test_ammonia_negative_input(bedded_pack: BeddedPack) -> None:
     with pytest.raises(ValueError, match="Daily nitrogen input mass must be non-negative: -1.0"):
-        bedded_pack._calculate_cbpb_ammonia_emission(-1.0, False)
+        bedded_pack._calculate_bedded_pack_ammonia_emission(-1.0, False)
 
 
 def test_calculate_bedded_pack_methane_emission(bedded_pack: BeddedPack, mocker: MockerFixture) -> None:

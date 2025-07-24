@@ -58,7 +58,7 @@ class BeddedPack(Storage):
 
     def process_manure(self, current_day_conditions: CurrentDayConditions, time: RufasTime) -> dict[str, ManureStream]:
         """
-        Processes manure in compost bedded pack.
+        Processes manure in bedded pack.
 
         Parameters
         ----------
@@ -103,13 +103,13 @@ class BeddedPack(Storage):
         )
         self._apply_dry_matter_loss(storage_methane, carbon_decomposition)
 
-        storage_nitrous_oxide_N = self._calculate_cbpb_nitrous_oxide_emission(
+        storage_nitrous_oxide_N = self._calculate_bedded_pack_nitrous_oxide_emission(
             received_nitrogen=self._manure_to_process.nitrogen, is_bedding_tilled=self.is_mixed
         )
         storage_N_loss_from_leaching = SolidsStorageCalculator.calculate_nitrogen_loss_to_leaching(
             ManureConstants.LEACHING_COEFFICIENT, self._manure_to_process.nitrogen
         )
-        storage_ammonia_N = self._calculate_cbpb_ammonia_emission(
+        storage_ammonia_N = self._calculate_bedded_pack_ammonia_emission(
             received_nitrogen=self._manure_to_process.nitrogen, is_bedding_tilled=self.is_mixed
         )
         self._apply_nitrogen_losses(storage_nitrous_oxide_N, storage_ammonia_N, storage_N_loss_from_leaching)
@@ -259,9 +259,9 @@ class BeddedPack(Storage):
         self._manure_to_process.nitrogen = received_manure_nitrogen_after_losses
 
     @staticmethod
-    def _calculate_cbpb_nitrous_oxide_emission(received_nitrogen: float, is_bedding_tilled: bool) -> float:
+    def _calculate_bedded_pack_nitrous_oxide_emission(received_nitrogen: float, is_bedding_tilled: bool) -> float:
         """
-        Calculate the nitrogen loss from nitrous oxide emission in a compost bedded pack barn.
+        Calculate the nitrogen loss from nitrous oxide emission in a bedded pack barn.
 
         Parameters
         ----------
@@ -273,7 +273,7 @@ class BeddedPack(Storage):
         Returns
         -------
         float
-            The nitrogen lost to nitrous oxide emissions in the compost bedded pack barn (kg).
+            The nitrogen lost to nitrous oxide emissions in the bedded pack barn (kg).
 
         Raises
         ------
@@ -292,9 +292,9 @@ class BeddedPack(Storage):
         return coefficient * received_nitrogen
 
     @staticmethod
-    def _calculate_cbpb_ammonia_emission(received_nitrogen: float, is_bedding_tilled: bool) -> float:
+    def _calculate_bedded_pack_ammonia_emission(received_nitrogen: float, is_bedding_tilled: bool) -> float:
         """
-        Calculate the nitrogen loss from ammonia emission in the compost bedded pack barn.
+        Calculate the nitrogen loss from ammonia emission in the bedded pack barn.
 
         Parameters
         ----------
@@ -306,7 +306,7 @@ class BeddedPack(Storage):
         Returns
         -------
         float
-            The nitrogen lost to ammonia emission in the compost bedded pack barn (kg).
+            The nitrogen lost to ammonia emission in the bedded pack barn (kg).
 
         Raises
         ------
