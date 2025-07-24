@@ -344,7 +344,7 @@ class BeddedPack(Storage):
         Returns
         -------
         float
-            The calculated methane emissions for the given ambient barn temperature (kg).
+            The calculated methane emissions for the given day (kg).
 
         """
         if manure_volatile_solids < 0:
