@@ -5265,7 +5265,7 @@
         },
         "is_mixed": {
           "type": "bool",
-          "description": "Indicator for if the bedded pack is mixed.",
+          "description": "Indicator for if the bedded pack is regularly mixed to promote composting activity.",
           "nullable": true
         }
       }
