@@ -694,7 +694,7 @@ class DataValidator:
         )
         return True, ""
 
-    # Validate input by type related
+
     def validate_data_by_type(
         self,
         variable_properties: dict[str, Any],
@@ -779,6 +779,8 @@ class DataValidator:
         )
 
         if data_type not in fixable_data_types:
+            if not is_valid:
+                raise ValueError(f"{properties_blob_key} not valid")
             return is_valid
 
         if is_valid:
