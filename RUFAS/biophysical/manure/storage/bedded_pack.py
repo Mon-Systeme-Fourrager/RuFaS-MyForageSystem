@@ -372,7 +372,7 @@ class BeddedPack(Storage):
         Returns
         -------
         float
-            The calculated Methane Conversion Factor (MCF) for the given ambient barn temperature (unitless).
+            The calculated Methane Conversion Factor (MCF) for the given annual average temperature (unitless).
 
         References
         ----------
