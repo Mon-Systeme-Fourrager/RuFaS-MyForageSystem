@@ -1,7 +1,6 @@
 import math
 from typing import Any, Dict, List, Union
 
-from RUFAS.enums import AnimalCombination
 from RUFAS.input_manager import InputManager
 from RUFAS.output_manager import OutputManager
 from RUFAS.routines.animal.ration.user_defined_ration import UserDefinedRationManager as UserDefinedRationManager
@@ -9,6 +8,7 @@ from RUFAS.units import MeasurementUnits
 
 from . import carbon_loss, nitrogen_loss, protein_degradation
 from .feed_typed_dicts import PurchasedFeedTypedDict
+from ...biophysical.animal.data_types.animal_combination import AnimalCombination
 
 udrm = UserDefinedRationManager()
 
