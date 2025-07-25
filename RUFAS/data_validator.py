@@ -148,9 +148,9 @@ class Modifiability(Enum):
         Indicates the variable does not need to be initialized with a value and can be modified during runtime.
     """
 
-    REQUIRED_LOCKED: str = "required locked"
-    REQUIRED_UNLOCKED: str = "required unlocked"
-    UNREQUIRED_UNLOCKED: str = "unrequired unlocked"
+    REQUIRED_LOCKED = "required locked"
+    REQUIRED_UNLOCKED = "required unlocked"
+    UNREQUIRED_UNLOCKED = "unrequired unlocked"
 
     @classmethod
     def values(cls) -> list[str]:
@@ -781,7 +781,7 @@ class DataValidator:
             "class": DataValidator.__name__,
             "function": DataValidator.validate_data_by_type.__name__,
         }
-        path = ".".join(variable_path)
+        path = ",".join(str(level) for level in variable_path)
         if data_type not in fixable_data_types:
             if not is_valid:
                 error_message = (
