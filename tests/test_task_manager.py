@@ -630,6 +630,7 @@ def test_task(
         "maximum_memory_usage_percent": 0,
         "output_prefix": "test",
         "logs_directory": Path("/fake/logs"),
+        "filters_directory": Path("/fake/filters"),
         "task_id": 1,
         "random_seed": 924,
         "suppress_log_files": True,
@@ -645,8 +646,6 @@ def test_task(
     mock_handle_input_data_audit = mocker.patch.object(TaskManager, "handle_input_data_audit", return_value=True)
     mock_set_random_seed = mocker.patch.object(TaskManager, "set_random_seed", return_value=None)
     mocker.patch.object(OutputManager, "validate_filter_constant_content")
-    mocker.patch.object(InputManager, "start_data_processing")
-    mocker.patch.object(InputManager, "get_data")
     task_manager.task(args, produce_graphics, 2, 10, metadata_path=Path("metadata/path"))
     mock_im_init.assert_called_once_with(10)
 
