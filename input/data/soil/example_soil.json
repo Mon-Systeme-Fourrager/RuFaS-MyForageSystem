@@ -31,7 +31,8 @@
             "initial_fresh_organic_phosphorus_concentration": 0.0,
             "initial_soil_nitrate_concentration": 0.0,
             "initial_soil_ammonium_concentration": 1,
-            "ammonium_volatilization_cation_exchange_factor": 0.45
+            "ammonium_volatilization_cation_exchange_factor": 0.45,
+            "pH": 6.8
         },
         {
             "bottom_depth": 500,
@@ -51,7 +52,8 @@
             "initial_fresh_organic_phosphorus_concentration": 0.0,
             "initial_soil_nitrate_concentration": 0.0,
             "initial_soil_ammonium_concentration": 1,
-            "ammonium_volatilization_cation_exchange_factor": 0.45
+            "ammonium_volatilization_cation_exchange_factor": 0.45,
+            "pH": 6.8
         },
         {
             "bottom_depth": 1000,
@@ -71,7 +73,8 @@
             "initial_fresh_organic_phosphorus_concentration": 0.0,
             "initial_soil_nitrate_concentration": 0.0,
             "initial_soil_ammonium_concentration": 1,
-            "ammonium_volatilization_cation_exchange_factor": 0.45
+            "ammonium_volatilization_cation_exchange_factor": 0.45,
+            "pH": 6.8
         }
     ]
 }
