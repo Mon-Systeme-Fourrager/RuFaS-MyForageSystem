@@ -694,7 +694,6 @@ class DataValidator:
         )
         return True, ""
 
-
     def validate_data_by_type(
         self,
         variable_properties: dict[str, Any],
@@ -782,7 +781,7 @@ class DataValidator:
             "class": DataValidator.__name__,
             "function": DataValidator.validate_data_by_type.__name__,
         }
-        path = '.'.join(variable_path)
+        path = ".".join(variable_path)
         if data_type not in fixable_data_types:
             if not is_valid:
                 error_message = (
@@ -808,9 +807,7 @@ class DataValidator:
             elements_counter.increment(ElementState.FIXED)
             return True
         else:
-            error_message = (
-                f"Variable: '{path}' has invalid values and failed to fix. Please check the inputs."
-            )
+            error_message = f"Variable: '{path}' has invalid values and failed to fix. Please check the inputs."
             self.event_logs.append(
                 {
                     "error": "Validation: invalid data not able to be fixed",
