@@ -58,23 +58,66 @@ class EmissionsEstimator:
 
     def _calculate_purchased_feed_emissions_refreshed(self) -> None:
         """Calculates purchased feed emissions.
-        
+
         the information that a user would want to know for a given time period is: emissions of purchased feed in
         inventory at the start of the time period + the emissions of what was purchased during that time period
         - emissions in inventory at the end of the time period
-        
+
         """
         info_map = {"class": self.__class__.__name__,
                     "function": self._calculate_purchased_feed_emissions_refreshed.__name__
                     }
-        filter = {
-            "name": "Feed Ration Totals",
+        feeds_in_storage_filter = {
+            "name": "Feeds in Storage",
             "description": "Gathers the amounts of purchased feeds in storage on a particular day.",
-            "filters": ["FeedManager.report_daily_purchases.*daily_storage_levels.*"],
+            "filters": [
+                "PurchasedFeedStorage.report_stored_purchased_feeds.stored_feed_.*daily_storage_levels.*"
+            ],
             "slice_start": SLICE_START,
         }
-        feeds = self.om.filter_variables_pool(filter)
-        
+        stored_feeds = self.om.filter_variables_pool(feeds_in_storage_filter)
+        if not stored_feeds:
+            self.om.add_warning("No Purchased Feeds in Storage", "No purchased feeds were found in storage.", info_map)
+            return
+
+        purchased_storage_starting_totals = {key: float(stored_feeds[key]["values"][0]) for key in stored_feeds.keys()}
+        (
+            purchased_feed_emissions_at_start,
+            land_use_change_emissions_at_start,
+        ) = self._calculate_actual_purchased_feed_emissions(purchased_storage_starting_totals)
+        emissions_info_map = dict(
+            info_map, **{"units": MeasurementUnits.KILOGRAMS_CARBON_DIOXIDE_PER_KILOGRAM_DRY_MATTER}
+        )
+        self.om.add_variable("Purchased Feed Emissions at Start", purchased_feed_emissions_at_start, emissions_info_map)
+        self.om.add_variable(
+            "Purchased Feed Land Use Change Emissions at Start", land_use_change_emissions_at_start, emissions_info_map
+        )
+
+        purchased_storage_ending_totals = {key: float(stored_feeds[key]["values"][-1]) for key in stored_feeds.keys()}
+        (
+            purchased_feed_emissions_at_end,
+            land_use_change_emissions_at_end,
+        ) = self._calculate_actual_purchased_feed_emissions(purchased_storage_ending_totals)
+        self.om.add_variable("Purchased Feed Emissions at End", purchased_feed_emissions_at_end, emissions_info_map)
+        self.om.add_variable(
+            "Purchased Feed Land Use Change Emissions at End", land_use_change_emissions_at_end, emissions_info_map
+        )
+
+        purchased_feed_filter = {
+            "name": "Purchased Feed Totals",
+            "description": "Gathers the amounts of feeds purchased in final year.",
+            "filters": ["FeedManager.purchase_feed.*amount_purchased.*"],
+            "slice_start": SLICE_START,
+        }
+        purchased_feeds = self.om.filter_variables_pool(purchased_feed_filter)
+        purchased_feed_totals = {key: float(sum(purchased_feeds[key]["values"])) for key in purchased_feeds.keys()}
+        self.om.add_variable("Purchased Feed Totals", purchased_feed_totals, dict(info_map, **{"units": MeasurementUnits.KILOGRAMS})))
+        (
+            actual_purchased_feed_emissions,
+            actual_land_use_change_emissions,
+        ) = self._calculate_actual_purchased_feed_emissions(purchased_feed_totals)
+        self.om.add_variable("Purchased Feed Emissions", actual_purchased_feed_emissions, emissions_info_map)
+        self.om.add_variable("Land Use Change Emissions", actual_land_use_change_emissions, emissions_info_map)
 
     def _calculate_purchased_feed_emissions(self, homegrown_feeds: list[dict[str, Any]]) -> None:
         info_map = {"class": self.__class__.__name__, "function": self._calculate_purchased_feed_emissions.__name__}
