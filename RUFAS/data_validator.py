@@ -809,7 +809,7 @@ class DataValidator:
             error_message = f"Variable: '{path}' has invalid values and failed to fix. Please check the inputs."
             self.event_logs.append(
                 {
-                    "error": "Validation: invalid data not able to be fixed",
+                    "error": "Validation: invalid input data not able to be fixed",
                     "message": error_message,
                     "info_map": info_map,
                 }
