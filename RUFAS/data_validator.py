@@ -785,7 +785,7 @@ class DataValidator:
         if data_type not in fixable_data_types:
             if not is_valid:
                 error_message = (
-                    f"Variable: '{path}' has invalid values and its data type is not fixable. Please check the inputs."
+                    f"Variable: '{path}' has invalid or missing values and its data type is not fixable. Please check the inputs."
                 )
                 self.event_logs.append(
                     {
