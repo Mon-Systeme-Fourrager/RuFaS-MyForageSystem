@@ -17,6 +17,7 @@ class AnimalGroupingScenario(Enum):
 
 
     """
+
     CALF__GROWING__CLOSE_UP__LACCOW = {
         AnimalCombination.CALF: [AnimalType.CALF],
         AnimalCombination.GROWING: [AnimalType.HEIFER_I, AnimalType.HEIFER_II],
