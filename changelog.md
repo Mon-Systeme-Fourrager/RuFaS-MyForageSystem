@@ -211,6 +211,8 @@ v0.9.2
 - [2479](https://github.com/RuminantFarmSystems/MASM/pull/2479) - [minor change] Removes `errors.py`.
 - [2499](https://github.com/RuminantFarmSystems/MASM/pull/2499) - [minor change] Updates `pyproject.toml` and added check for user meeting dependency requirements.
 - [2500](https://github.com/RuminantFarmSystems/MASM/pull/2500) - [minor change] Moves `AnimalCombination`, `AnimalManureExcretions`, and removes the old `PenManureData`.
+- [2491](https://github.com/RuminantFarmSystems/MASM/pull/2491) - [minor change] [Manure] Fixes a bug in manure request management when trying to supplement a request from a farm that has no on-farm manure.
+- [2461](https://github.com/RuminantFarmSystems/MASM/pull/2461) [Input] Create Example Input files.
 
 ### v0.9.2
 
