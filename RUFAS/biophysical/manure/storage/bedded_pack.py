@@ -104,13 +104,13 @@ class BeddedPack(Storage):
         self._apply_dry_matter_loss(storage_methane, carbon_decomposition)
 
         storage_nitrous_oxide_N = self._calculate_bedded_pack_nitrous_oxide_emission(
-            received_nitrogen=self._manure_to_process.nitrogen, is_bedding_tilled=self.is_mixed
+            received_nitrogen=self._manure_to_process.nitrogen, is_mixed=self.is_mixed
         )
         storage_N_loss_from_leaching = SolidsStorageCalculator.calculate_nitrogen_loss_to_leaching(
             ManureConstants.LEACHING_COEFFICIENT, self._manure_to_process.nitrogen
         )
         storage_ammonia_N = self._calculate_bedded_pack_ammonia_emission(
-            received_nitrogen=self._manure_to_process.nitrogen, is_bedding_tilled=self.is_mixed
+            received_nitrogen=self._manure_to_process.nitrogen, is_mixed=self.is_mixed
         )
         self._apply_nitrogen_losses(storage_nitrous_oxide_N, storage_ammonia_N, storage_N_loss_from_leaching)
         self._manure_to_process.volume = self._manure_to_process.mass / ManureConstants.SOLID_MANURE_DENSITY
@@ -259,7 +259,7 @@ class BeddedPack(Storage):
         self._manure_to_process.nitrogen = received_manure_nitrogen_after_losses
 
     @staticmethod
-    def _calculate_bedded_pack_nitrous_oxide_emission(received_nitrogen: float, is_bedding_tilled: bool) -> float:
+    def _calculate_bedded_pack_nitrous_oxide_emission(received_nitrogen: float, is_mixed: bool) -> float:
         """
         Calculate the nitrogen loss from nitrous oxide emission in a bedded pack barn.
 
@@ -267,7 +267,7 @@ class BeddedPack(Storage):
         ----------
         received_nitrogen : float
             The mass of nitrogen present in the manure excreted by animals (kg).
-        is_bedding_tilled : bool
+        is_mixed : bool
             Indicator for if the bedding is tilled for the current simulation day.
 
         Returns
@@ -284,7 +284,7 @@ class BeddedPack(Storage):
 
         if received_nitrogen < 0.0:
             raise ValueError(f"Daily nitrogen input mass must be non-negative: {received_nitrogen}")
-        if is_bedding_tilled:
+        if is_mixed:
             coefficient = ManureConstants.NITROUS_OXIDE_COEFFICIENT_WITH_TILLED_BEDDING
         else:
             coefficient = ManureConstants.NITROUS_OXIDE_COEFFICIENT_WITH_UNTILLED_BEDDING
@@ -292,7 +292,7 @@ class BeddedPack(Storage):
         return coefficient * received_nitrogen
 
     @staticmethod
-    def _calculate_bedded_pack_ammonia_emission(received_nitrogen: float, is_bedding_tilled: bool) -> float:
+    def _calculate_bedded_pack_ammonia_emission(received_nitrogen: float, is_mixed: bool) -> float:
         """
         Calculate the nitrogen loss from ammonia emission in the bedded pack barn.
 
@@ -300,7 +300,7 @@ class BeddedPack(Storage):
         ----------
         received_nitrogen : float
             The mass of nitrogen present in the manure excreted by animals (kg).
-        is_bedding_tilled : bool
+        is_mixed : bool
             Indicator for if the bedding is tilled for the current simulation day.
 
         Returns
@@ -317,7 +317,7 @@ class BeddedPack(Storage):
         if received_nitrogen < 0.0:
             raise ValueError(f"Daily nitrogen input mass must be non-negative: {received_nitrogen}")
 
-        if is_bedding_tilled:
+        if is_mixed:
             coefficient = ManureConstants.AMMONIA_EMISSION_COEFFICIENT_WITH_TILLED_BEDDING
         else:
             coefficient = ManureConstants.AMMONIA_EMISSION_COEFFICIENT_WITH_UNTILLED_BEDDING
