@@ -1,6 +1,5 @@
 from typing import Optional
 
-from RUFAS.general_constants import GeneralConstants
 from RUFAS.routines.field.soil.soil_data import SoilData
 from RUFAS.user_constants import UserConstants
 

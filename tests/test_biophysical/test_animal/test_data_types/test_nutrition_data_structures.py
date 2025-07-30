@@ -6,7 +6,6 @@ from RUFAS.biophysical.animal.data_types.nutrition_data_structures import (
     NutritionSupply,
 )
 from RUFAS.biophysical.animal.ration.amino_acid import EssentialAminoAcidRequirements
-from RUFAS.general_constants import GeneralConstants
 from RUFAS.user_constants import UserConstants
 
 

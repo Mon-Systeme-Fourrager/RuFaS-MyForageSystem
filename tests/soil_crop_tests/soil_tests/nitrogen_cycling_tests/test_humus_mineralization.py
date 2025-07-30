@@ -2,7 +2,6 @@ from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 
-from RUFAS.general_constants import GeneralConstants
 from RUFAS.routines.field.soil.layer_data import LayerData
 from RUFAS.routines.field.soil.nitrogen_cycling.humus_mineralization import HumusMineralization
 from RUFAS.routines.field.soil.soil_data import SoilData
