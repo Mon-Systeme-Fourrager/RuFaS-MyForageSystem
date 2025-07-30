@@ -4,7 +4,7 @@ import numpy as np
 import numpy.typing as npt
 from typing import Callable, Any, Sequence, Optional
 from RUFAS.biophysical.animal.nutrients.nutrition_supply_calculator import NutritionSupplyCalculator, FeedInRation
-from RUFAS.enums import AnimalCombination
+from RUFAS.biophysical.animal.data_types.animal_combination import AnimalCombination
 from RUFAS.units import MeasurementUnits
 from RUFAS.general_constants import GeneralConstants
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
