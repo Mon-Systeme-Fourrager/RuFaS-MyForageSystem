@@ -7,9 +7,9 @@ from unittest.mock import MagicMock, patch
 from pytest_mock import MockerFixture
 from scipy.optimize import OptimizeResult
 
+from RUFAS.biophysical.animal.data_types.animal_combination import AnimalCombination
 from RUFAS.biophysical.animal.nutrients.nutrition_supply_calculator import NutritionSupplyCalculator
 from RUFAS.biophysical.animal.ration.ration_optimizer import RationOptimizer, RationConfig
-from RUFAS.enums import AnimalCombination
 from RUFAS.data_structures.feed_storage_to_animal_connection import Feed, FeedComponentType, FeedCategorization
 from RUFAS.biophysical.animal.data_types.nutrition_data_structures import NutritionRequirements
 from RUFAS.units import MeasurementUnits
