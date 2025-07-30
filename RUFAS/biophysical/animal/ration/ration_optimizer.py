@@ -722,7 +722,7 @@ class RationOptimizer:
         pen_available_feeds: list[Feed],
         animal_combination: AnimalCombination,
         previous_ration: dict[RUFAS_ID | str, float | str] | None = None,
-        user_defined_ration_dictionary: Dict[RUFAS_ID, float] | None = None,
+        user_defined_ration_dictionary: dict[RUFAS_ID, float] | None = None,
         user_defined_ration_tolerance: float = None
     ) -> tuple[OptimizeResult | None, RationConfig]:
         """
@@ -820,7 +820,7 @@ class RationOptimizer:
     def _build_bounds_user_defined_ration(
         ration_config: RationConfig,
         user_defined_ration_dictionary: dict[RUFAS_ID, float],
-        user_defined_ration_tolerance: float) -> List[Tuple[float, float]]:
+        user_defined_ration_tolerance: float) -> list[tuple[float, float]]:
         feed_bound_list = list(zip(
             ration_config.feed_minimum_list,
             ration_config.feed_maximum_list
