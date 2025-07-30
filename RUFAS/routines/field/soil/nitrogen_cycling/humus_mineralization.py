@@ -2,6 +2,7 @@ from typing import Optional
 
 from RUFAS.general_constants import GeneralConstants
 from RUFAS.routines.field.soil.soil_data import SoilData
+from RUFAS.user_constants import UserConstants
 
 
 class HumusMineralization:
@@ -103,7 +104,7 @@ class HumusMineralization:
         """
         rate_constant = 10**-5
         amount_transferred = rate_constant * (
-            active_organic_nitrogen * ((1 / GeneralConstants.FRACTION_OF_HUMIC_NITROGEN_IN_ACTIVE_POOL) - 1)
+            active_organic_nitrogen * ((1 / UserConstants.FRACTION_OF_HUMIC_NITROGEN_IN_ACTIVE_POOL) - 1)
             - stable_organic_nitrogen
         )
 
