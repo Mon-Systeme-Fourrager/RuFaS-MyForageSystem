@@ -997,14 +997,19 @@ class Pen:
         )
         if is_ration_defined_by_user:
             user_defined_ration_dictionary = UserDefinedRationManager.user_defined_rations[self.animal_combination]
+            tolerance = UserDefinedRationManager.tolerance
+        else:
+            user_defined_ration_dictionary = None
+            tolerance = None
 
         return self.ration_optimizer.attempt_optimization(
             pen_average_body_weight=self.average_body_weight,
             requirements=self.average_nutrition_requirements,
             pen_available_feeds=pen_feeds,
             animal_combination=self.animal_combination,
-            previous_ration=previous_ration, user_defined_ration_dictionary=user_defined_ration_dictionary,
-            user_defined_ration_tolerance=UserDefinedRationManager.tolerance
+            previous_ration=previous_ration,
+            user_defined_ration_dictionary=user_defined_ration_dictionary,
+            user_defined_ration_tolerance=tolerance
         )
 
     def _apply_successful_solution(self, solution: OptimizeResult | None, pen_feeds: list[Feed]) -> None:
