@@ -625,6 +625,11 @@ class Pen:
         specified in `self.manure_streams` and each assigned a `first_processor` directing it how to be routed once
         it reaches the manure module.
         - The function validates that all general stream proportions sum to 1.0 (or 100% of the general portion).
+        - Manure methane potential is assigned according to animal combination. Manure from lactating, dry and close up
+        animals are assigned a value of 0.24 m3 methane per kg of manure volatile solids, and calves and heifers are
+        assigned a value of 0.17, based on the 2024 USDA method for entity scale inventory. If a pen contains heifers,
+        dry and close up animals, methane potential is assigned as a weighted average based on number of dry/close up
+        vs. heifers.
 
         """
         animal_manure_streams: dict[str, ManureStream] = {}
