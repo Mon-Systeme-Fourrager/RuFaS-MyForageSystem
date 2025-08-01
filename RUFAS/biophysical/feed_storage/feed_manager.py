@@ -233,6 +233,17 @@ class FeedManager:
         self.report_stored_farmgrown_feeds(simulation_day, reporting_suffix)
         self.purchased_feed_storage.report_stored_purchased_feeds(simulation_day, reporting_suffix)
 
+    def report_cumulative_purchased_feeds(self, simulation_day: int) -> None:
+        """Outputs the cumulative purchased feeds to the output manager."""
+        info_map = {
+            "class": self.__class__.__name__,
+            "function": self.report_cumulative_purchased_feeds.__name__,
+            "simulation_day": simulation_day,
+            "units": MeasurementUnits.KILOGRAMS,
+        }
+        for rufas_id, amount in self._cumulative_purchased_feeds.items():
+            self._om.add_variable(f"purchased_feed_{rufas_id}_purchased_to_date", amount, info_map)
+
     def report_stored_farmgrown_feeds(self, simulation_day: int, reporting_suffix: str) -> None:
         """Outputs total amounts of farmgrown feeds currently stored by the FeedManager."""
         feed_report: dict[RUFAS_ID, float] = {}
@@ -502,11 +513,6 @@ class FeedManager:
 
             total_cost = purchase_amount * feed_info.purchase_cost
 
-            info_map = info_map | {
-                "price": feed_info.purchase_cost,
-                "amount_purchased": purchase_amount,
-                "total_cost": total_cost,
-            }
             self._om.add_variable(
                 f"{purchase_type}_{rufas_id}_cost",
                 total_cost,
@@ -561,9 +567,6 @@ class FeedManager:
 
         all_available_feeds = sorted(all_available_feeds, key=lambda feed: feed.storage_time)
 
-        total_purchased_feed_deductions: dict[RUFAS_ID, float] = {}
-        total_farmgrown_feed_deductions: dict[RUFAS_ID, float] = {}
-
         for rufas_id, amount in feeds_to_deduct.items():
             available_feeds = [
                 feed for feed in all_available_feeds if self._check_feed_availability(feeds_to_deduct, rufas_id, feed)
@@ -577,9 +580,6 @@ class FeedManager:
 
                 if isinstance(feed, PurchasedFeed):
                     feed.remove_dry_matter_mass(amount_to_deduct)
-                    total_purchased_feed_deductions[rufas_id] = (
-                        total_purchased_feed_deductions.get(rufas_id, 0.0) + amount_to_deduct
-                    )
                     self._cumulative_purchased_feeds_fed[rufas_id] += amount_to_deduct
                 elif isinstance(feed, HarvestedCrop):
                     feed.remove_feed_mass(amount_to_deduct)
@@ -588,9 +588,6 @@ class FeedManager:
                     )
                     if harvested_rufas_id is None:
                         raise ValueError("Could not resolve a valid harvested_rufas_id from feed.rufas_ids")
-                    total_farmgrown_feed_deductions[harvested_rufas_id] = (
-                        total_farmgrown_feed_deductions.get(harvested_rufas_id, 0.0) + amount_to_deduct
-                    )
                     self._cumulative_farmgrown_feeds_fed[harvested_rufas_id] += amount_to_deduct
                 else:
                     raise TypeError(f"Unsupported feed type: {type(feed)}")
