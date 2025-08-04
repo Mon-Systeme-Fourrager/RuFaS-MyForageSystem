@@ -290,7 +290,8 @@ def test__calculate_purchased_feed_emissions(
     """Tests _calculate_purchased_feed_emissions() for both feed-present and feed-empty cases."""
 
     mock_get_stored = mocker.patch.object(em, "_get_stored_purchased_feeds", return_value=stored_feeds)
-    mock_calc_totals = mocker.patch.object(em, "_calculate_purchased_storage_totals", return_value=({"50": 100.0}, {"50": 40.0}))
+    mock_calc_totals = mocker.patch.object(em, "_calculate_purchased_storage_totals", return_value=({"50": 100.0},
+                                                                                                    {"50": 40.0}))
     mock_calc_purchased = mocker.patch.object(em, "_calculate_purchased_feed_amounts", return_value={"50": 20.0})
     mock_calc_fed = mocker.patch.object(em, "_calculate_total_purchased_feed_fed", return_value={"50": 80.0})
     mock_calc_emissions = mocker.patch.object(em, "_calculate_emissions", return_value=(400.0, 50.0))
@@ -384,8 +385,6 @@ def test__calculate_purchased_storage_totals(
     assert start == expected_start
     assert end == expected_end
 
-
-import pytest
 
 @pytest.mark.parametrize(
     "purchased_feeds, expected_totals",

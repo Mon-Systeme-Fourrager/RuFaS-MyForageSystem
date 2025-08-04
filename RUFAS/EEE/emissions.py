@@ -177,7 +177,8 @@ class EmissionsEstimator:
         return fed
 
     # def _calculate_purchased_feed_emissions_old(self, homegrown_feeds: list[dict[str, Any]]) -> None:
-    #     info_map = {"class": self.__class__.__name__, "function": self._calculate_purchased_feed_emissions_old.__name__}
+    #     info_map = {"class": self.__class__.__name__,
+    # "function": self._calculate_purchased_feed_emissions_old.__name__}
     #     purchased_feeds = self._gather_ration_feed_totals()
     #     actual_purchased_feed_totals = self._calculate_actual_purchased_feeds(homegrown_feeds, purchased_feeds)
     #     self.om.add_variable(
@@ -261,12 +262,12 @@ class EmissionsEstimator:
 
     # def _gather_ration_feed_totals(self) -> dict[str, float]:
     #     """
-    #     Collects totals of feeds from rations given to animals in the last 365 days of the simulation and collapses them
-    #     into single set of numbers.
+    #     Collects totals of feeds from rations given to animals in the last 365 days of the simulation and collapses
+    #     them into single set of numbers.
     #     """
     #     filter = {
     #         "name": "Feed Ration Totals",
-    #         "description": "Gathers the amounts of purchased feeds fed to animals in the last year of the simulation.",
+    #         "description": "Gathers amounts of purchased feeds fed to animals in the last year of the simulation.",
     #         "filters": ["AnimalModuleReporter._report_daily_ration_per_pen.ration_daily_feed_totals.*"],
     #         "slice_start": SLICE_START,
     #     }
