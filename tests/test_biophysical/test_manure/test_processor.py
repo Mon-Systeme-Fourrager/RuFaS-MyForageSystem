@@ -100,7 +100,7 @@ def mock_separator() -> Separator:
         ash_efficiency=0.3,
         volatile_solids_efficiency=0.2,
         total_solids_efficiency=0.1,
-        processor_type="ScrewPress"
+        processor_type="ScrewPress",
     )
     return separator
 
@@ -149,7 +149,7 @@ def test_report_manure_stream_via_process_manure(
         {
             "class": "Separator",
             "function": "_report_manure_stream",
-            'prefix': 'Manure.Separator.ScrewPress.TestSeparator',
+            "prefix": "Manure.Separator.ScrewPress.TestSeparator",
             "simulation_day": 42,
             "units": MeasurementUnits.KILOGRAMS,
         },
