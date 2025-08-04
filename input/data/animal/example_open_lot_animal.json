@@ -8,15 +8,15 @@
     "replace_num": 5000,
     "herd_num": 1000,
     "breed": "HO",
-	"lactating_fraction": 0.5,
+	"lactating_fraction": 0.85,
 	"parity_fractions": {
-		"1": 0.36,
-		"2": 0.262,
-		"3": 0.18,
-		"4": 0.11,
-		"5": 0.09
+		"1": 0.35,
+		"2": 0.26,
+		"3": 0.17,
+		"4": 0.10,
+		"5": 0.12
     },
-    "annual_milk_yield": null
+    "annual_milk_yield": 9928000
   },
   "herd_initialization": {
     "initial_animal_num": 10000,
