@@ -916,6 +916,7 @@ def test_request_nutrients(
     manure_manager._om = OutputManager()
 
     mock_nutrient_request = mocker.MagicMock()
+
     mock_nutrient_request.use_supplemental_manure = use_supplemental_manure
     mock_nutrient_request.manure_type = ManureType.LIQUID
 
@@ -933,6 +934,7 @@ def test_request_nutrients(
     mock_field_request = mocker.patch.object(FieldManureSupplier, "request_nutrients", return_value=supplemental_result)
     mock_remove = mocker.patch.object(ManureManager, "_remove_nutrients_from_storage")
     mocker.patch.object(manure_manager, "_calculate_supplemental_manure_needed", return_value="calculated_supplemental")
+
 
     # Act
     actual_results = manure_manager.request_nutrients(mock_nutrient_request, animals_simulated, mock_time)
@@ -953,6 +955,7 @@ def test_request_nutrients(
                 assert actual_results == request_result + supplemental_result
             else:
                 assert actual_results == request_result
+
     else:
         mock_field_request.assert_called_once_with(mock_nutrient_request)
         assert actual_results == supplemental_result
@@ -1024,6 +1027,7 @@ def test_compute_stream_after_removal_with_real_manure_stream(
         degradable_volatile_solids=0.0,
         total_solids=0.0,
         volume=0.0,
+        methane_production_potential=0.24,
         pen_manure_data=None,
     )
 
