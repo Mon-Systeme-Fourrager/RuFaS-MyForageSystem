@@ -741,8 +741,6 @@ class RationOptimizer:
 
         Parameters
         ----------
-        is_ration_defined_by_user : bool
-            True if user defined ration methodology to be used.
         pen_average_body_weight : float
             Average body weight of animals in pen.
         requirements : AnimalRequirements
@@ -753,7 +751,10 @@ class RationOptimizer:
             The animal combination to optimize the ration for.
         previous_ration : dict[RUFAS_ID, str | float] | None
             Ration from previous formulation interval, if available.
-
+        user_defined_ration_dictionary : dict[RUFAS_ID, float]
+            Dictionary of feed IDs and inclusion rate.
+        user_defined_ration_tolerance : float
+            Allowable tolerance of user defined ration inclusion rate.
         Returns
         -------
         OptimizeResult
