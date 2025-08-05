@@ -48,6 +48,7 @@ def stored_manure() -> ManureStream:
         total_solids=290.01,
         volume=100.12,
         pen_manure_data=None,
+        methane_production_potential=0.24
     )
 
 
@@ -66,6 +67,7 @@ def received_manure() -> ManureStream:
         total_solids=29.01,
         volume=10.12,
         pen_manure_data=None,
+        methane_production_potential=0.24
     )
 
 
@@ -344,7 +346,7 @@ def test_calculate_bedded_pack_methane_emission(bedded_pack: BeddedPack, mocker:
     manure_volatile_solids = 1000.0
     expected = (manure_volatile_solids * 0.24 * 0.67 * 1.0) / 100
 
-    actual = bedded_pack.calculate_bedded_pack_methane_emission(True, manure_volatile_solids, 1.0)
+    actual = bedded_pack.calculate_bedded_pack_methane_emission(True, manure_volatile_solids, 1.0, 0.24)
 
     mock_conversion_factor.assert_called_once_with(True, 1.0)
     assert actual == pytest.approx(expected)

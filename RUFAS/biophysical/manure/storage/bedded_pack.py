@@ -83,6 +83,7 @@ class BeddedPack(Storage):
                 self.is_mixed,
                 self._manure_to_process.total_volatile_solids,
                 self._determine_barn_temperature(manure_annual_temperature),
+                self._manure_to_process.methane_production_potential
             )
         else:
             storage_methane = 0
@@ -327,7 +328,8 @@ class BeddedPack(Storage):
     @staticmethod
     def calculate_bedded_pack_methane_emission(is_mixed: bool,
                                                manure_volatile_solids: float,
-                                               manure_temperature: float) -> float:
+                                               manure_temperature: float,
+                                               methane_production_potential : float) -> float:
         """
         Calculates emission of methane on the current day based on methodology from IPCC 2019
         for mixed and unmixed bedded pack barns.
@@ -340,6 +342,9 @@ class BeddedPack(Storage):
             The volatile solids (kg).
         manure_temperature : float
             The annual average temperature of the barn (Celsius).
+        methane_production_potential : float
+            Achievable emission of methane from dairy manure (m^3 methane / kg volatile solids).
+
 
         Returns
         -------
@@ -349,7 +354,7 @@ class BeddedPack(Storage):
         """
         if manure_volatile_solids < 0:
             raise ValueError(f"Manure volatile solids mass must be positive. Received {manure_volatile_solids}.")
-        Bo = ManureConstants.ACHIEVABLE_METHANE_EMISSION
+        Bo = methane_production_potential
         methane_conversion_factor = BeddedPack.calculate_bedded_pack_methane_conversion_factor(is_mixed,
                                                                                                manure_temperature)
         methane_emissions_in_kg = \
