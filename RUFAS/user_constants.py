@@ -31,6 +31,7 @@ class UserConstants:
         A dictionary mapping constant names to their respective measurement units.
 
     """
+
     # Density-related
     WATER_DENSITY_KG_PER_LITER = 0.997
     WATER_DENSITY_KG_PER_M3 = WATER_DENSITY_KG_PER_LITER * GeneralConstants.LITERS_TO_CUBIC_METERS

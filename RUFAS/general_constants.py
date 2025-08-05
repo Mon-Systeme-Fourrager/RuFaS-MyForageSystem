@@ -90,6 +90,7 @@ class GeneralConstants:
         A dictionary mapping constant names to their associated units.
 
     """
+
     # Memory related
     BYTES_PER_GB = 1024**3
 
@@ -195,4 +196,3 @@ class GeneralConstants:
         "GAS_CONSTANT": MeasurementUnits.J_PER_K_PER_MOL,
         "IDEAL_GAS_LAW_R": MeasurementUnits.L_ATM_PER_MOL_K,
     }
-
