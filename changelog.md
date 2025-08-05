@@ -217,6 +217,8 @@ v0.9.2
 - [2518](https://github.com/RuminantFarmSystems/MASM/pull/2518) - [minor change] Cleanup all TODOs in the codebase.
 - [2502](https://github.com/RuminantFarmSystems/MASM/pull/2502) - [minor change] [Manure] Implement Manure Methane Potential Tracking.
 - [2513](https://github.com/RuminantFarmSystems/MASM/pull/2502) - [minor change] [Manure] Add type to separator.
+- [2491](https://github.com/RuminantFarmSystems/MASM/pull/2491) - [minor change] [Manure] Fixes a bug in manure request management when trying to supplement a request from a farm that has no on-farm manure.
+- [2461](https://github.com/RuminantFarmSystems/MASM/pull/2461) [Input] Create Example Input files.
 
 ### v0.9.2
 
