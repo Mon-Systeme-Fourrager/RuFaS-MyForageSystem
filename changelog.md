@@ -218,6 +218,7 @@ v0.9.2
 - [2502](https://github.com/RuminantFarmSystems/MASM/pull/2502) - [minor change] [Manure] Implement Manure Methane Potential Tracking.
 - [2491](https://github.com/RuminantFarmSystems/MASM/pull/2491) - [minor change] [Manure] Fixes a bug in manure request management when trying to supplement a request from a farm that has no on-farm manure.
 - [2461](https://github.com/RuminantFarmSystems/MASM/pull/2461) [Input] Create Example Input files.
+- [2526](https://github.com/RuminantFarmSystems/MASM/pull/2526) - [minor change] Update expected e2e results and fix flake8 error.
 
 ### v0.9.2
 
