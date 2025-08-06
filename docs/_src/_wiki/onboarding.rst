@@ -731,13 +731,9 @@ open your Git Desktop and VS Code.
    -  In the menu to the left select the input dropdown and then select
       metadata dropdown.
 
-   .. figure:: /_static/findmeta.png
-      :alt: The VS Code window has a menu on the left side of the screen
-      where you will spend the most time navigating between dropdowns to
-      find the files you need to change and your outcomes. You will
-      become familiar with the following: input, output, data, metadata,
-      output filters, and reports
-      :name: fig:example
+    .. figure:: /_static/findmeta.png
+      :alt: Navigating metadata
+      :name: fig:findmeta
       :width: 80.0%
 
       The VS Code window has a menu on the left side of the screen where
@@ -746,10 +742,8 @@ open your Git Desktop and VS Code.
       familiar with the following: input, output, data, metadata, output
       filters, and reports
 
-   .
-
 #. Select the file titled task_manager_metadata.json and observe the
-   "path" to find the example_task.json file.
+   "path" to find the example_freestall_task.json file.
 
    -  The path demonstrates how you may find the file from which RuFaS
       is receiving instruction or inputs. If no changes are made, RuFaS
@@ -758,33 +752,33 @@ open your Git Desktop and VS Code.
    -  Go to the left menu of VS Code again and you may locate the file
       by selecting input then data, and finally tasks.
 
-      There you will find example_task.json.
+      There you will find example_freestall_task.json.
 
-   .. figure:: /_static/defaulttask.png
+   .. figure:: /_static/default_task.png
       :alt: default task mngr
       :name: fig:example
-      :width: 80.0%
+      :width: 100.0%
 
       This figure demonstrates where you may find the
       task_manager_metadata.json file and the location of the path for
       the next default task.
 
-#. When you select the file, example_task.json you will notice there is
-   another path pointing to a example_metadata.json file. This
-   example_metadata.json file is your first opportunity to make
+#. When you select the file, example_freestall_task.json you will notice there is
+   another path pointing to a example_freestall_dairy_metadata.json file. This
+   example_freestall_dairy_metadata.json file is your first opportunity to make
    adjustments to tailor the simulation to your needs. Following the
    path, navigate to the metadata json file.
 
-.. figure:: /_static/defaulttask.png
-   :alt: default task
-   :name: fig:example
-   :width: 80.0%
+    .. figure:: /_static/default_task.png
+       :alt: default task
+       :name: fig:example
+       :width: 100.0%
 
-When you open the example_task.json file, this is what you should
-see. Notice that the example scenario is a single run of a
-simulation titled, "SIMULATION_SINGLE_RUN."
+        When you open the example_freestall_task.json file, this is what you should
+        see. Notice that the example scenario is a single run of a
+        simulation titled, "SIMULATION_SINGLE_RUN."
 
-#. In the example_metadata.json file, you will observe a long list of
+#. In the example_freestall_dairy_metadata.json file, you will observe a long list of
    paths to different input or config files. These are where you will be
    making your changes to inputs (i.e. animal numbers, manure storage
    system, etcetera).
@@ -799,26 +793,26 @@ simulation titled, "SIMULATION_SINGLE_RUN."
          remember. We recommend "example_metadatav1.json" or something
          similar.
 
-.. figure:: /_static/defaultmeta.png
-   :alt: default meta
-   :name: fig:example
-   :width: 80.0%
+    .. figure:: /_static/example_metadata.png
+       :alt: default meta
+       :name: fig:example
+       :width: 100.0%
 
-This is an example of what you will see when you open your default
-metadata json file. Depending on what you are looking for, you may
-use this to better understand what input or config files you will
-need to look at.
+        This is an example of what you will see when you open your example
+        metadata json file. Depending on what you are looking for, you may
+        use this to better understand what input or config files you will
+        need to look at.
 
-#. Using the paths in either the default_metadata.json file or the
+#. Using the paths in either the example_freestall_dairy_metadata.json file or the
    version of the file that you created, locate the values that you wish
    to alter for your simulation.
 
    -  For practice, navigate to the portion of text titled "Animal data"
-      in the file. Follow this path to the default_animal.json file in
+      in the file. Follow this path to the example_freestall_animal.json file in
       the metadata dropdown.
 
    -  Create a copy of default_animal.json and give it the title
-      **"default_animal1.json."**
+      **"example_freestall_animal1.json"**
 
    -  In your newly created json file, change the "cow_num" from 100 to
       10000 and your "replace_num" from 500 to 3000.
@@ -832,16 +826,16 @@ need to look at.
    steps to check that the paths are pointing to your newly created file
    or files if you made a copy of the default_metadata file.
 
-   -  Check your default_metadata.json file or the copy that you
+   -  Check your example_freestall_dairy_metadata.json file or the copy that you
       created. The path for the "animal data" should point to the new
-      default_animal1.json file that you created in **Step 6**.
+      example_freestall_animal1.json file that you created in **Step 6**.
 
-   -  Check that your default_task.json file is indicating the correct
+   -  Check that your example_freestall_task.json file is indicating the correct
       metadata json file if you did create a copy of the file. If you
       did not, it should already be pointing to the correctly
-      default_metadata.json file.
+      example_freestall_dairy_metadata.json file.
 
-   -  You may wish to check on the default_task.json and
+   -  You may wish to check on the example_freestall_task.json and
       task_manager_metadata.json, but we did not make any changes past
       this point so all files should still be correctly indicated in the
       path.
