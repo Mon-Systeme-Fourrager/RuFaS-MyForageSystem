@@ -220,6 +220,8 @@ v0.9.2
 - [2491](https://github.com/RuminantFarmSystems/MASM/pull/2491) - [minor change] [Manure] Fixes a bug in manure request management when trying to supplement a request from a farm that has no on-farm manure.
 - [2461](https://github.com/RuminantFarmSystems/MASM/pull/2461) [Input] Create Example Input files.
 - [2526](https://github.com/RuminantFarmSystems/MASM/pull/2526) - [minor change] Update expected e2e results and fix flake8 error.
+- [2529](https://github.com/RuminantFarmSystems/MASM/pull/2529) - [minor change] E2E Testing for No Animal C&S Run.
+
 
 ### v0.9.2
 
