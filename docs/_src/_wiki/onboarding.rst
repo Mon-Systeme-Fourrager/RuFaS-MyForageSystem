@@ -288,7 +288,6 @@ repository for your offline repository.
    -  A step by step guide on how to do this is available at
       `GitHub <https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository>`__.
 
-   -  If more help is needed, ask your On boarding Buddy for help.
 
 *Install Python*
 ----------------
@@ -670,7 +669,7 @@ Git Desktop.
          "csv" and then the name of the rest of the file. All that goes
          into this file is the name of the output you want. They can be
          quite user specific, so it might be helpful to start with
-         asking for some team members to share some basic filters.
+         asking other model users to share some basic filters.
 
       Recall from the input section that some data are reported on a
       ’daily’ basis. You can set up csv files print a column with each
@@ -683,8 +682,8 @@ Git Desktop.
       \*Note, when you run a simulation, there will also be logs to tell
       you more detailed information about the simulation you ran. Some
       of these logs may be helpful, but may sometimes be difficult to
-      interpret. Don’t hesitate to reach out to a RuFaS team member or
-      your dev team experts to help you interpret logs.
+      interpret. Don’t hesitate to reach out to the RuFaS user community 
+      to help you interpret logs.
 
    #. **RuFaS** - as the name may imply, this is the home for the code
       that makes up the program. There are folders like "routines",
