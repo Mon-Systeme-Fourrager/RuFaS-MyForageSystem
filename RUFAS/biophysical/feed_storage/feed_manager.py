@@ -560,12 +560,16 @@ class FeedManager:
             If the amount of feed to deduct is greater than the amount in storage.
 
         """
-        all_available_feeds: list[HarvestedCrop | PurchasedFeed] = []
-        for storage in self.active_storages.values():
-            all_available_feeds.extend(storage.stored)
-        all_available_feeds.extend(self.purchased_feed_storage.stored)
+        info_map = {
+            "class": self.__class__.__name__,
+            "function": self._deduct_feeds_from_inventory.__name__,
+            "units": MeasurementUnits.DRY_KILOGRAMS,
+            "simulation_day": simulation_day,
+        }
+        total_purchased_feed_deductions: dict[RUFAS_ID, float] = {}
+        total_farmgrown_feed_deductions: dict[RUFAS_ID, float] = {}
 
-        all_available_feeds = sorted(all_available_feeds, key=lambda feed: feed.storage_time)
+        all_available_feeds: list[HarvestedCrop | PurchasedFeed] = self._gather_available_feeds()
 
         for rufas_id, amount in feeds_to_deduct.items():
             available_feeds = [
@@ -575,11 +579,12 @@ class FeedManager:
             for feed in available_feeds:
                 amount_to_deduct = min(amount, feed.dry_matter_mass)
                 amount -= amount_to_deduct
-                if amount < 0.001:
-                    amount = 0
 
                 if isinstance(feed, PurchasedFeed):
                     feed.remove_dry_matter_mass(amount_to_deduct)
+                    total_purchased_feed_deductions[rufas_id] = (
+                        total_purchased_feed_deductions.get(rufas_id, 0.0) + amount_to_deduct
+                    )
                     self._cumulative_purchased_feeds_fed[rufas_id] += amount_to_deduct
                 elif isinstance(feed, HarvestedCrop):
                     feed.remove_feed_mass(amount_to_deduct)
@@ -587,16 +592,50 @@ class FeedManager:
                         feed.rufas_ids, list(feeds_to_deduct.keys())
                     )
                     if harvested_rufas_id is None:
-                        raise ValueError("Could not resolve a valid harvested_rufas_id from feed.rufas_ids")
+                        raise ValueError("Could not resolve a valid harvested crop rufas_id from feed.rufas_ids.")
+                    total_farmgrown_feed_deductions[harvested_rufas_id] = (
+                        total_farmgrown_feed_deductions.get(harvested_rufas_id, 0.0) + amount_to_deduct
+                    )
                     self._cumulative_farmgrown_feeds_fed[harvested_rufas_id] += amount_to_deduct
                 else:
-                    raise TypeError(f"Unsupported feed type: {type(feed)}")
+                    raise TypeError(f"Unsupported feed type: {type(feed)}.")
 
-                if amount == 0.0:
+                if amount < 0.001:
+                    amount = 0
                     break
 
-            if amount != 0.0:
+            if amount >= 0.001:
                 raise ValueError(f"Was not able to deduct remaining {amount} of feed {rufas_id}.")
+
+        for rufas_id, amount in total_purchased_feed_deductions.items():
+            self._om.add_variable(
+                f"purchased_feed_{rufas_id}_fed_on_day_{simulation_day}",
+                amount,
+                info_map,
+            )
+        for rufas_id, amount in total_farmgrown_feed_deductions.items():
+            self._om.add_variable(
+                f"farmgrown_feed_{rufas_id}_fed_on_day_{simulation_day}",
+                amount,
+                info_map,
+            )
+
+    def _gather_available_feeds(self) -> list[HarvestedCrop | PurchasedFeed]:
+        """
+        Gathers all available feeds from active storages and purchased feed storage.
+
+        Returns
+        -------
+        list[HarvestedCrop | PurchasedFeed]
+            A list of all available feeds sorted by their storage time.
+        """
+        all_available_feeds: list[HarvestedCrop | PurchasedFeed] = []
+        for storage in self.active_storages.values():
+            all_available_feeds.extend(storage.stored)
+        all_available_feeds.extend(self.purchased_feed_storage.stored)
+
+        all_available_feeds = sorted(all_available_feeds, key=lambda feed: feed.storage_time)
+        return all_available_feeds
 
     def _check_feed_availability(
         self, feeds_to_deduct: dict[RUFAS_ID, float], rufas_id: int, feed: HarvestedCrop | PurchasedFeed
