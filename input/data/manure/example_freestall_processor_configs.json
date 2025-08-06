@@ -82,30 +82,6 @@
   ],
   "storage": [
     {
-      "name": "calf_BP",
-      "processor_type": "BeddedPack",
-      "storage_time_period": 180,
-      "is_mixed": true
-    },
-    {
-      "name": "grow_BP",
-      "processor_type": "BeddedPack",
-      "storage_time_period": 180,
-      "is_mixed": true
-    },
-        {
-      "name": "close_BP",
-      "processor_type": "BeddedPack",
-      "storage_time_period": 180,
-      "is_mixed": true
-    },
-    {
-      "name": "lac_BP",
-      "processor_type": "BeddedPack",
-      "storage_time_period": 180,
-      "is_mixed": true
-    },
-    {
       "name": "slurry_storage_outdoor_growing",
       "processor_type": "SlurryStorageOutdoor",
       "capacity": 1e10,
@@ -151,7 +127,13 @@
     {
       "name": "bedded_pack_1",
       "processor_type": "BeddedPack",
-      "storage_time_period": 365,
+      "storage_time_period": 30,
+      "is_mixed": false
+    },
+    {
+      "name": "compost_bedded_pack_1",
+      "processor_type": "BeddedPack",
+      "storage_time_period": 183,
       "is_mixed": true
     }
   ]
