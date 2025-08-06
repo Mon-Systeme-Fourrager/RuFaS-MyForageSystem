@@ -79,7 +79,7 @@ class AnimalModuleConstants:
     MILK_LACTOSE: float = 4.85
     """Milk lactose content, percentage."""
 
-    DMI_CONSTRAINT_FRACTION: float = 0.20
+    DMI_CONSTRAINT_FRACTION: float = 0.30
     """The +/- fraction of DMI estimated allowed for ration formulation."""
 
     MINIMUM_DMI: float = 1.0
