@@ -281,7 +281,7 @@ def test_gather_homegrown_feeds_and_fertilizer_apps(mocker: MockerFixture, em: E
         ),
     ],
 )
-def test__calculate_purchased_feed_emissions(
+def test_calculate_purchased_feed_emissions(
     em: EmissionsEstimator,
     mocker: MockerFixture,
     stored_feeds: dict[str, Any],
@@ -322,7 +322,7 @@ def test__calculate_purchased_feed_emissions(
         ({}, True),
     ],
 )
-def test__get_stored_purchased_feeds(
+def test_get_stored_purchased_feeds(
     em: EmissionsEstimator,
     mocker: MockerFixture,
     stored_feeds: dict[str, Any],
@@ -373,7 +373,7 @@ def test__get_stored_purchased_feeds(
         ),
     ],
 )
-def test__calculate_purchased_storage_totals(
+def test_calculate_purchased_storage_totals(
     em: EmissionsEstimator,
     stored_feeds: dict[str, Any],
     expected_start: dict[str, float],
@@ -473,7 +473,7 @@ def test__calculate_purchased_feed_amounts(
         ),
     ],
 )
-def test__calculate_total_purchased_feed_fed(
+def test_calculate_total_purchased_feed_fed(
     em: EmissionsEstimator,
     start: dict[str, float],
     end: dict[str, float],

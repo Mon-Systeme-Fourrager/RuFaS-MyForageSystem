@@ -12,6 +12,66 @@ SLICE_START = -365
 SLICE_END = -364
 FINAL_DAY_SLICE_START = -1
 
+PURCHASED_FEED_STORAGE_FILTER = {
+    "name": "Purchased Feeds in Storage",
+    "description": "Gathers the amounts of purchased feeds in storage on a particular day.",
+    "filters": [
+        "PurchasedFeedStorage.report_stored_purchased_feeds.stored_feed_.*daily_storage_levels.*"
+    ],
+    "slice_start": SLICE_START,
+}
+
+PURCHASED_FEED_TOTALS_FILTER = {
+    "name": "Purchased Feed Totals",
+    "description": "Gathers the amounts of feeds purchased in final year.",
+    "filters": ["FeedManager.report_cumulative_purchased_feeds.*_purchased_to_date.*"],
+    "slice_start": SLICE_START,
+}
+TIME_FILTER = {
+    "name": "RufasTime Filter",
+    "description": "Collects the date a year before the simulation ended, to be used as a cutoff for deciding "
+    "which crop yields and nutrient applications to estimate emissions for.",
+    "filters": ["RufasTime.(day|calendar_year)"],
+    "slice_start": SLICE_START,
+    "slice_end": SLICE_END,
+}
+HOMEGROWN_FEEDS_AND_FERTILIZERS_FILTERS: dict[str, dict[str, Any]] = {
+    "homegrown feeds filter": {
+        "name": "Homegrown Feeds",
+        "description": "Collects all crop harvests that occurred in the simulation.",
+        "filters": ["CropManagement._record_yield.harvest_yield.field='.*'"],
+        "variables": [".*"],
+        "date_fields": ("harvest_year", "harvest_day"),
+    },
+    "fertilizer applications filter": {
+        "name": "Fertilizer Applications",
+        "description": "Collects all synthetic fertilizer applications that occurred in the simulation.",
+        "filters": ["Field._record_fertilizer_application\\.fertilizer_application\\.field='.*'"],
+        "variables": [".*"],
+        "date_fields": ("year", "day"),
+    },
+    "manure applications filter": {
+        "name": "Manure Applications",
+        "description": "Collects all manure applications that occurred in the simulation.",
+        "filters": ["Field._record_manure_application\\.manure_application\\.field='.*'"],
+        "variables": [".*"],
+        "date_fields": ("year", "day"),
+    },
+    "manure requests filter": {
+        "name": "Manure Requests",
+        "description": "Collects all manure requests that occurred in the simulation.",
+        "filters": ["Field._record_manure_application\\.manure_request\\.field='.*'"],
+        "variables": [".*"],
+        "date_fields": ("year", "day"),
+    },
+}
+
+"""
+Patterns for matching purchased feed storage and totals in the output variables.
+"""
+PURCHASED_FEED_PATTERN = r"_(\d+)_purchased_to_date.*"
+DAILY_STORAGE_LEVELS_PATTERN = r"_(\d+).daily_storage_levels$"
+
 """
 These are constants for calculating the embedded emissions of synthetic nitrogen and phosphorus fertilizer. Their units
 are in kg CO2e / kg N and kg CO2e / kg P, respectively. The nitrogen and phosphorus constants reference IPCC 2021, GWP
@@ -97,15 +157,7 @@ class EmissionsEstimator:
             "class": self.__class__.__name__,
             "function": self._get_stored_purchased_feeds.__name__,
         }
-        filter_config = {
-            "name": "Feeds in Storage",
-            "description": "Gathers the amounts of purchased feeds in storage on a particular day.",
-            "filters": [
-                "PurchasedFeedStorage.report_stored_purchased_feeds.stored_feed_.*daily_storage_levels.*"
-            ],
-            "slice_start": SLICE_START,
-        }
-        stored_feeds = self.om.filter_variables_pool(filter_config)
+        stored_feeds = self.om.filter_variables_pool(PURCHASED_FEED_STORAGE_FILTER)
         if not stored_feeds:
             self.om.add_warning("No Purchased Feeds in Storage", "No purchased feeds were found in storage.", info_map)
         return stored_feeds
@@ -127,7 +179,7 @@ class EmissionsEstimator:
         start_totals = defaultdict(float)
         end_totals = defaultdict(float)
         for key, value in stored_feeds.items():
-            if match := re.search(r"_(\d+).daily_storage_levels$", key):
+            if match := re.search(DAILY_STORAGE_LEVELS_PATTERN, key):
                 feed_id = match.group(1)
                 values = value.get("values") or [0.0]
                 start_totals[feed_id] = values[0]
@@ -135,16 +187,18 @@ class EmissionsEstimator:
         return start_totals, end_totals
 
     def _calculate_purchased_feed_amounts(self) -> dict[str, float]:
-        filter_config = {
-            "name": "Purchased Feed Totals",
-            "description": "Gathers the amounts of feeds purchased in final year.",
-            "filters": ["FeedManager.report_cumulative_purchased_feeds.*_purchased_to_date.*"],
-            "slice_start": SLICE_START,
-        }
-        purchased_feeds = self.om.filter_variables_pool(filter_config)
+        """
+        Calculates the amounts of purchased feeds during the time period.
+
+        Returns
+        -------
+        dict[str, float]
+            A dictionary containing the amounts of purchased feeds during the time period.
+        """
+        purchased_feeds = self.om.filter_variables_pool(PURCHASED_FEED_TOTALS_FILTER)
         totals = defaultdict(float)
         for key, value in purchased_feeds.items():
-            if match := re.search(r"_(\d+)_purchased_to_date.*", key):
+            if match := re.search(PURCHASED_FEED_PATTERN, key):
                 feed_id = match.group(1)
                 values = value.get("values") or [0.0]
                 totals[feed_id] = values[-1] - values[0]
@@ -205,53 +259,14 @@ class EmissionsEstimator:
         Gathers the yields that were harvested and fertilizer applications that were applied in the last 365 days of the
         simulation.
         """
-        time_filter = {
-            "name": "RufasTime Filter",
-            "description": "Collects the date a year before the simulation ended, to be used as a cutoff for deciding "
-            "which crop yields and nutrient applications to estimate emissions for.",
-            "filters": ["RufasTime.(day|calendar_year)"],
-            "slice_start": SLICE_START,
-            "slice_end": SLICE_END,
-        }
-        date_variables = self.om.filter_variables_pool(time_filter)
+        date_variables = self.om.filter_variables_pool(TIME_FILTER)
         day_cutoff = date_variables["RufasTime.day"]["values"][0]
         year_cutoff = date_variables["RufasTime.calendar_year"]["values"][0]
         date_cutoff = RufasTime.convert_year_jday_to_date(year_cutoff, day_cutoff).date()
 
-        filters: dict[str, dict[str, Any]] = {
-            "homegrown feeds filter": {
-                "name": "Homegrown Feeds",
-                "description": "Collects all crop harvests that occurred in the simulation.",
-                "filters": ["CropManagement._record_yield.harvest_yield.field='.*'"],
-                "variables": [".*"],
-                "date_fields": ("harvest_year", "harvest_day"),
-            },
-            "fertilizer applications filter": {
-                "name": "Fertilizer Applications",
-                "description": "Collects all synthetic fertilizer applications that occurred in the simulation.",
-                "filters": ["Field._record_fertilizer_application\\.fertilizer_application\\.field='.*'"],
-                "variables": [".*"],
-                "date_fields": ("year", "day"),
-            },
-            "manure applications filter": {
-                "name": "Manure Applications",
-                "description": "Collects all manure applications that occurred in the simulation.",
-                "filters": ["Field._record_manure_application\\.manure_application\\.field='.*'"],
-                "variables": [".*"],
-                "date_fields": ("year", "day"),
-            },
-            "manure requests filter": {
-                "name": "Manure Requests",
-                "description": "Collects all manure requests that occurred in the simulation.",
-                "filters": ["Field._record_manure_application\\.manure_request\\.field='.*'"],
-                "variables": [".*"],
-                "date_fields": ("year", "day"),
-            },
-        }
-
         results = {}
-        for operation_filter_key in filters:
-            operation_filter = filters[operation_filter_key]
+        for operation_filter_key in HOMEGROWN_FEEDS_AND_FERTILIZERS_FILTERS:
+            operation_filter = HOMEGROWN_FEEDS_AND_FERTILIZERS_FILTERS[operation_filter_key]
             filtered_data = self._filter_results(operation_filter, date_cutoff, *operation_filter["date_fields"])
             results[operation_filter["name"]] = filtered_data
 
