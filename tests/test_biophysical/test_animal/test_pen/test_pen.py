@@ -1253,7 +1253,11 @@ def test_attempt_formulation(mocker: MockerFixture, pen: Pen) -> None:
     mock_set = mocker.patch.object(pen, "set_animal_nutritional_requirements")
     mock_result = (MagicMock(spec=OptimizeResult), MagicMock(spec=RationConfig))
     mock_attempt = mocker.patch.object(RationOptimizer, "attempt_optimization", return_value=mock_result)
-    result = pen._attempt_formulation(False, _mock_feeds(), 25, None)
+    result = pen._attempt_formulation(is_ration_defined_by_user=False,
+                                      pen_feeds=_mock_feeds(),
+                                      temperature=25, previous_ration=None,
+                                      initial_dry_matter_requirement=1,
+                                      initial_protein_requirement=1)
     mock_set.assert_called_once()
     mock_attempt.assert_called_once()
     assert result == mock_result
