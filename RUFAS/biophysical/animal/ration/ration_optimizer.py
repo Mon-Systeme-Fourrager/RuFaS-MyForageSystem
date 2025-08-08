@@ -85,7 +85,7 @@ class RationConfig:
             pen_available_feeds = []
         self.animal_requirements = animal_requirements
         self.pen_average_body_weight = pen_average_body_weight
-        self.dry_matter_intake_fixed: float = initial_dry_matter_requirement
+        self.initial_dry_matter_requirement: float = initial_dry_matter_requirement
         self.initial_protein_requirement: float = initial_protein_requirement
 
         self.feeds_used = pen_available_feeds
@@ -713,7 +713,7 @@ class RationOptimizer:
         return float(
             -(sum(decision_vector))
             + (
-                ration_configuration.dry_matter_intake_fixed
+                ration_configuration.initial_dry_matter_requirement
                 * (1 + AnimalModuleConstants.DMI_CONSTRAINT_FRACTION)
             )
         )
@@ -880,7 +880,7 @@ class RationOptimizer:
                 user_defined_ration_dictionary[key]
                 / 100
                 * (1 + udr_tolerance)
-                * (ration_config.dry_matter_intake_fixed * (1 + AnimalModuleConstants.DMI_CONSTRAINT_FRACTION))
+                * (ration_config.initial_dry_matter_requirement * (1 + AnimalModuleConstants.DMI_CONSTRAINT_FRACTION))
             )
             targetbounds = (max(0.0, target_lower), target_upper)
             user_defined_boundlist.append(targetbounds)
