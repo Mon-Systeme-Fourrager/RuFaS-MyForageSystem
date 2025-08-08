@@ -86,7 +86,7 @@ class RationConfig:
         self.animal_requirements = animal_requirements
         self.pen_average_body_weight = pen_average_body_weight
         self.dry_matter_intake_fixed: float = initial_dry_matter_requirement
-        self.protein_limit_fixed: float = initial_protein_requirement
+        self.initial_protein_requirement: float = initial_protein_requirement
 
         self.feeds_used = pen_available_feeds
 
@@ -446,10 +446,6 @@ class RationOptimizer:
         metabolizable_protein_supply, actual_metabolizable_protein_requirement = (
             RationOptimizer._calculate_protein_constraint_parameters(decision_vector, ration_configuration, use_initial_requirement=False)
         )
-        # print("protein lower")
-        # print(ration_configuration.protein_limit_fixed)
-        # print(ration_configuration.animal_requirements.metabolizable_protein)
-        # print(actual_metabolizable_protein_requirement)
 
         return metabolizable_protein_supply - actual_metabolizable_protein_requirement
 
@@ -476,10 +472,6 @@ class RationOptimizer:
         metabolizable_protein_supply, actual_metabolizable_protein_requirement = (
             RationOptimizer._calculate_protein_constraint_parameters(decision_vector, ration_configuration, use_initial_requirement=True)
         )
-        # print("protein upper")
-        # print(ration_configuration.protein_limit_fixed)
-        # print(ration_configuration.animal_requirements.metabolizable_protein)
-        # print(actual_metabolizable_protein_requirement)
 
         return (
             actual_metabolizable_protein_requirement * AnimalModuleConstants.PROTEIN_UPPER_LIMIT_FACTOR
@@ -520,7 +512,7 @@ class RationOptimizer:
             body_weight=ration_configuration.pen_average_body_weight,
         )
         if use_initial_requirement:
-            actual_metabolizable_protein_requirement = ration_configuration.protein_limit_fixed
+            actual_metabolizable_protein_requirement = ration_configuration.initial_protein_requirement
         else:
             actual_metabolizable_protein_requirement = ration_configuration.animal_requirements.metabolizable_protein
         return metabolizable_protein_supply, actual_metabolizable_protein_requirement
@@ -689,9 +681,6 @@ class RationOptimizer:
             Non-negative value indicates that supply is exceeds the minimum dry matter intake.
 
         """
-        # dmilower = ration_configuration.animal_requirements.dry_matter * (
-        #     1 - AnimalModuleConstants.DMI_CONSTRAINT_FRACTION)
-        # print(f"dry matter intake lower: {dmilower}")
         return float(
             (sum(decision_vector))
             - (
@@ -719,9 +708,6 @@ class RationOptimizer:
             Non-negative value indicates that supply is less than the maximum dry matter intake.
 
         """
-        # dmiupper = (ration_configuration.dry_matter_intake_fixed
-        #             * (1 + AnimalModuleConstants.DMI_CONSTRAINT_FRACTION))
-        # print(f"dry matter intake upper: {dmiupper}")
         return float(
             -(sum(decision_vector))
             + (
@@ -729,13 +715,6 @@ class RationOptimizer:
                 * (1 + AnimalModuleConstants.DMI_CONSTRAINT_FRACTION)
             )
         )
-        # return float(
-        #     -(sum(decision_vector))
-        #     + (
-        #         ration_configuration.animal_requirements.dry_matter
-        #         * (1 + AnimalModuleConstants.DMI_CONSTRAINT_FRACTION)
-        #     )
-        # )
 
     @staticmethod
     def objective(decision_vector: npt.NDArray[np.float64], ration_config: RationConfig) -> float:
