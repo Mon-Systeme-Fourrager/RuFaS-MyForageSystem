@@ -29,7 +29,7 @@ class RationConfig:
     initial_dry_matter_requirement : float
         Dry matter intake requirement at start of ration formulation.
     initial_protein_requirement : float
-        Metabolizable protein requirement at start of ration formulation.    
+        Metabolizable protein requirement at start of ration formulation.
     feeds_used : list[Feed]
         List of Feeds used in ration formulation.
     price_list : list[float]
@@ -77,7 +77,7 @@ class RationConfig:
         initial_dry_matter_requirement : float
             Dry matter intake requirement at start of ration formulation.
         initial_protein_requirement : float
-            Metabolizable protein requirement at start of ration formulation.    
+            Metabolizable protein requirement at start of ration formulation.
         pen_average_body_weight : float
             Average body weight in pen, used in constraint methods.
         """
@@ -444,7 +444,8 @@ class RationOptimizer:
 
         """
         metabolizable_protein_supply, actual_metabolizable_protein_requirement = (
-            RationOptimizer._calculate_protein_constraint_parameters(decision_vector, ration_configuration, use_initial_requirement=False)
+            RationOptimizer._calculate_protein_constraint_parameters(
+                decision_vector, ration_configuration, use_initial_requirement=False)
         )
 
         return metabolizable_protein_supply - actual_metabolizable_protein_requirement
@@ -470,7 +471,8 @@ class RationOptimizer:
 
         """
         metabolizable_protein_supply, actual_metabolizable_protein_requirement = (
-            RationOptimizer._calculate_protein_constraint_parameters(decision_vector, ration_configuration, use_initial_requirement=True)
+            RationOptimizer._calculate_protein_constraint_parameters(
+                decision_vector, ration_configuration, use_initial_requirement=True)
         )
 
         return (
@@ -1007,7 +1009,7 @@ class RationOptimizer:
         initial_dry_matter_requirement : float
             Dry matter intake requirement at start of ration formulation.
         initial_protein_requirement : float
-            Metabolizable protein requirement at start of ration formulation.    
+            Metabolizable protein requirement at start of ration formulation.
         sim_day : int
             Day of simulation.
 
@@ -1038,7 +1040,6 @@ class RationOptimizer:
             "pen requirements": average_nutrient_requirements,
             "initial_dry_matter_requirement": initial_dry_matter_requirement,
             "initial_protein_requirement": initial_protein_requirement
-            
         }
         fail_summary_units = {
             "simulation day": MeasurementUnits.SIMULATION_DAY,

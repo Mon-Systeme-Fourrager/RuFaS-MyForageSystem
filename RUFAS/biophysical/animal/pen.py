@@ -936,7 +936,7 @@ class Pen:
         self.set_animal_nutritional_requirements(temperature=temperature, available_feeds=pen_available_feeds)
         initial_dry_matter_requirement = self.average_nutrition_requirements.dry_matter
         initial_protein_requirement = self.average_nutrition_requirements.metabolizable_protein
- 
+
         while True:
             num_attempts += 1
             solution, ration_config = self._attempt_formulation(
