@@ -55,7 +55,7 @@ class EnergyEstimator:
         om.add_variable(
             "total_diesel_consumption_tractor_implement",
             total_diesel_consumption_tractor_implement_liter_per_ton,
-            {**base_info_map, **{"units": MeasurementUnits.LITERS_PER_TONS}},
+            {**base_info_map, **{"units": MeasurementUnits.LITERS_PER_TON}},
         )
 
     def report_diesel_consumption(
@@ -125,7 +125,7 @@ class EnergyEstimator:
         om.add_variable(
             f"diesel_consumption_tractor_implement_for_{suffix}",
             diesel_consumption_tractor_implement_liter_per_ton,
-            {**base_info_map, **{"units": MeasurementUnits.LITERS_PER_TONS}},
+            {**base_info_map, **{"units": MeasurementUnits.LITERS_PER_TON}},
         )
 
     def parse_inputs_for_diesel_consumption_calculation(self) -> list[dict[str, Any]]:
@@ -235,6 +235,8 @@ class EnergyEstimator:
         for filter in crop_and_soil_filters:
             filtered_pool = om.filter_variables_pool(filter)
             max_index = Utility.find_max_index_from_keys(filtered_pool)
+            if max_index is None or max_index < 0:
+                continue
             first_key_in_pool = next(iter(filtered_pool.keys()))
             for event_type, key_mappings in eee_to_om_key_mapping.items():
                 if first_key_in_pool.startswith(event_type.value):
