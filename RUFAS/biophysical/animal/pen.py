@@ -934,18 +934,15 @@ class Pen:
         previous_ration = getattr(self, "ration", None)
         num_attempts = 0
         self.set_animal_nutritional_requirements(temperature=temperature, available_feeds=pen_available_feeds)
-        fixed_dry_matter_requirement = self.average_nutrition_requirements.dry_matter
-        fixed_protein_requirement = self.average_nutrition_requirements.metabolizable_protein
-        # print(self.animal_combination)
-        # print(fixed_dry_matter_requirement)
-        # print(fixed_protein_requirement)
+        initial_dry_matter_requirement = self.average_nutrition_requirements.dry_matter
+        initial_protein_requirement = self.average_nutrition_requirements.metabolizable_protein
  
         while True:
             num_attempts += 1
             solution, ration_config = self._attempt_formulation(
                 is_ration_defined_by_user, pen_available_feeds, temperature, previous_ration,
-                fixed_dry_matter_requirement,
-                fixed_protein_requirement
+                initial_dry_matter_requirement,
+                initial_protein_requirement
             )
 
             if not solution.success:
@@ -957,7 +954,7 @@ class Pen:
                     pen_id=self.id,
                     pen_available_feeds=pen_available_feeds,
                     average_nutrient_requirements=self.average_nutrition_requirements,
-                    fixed_dry_matter_requirement=fixed_dry_matter_requirement,
+                    initial_dry_matter_requirement=initial_dry_matter_requirement,
                     sim_day=simulation_day,
                 )
 
@@ -996,8 +993,8 @@ class Pen:
 
     def _attempt_formulation(
         self, is_ration_defined_by_user: bool, pen_feeds: list[Feed], temperature: float, previous_ration: Any,
-        fixed_dry_matter_intake_requirement: float,
-        fixed_protein_requirement: float
+        initial_dry_matter_requirement: float,
+        initial_protein_requirement: float
     ) -> tuple[OptimizeResult, RationConfig]:
         """Runs the optimizer and returns solution and config."""
         self.set_animal_nutritional_requirements(temperature=temperature, available_feeds=pen_feeds)
@@ -1011,8 +1008,8 @@ class Pen:
         return self.ration_optimizer.attempt_optimization(
             pen_average_body_weight=self.average_body_weight,
             requirements=self.average_nutrition_requirements,
-            fixed_dry_matter_intake_requirement=fixed_dry_matter_intake_requirement,
-            fixed_protein_requirement=fixed_protein_requirement,
+            initial_dry_matter_requirement=initial_dry_matter_requirement,
+            initial_protein_requirement=initial_protein_requirement,
             pen_available_feeds=pen_feeds,
             animal_combination=self.animal_combination,
             previous_ration=previous_ration,
