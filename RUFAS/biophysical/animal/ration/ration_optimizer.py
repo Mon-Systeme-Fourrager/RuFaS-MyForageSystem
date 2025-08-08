@@ -26,10 +26,10 @@ class RationConfig:
         Nutrition requirements for pen, used in constraint methods.
     pen_average_body_weight : float
         Average body weight in pen, used in constraint methods.
-    dry_matter_intake_fixed : float
+    initial_dry_matter_requirement : float
         Dry matter intake requirement at start of ration formulation.
-    protein
-    
+    initial_protein_requirement : float
+        Metabolizable protein requirement at start of ration formulation.    
     feeds_used : list[Feed]
         List of Feeds used in ration formulation.
     price_list : list[float]
@@ -74,6 +74,10 @@ class RationConfig:
             Nutrition requirements for pen, used in constraint methods.
         pen_available_feeds : list[Feed], optional
             List of Feeds used in ration formulation.
+        initial_dry_matter_requirement : float
+            Dry matter intake requirement at start of ration formulation.
+        initial_protein_requirement : float
+            Metabolizable protein requirement at start of ration formulation.    
         pen_average_body_weight : float
             Average body weight in pen, used in constraint methods.
         """
@@ -890,7 +894,6 @@ class RationOptimizer:
                 / 100
                 * (1 - udr_tolerance)
                 * (ration_config.animal_requirements.dry_matter)
-                # TODO consider increasing/decreasing dry matter intake requirement using a constant, e.g. 1.1
             )
             target_upper = (
                 user_defined_ration_dictionary[key]
@@ -898,7 +901,6 @@ class RationOptimizer:
                 * (1 + udr_tolerance)
                 * (ration_config.dry_matter_intake_fixed * (1 + AnimalModuleConstants.DMI_CONSTRAINT_FRACTION))
             )
-            # TODO consider increasing/decreasing dry matter intake requirement using a constant, e.g. 1.1
             targetbounds = (max(0.0, target_lower), target_upper)
             user_defined_boundlist.append(targetbounds)
 
@@ -995,6 +997,7 @@ class RationOptimizer:
         pen_available_feeds: Any,
         average_nutrient_requirements: NutritionRequirements,
         initial_dry_matter_requirement: float,
+        initial_protein_requirement: float,
         sim_day: int,
     ) -> None:
         """
@@ -1022,11 +1025,12 @@ class RationOptimizer:
             A dictionary of available feeds for ration formulation.
         average_nutrient_requirements : NutritionRequirements
             The pen's average requirements used in ration formulation.
+        initial_dry_matter_requirement : float
+            Dry matter intake requirement at start of ration formulation.
+        initial_protein_requirement : float
+            Metabolizable protein requirement at start of ration formulation.    
         sim_day : int
             Day of simulation.
-        info_map : dict[str, Any]
-            A dictionary containing additional information to be logged with the failed
-            constraints summary.
 
         Returns:
         --------
@@ -1053,7 +1057,9 @@ class RationOptimizer:
             "constraints_failed_dict": constraints_failed_list,
             "ration_attempted": self.make_ration_from_solution(pen_available_feeds, solution),
             "pen requirements": average_nutrient_requirements,
-            "initial_dry_matter_requirement": initial_dry_matter_requirement
+            "initial_dry_matter_requirement": initial_dry_matter_requirement,
+            "initial_protein_requirement": initial_protein_requirement
+            
         }
         fail_summary_units = {
             "simulation day": MeasurementUnits.SIMULATION_DAY,
@@ -1072,7 +1078,8 @@ class RationOptimizer:
                 "dry_matter": MeasurementUnits.KILOGRAMS,
                 "activity_energy": MeasurementUnits.MEGACALORIES,
             },
-            "initial_dry_matter_requirement": MeasurementUnits.KILOGRAMS
+            "initial_dry_matter_requirement": MeasurementUnits.KILOGRAMS,
+            "initial_protein_requirement": MeasurementUnits.GRAMS
         }
         info_map = {
             "class": self.__class__.__name__,

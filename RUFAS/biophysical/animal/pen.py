@@ -955,6 +955,7 @@ class Pen:
                     pen_available_feeds=pen_available_feeds,
                     average_nutrient_requirements=self.average_nutrition_requirements,
                     initial_dry_matter_requirement=initial_dry_matter_requirement,
+                    initial_protein_requirement=initial_protein_requirement,
                     sim_day=simulation_day,
                 )
 
