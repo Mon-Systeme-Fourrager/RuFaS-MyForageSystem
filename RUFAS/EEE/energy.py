@@ -38,7 +38,7 @@ class EnergyEstimator:
                 tillage_implement=diesel_consumption_data_item.get("tillage_implement"),
             )
             diesel_consumption_tractor_implement_liter_per_ton = estimator.calculate_diesel_consumption(
-                diesel_consumption_data_item.get("crop_yield", 1),
+                diesel_consumption_data_item.get("crop_yield", 0),
                 diesel_consumption_data_item["field_production_size"],
                 tractor,
                 diesel_consumption_data_item.get("clay_percent", 0),
@@ -279,32 +279,35 @@ class EnergyEstimator:
         Returns
         -------
         float
-            Diesel Consumption for Tractor-Implement (l/ton)
+            Diesel Consumption for Tractor-Implement (l/ha)
         """
-        diesel_consumption_tractor_implement_liter_per_ton = 0.0
+        diesel_consumption_tractor_implement_liter_ha = 0.0
+
         for implement in tractor.implements:
+            crop_yield_ton_ha = crop_yield/1000 #convert kg to tons
             total_power_needed_kW = self._calculate_total_power_needed(
                 tractor,
                 implement,
-                crop_yield,
+                crop_yield_ton_ha,
                 field_production_size,
                 clay_percent,
             )
-            x = total_power_needed_kW / tractor.power_available_kW  # helper function 411
+            x = total_power_needed_kW /tractor.power_available_kW  # helper function 411
             specific_fuel_consumption_liter_per_kWh = (
-                (2.64 * x) + 3.91 - 0.203 * sqrt(738 * x + 172)
+                (2.64 * x) + 3.91 - 0.203 * sqrt(738 * x + 173)
             )  # helper function 410
+
             tractor_implement_operation_time_hr = implement.calculate_operation_time_hr(
-                field_production_size, crop_yield
+                field_production_size, crop_yield_ton_ha
             )
-            diesel_consumption_tractor_implement_liter_per_ton += (
+            diesel_consumption_tractor_implement_liter_ha += (
                 specific_fuel_consumption_liter_per_kWh
                 * total_power_needed_kW
                 * tractor_implement_operation_time_hr
                 / field_production_size
-                / crop_yield
+            #    / crop_yield_ton_ha
             )
-        return diesel_consumption_tractor_implement_liter_per_ton
+        return diesel_consumption_tractor_implement_liter_ha
 
     def _calculate_total_power_needed(
         self,
