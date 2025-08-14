@@ -82,6 +82,10 @@ class AnimalModuleConstants:
     DMI_CONSTRAINT_FRACTION: float = 0.30
     """The +/- fraction of DMI estimated allowed for ration formulation."""
 
+    DMI_requirement_boost: float = 1.1
+    """The fraction of the dry matter intake requirement used as the basis for
+    the inclusion rate bounds in user defined ration formulation method."""
+
     MINIMUM_DMI: float = 1.0
     """Minimum estimated DMI instituted for all animals, kg/day"""
 
