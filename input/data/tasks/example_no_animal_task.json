@@ -4,7 +4,7 @@
     {
       "task_type": "SIMULATION_SINGLE_RUN",
       "metadata_file_path": "input/metadata/example_no_animal_metadata.json",
-      "output_prefix": "freestall",
+      "output_prefix": "no_animal",
       "log_verbosity": "errors",
       "random_seed": 42,
       "save_animals_directory": "output/.",
