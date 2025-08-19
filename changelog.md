@@ -212,6 +212,7 @@ v0.9.2
 - [2293](https://github.com/RuminantFarmSystems/MASM/pull/2293) - [minor change] [Animal] Adds behavior in an animal reporter method to create an empty output variable in case where there are no sold animals for a given AnimalCombination.
 - [2497](https://github.com/RuminantFarmSystems/MASM/pull/2497) - [minor change] Establishes a FeedManager balance reporting system.
 - [2479](https://github.com/RuminantFarmSystems/MASM/pull/2479) - [minor change] Removes `errors.py`.
+- [2492](https://github.com/RuminantFarmSystems/MASM/pull/2492) - [minor change] [Manure] Use annual mean temperature and redo MCF factor calculation in bedded pack.
 - [2504](https://github.com/RuminantFarmSystems/MASM/pull/2504) - [minor change] [Data Validator] Raise helpful error messages when object level data validations failed.
 - [2499](https://github.com/RuminantFarmSystems/MASM/pull/2499) - [minor change] Updates `pyproject.toml` and added check for user meeting dependency requirements.
 - [2500](https://github.com/RuminantFarmSystems/MASM/pull/2500) - [minor change] Moves `AnimalCombination`, `AnimalManureExcretions`, and removes the old `PenManureData`.
@@ -221,7 +222,11 @@ v0.9.2
 - [2491](https://github.com/RuminantFarmSystems/MASM/pull/2491) - [minor change] [Manure] Fixes a bug in manure request management when trying to supplement a request from a farm that has no on-farm manure.
 - [2461](https://github.com/RuminantFarmSystems/MASM/pull/2461) [Input] Create Example Input files.
 - [2526](https://github.com/RuminantFarmSystems/MASM/pull/2526) - [minor change] Update expected e2e results and fix flake8 error.
+- [2505](https://github.com/RuminantFarmSystems/MASM/pull/2505) - [minor change] Update the wiki pages .rst files and the onboarding doc.
 - [2521](https://github.com/RuminantFarmSystems/MASM/pull/2521) - [minor change] Separate `UserConstants` from `GeneralConstants`.
+- [2534](https://github.com/RuminantFarmSystems/MASM/pull/2534) - [minor change][docs] Update rufas logo.
+- [2529](https://github.com/RuminantFarmSystems/MASM/pull/2529) - [minor change] E2E Testing for No Animal C&S Run.
+
 
 ### v0.9.2
 
