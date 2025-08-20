@@ -1072,5 +1072,5 @@ class RationOptimizer:
             fail_summary,
             dict(info_map, **{"units": fail_summary_units}),
         )
-        
+
         return constraints_failed_list
