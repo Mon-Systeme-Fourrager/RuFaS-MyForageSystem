@@ -388,6 +388,8 @@ class HerdManager:
         for animal in animals:
             animal_daily_routines_output: DailyRoutinesOutput = animal.daily_routines(time)
             self.herd_reproduction_statistics += animal_daily_routines_output.herd_reproduction_statistics
+            if animal_daily_routines_output.animal_status == AnimalStatus.STILLBORN:
+                self.herd_statistics.stillborn_calf_num += 1
             if animal_daily_routines_output.animal_status == AnimalStatus.DEAD:
                 self.herd_statistics.animals_deaths_by_stage[animal.animal_type] += 1
             if animal_daily_routines_output.animal_status == AnimalStatus.LIFE_STAGE_CHANGED:
@@ -553,7 +555,7 @@ class HerdManager:
         """
         newborn_calf_config["id"] = AnimalPopulation.next_id()
         newborn_calf: Animal = Animal(args=newborn_calf_config, simulation_day=simulation_day)
-        if not newborn_calf.sold:
+        if not newborn_calf.sold: # TODO change to is dead by updating the statistics.
             newborn_calf.events.add_event(newborn_calf.days_born, simulation_day, animal_constants.ENTER_HERD)
         return newborn_calf
 

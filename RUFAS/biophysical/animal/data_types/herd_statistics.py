@@ -168,6 +168,7 @@ class HerdStatistics:
     heiferIII_num = 0
     cow_num = 0
 
+    stillborn_calf_num = 0
     sold_calf_num = 0
     sold_heiferIII_oversupply_num = 0
     bought_heifer_num = 0
@@ -297,6 +298,7 @@ class HerdStatistics:
         self.cow_num = 0
 
         self.sold_calf_num = 0
+        self.stillborn_calf_num = 0
         self.sold_heiferIII_oversupply_num = 0
         self.bought_heifer_num = 0
         self.sold_heiferII_num = 0
