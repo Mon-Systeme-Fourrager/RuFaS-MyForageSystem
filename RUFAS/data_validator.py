@@ -1740,14 +1740,14 @@ class CrossValidator:
                 self._event_logs.append(
                     {
                         "error": "Missing Apply To",
-                        "message": f"Missing 'apply_to' key in expression block.",
+                        "message": "Missing 'apply_to' key in expression block.",
                         "info_map": {
                             "class": CrossValidator.__name__,
                             "function": CrossValidator._evaluate_expression.__name__,
                         },
                     }
                 )
-                raise ValueError(f"Missing 'apply_to' key in expression block.")
+                raise ValueError("Missing 'apply_to' key in expression block.")
             apply_to = expression_block["apply_to"]
             if apply_to == "individual":
                 return ordered_values
