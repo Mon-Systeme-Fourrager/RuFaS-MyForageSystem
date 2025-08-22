@@ -1117,7 +1117,6 @@ class Animal:
         self._assign_sex_to_newborn_calf()
 
         if random() < AnimalConfig.still_birth_rate:
-            # make a still birth dead or new report type still birth over here.
             self.stillborn_day = simulation_day
             self.events.add_event(0, simulation_day, animal_constants.STILL_BIRTH)
 

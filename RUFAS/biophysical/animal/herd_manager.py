@@ -12,7 +12,8 @@ from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstan
 from RUFAS.biophysical.animal.animal_module_reporter import AnimalModuleReporter
 from RUFAS.biophysical.animal.data_types.animal_enums import AnimalStatus
 from RUFAS.biophysical.animal.data_types.animal_population import AnimalPopulation
-from RUFAS.biophysical.animal.data_types.animal_typed_dicts import NewBornCalfValuesTypedDict, SoldAnimalTypedDict
+from RUFAS.biophysical.animal.data_types.animal_typed_dicts import NewBornCalfValuesTypedDict, SoldAnimalTypedDict, \
+    StillbornCalfTypedDict
 from RUFAS.biophysical.animal.data_types.herd_statistics import HerdStatistics
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 from RUFAS.biophysical.animal.data_types.daily_routines_output import DailyRoutinesOutput
@@ -368,6 +369,16 @@ class HerdManager:
         self.herd_statistics.reset_parity()
         self.herd_statistics.reset_cull_reason_stats()
 
+    def _update_stillborn_calf_statistics(self, stillborn_calves: list[Animal]) -> None:
+        """Updates the statistic regarding the stillborn calves."""
+        self.herd_statistics.stillborn_calf_num += len(stillborn_calves)
+        self.herd_statistics.stillborn_calf_info += [
+            StillbornCalfTypedDict(
+                id=calf.id
+            )
+            for calf in stillborn_calves
+        ]
+
     def _update_sold_animal_statistics(
         self, sold_newborn_calves: list[Animal], sold_heiferIIs: list[Animal], sold_and_died_cows: list[Animal]
     ) -> None:
@@ -397,7 +408,6 @@ class HerdManager:
                     newborn_calf = self._create_newborn_calf(
                         animal_daily_routines_output.newborn_calf_config, simulation_day=time.simulation_day
                     )
-                    # Todo: update this, need to handle both still born AND sold
                     if newborn_calf.stillborn:
                         stillborn_newborn_calves.append(newborn_calf)
                     elif newborn_calf.sold:
@@ -509,12 +519,13 @@ class HerdManager:
         sold_newborn_calves += sold_newborn_calves_from_cows
         newborn_calves += newborn_calves_from_cows
 
-        # TODO: follow the logic to update a stillborn newborn stats
         self._update_sold_animal_statistics(
             sold_newborn_calves=sold_newborn_calves,
             sold_heiferIIs=sold_heiferIIs,
             sold_and_died_cows=sold_and_died_cows,
         )
+
+        self._update_stillborn_calf_statistics(stillborn_newborn_calves)
 
         removed_animals += self._check_if_heifers_need_to_be_sold(simulation_day=time.simulation_day)
         newly_added_animals = self._check_if_replacement_heifers_needed(time=time)
