@@ -122,24 +122,26 @@
       "name": "compost",
       "processor_type": "Composting",
       "composting_type": "intensive windrow",
-      "storage_time_period": 365
+      "storage_time_period": 365,
+      "surface_area": null
     },
     {
       "name": "open_lot_1",
       "processor_type": "OpenLot",
-      "storage_time_period": 365
+      "storage_time_period": 365,
+      "surface_area": null
     },
     {
       "name": "bedded_pack_1",
       "processor_type": "BeddedPack",
       "storage_time_period": 30,
-      "is_mixed": false
+      "surface_area": null
     },
     {
       "name": "compost_bedded_pack_1",
       "processor_type": "BeddedPack",
       "storage_time_period": 183,
-      "is_mixed": true
+      "surface_area": null
     }
   ]
 }
