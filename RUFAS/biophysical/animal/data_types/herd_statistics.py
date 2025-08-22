@@ -44,6 +44,8 @@ class HerdStatistics:
         Total count of heifers categorized as "Heifer III", (unitless).
     cow_num : int
         Total count of cows in the herd, (unitless).
+    stillborn_calf_num  : int
+        Number of stillborn calves during a specific period, (unitless).
     sold_calf_num : int
         Number of calves sold during a specific period, (unitless).
     sold_heiferIII_oversupply_num : int
@@ -169,7 +171,7 @@ class HerdStatistics:
     heiferIII_num = 0
     cow_num = 0
 
-    # TODO: remove this
+    stillborn_calf_num = 0
     sold_calf_num = 0
     sold_heiferIII_oversupply_num = 0
     bought_heifer_num = 0
@@ -232,7 +234,6 @@ class HerdStatistics:
     cull_reason_stats_percent: dict[str, float]
     percent_cow_for_parity: dict[str, float]
 
-    animals_deaths_by_stage: dict[AnimalType, int]
     calf_num_by_status: dict[AnimalStatus, int]
 
     def __init__(self) -> None:
@@ -276,6 +277,7 @@ class HerdStatistics:
             "greater_than_3": 0.0,
         }
 
+        self.stillborn_calf_info = []
         self.sold_calves_info = []
         self.sold_heiferIIIs_info = []
         self.sold_heiferIIs_info = []
@@ -291,11 +293,6 @@ class HerdStatistics:
             AnimalType.DRY_COW: 0,
         }
 
-        self.calf_num_by_status = {
-            AnimalStatus.STILLBORN: 0,
-            AnimalStatus.DEAD: 0,
-            AnimalStatus.SOLD: 0
-        }
 
     def reset_daily_stats(self) -> None:
         """Resets daily-based attributes."""
@@ -305,6 +302,7 @@ class HerdStatistics:
         self.heiferIII_num = 0
         self.cow_num = 0
 
+        self.stillborn_calf_num = 0
         self.sold_calf_num = 0
         self.sold_heiferIII_oversupply_num = 0
         self.bought_heifer_num = 0
@@ -367,12 +365,6 @@ class HerdStatistics:
             AnimalType.HEIFER_III: 0,
             AnimalType.LAC_COW: 0,
             AnimalType.DRY_COW: 0,
-        }
-
-        self.calf_num_by_status = {
-            AnimalStatus.STILLBORN: 0,
-            AnimalStatus.DEAD: 0,
-            AnimalStatus.SOLD: 0
         }
 
     def reset_parity(self) -> None:
