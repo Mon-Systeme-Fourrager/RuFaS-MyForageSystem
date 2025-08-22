@@ -378,10 +378,11 @@ class HerdManager:
 
     def _perform_daily_routines_for_animals(
         self, time: RufasTime, animals: list[Animal]
-    ) -> tuple[list[Animal], list[Animal], list[Animal], list[Animal]]:
+    ) -> tuple[list[Animal], list[Animal], list[Animal], list[Animal], list[Animal]]:
         """Perform daily routines for a given list of animals."""
         graduated_animals: list[Animal] = []
         sold_animals: list[Animal] = []
+        stillborn_newborn_calves: list[Animal] = []
         sold_newborn_calves: list[Animal] = []
         newborn_calves: list[Animal] = []
 
@@ -396,13 +397,16 @@ class HerdManager:
                     newborn_calf = self._create_newborn_calf(
                         animal_daily_routines_output.newborn_calf_config, simulation_day=time.simulation_day
                     )
-                    if newborn_calf.sold:
+                    # Todo: update this, need to handle both still born AND sold
+                    if newborn_calf.stillborn:
+                        stillborn_newborn_calves.append(newborn_calf)
+                    elif newborn_calf.sold:
                         sold_newborn_calves.append(newborn_calf)
                     else:
                         newborn_calves.append(newborn_calf)
             elif animal_daily_routines_output.animal_status in [AnimalStatus.DEAD, AnimalStatus.SOLD]:
                 sold_animals.append(animal)
-        return graduated_animals, sold_animals, sold_newborn_calves, newborn_calves
+        return graduated_animals, sold_animals, stillborn_newborn_calves, newborn_calves, sold_newborn_calves
 
     def _update_herd_structure(
         self,
@@ -461,39 +465,44 @@ class HerdManager:
         removed_animals: list[Animal] = []
 
         sold_newborn_calves: list[Animal] = []
+        stillborn_newborn_calves: list[Animal] = []
 
         self._reset_daily_statistics()
         self.herd_reproduction_statistics = HerdReproductionStatistics()
 
-        graduated_calves, sold_calves, _, _ = self._perform_daily_routines_for_animals(time, self.calves)
+        graduated_calves, sold_calves, _, _, _ = self._perform_daily_routines_for_animals(time, self.calves)
         graduated_animals += graduated_calves
         removed_animals += sold_calves
 
-        graduated_heiferIs, sold_heiferIs, _, _ = self._perform_daily_routines_for_animals(time, self.heiferIs)
+        graduated_heiferIs, sold_heiferIs, _, _, _ = self._perform_daily_routines_for_animals(time, self.heiferIs)
         graduated_animals += graduated_heiferIs
         removed_animals += sold_heiferIs
 
-        graduated_heiferIIs, sold_heiferIIs, _, _ = self._perform_daily_routines_for_animals(time, self.heiferIIs)
+        graduated_heiferIIs, sold_heiferIIs, _, _, _ = self._perform_daily_routines_for_animals(time, self.heiferIIs)
         graduated_animals += graduated_heiferIIs
         removed_animals += sold_heiferIIs
 
         # TODO: Rank heifers to enter the herd or sold # GitHub Issue 1214
-        (graduated_heiferIIIs, sold_heiferIIIs, sold_newborn_calves_from_heiferIIIs, newborn_calves_from_heiferIIIs) = (
+        (graduated_heiferIIIs, sold_heiferIIIs, stillborn_newborn_calves_from_heiferIIIs, newborn_calves_from_heiferIIIs,
+         sold_newborn_calves_from_heiferIIIs) = (
             self._perform_daily_routines_for_animals(time, self.heiferIIIs)
         )
         graduated_animals += graduated_heiferIIIs
         removed_animals += sold_heiferIIIs
+        stillborn_newborn_calves += stillborn_newborn_calves_from_heiferIIIs
         sold_newborn_calves += sold_newborn_calves_from_heiferIIIs
         newborn_calves += newborn_calves_from_heiferIIIs
 
-        (graduated_cows, sold_and_died_cows, sold_newborn_calves_from_cows, newborn_calves_from_cows) = (
+        (graduated_cows, sold_and_died_cows, stillborn_newborn_calves_from_cows, newborn_calves_from_cows, sold_newborn_calves_from_cows) = (
             self._perform_daily_routines_for_animals(time, self.cows)
         )
         graduated_animals += graduated_cows
         removed_animals += sold_and_died_cows
+        stillborn_newborn_calves += stillborn_newborn_calves_from_cows
         sold_newborn_calves += sold_newborn_calves_from_cows
         newborn_calves += newborn_calves_from_cows
 
+        # TODO: follow the logic to update a stillborn newborn stats
         self._update_sold_animal_statistics(
             sold_newborn_calves=sold_newborn_calves,
             sold_heiferIIs=sold_heiferIIs,
@@ -553,7 +562,7 @@ class HerdManager:
         """
         newborn_calf_config["id"] = AnimalPopulation.next_id()
         newborn_calf: Animal = Animal(args=newborn_calf_config, simulation_day=simulation_day)
-        if not newborn_calf.sold:
+        if not newborn_calf.sold: # TODO change to is dead by updating the statistics.
             newborn_calf.events.add_event(newborn_calf.days_born, simulation_day, animal_constants.ENTER_HERD)
         return newborn_calf
 
