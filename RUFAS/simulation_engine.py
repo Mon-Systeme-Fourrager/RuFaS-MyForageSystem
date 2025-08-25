@@ -107,7 +107,6 @@ class SimulationEngine:
     def _daily_simulation(self) -> None:
         """Executes the daily simulation routines."""
         manure_applications = self.generate_daily_manure_applications()
-        self.feed_manager.report_feed_storage_levels(self.time.simulation_day, "daily_storage_levels")
         harvested_crops = self.field_manager.daily_update_routine(self.weather, self.time, manure_applications)
         next_harvest_dates: dict[str, date | None] = {}
         for harvested_crop in harvested_crops:
@@ -145,6 +144,7 @@ class SimulationEngine:
             self._formulate_ration()
 
         requested_feed = self.herd_manager.collect_daily_feed_request()
+        self.feed_manager.report_feed_storage_levels(self.time.simulation_day, "daily_storage_levels")
         is_ok_to_feed_animals = self.feed_manager.manage_daily_feed_request(requested_feed, self.time)
         info_map = {"class": self.__class__.__name__, "function": self._daily_simulation.__name__}
         if not is_ok_to_feed_animals:
