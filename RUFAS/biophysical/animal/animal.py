@@ -1749,10 +1749,7 @@ class Animal:
             False otherwise.
 
         """
-        if self.stillborn:
-            return False
-        else:
-            return self.days_born == AnimalConfig.wean_day
+        return self.days_born == AnimalConfig.wean_day
 
     def _evaluate_heiferI_for_heiferII(self) -> bool:
         """
