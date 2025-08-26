@@ -108,7 +108,6 @@ class SimulationEngine:
     def _daily_simulation(self) -> None:
         """Executes the daily simulation routines."""
         manure_applications = self.generate_daily_manure_applications()
-        self.feed_manager.report_feed_storage_levels(self.time.simulation_day, "daily_storage_levels")
         self.feed_manager.report_cumulative_purchased_feeds(self.time.simulation_day)
         for rufas_id, amount in self.feed_manager._cumulative_purchased_feeds_fed.items():
             self.om.add_variable(f"purchased_feed_{rufas_id}_fed_to_date", amount,
@@ -153,6 +152,7 @@ class SimulationEngine:
             self._formulate_ration()
 
         requested_feed = self.herd_manager.collect_daily_feed_request()
+        self.feed_manager.report_feed_storage_levels(self.time.simulation_day, "daily_storage_levels")
         is_ok_to_feed_animals = self.feed_manager.manage_daily_feed_request(requested_feed, self.time)
         info_map = {"class": self.__class__.__name__, "function": self._daily_simulation.__name__}
         if not is_ok_to_feed_animals:

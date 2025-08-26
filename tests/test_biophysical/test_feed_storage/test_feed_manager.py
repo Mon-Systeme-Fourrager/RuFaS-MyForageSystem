@@ -332,7 +332,7 @@ def test_report_stored_farmgrown_feeds(
 
     feed_manager.report_stored_farmgrown_feeds(mock_time, "mock_suffix")
 
-    assert mock_om_add_variable.call_count == 5
+    assert mock_om_add_variable.call_count == 10
 
 
 def test_manage_daily_feed_request(feed_manager: FeedManager, mocker: MockerFixture) -> None:
@@ -726,7 +726,7 @@ def test_store_purchased_feed(
     "grown_amount, grown_date, purchased_amount, purchased_date, expected_grown, expected_purchased",
     [
         (50.0, date(2024, 6, 1), 50.0, date(2024, 6, 2), 0.0, 25.0),
-        (50.0, date(2024, 6, 2), 50.0, date(2024, 6, 1), 25.0, 0.0),
+        (50.0, date(2024, 6, 2), 50.0, date(2024, 6, 1), 0.0, 25.0),
         (75.0, date(2024, 6, 1), 50.0, date(2024, 6, 1), 0.0, 50.0),
         (25.0, date(2024, 6, 1), 50.0, date(2024, 6, 1), 0.0, 0.0),
         (0.0, date(2024, 6, 1), 75.0, date(2024, 6, 1), 0.0, 0.0),

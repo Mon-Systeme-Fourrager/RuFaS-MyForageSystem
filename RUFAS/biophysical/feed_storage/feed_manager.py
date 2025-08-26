@@ -246,17 +246,18 @@ class FeedManager:
 
     def report_stored_farmgrown_feeds(self, simulation_day: int, reporting_suffix: str) -> None:
         """Outputs total amounts of farmgrown feeds currently stored by the FeedManager."""
-        feed_report: dict[RUFAS_ID, float] = {}
-        available_feed_ids = [feed.rufas_id for feed in self._available_feeds]
+        feed_report: dict[RUFAS_ID, dict[str, float]] = {
+            feed.rufas_id: {"dry_matter_mass": 0.0, "fresh_mass": 0.0} for feed in self._available_feeds
+        }
+        available_feed_ids = set(feed_report.keys())
+
         for storage in self.active_storages.values():
             for crop in storage.stored:
                 rufas_id = self._select_rufas_id_for_harvested_crop(crop.rufas_ids, available_feed_ids)
                 if rufas_id is None:
                     continue
-                if rufas_id in feed_report.keys():
-                    feed_report[rufas_id] += crop.dry_matter_mass
-                else:
-                    feed_report[rufas_id] = crop.dry_matter_mass
+                feed_report[rufas_id]["dry_matter_mass"] += crop.dry_matter_mass
+                feed_report[rufas_id]["fresh_mass"] += crop.fresh_mass
         info_map = {
             "class": self.__class__.__name__,
             "function": self.report_stored_farmgrown_feeds.__name__,
@@ -264,11 +265,10 @@ class FeedManager:
             "units": MeasurementUnits.DRY_KILOGRAMS,
             "suffix": reporting_suffix,
         }
-        for feed in self._available_feeds:
-            if feed.rufas_id not in feed_report.keys():
-                feed_report[feed.rufas_id] = 0.0
+
         for rufas_id, mass in feed_report.items():
-            self._om.add_variable(f"stored_feed_{rufas_id}", mass, info_map)
+            self._om.add_variable(f"stored_feed_{rufas_id}_dm", mass["dry_matter_mass"], info_map)
+            self._om.add_variable(f"stored_feed_{rufas_id}_wet", mass["fresh_mass"], info_map)
 
     def manage_daily_feed_request(self, requested_feed: RequestedFeed, time: RufasTime) -> bool:
         """Returns true if requested feeds can be provided, either through on-farm feeds or by purchasing."""
@@ -566,8 +566,8 @@ class FeedManager:
             "units": MeasurementUnits.DRY_KILOGRAMS,
             "simulation_day": simulation_day,
         }
-        total_purchased_feed_deductions: dict[RUFAS_ID, float] = {}
-        total_farmgrown_feed_deductions: dict[RUFAS_ID, float] = {}
+        total_purchased_feed_deductions: dict[RUFAS_ID, float] = {feed.rufas_id: 0.0 for feed in self._available_feeds}
+        total_farmgrown_feed_deductions: dict[RUFAS_ID, float] = {feed.rufas_id: 0.0 for feed in self._available_feeds}
 
         all_available_feeds: list[HarvestedCrop | PurchasedFeed] = self._gather_available_feeds()
 
@@ -609,13 +609,13 @@ class FeedManager:
 
         for rufas_id, amount in total_purchased_feed_deductions.items():
             self._om.add_variable(
-                f"purchased_feed_{rufas_id}_fed_on_day_{simulation_day}",
+                f"purchased_feed_{rufas_id}_fed",
                 amount,
                 info_map,
             )
         for rufas_id, amount in total_farmgrown_feed_deductions.items():
             self._om.add_variable(
-                f"farmgrown_feed_{rufas_id}_fed_on_day_{simulation_day}",
+                f"farmgrown_feed_{rufas_id}_fed",
                 amount,
                 info_map,
             )
@@ -627,14 +627,15 @@ class FeedManager:
         Returns
         -------
         list[HarvestedCrop | PurchasedFeed]
-            A list of all available feeds sorted by their storage time.
+            A list of all available feeds. The list is sorted by HarvestedCrops (oldest -> newest)
+            followed by PurchasedFeeds in their original order.
         """
         all_available_feeds: list[HarvestedCrop | PurchasedFeed] = []
         for storage in self.active_storages.values():
             all_available_feeds.extend(storage.stored)
+        all_available_feeds = sorted(all_available_feeds, key=lambda feed: feed.storage_time)
         all_available_feeds.extend(self.purchased_feed_storage.stored)
 
-        all_available_feeds = sorted(all_available_feeds, key=lambda feed: feed.storage_time)
         return all_available_feeds
 
     def _check_feed_availability(
