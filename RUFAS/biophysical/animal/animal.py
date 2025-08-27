@@ -1900,7 +1900,7 @@ class Animal:
             If the animal_type is not present in the mapping dictionary.
 
         """
-        mapping: dict[AnimalType, Callable[[], dict[str, Any]]] = {
+        mapping: dict[AnimalType, Callable[[], Any]] = {
             AnimalType.CALF: self._get_calf_values,
             AnimalType.HEIFER_I: self._get_heiferI_values,
             AnimalType.HEIFER_II: self._get_heiferII_values,

@@ -190,5 +190,5 @@ class SoldAnimalTypedDict(TypedDict):
 
 class StillbornCalfTypedDict(TypedDict):
     id: int
-    stillborn_day: int
+    stillborn_day: int | None
     birth_weight: float
