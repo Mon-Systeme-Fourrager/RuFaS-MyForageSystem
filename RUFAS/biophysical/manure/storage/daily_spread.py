@@ -10,14 +10,13 @@ class DailySpread(Storage):
         name: str,
         cover: str,
         surface_area: float,
-        storage_time_period: int = 1,
     ):
         """Initialize DailySpread object."""
         super().__init__(
             name=name,
             is_housing_emissions_calculator=False,
             cover=cover,
-            storage_time_period=storage_time_period,
+            storage_time_period=1,
             surface_area=surface_area
         )
 
