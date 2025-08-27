@@ -1,12 +1,11 @@
 from datetime import datetime
 from random import shuffle, randint
 from typing import Any
-from unittest.mock import call, MagicMock, PropertyMock
+from unittest.mock import call, MagicMock
 
 import pytest
 from pytest_mock import MockerFixture
 
-from RUFAS.biophysical.animal import animal_constants
 from RUFAS.biophysical.animal.animal import Animal
 from RUFAS.biophysical.animal.bedding.bedding import Bedding
 from RUFAS.biophysical.animal.data_types.animal_enums import AnimalStatus, Breed
@@ -309,7 +308,6 @@ def test_daily_routines(herd_manager: HerdManager, mock_herd: dict[str, list[Ani
         graduated_calves + graduated_heiferIs + graduated_heiferIIs + graduated_heiferIIIs + graduated_cows
     )
     newborn_calves = heiferIII_newborn_calves + cow_newborn_calves
-    sold_newborn_calves = heiferIII_sold_newborn_calves + cow_sold_newborn_calves
     removed_animals = (
         sold_calves + sold_heiferIs + sold_heiferIIs + sold_heiferIIIs + sold_and_died_cows + sold_oversupply_heiferIIIs
     )
