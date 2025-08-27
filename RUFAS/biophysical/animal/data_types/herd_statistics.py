@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
 from RUFAS.biophysical.animal import animal_constants
-from RUFAS.biophysical.animal.data_types.animal_enums import AnimalStatus
 from RUFAS.biophysical.animal.data_types.animal_typed_dicts import SoldAnimalTypedDict
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 
