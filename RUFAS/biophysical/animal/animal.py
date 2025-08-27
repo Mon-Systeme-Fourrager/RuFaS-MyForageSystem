@@ -1159,7 +1159,7 @@ class Animal:
 
     def _determine_heifer_reproduction_programs(
         self, args: HeiferIIValuesTypedDict | HeiferIIIValuesTypedDict
-    ) -> tuple[HeiferReproductionProtocol, HeiferTAISubProtocol | HeiferSynchEDSubProtocol]:
+    ) -> tuple[HeiferReproductionProtocol | None, HeiferTAISubProtocol | HeiferSynchEDSubProtocol | None]:
         """
         Determines the reproduction program and sub-program for a heifer.
 
