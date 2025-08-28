@@ -37,8 +37,9 @@ class EntericMethaneCalculator:
         methane_results = {}
         for model, usage in methane_models.items():
             if usage:
-                methane_emission = (0.013 * (
-                    body_weight ** 0.75) * GeneralConstants.KCAL_TO_MJ) / GeneralConstants.MJ_CH4_TO_G_CH4
+                methane_emission = (
+                    0.013 * (body_weight**0.75) * GeneralConstants.KCAL_TO_MJ
+                ) / GeneralConstants.MJ_CH4_TO_G_CH4
                 methane_results[model] = methane_emission
             else:
                 methane_results[model] = 0
@@ -85,20 +86,20 @@ class EntericMethaneCalculator:
                 neutral_detergent_fiber_concentration = nutrition_supply.ndf_percentage
                 ash_concentration = nutrition_supply.ash_percentage
                 soluble_residue = (
-                        (100 - ash_concentration)
-                        - neutral_detergent_fiber_concentration
-                        - crude_protein_concentration
-                        - ethyl_ester_concentration
+                    (100 - ash_concentration)
+                    - neutral_detergent_fiber_concentration
+                    - crude_protein_concentration
+                    - ethyl_ester_concentration
                 )
                 gross_energy_concentration = (
-                        0.263 * crude_protein_concentration
-                        + 0.522 * ethyl_ester_concentration
-                        + 0.198 * neutral_detergent_fiber_concentration
-                        + 0.160 * soluble_residue
+                    0.263 * crude_protein_concentration
+                    + 0.522 * ethyl_ester_concentration
+                    + 0.198 * neutral_detergent_fiber_concentration
+                    + 0.160 * soluble_residue
                 )
                 methane_emission = (
-                                           0.065 * gross_energy_concentration * nutrition_supply.dry_matter
-                                   ) / GeneralConstants.MJ_CH4_TO_G_CH4
+                    0.065 * gross_energy_concentration * nutrition_supply.dry_matter
+                ) / GeneralConstants.MJ_CH4_TO_G_CH4
                 methane_results[model] = methane_emission
             else:
                 methane_results[model] = 0
@@ -249,35 +250,39 @@ class EntericMethaneCalculator:
             if usage:
                 if model == "Mutian":
                     methane_emission = (
-                            -126
-                            + 11.3 * dry_matter_intake
-                            + 2.30 * neutral_detergent_fiber_concentration
-                            + 28.8 * milk_fat
-                            + 0.148 * body_weight
+                        -126
+                        + 11.3 * dry_matter_intake
+                        + 2.30 * neutral_detergent_fiber_concentration
+                        + 28.8 * milk_fat
+                        + 0.148 * body_weight
                     )
                 elif model == "Mills":
                     mitscherlich_parameter_a = animal_constants.MITS_PARAMETER_A
                     mitscherlich_parameter_b = animal_constants.MITS_PARAMETER_B
-                    mitscherlich_parameter_c = -0.0011 * starch_concentration / acid_detergent_fiber_concentration + 0.0045
+                    mitscherlich_parameter_c = (
+                        -0.0011 * starch_concentration / acid_detergent_fiber_concentration + 0.0045
+                    )
                     methane_emission_MJ = mitscherlich_parameter_a - (
-                            mitscherlich_parameter_a + mitscherlich_parameter_b
+                        mitscherlich_parameter_a + mitscherlich_parameter_b
                     ) * exp(-mitscherlich_parameter_c * metabolizable_energy_intake * GeneralConstants.KCAL_TO_MJ)
                     methane_emission = methane_emission_MJ / GeneralConstants.MJ_CH4_TO_G_CH4
                 else:
                     soluble_residue = (
-                            GeneralConstants.FRACTION_TO_PERCENTAGE
-                            - ash_concentration
-                            - neutral_detergent_fiber_concentration
-                            - crude_protein_concentration
-                            - ethyl_ester_concentration
+                        GeneralConstants.FRACTION_TO_PERCENTAGE
+                        - ash_concentration
+                        - neutral_detergent_fiber_concentration
+                        - crude_protein_concentration
+                        - ethyl_ester_concentration
                     )
                     gross_energy_concentration = (
-                            0.263 * crude_protein_concentration
-                            + 0.522 * ethyl_ester_concentration
-                            + 0.198 * neutral_detergent_fiber_concentration
-                            + 0.160 * soluble_residue
+                        0.263 * crude_protein_concentration
+                        + 0.522 * ethyl_ester_concentration
+                        + 0.198 * neutral_detergent_fiber_concentration
+                        + 0.160 * soluble_residue
                     )
-                    methane_emission = 0.065 * gross_energy_concentration * dry_matter_intake / GeneralConstants.MJ_CH4_TO_G_CH4
+                    methane_emission = (
+                        0.065 * gross_energy_concentration * dry_matter_intake / GeneralConstants.MJ_CH4_TO_G_CH4
+                    )
                 methane_results[model] = methane_emission
             else:
                 methane_results[model] = 0.0
@@ -343,21 +348,23 @@ class EntericMethaneCalculator:
                 if model == "Mills":
                     mitscherlich_parameter_a = animal_constants.MITS_PARAMETER_A
                     mitscherlich_parameter_b = animal_constants.MITS_PARAMETER_B
-                    mitscherlich_parameter_c = -0.0011 * starch_concentration / acid_detergent_fiber_concentration + 0.0045
+                    mitscherlich_parameter_c = (
+                        -0.0011 * starch_concentration / acid_detergent_fiber_concentration + 0.0045
+                    )
                     methane_emission_MJ = mitscherlich_parameter_a - (
-                            mitscherlich_parameter_a + mitscherlich_parameter_b
+                        mitscherlich_parameter_a + mitscherlich_parameter_b
                     ) * exp(-mitscherlich_parameter_c * metabolizable_energy_intake * GeneralConstants.KCAL_TO_MJ)
                     methane_emission = methane_emission_MJ / GeneralConstants.MJ_CH4_TO_G_CH4
                 else:
                     gross_energy_concentration = (
-                            0.263 * crude_protein_concentration
-                            + 0.522 * ethyl_ester_concentration
-                            + 0.198 * neutral_detergent_fiber_concentration
-                            + 0.160 * soluble_residue
+                        0.263 * crude_protein_concentration
+                        + 0.522 * ethyl_ester_concentration
+                        + 0.198 * neutral_detergent_fiber_concentration
+                        + 0.160 * soluble_residue
                     )
                     methane_emission = (
-                                               0.065 * gross_energy_concentration * dry_matter_intake
-                                       ) / GeneralConstants.MJ_CH4_TO_G_CH4
+                        0.065 * gross_energy_concentration * dry_matter_intake
+                    ) / GeneralConstants.MJ_CH4_TO_G_CH4
                 methane_results[model] = methane_emission
             else:
                 methane_results[model] = 0.0
