@@ -930,18 +930,27 @@ class Pen:
         }
         if self.animal_combination == AnimalCombination.LAC_COW:
             self.reset_milk_production_reduction()
-
+        # print(self.animal_combination)
         previous_ration = getattr(self, "ration", None)
         num_attempts = 0
+        self.set_animal_nutritional_requirements(temperature=temperature, available_feeds=pen_available_feeds)
+        initial_pen_average_nutrition_requirements = self.average_nutrition_requirements
+        initial_dry_matter_requirement = initial_pen_average_nutrition_requirements.dry_matter
+        initial_protein_requirement = initial_pen_average_nutrition_requirements.metabolizable_protein
+
+        initial_dry_matter_requirement_fixed = initial_dry_matter_requirement
 
         while True:
             num_attempts += 1
+            # print(f"num_attempts = {num_attempts}")
             solution, ration_config = self._attempt_formulation(
-                is_ration_defined_by_user, pen_available_feeds, temperature, previous_ration
+                is_ration_defined_by_user, pen_available_feeds, temperature, previous_ration,
+                initial_dry_matter_requirement,
+                initial_protein_requirement
             )
 
             if not solution.success:
-                self.ration_optimizer.handle_failed_constraints(
+                constraints_failed_list = self.ration_optimizer.handle_failed_constraints(
                     num_attempts=num_attempts,
                     solution=solution,
                     ration_config=ration_config,
@@ -949,6 +958,8 @@ class Pen:
                     pen_id=self.id,
                     pen_available_feeds=pen_available_feeds,
                     average_nutrient_requirements=self.average_nutrition_requirements,
+                    initial_dry_matter_requirement=initial_dry_matter_requirement,
+                    initial_protein_requirement=initial_protein_requirement,
                     sim_day=simulation_day,
                 )
 
@@ -956,8 +967,33 @@ class Pen:
             if solution.success or (self.animal_combination is not AnimalCombination.LAC_COW):
                 break
 
+            # TODO NOTE that below is only happening for lac cows: if this is reasonable, we can try for all classes
+            if is_ration_defined_by_user and (
+                (initial_dry_matter_requirement_fixed * (
+                    1 - AnimalModuleConstants.DMI_CONSTRAINT_FRACTION + UserDefinedRationManager.tolerance))
+                < initial_dry_matter_requirement < 
+                (initial_dry_matter_requirement_fixed * (
+                    1 + AnimalModuleConstants.DMI_CONSTRAINT_FRACTION - UserDefinedRationManager.tolerance))):
+                if bool(set(["NE_total_constraint",
+                             "NE_maintenance_and_activity_constraint",
+                             "NE_lactation_constraint",
+                             "NE_growth_constraint"
+                             "calcium_constraint",
+                             "phosphorus_constraint",
+                             "protein_constraint_lower",
+                             "DMI_constraint_lower"]) & set(constraints_failed_list)):
+                    # print("Increasing the initial DMI used in the UDR attempt")
+                    initial_dry_matter_requirement = initial_dry_matter_requirement * 1.1
+                    continue
+                elif bool(set(["protein_constraint_upper",
+                               "DMI_constraint_upper"]) & set(constraints_failed_list)):
+                    print("DECREASING the initial DMI used in the UDR attempt")
+                    initial_dry_matter_requirement = initial_dry_matter_requirement * 0.9
+                    continue
+
             # For lac cow
             if is_ration_defined_by_user:
+                print("tried reducing")
                 if self._reduce_on_lactation_failure_user_defined(info_map=info_map):
                     break
             else:
@@ -986,7 +1022,9 @@ class Pen:
             )
 
     def _attempt_formulation(
-        self, is_ration_defined_by_user: bool, pen_feeds: list[Feed], temperature: float, previous_ration: Any
+        self, is_ration_defined_by_user: bool, pen_feeds: list[Feed], temperature: float, previous_ration: Any,
+        initial_dry_matter_requirement: float,
+        initial_protein_requirement: float
     ) -> tuple[OptimizeResult, RationConfig]:
         """Runs the optimizer and returns solution and config."""
         self.set_animal_nutritional_requirements(temperature=temperature, available_feeds=pen_feeds)
@@ -1000,6 +1038,8 @@ class Pen:
         return self.ration_optimizer.attempt_optimization(
             pen_average_body_weight=self.average_body_weight,
             requirements=self.average_nutrition_requirements,
+            initial_dry_matter_requirement=initial_dry_matter_requirement,
+            initial_protein_requirement=initial_protein_requirement,
             pen_available_feeds=pen_feeds,
             animal_combination=self.animal_combination,
             previous_ration=previous_ration,

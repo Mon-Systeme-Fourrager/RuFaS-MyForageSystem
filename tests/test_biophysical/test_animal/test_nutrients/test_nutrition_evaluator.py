@@ -509,7 +509,7 @@ def test_calculate_fat_supplied(
                 metabolizable_protein=700.0,
                 calcium=120.0,
                 phosphorus=55.0,
-                dry_matter=7.0,
+                dry_matter=6.0,
                 wet_matter=15.0,
                 ndf_supply=3.0,
                 forage_ndf_supply=1.5,
@@ -551,7 +551,7 @@ def test_calculate_fat_supplied(
                 starch_supply=2.0,
                 byproduct_supply=1.0,
             ),
-            2.0,
+            1.0,
         ),
     ],
 )
