@@ -1692,7 +1692,7 @@ class CrossValidator:
     def _evaluate_expression(self, expression_block: dict[str, Any], eager_termination: bool) -> tuple[Any, bool]:
         """
         Evaluates an expression based on the provided expression block. This function also
-        optionally adds to the alias pool if the "save_as" key is present in the expression block.
+        optionally adds to the alias pool if the `save_as` key is present in the expression block.
 
         Parameters
         ----------
