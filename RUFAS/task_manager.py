@@ -178,10 +178,7 @@ class TaskManager:
         export_input_data_to_csv: bool = task_config.get("export_input_data_to_csv", False)
         input_data_csv_export_path: str = task_config.get("input_data_csv_export_path", "")
         input_data_csv_import_path: str = task_config.get("input_data_csv_import_path", "")
-        is_end_to_end_test_task = any(
-            task.get("task_type") == TaskType.END_TO_END_TESTING
-            for task in runnable_args
-        )
+        is_end_to_end_test_task = any(task.get("task_type") == TaskType.END_TO_END_TESTING for task in runnable_args)
         if is_end_to_end_test_task:
             output_prefixes: list[str] = [runnable_args[i]["output_prefix"] for i in range(len(runnable_args))]
             self.output_manager.add_log(

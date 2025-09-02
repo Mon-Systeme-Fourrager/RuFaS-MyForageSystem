@@ -3263,8 +3263,9 @@ def test_print_errors_warnings_logs(
         assert captured.out == expected_output
 
 
-def test_summarize_e2e_test_results_happy_path(tmp_path: Path, mock_output_manager: OutputManager,
-                                               mocker: MockerFixture) -> None:
+def test_summarize_e2e_test_results_happy_path(
+    tmp_path: Path, mock_output_manager: OutputManager, mocker: MockerFixture
+) -> None:
     """Unit test for the summarize_e2e_test_results() method in OutputManager class."""
     mock_print = mocker.patch.object(mock_output_manager, "_print_e2e_results_summary")
 
@@ -3291,19 +3292,16 @@ def test_summarize_e2e_test_results_happy_path(tmp_path: Path, mock_output_manag
 
     mock_print.assert_called_once()
     (summary_arg,) = mock_print.call_args.args
-    assert summary_arg == {
-        "E2E_Animal": {"Animal": True, "CropAndSoil": False, "Manure": "n/a"}
-    }
+    assert summary_arg == {"E2E_Animal": {"Animal": True, "CropAndSoil": False, "Manure": "n/a"}}
 
 
-def test_summarize_e2e_test_results_invalid_prefix_logs_error(tmp_path: Path, mock_output_manager: OutputManager,
-                                                              mocker: MockerFixture) -> None:
+def test_summarize_e2e_test_results_invalid_prefix_logs_error(
+    tmp_path: Path, mock_output_manager: OutputManager, mocker: MockerFixture
+) -> None:
     """Unit test for the summarize_e2e_test_results() method in OutputManager class with no matching prefix."""
     mock_print = mocker.patch.object(mock_output_manager, "_print_e2e_results_summary")
 
-    (tmp_path / "NoMatch_comparison.json").write_text(
-        json.dumps({"Animal.something": {"values": [True]}})
-    )
+    (tmp_path / "NoMatch_comparison.json").write_text(json.dumps({"Animal.something": {"values": [True]}}))
     mock_add_error = mocker.patch.object(mock_output_manager, "add_error")
 
     mock_output_manager.summarize_e2e_test_results(tmp_path, ["E2E_Animal"])
@@ -3316,13 +3314,12 @@ def test_summarize_e2e_test_results_invalid_prefix_logs_error(tmp_path: Path, mo
 
     mock_print.assert_called_once()
     (summary_arg,) = mock_print.call_args.args
-    assert summary_arg == {
-        "E2E_Animal": {"Animal": "n/a", "CropAndSoil": "n/a", "Manure": "n/a"}
-    }
+    assert summary_arg == {"E2E_Animal": {"Animal": "n/a", "CropAndSoil": "n/a", "Manure": "n/a"}}
 
 
-def test_summarize_e2e_test_results_file_read_error(tmp_path: Path, mock_output_manager: OutputManager,
-                                                    mocker: MockerFixture) -> None:
+def test_summarize_e2e_test_results_file_read_error(
+    tmp_path: Path, mock_output_manager: OutputManager, mocker: MockerFixture
+) -> None:
     """Unit test for the summarize_e2e_test_results() method in OutputManager class with a file read error."""
     mock_print = mocker.patch.object(mock_output_manager, "_print_e2e_results_summary")
 
@@ -3340,13 +3337,12 @@ def test_summarize_e2e_test_results_file_read_error(tmp_path: Path, mock_output_
 
     mock_print.assert_called_once()
     (summary_arg,) = mock_print.call_args.args
-    assert summary_arg == {
-        "E2E_Animal": {"Animal": "n/a", "CropAndSoil": "n/a", "Manure": "n/a"}
-    }
+    assert summary_arg == {"E2E_Animal": {"Animal": "n/a", "CropAndSoil": "n/a", "Manure": "n/a"}}
 
 
-def test__print_e2e_results_summary_formats_output(capsys: CaptureFixture[str], mock_output_manager: OutputManager,
-                                                   mocker: MockerFixture) -> None:
+def test__print_e2e_results_summary_formats_output(
+    capsys: CaptureFixture[str], mock_output_manager: OutputManager, mocker: MockerFixture
+) -> None:
     """Unit test for the _print_e2e_results_summary() method in OutputManager class."""
     summary = {
         "E2E_Animal": {
