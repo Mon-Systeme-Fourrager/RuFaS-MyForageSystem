@@ -2116,19 +2116,24 @@ class OutputManager(object):
         Summarizes the end-to-end test results by gathering the results from all the e2e tests and readies them to be
         printed out to the console.
         This method is intended to be called at the end of an end-to-end testing run.
+
+        Parameters
+        ----------
+        json_output_directory : Path
+            The directory where the JSON output files are located.
+        output_prefixes : list[str]
+            A list of output prefixes to look for in the filenames.
         """
         info_map = {
             "class": self.__class__.__name__,
             "function": self.summarize_e2e_test_results.__name__,
         }
         self.add_log("Attempting to open e2e test results directory", "Opening e2e test results directory", info_map)
-        module_header_mapping_dict = {"comparison_animal": "Animal", "comparison_crop_and_soil": "CropAndSoil",
-                                      "comparison_manure": "Manure"}
+        module_headers: list[str] = ["Animal", "CropAndSoil", "Manure"]
         e2e_results_summary: dict[str, dict[str, str]] = {
-            prefix: {header: "n/a" for header in module_header_mapping_dict.values()}
+            prefix: {header: "n/a" for header in module_headers}
             for prefix in output_prefixes
         }
-        e2e_results: list[dict[str, Any]] = []
         all_results_files = os.listdir(json_output_directory)
         for filename in all_results_files:
             if "comparison" not in filename.lower() or not filename.endswith(".json"):
@@ -2150,16 +2155,8 @@ class OutputManager(object):
             for key, value in data.items():
                 if key == "DISCLAIMER":
                     continue
-                e2e_results.append({
-                    "prefix": matched_prefix,
-                    "module": self._normalize_module_header(key),
-                    "result": value["values"][0]
-                })
-
-        for result in e2e_results:
-            prefix = result["prefix"]
-            module = result["module"]
-            e2e_results_summary[prefix][module] = result["result"]
+                module = self._normalize_module_header(key)
+                e2e_results_summary[matched_prefix][module] = value["values"][0]
 
         self._print_e2e_results_summary(e2e_results_summary)
 

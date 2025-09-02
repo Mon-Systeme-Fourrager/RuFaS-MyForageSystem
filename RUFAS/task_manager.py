@@ -180,11 +180,16 @@ class TaskManager:
         input_data_csv_import_path: str = task_config.get("input_data_csv_import_path", "")
         is_end_to_end_test_task = (
             True if any(
-                task["task_type"] in [TaskType.END_TO_END_TESTING, TaskType.UPDATE_E2E_TEST_RESULTS]
+                task["task_type"] == TaskType.END_TO_END_TESTING
                 for task in runnable_args) else False
         )
         if is_end_to_end_test_task:
             output_prefixes: list[str] = [runnable_args[i]["output_prefix"] for i in range(len(runnable_args))]
+            self.output_manager.add_log(
+                "Summarizing e2e test results",
+                f"Gathering e2e results for {output_prefixes}...",
+                info_map,
+            )
             json_output_directory = runnable_args[0]["json_output_directory"]
             self.output_manager.summarize_e2e_test_results(json_output_directory, output_prefixes)
 
