@@ -120,7 +120,9 @@ def test_task_manager_start(
 
     if not is_end_to_end_test_task:
         mock_parse_input_tasks = mocker.patch.object(tm, "_parse_input_tasks", return_value=([{}], [{}]))
-        mock_expand_multi_runs_to_single_runs = mocker.patch.object(tm, "_expand_multi_runs_to_single_runs", return_value=[{}])
+        mock_expand_multi_runs_to_single_runs = mocker.patch.object(
+            tm, "_expand_multi_runs_to_single_runs", return_value=[{}]
+        )
     else:
         e2e_task = {
             "task_type": TaskType.END_TO_END_TESTING,
@@ -128,7 +130,9 @@ def test_task_manager_start(
             "json_output_directory": Path("out/e2e"),
         }
         mock_parse_input_tasks = mocker.patch.object(tm, "_parse_input_tasks", return_value=([e2e_task], [{}]))
-        mock_expand_multi_runs_to_single_runs = mocker.patch.object(tm, "_expand_multi_runs_to_single_runs", return_value=[])
+        mock_expand_multi_runs_to_single_runs = mocker.patch.object(
+            tm, "_expand_multi_runs_to_single_runs", return_value=[]
+        )
 
     mock_run_tasks = mocker.patch.object(tm, "_run_tasks")
     mock_summarize = mocker.patch.object(mock_output_manager, "summarize_e2e_test_results")
@@ -384,9 +388,7 @@ def test_handle_post_processing(
     mocker.patch.object(mock_output_manager, "dict_to_file_json", return_value=None)
     if not suppress_logs:
         mock_dump_data_logs.call_count == 1
-        mock_dump_all_nondata_pools.assert_called_with(
-            args["logs_directory"], args["exclude_info_maps"], "verbose"
-        )
+        mock_dump_all_nondata_pools.assert_called_with(args["logs_directory"], args["exclude_info_maps"], "verbose")
     else:
         mock_dump_data_logs.assert_not_called()
         mock_dump_all_nondata_pools.assert_not_called()
@@ -470,8 +472,9 @@ def test_handle_end_to_end_testing(
     assert post_processing.call_count == 1
 
 
-def test_handle_update_e2e_test_results(mock_output_manager: OutputManager, task_manager: TaskManager,
-                                        mocker: MockerFixture) -> None:
+def test_handle_update_e2e_test_results(
+    mock_output_manager: OutputManager, task_manager: TaskManager, mocker: MockerFixture
+) -> None:
     """Test that updating end-to-end expected test results executes correctly."""
 
     # Arrange
@@ -520,8 +523,9 @@ def test_handle_post_processing_load_pool(
     mocker.patch.object(mock_input_manager, "dump_get_data_logs", return_value=None)
     mocker.patch("RUFAS.task_manager.InputManager", return_value=mock_input_manager)
     mock_flush_pools = mocker.patch.object(mock_output_manager, "flush_pools", return_value=None)
-    mock_load_variables_pool_from_file = mocker.patch.object(mock_output_manager, "load_variables_pool_from_file",
-                                                             return_value=None)
+    mock_load_variables_pool_from_file = mocker.patch.object(
+        mock_output_manager, "load_variables_pool_from_file", return_value=None
+    )
     mock_set_metadata_prefix = mocker.patch.object(mock_output_manager, "set_metadata_prefix", return_value=None)
 
     mocker.patch.object(mock_output_manager, "dict_to_file_json", return_value=None)
