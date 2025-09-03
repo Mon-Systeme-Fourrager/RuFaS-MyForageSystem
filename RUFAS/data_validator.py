@@ -1742,9 +1742,7 @@ class CrossValidator:
 
         if isinstance(ordered_values[0], (list, dict)):
             if not self._validate_expression_block_with_complex_variable(
-                    expression_block,
-                    ordered_values,
-                    eager_termination
+                expression_block, ordered_values, eager_termination
             ):
                 return None, False
             ordered_values = (
@@ -1760,10 +1758,7 @@ class CrossValidator:
         return result, True
 
     def _validate_expression_block_with_complex_variable(
-            self,
-            expression_block: dict[str, Any],
-            ordered_values: list[Any],
-            eager_termination: bool
+        self, expression_block: dict[str, Any], ordered_values: list[Any], eager_termination: bool
     ) -> bool:
         """
         Validates an expression block when it contains complex variables.
@@ -1794,7 +1789,7 @@ class CrossValidator:
                 {
                     "error": "Multiple Complex Variables Selected",
                     "message": "Only one list or dict variable can be selected for cross validation in "
-                               "a single expression block.",
+                    "a single expression block.",
                     "info_map": {
                         "class": CrossValidator.__name__,
                         "function": CrossValidator._evaluate_expression.__name__,
@@ -1814,7 +1809,7 @@ class CrossValidator:
                 {
                     "error": "Missing `apply_to` key",
                     "message": "The 'apply_to' key is required in expression block "
-                               "when a complex data structure is selected.",
+                    "when a complex data structure is selected.",
                     "info_map": {
                         "class": CrossValidator.__name__,
                         "function": CrossValidator._evaluate_expression.__name__,
