@@ -3284,10 +3284,14 @@ def test_summarize_e2e_test_results_good_path(
 
     info_map = {"class": OutputManager.__name__, "function": OutputManager.summarize_e2e_test_results.__name__}
     expected_add_log_calls = [
-        call("Attempting to open e2e test results directory",
-             "Opening e2e test results directory to read results files", info_map),
-        call("Successfully opened e2e test results directory", "Directory opened and files successfully read",
-             info_map),
+        call(
+            "Attempting to open e2e test results directory",
+            "Opening e2e test results directory to read results files",
+            info_map,
+        ),
+        call(
+            "Successfully opened e2e test results directory", "Directory opened and files successfully read", info_map
+        ),
     ]
     mock_add_log.assert_has_calls(expected_add_log_calls)
 
