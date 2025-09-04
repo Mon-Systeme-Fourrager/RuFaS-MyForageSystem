@@ -3263,7 +3263,7 @@ def test_print_errors_warnings_logs(
         assert captured.out == expected_output
 
 
-def test_summarize_e2e_test_results_happy_path(
+def test_summarize_e2e_test_results_good_path(
     tmp_path: Path, mock_output_manager: OutputManager, mocker: MockerFixture
 ) -> None:
     """Unit test for the summarize_e2e_test_results() method in OutputManager class."""
@@ -3282,11 +3282,14 @@ def test_summarize_e2e_test_results_happy_path(
 
     mock_output_manager.summarize_e2e_test_results(tmp_path, ["E2E_Animal"])
 
-    mock_add_log.assert_called_once_with(
-        "Attempting to open e2e test results directory",
-        "Opening e2e test results directory",
-        ANY,
-    )
+    info_map = {"class": OutputManager.__name__, "function": OutputManager.summarize_e2e_test_results.__name__}
+    expected_add_log_calls = [
+        call("Attempting to open e2e test results directory",
+             "Opening e2e test results directory to read results files", info_map),
+        call("Successfully opened e2e test results directory", "Directory opened and files successfully read",
+             info_map),
+    ]
+    mock_add_log.assert_has_calls(expected_add_log_calls)
 
     mock_add_error.assert_not_called()
 

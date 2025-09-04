@@ -2129,7 +2129,8 @@ class OutputManager(object):
             "class": self.__class__.__name__,
             "function": self.summarize_e2e_test_results.__name__,
         }
-        self.add_log("Attempting to open e2e test results directory", "Opening e2e test results directory", info_map)
+        self.add_log("Attempting to open e2e test results directory",
+                     "Opening e2e test results directory to read results files", info_map)
         module_headers: list[str] = ["Animal", "CropAndSoil", "Manure"]
         e2e_results_summary: dict[str, dict[str, bool | str]] = {
             prefix: {header: "n/a" for header in module_headers} for prefix in output_prefixes
@@ -2158,6 +2159,9 @@ class OutputManager(object):
                     continue
                 module = self._normalize_module_header(key)
                 e2e_results_summary[matched_prefix][module] = value["values"][0]
+
+        self.add_log("Successfully opened e2e test results directory", "Directory opened and files successfully read",
+                     info_map)
 
         self._print_e2e_results_summary(e2e_results_summary)
 
