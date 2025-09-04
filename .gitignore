@@ -64,3 +64,5 @@ DataCollectionApp/schema/*
 !DataCollectionApp/schema/.keep
 
 docs/_build/
+example/input*
+example/output*
