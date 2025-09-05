@@ -417,7 +417,6 @@ class HerdManager:
                         newborn_calves.append(newborn_calf)
             elif animal_daily_routines_output.animal_status in [AnimalStatus.DEAD, AnimalStatus.SOLD]:
                 sold_animals.append(animal)
-        # TODO: Might have to report the newborn_calves here
         return graduated_animals, sold_animals, stillborn_newborn_calves, newborn_calves, sold_newborn_calves
 
     def _update_herd_structure(
