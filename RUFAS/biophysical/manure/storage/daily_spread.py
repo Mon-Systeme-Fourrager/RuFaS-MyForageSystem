@@ -15,7 +15,6 @@ class DailySpread(Storage):
         surface_area: float = math.inf,
         cover: StorageCover = StorageCover.NO_COVER,
     ):
-        """Initialize DailySpread object."""
         super().__init__(
             name=name,
             is_housing_emissions_calculator=False,
@@ -37,7 +36,7 @@ class DailySpread(Storage):
 
     def process_manure(self, current_day_conditions: CurrentDayConditions, time: RufasTime) -> dict[str, ManureStream]:
         """
-        Processes manure in bedded pack.
+        Processes manure in daily spread.
 
         Parameters
         ----------

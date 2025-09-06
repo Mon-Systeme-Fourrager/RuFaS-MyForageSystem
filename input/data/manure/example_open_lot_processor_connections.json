@@ -64,10 +64,6 @@
     {
       "processor_name": "lac_open_lot",
       "destinations": []
-    },
-    {
-      "processor_name": "dailyspread",
-      "destinations": []
     }
   ],
   "separator_connections": []
