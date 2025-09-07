@@ -1313,6 +1313,35 @@ class AnimalModuleReporter:
         AnimalModuleReporter._record_animal_events(heiferIIs, time.simulation_day)
         AnimalModuleReporter._record_heiferIIs_conception_rate(herd_reproduction_statistics)
         AnimalModuleReporter._record_cows_conception_rate(herd_reproduction_statistics)
+        AnimalModuleReporter._record_animal_enteric_methane(cows, time.simulation_day)
+
+    @classmethod
+    def _record_animal_enteric_methane(cls, animals: list[Animal], simulation_day: int) -> None:
+        """
+        Record the enteric methane of each animals.
+
+        Parameters
+        ----------
+        animals : list[Animal]
+            A list of animals.
+        simulation_day : int
+            The current simulation day.
+
+        Returns
+        -------
+        None
+
+        """
+        info_map = {
+            "class": AnimalModuleReporter.__name__,
+            "function": AnimalModuleReporter._record_animal_enteric_methane.__name__,
+        }
+        for animal in animals:
+            om.add_variable(
+                f"{animal.__class__.__name__}_{animal.id}_day_{simulation_day}",
+                animal.digestive_system.enteric_methane_emission,
+                dict(info_map, **{"units": MeasurementUnits.UNITLESS}),
+            )
 
     @classmethod
     def _record_animal_events(cls, animals: list[Animal], simulation_day: int) -> None:
@@ -1330,7 +1359,6 @@ class AnimalModuleReporter:
         -------
         None
         """
-
         info_map = {
             "class": AnimalModuleReporter.__name__,
             "function": AnimalModuleReporter._record_animal_events.__name__,
