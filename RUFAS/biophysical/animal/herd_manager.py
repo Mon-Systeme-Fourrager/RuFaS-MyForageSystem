@@ -388,10 +388,14 @@ class HerdManager:
         self._update_sold_heiferII_statistics(sold_heiferIIs)
         self._update_sold_newborn_calf_statistics(sold_newborn_calves)
 
-    def _perform_daily_routines_for_animals(
-        self, time: RufasTime, animals: list[Animal]
-    ) -> tuple[list[Animal], list[Animal], list[Animal], list[Animal], list[Animal],
-    list[dict[AnimalType, dict[str, float] | None]]]:
+    def _perform_daily_routines_for_animals(self, time: RufasTime, animals: list[Animal]) -> tuple[
+        list[Animal],
+        list[Animal],
+        list[Animal],
+        list[Animal],
+        list[Animal],
+        list[dict[AnimalType, dict[str, float] | None]],
+    ]:
         """Perform daily routines for a given list of animals."""
         graduated_animals: list[Animal] = []
         sold_animals: list[Animal] = []
@@ -420,9 +424,14 @@ class HerdManager:
                         newborn_calves.append(newborn_calf)
             elif animal_daily_routines_output.animal_status in [AnimalStatus.DEAD, AnimalStatus.SOLD]:
                 sold_animals.append(animal)
-        return (graduated_animals, sold_animals, stillborn_newborn_calves, newborn_calves, sold_newborn_calves,
-                digestion_outputs)
-
+        return (
+            graduated_animals,
+            sold_animals,
+            stillborn_newborn_calves,
+            newborn_calves,
+            sold_newborn_calves,
+            digestion_outputs,
+        )
 
     def _update_herd_structure(
         self,
@@ -486,17 +495,23 @@ class HerdManager:
         self._reset_daily_statistics()
         self.herd_reproduction_statistics = HerdReproductionStatistics()
 
-        graduated_calves, sold_calves, _, _, _, calves_digestions = self._perform_daily_routines_for_animals(time, self.calves)
+        graduated_calves, sold_calves, _, _, _, calves_digestions = self._perform_daily_routines_for_animals(
+            time, self.calves
+        )
         graduated_animals += graduated_calves
         removed_animals += sold_calves
         self._update_total_enteric_methane(calves_digestions)
 
-        graduated_heiferIs, sold_heiferIs, _, _, _, heiferI_digestions = self._perform_daily_routines_for_animals(time, self.heiferIs)
+        graduated_heiferIs, sold_heiferIs, _, _, _, heiferI_digestions = self._perform_daily_routines_for_animals(
+            time, self.heiferIs
+        )
         graduated_animals += graduated_heiferIs
         removed_animals += sold_heiferIs
         self._update_total_enteric_methane(heiferI_digestions)
 
-        graduated_heiferIIs, sold_heiferIIs, _, _, _, heiferII_digestions = self._perform_daily_routines_for_animals(time, self.heiferIIs)
+        graduated_heiferIIs, sold_heiferIIs, _, _, _, heiferII_digestions = self._perform_daily_routines_for_animals(
+            time, self.heiferIIs
+        )
         graduated_animals += graduated_heiferIIs
         removed_animals += sold_heiferIIs
         self._update_total_enteric_methane(heiferII_digestions)
@@ -508,7 +523,7 @@ class HerdManager:
             stillborn_newborn_calves_from_heiferIIIs,
             newborn_calves_from_heiferIIIs,
             sold_newborn_calves_from_heiferIIIs,
-            heiferIII_digestions
+            heiferIII_digestions,
         ) = self._perform_daily_routines_for_animals(time, self.heiferIIIs)
         self._update_total_enteric_methane(heiferIII_digestions)
         graduated_animals += graduated_heiferIIIs
@@ -523,7 +538,7 @@ class HerdManager:
             stillborn_newborn_calves_from_cows,
             newborn_calves_from_cows,
             sold_newborn_calves_from_cows,
-            cow_digestions
+            cow_digestions,
         ) = self._perform_daily_routines_for_animals(time, self.cows)
         self._update_total_enteric_methane(cow_digestions)
         graduated_animals += graduated_cows
@@ -1912,6 +1927,5 @@ class HerdManager:
 
                     all_keys = set(current_totals.keys()) | set(new_emissions.keys())
                     self.herd_statistics.total_enteric_methane[animal_type] = {
-                        k: float(current_totals.get(k, 0) + new_emissions.get(k, 0))
-                        for k in all_keys
+                        k: float(current_totals.get(k, 0) + new_emissions.get(k, 0)) for k in all_keys
                     }

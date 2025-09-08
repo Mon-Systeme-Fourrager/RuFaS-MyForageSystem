@@ -391,7 +391,6 @@ class HerdStatistics:
             AnimalType.DRY_COW: {"IPCC": 0, "Mills": 0},
         }
 
-
     def reset_parity(self) -> None:
         """Resets parity-based attributes."""
         for parity in self.num_cow_for_parity:

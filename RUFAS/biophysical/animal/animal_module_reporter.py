@@ -1306,24 +1306,27 @@ class AnimalModuleReporter:
                 AnimalModuleReporter.report_milk(pen, simulation_day)
         info_map = {
             "class": AnimalModuleReporter.__name__,
-            "function": AnimalModuleReporter.report_daily_reports.__name__
+            "function": AnimalModuleReporter.report_daily_reports.__name__,
         }
         if herd_statistics.total_enteric_methane:
-            om.add_variable("animal_total_enteric_methane",
-                            herd_statistics.total_enteric_methane,
-                            dict(info_map, **{"units": MeasurementUnits.GRAMS}))
+            om.add_variable(
+                "animal_total_enteric_methane",
+                herd_statistics.total_enteric_methane,
+                dict(info_map, **{"units": MeasurementUnits.GRAMS}),
+            )
         else:
-            om.add_variable("animal_total_enteric_methane",
-                            {
-                                AnimalType.CALF: {"Pattanaik": 0},
-                                AnimalType.HEIFER_I: {"IPCC": 0},
-                                AnimalType.HEIFER_II: {"IPCC": 0},
-                                AnimalType.HEIFER_III: {"IPCC": 0},
-                                AnimalType.LAC_COW: {"IPCC": 0, "Mills": 0, "Mutian": 0},
-                                AnimalType.DRY_COW: {"IPCC": 0, "Mills": 0},
-                            },
-                            dict(info_map, **{"units": MeasurementUnits.GRAMS}))
-
+            om.add_variable(
+                "animal_total_enteric_methane",
+                {
+                    AnimalType.CALF: {"Pattanaik": 0},
+                    AnimalType.HEIFER_I: {"IPCC": 0},
+                    AnimalType.HEIFER_II: {"IPCC": 0},
+                    AnimalType.HEIFER_III: {"IPCC": 0},
+                    AnimalType.LAC_COW: {"IPCC": 0, "Mills": 0, "Mutian": 0},
+                    AnimalType.DRY_COW: {"IPCC": 0, "Mills": 0},
+                },
+                dict(info_map, **{"units": MeasurementUnits.GRAMS}),
+            )
 
     @classmethod
     def report_end_of_simulation(
@@ -1417,7 +1420,6 @@ class AnimalModuleReporter:
             AnimalModuleReporter.report_stillborn_calves_information(
                 [{"stillborn_day": 0, "birth_weight": 0}], "stillborn_calves", time.simulation_day
             )
-
 
         AnimalModuleReporter._record_animal_events(cows, time.simulation_day)
         AnimalModuleReporter._record_animal_events(heiferIIs, time.simulation_day)

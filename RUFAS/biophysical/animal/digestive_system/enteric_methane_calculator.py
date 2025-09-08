@@ -261,9 +261,7 @@ class EntericMethaneCalculator:
             elif model == "Mills" and usage:
                 mitscherlich_parameter_a = animal_constants.MITS_PARAMETER_A
                 mitscherlich_parameter_b = animal_constants.MITS_PARAMETER_B
-                mitscherlich_parameter_c = (
-                    -0.0011 * starch_concentration / acid_detergent_fiber_concentration + 0.0045
-                )
+                mitscherlich_parameter_c = -0.0011 * starch_concentration / acid_detergent_fiber_concentration + 0.0045
                 methane_emission_MJ = mitscherlich_parameter_a - (
                     mitscherlich_parameter_a + mitscherlich_parameter_b
                 ) * exp(-mitscherlich_parameter_c * metabolizable_energy_intake * GeneralConstants.KCAL_TO_MJ)
@@ -349,9 +347,7 @@ class EntericMethaneCalculator:
             if model == "Mills" and usage:
                 mitscherlich_parameter_a = animal_constants.MITS_PARAMETER_A
                 mitscherlich_parameter_b = animal_constants.MITS_PARAMETER_B
-                mitscherlich_parameter_c = (
-                    -0.0011 * starch_concentration / acid_detergent_fiber_concentration + 0.0045
-                )
+                mitscherlich_parameter_c = -0.0011 * starch_concentration / acid_detergent_fiber_concentration + 0.0045
                 methane_emission_MJ = mitscherlich_parameter_a - (
                     mitscherlich_parameter_a + mitscherlich_parameter_b
                 ) * exp(-mitscherlich_parameter_c * metabolizable_energy_intake * GeneralConstants.KCAL_TO_MJ)
