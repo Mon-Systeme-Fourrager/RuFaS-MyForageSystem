@@ -23,7 +23,8 @@ class DigestiveSystem:
         self.phosphorus_excreted = 0.0
         self.enteric_methane_emission: dict[str, float] | None = None
 
-    def process_digestion(self, digestive_system_inputs: DigestiveSystemInputs) -> None:
+    def process_digestion(self,
+                          digestive_system_inputs: DigestiveSystemInputs) -> dict[AnimalType, dict[str, float] | None]:
         """
         Processes the digestion for different types of animals by calculating methane emission
         and manure excretion based on the provided digestive system inputs.
@@ -39,6 +40,7 @@ class DigestiveSystem:
         TypeError
             If the animal type in digestive_system_inputs is not supported, a TypeError is raised
             with information about supported animal types.
+
         """
         om = OutputManager()
         info_map = {
@@ -82,7 +84,7 @@ class DigestiveSystem:
             self.enteric_methane_emission = methane_emission
             self.phosphorus_excreted = phosphorus
             self.manure_excretion = excretion
-            return
+            return {digestive_system_inputs.animal_type: self.enteric_methane_emission}
 
         elif digestive_system_inputs.animal_type in (AnimalType.HEIFER_I, AnimalType.HEIFER_II, AnimalType.HEIFER_III):
             if digestive_system_inputs.animal_type == AnimalType.HEIFER_I:
@@ -106,7 +108,7 @@ class DigestiveSystem:
             self.enteric_methane_emission = methane_emission
             self.phosphorus_excreted = phosphorus
             self.manure_excretion = excretion
-            return
+            return {digestive_system_inputs.animal_type: self.enteric_methane_emission}
 
         elif digestive_system_inputs.animal_type.is_cow:
             methane_emission = EntericMethaneCalculator.calculate_cow_methane(
@@ -134,7 +136,10 @@ class DigestiveSystem:
             self.enteric_methane_emission = methane_emission
             self.phosphorus_excreted = phosphorus
             self.manure_excretion = excretion
-            return
+            if digestive_system_inputs.is_milking:
+                return {AnimalType.LAC_COW: self.enteric_methane_emission}
+            else:
+                return {AnimalType.DRY_COW: self.enteric_methane_emission}
 
         else:
             om.add_error(
