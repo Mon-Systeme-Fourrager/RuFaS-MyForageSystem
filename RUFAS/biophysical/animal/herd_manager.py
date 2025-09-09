@@ -394,7 +394,7 @@ class HerdManager:
         list[Animal],
         list[Animal],
         list[Animal],
-        list[dict[AnimalType, dict[str, float] | None]],
+        list[dict[AnimalType, dict[str, float]]],
     ]:
         """Perform daily routines for a given list of animals."""
         graduated_animals: list[Animal] = []
@@ -402,7 +402,7 @@ class HerdManager:
         stillborn_newborn_calves: list[Animal] = []
         sold_newborn_calves: list[Animal] = []
         newborn_calves: list[Animal] = []
-        digestion_outputs: list[dict[AnimalType, dict[str, float] | None]] = []
+        digestion_outputs: list[dict[AnimalType, dict[str, float]]] = []
 
         for animal in animals:
             animal_daily_routines_output: DailyRoutinesOutput = animal.daily_routines(time)
@@ -1917,7 +1917,7 @@ class HerdManager:
             sum([cow.reproduction.calves for cow in self.cows]) / len(self.cows) if len(self.cows) > 0 else 0
         )
 
-    def _update_total_enteric_methane(self, digestive_outputs: list[dict[AnimalType, dict[str, float] | None]]) -> None:
+    def _update_total_enteric_methane(self, digestive_outputs: list[dict[AnimalType, dict[str, float]]]) -> None:
         """Update the amount of total enteric methane in the herd statistics."""
         for methane_emission in digestive_outputs:
             for animal_type in methane_emission:

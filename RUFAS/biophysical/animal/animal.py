@@ -1295,7 +1295,7 @@ class Animal:
         )
         self.nutrients.perform_daily_phosphorus_update(nutrients_inputs)
 
-    def _daily_digestive_system_update(self) -> dict[AnimalType, dict[str, float] | None]:
+    def _daily_digestive_system_update(self) -> dict[AnimalType, dict[str, float]]:
         """
         Performs the daily digestive system updates for the animal.
 

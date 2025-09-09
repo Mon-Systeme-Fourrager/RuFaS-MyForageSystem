@@ -16,16 +16,16 @@ class DigestiveSystem:
 
     manure_excretion: AnimalManureExcretions
     phosphorus_excreted: float
-    enteric_methane_emission: dict[str, float] | None
+    enteric_methane_emission: dict[str, float]
 
     def __init__(self) -> None:
         self.manure_excretion = AnimalManureExcretions()
         self.phosphorus_excreted = 0.0
-        self.enteric_methane_emission: dict[str, float] | None = None
+        self.enteric_methane_emission: dict[str, float] = {}
 
     def process_digestion(
         self, digestive_system_inputs: DigestiveSystemInputs
-    ) -> dict[AnimalType, dict[str, float] | None]:
+    ) -> dict[AnimalType, dict[str, float]]:
         """
         Processes the digestion for different types of animals by calculating methane emission
         and manure excretion based on the provided digestive system inputs.

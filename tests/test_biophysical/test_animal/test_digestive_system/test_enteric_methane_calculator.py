@@ -93,9 +93,9 @@ def test_heifer_methane_with_model(nutrient_concentrations: NutritionSupply, exp
     "is_lactating, methane_mitigation_method, methane_mitigation_additive_amount, "
     "expected_methane, expected_mitigation_called",
     [
-        (True, "3-NOP", 500.0, {"Mutian": 0, "Mills": 0, "IPCC": 299.7}, True),  # Lactating cow with mitigation (methane reduced)
-        (True, "", 0.0, {"Mutian": 0, "Mills": 0, "IPCC": 300.0}, False),  # Lactating cow without mitigation (no change)
-        (False, "", 0.0, {"IPCC": 180.0, "Mills": 0}, False),  # Dry cow (different calculation, no mitigation)
+        (True, "3-NOP", 500.0, {"Mutian": 0, "Mills": 0, "IPCC": 299.7}, True),
+        (True, "", 0.0, {"Mutian": 0, "Mills": 0, "IPCC": 300.0}, False),
+        (False, "", 0.0, {"IPCC": 180.0, "Mills": 0}, False),
     ],
 )
 def test_calculate_cow_methane(
@@ -136,8 +136,8 @@ def test_calculate_cow_methane(
         nutrient_amounts=mock_nutrition,
         methane_mitigation_method=methane_mitigation_method,
         methane_mitigation_additive_amount=methane_mitigation_additive_amount,
-        methane_models={"cows":{"lactating cows": {"Mutian": False, "Mills": False, "IPCC": True},
-                                "dry cows": {"Mills": False, "IPCC": True}}}
+        methane_models={"cows": {"lactating cows": {"Mutian": False, "Mills": False, "IPCC": True},
+                                 "dry cows": {"Mills": False, "IPCC": True}}}
     )
 
     if is_lactating:
@@ -164,9 +164,9 @@ def test_calculate_cow_methane(
         ({"Mutian": False, "Mills": False, "IPCC": True},
          {"Mutian": 0, "Mills": 0, "IPCC": 525.2840970350404}),  # IPCC only model example output
         ({"Mutian": False, "Mills": True, "IPCC": True},
-         {"Mutian": 0, "Mills": 413.11769991015274, "IPCC": 525.2840970350404}), # multi model usage tests
+         {"Mutian": 0, "Mills": 413.11769991015274, "IPCC": 525.2840970350404}),  # multi model usage tests
         ({"Mutian": True, "Mills": True, "IPCC": True},
-         {"Mutian": 393.2, "Mills": 413.11769991015274, "IPCC": 525.2840970350404}) # all model usage test
+         {"Mutian": 393.2, "Mills": 413.11769991015274, "IPCC": 525.2840970350404})  # all model usage test
     ],
 )
 def test_calculate_lactating_cow_enteric_methane(
