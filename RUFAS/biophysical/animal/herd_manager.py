@@ -315,15 +315,15 @@ class HerdManager:
     @property
     def daily_milk_report(self) -> list[MilkProductionStatistics]:
         """
-        Returns a list of MilkProductionStatistics for each lactating cow in the herd.
+        Returns a list of MilkProductionStatistics for all cows in the herd.
 
         Returns
         -------
         list[MilkProductionStatistics]
-            A list of MilkProductionStatistics for all lactating cows.
+            A list of MilkProductionStatistics for all cows.
 
         """
-        return [cow.milk_statistics for cow in self.cows if cow.is_milking]
+        return [cow.milk_statistics for cow in self.cows]
 
     @property
     def average_herd_305_days_milk_production(self) -> float:
@@ -601,9 +601,61 @@ class HerdManager:
         AnimalModuleReporter.report_enteric_methane_emission(enteric_methane_emission_by_pen)
         AnimalModuleReporter.report_milk(self.daily_milk_report, time.simulation_day)
         AnimalModuleReporter.report_305d_milk(self.average_herd_305_days_milk_production)
-        AnimalModuleReporter.report_daily_reports(self, time.simulation_day)
+        self._report_ration(time.simulation_day)
 
         return herd_manager_output
+
+    def _report_ration(self, simulation_day: int) -> None:
+        """Report the ration for all pens."""
+        herd_total_ration: dict[str, float] = {}
+        for pen in self.all_pens:
+            AnimalModuleReporter.report_daily_pen_total(
+                str(pen.id),
+                pen.animal_combination.name,
+                len(pen.animals_in_pen),
+                simulation_day,
+            )
+
+            current_pen_ration = pen.total_pen_ration
+            AnimalModuleReporter.report_daily_ration_per_pen(
+                str(pen.id),
+                pen.animal_combination.name,
+                current_pen_ration,
+                simulation_day
+            )
+
+            for key, amount in current_pen_ration.items():
+                if key not in herd_total_ration.keys():
+                    herd_total_ration[key] = 0.0
+                herd_total_ration[key] += amount
+            daily_purchased_feed_emissions = (
+                self.feeds_emissions_estimator.create_daily_purchased_feed_emissions_report(current_pen_ration)
+            )
+            daily_land_use_change_feed_emissions = (
+                self.feeds_emissions_estimator.create_daily_land_use_change_feed_emissions_report(current_pen_ration)
+            )
+            AnimalModuleReporter.report_daily_feed_emissions(
+                daily_purchased_feed_emissions,
+                daily_land_use_change_feed_emissions,
+                pen.id,
+                pen.animal_combination.name,
+                simulation_day,
+            )
+
+        AnimalModuleReporter.report_daily_herd_total_ration(herd_total_ration, simulation_day)
+        herd_total_purchased_feed_emissions = (
+            self.feeds_emissions_estimator.create_daily_purchased_feed_emissions_report(herd_total_ration)
+        )
+        herd_total_land_use_change_feed_emissions = (
+            self.feeds_emissions_estimator.create_daily_land_use_change_feed_emissions_report(herd_total_ration)
+        )
+        AnimalModuleReporter.report_daily_feed_emissions(
+            herd_total_purchased_feed_emissions,
+            herd_total_land_use_change_feed_emissions,
+            "ALL",
+            "",
+            simulation_day,
+        )
 
     def _create_newborn_calf(self, newborn_calf_config: NewBornCalfValuesTypedDict, simulation_day: int) -> Animal:
         """
