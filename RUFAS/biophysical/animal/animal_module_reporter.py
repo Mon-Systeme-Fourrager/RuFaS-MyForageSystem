@@ -26,8 +26,6 @@ om = OutputManager()
 
 class AnimalModuleReporter:
 
-    _om = OutputManager()
-
     @classmethod
     def data_padder(
         cls,
@@ -209,7 +207,7 @@ class AnimalModuleReporter:
         ration_amounts_with_str_keys["dry_matter_intake_total"] = total_dry_matter
 
         units = {key: MeasurementUnits.KILOGRAMS for key in ration_amounts_with_str_keys.keys()}
-        cls._om.add_variable(
+        om.add_variable(
             f"ration_per_animal_for_{pen_base_name}", ration_amounts_with_str_keys, {**info_map, "units": units}
         )
 
@@ -252,7 +250,7 @@ class AnimalModuleReporter:
             "NE_growth": average_nutrition_supply.growth_energy,
             "metabolizable_protein": average_nutrition_supply.metabolizable_protein,
         }
-        cls._om.add_variable(f"ration_nutrient_amount_for_{pen_base_name}", nutrient_amounts, info_map)
+        om.add_variable(f"ration_nutrient_amount_for_{pen_base_name}", nutrient_amounts, info_map)
 
     @classmethod
     def report_average_nutrient_requirements(
@@ -299,7 +297,7 @@ class AnimalModuleReporter:
             "avg_essential_amino_acid_requirement": average_nutrition_requirements.essential_amino_acids,
         }
 
-        cls._om.add_variable(f"avg_rqmts_for_{pen_base_name}", avg_requirements, info_map)
+        om.add_variable(f"avg_rqmts_for_{pen_base_name}", avg_requirements, info_map)
 
     @classmethod
     def report_average_nutrient_evaluation_results(
@@ -333,13 +331,13 @@ class AnimalModuleReporter:
             "forage_ndf_percent_difference": average_nutrition_evaluation.forage_ndf_percent,
             "fat_percent_difference": average_nutrition_evaluation.fat_percent,
         }
-        cls._om.add_variable(
+        om.add_variable(
             f"avg_eval_results_for_{pen_base_name}",
             nutrient_evaluation_results,
             {**info_map, "units": NutritionEvaluationResults.UNITS},
         )
 
-        cls._om.add_variable(
+        om.add_variable(
             f"avg_eval_report_for_{pen_base_name}",
             average_nutrition_evaluation.report,
             {**info_map, "units": NutritionEvaluationResults.REPORT_UNITS},
@@ -369,7 +367,7 @@ class AnimalModuleReporter:
             "units": units,
         }
 
-        cls._om.add_variable(
+        om.add_variable(
             f"MEdiet_for_{pen_base_name}",
             metabolizable_energy,
             info_map,
@@ -422,7 +420,7 @@ class AnimalModuleReporter:
             "units": units,
         }
 
-        cls._om.add_variable(f"ration_daily_feed_totals_for_pen_{pen_id}_{pen_animal_name}", pen_ration, info_map)
+        om.add_variable(f"ration_daily_feed_totals_for_pen_{pen_id}_{pen_animal_name}", pen_ration, info_map)
 
     @classmethod
     def report_daily_feed_emissions(
@@ -456,17 +454,21 @@ class AnimalModuleReporter:
             "function": function_name,
         }
         if pen_id == "ALL":
-            info_map["data_origin"] = [("FeedEmissionsEstimator", "create_daily_purchased_feed_emissions_report")]
             om.add_variable(
                 "purchased_feed_emissions_across_pens",
                 daily_purchased_feed_emissions,
-                dict(info_map, **{"units": MeasurementUnits.KILOGRAMS_CARBON_DIOXIDE_EQ}),
+                dict(info_map, **{
+                    "data_origin": [("FeedEmissionsEstimator", "create_daily_purchased_feed_emissions_report")],
+                    "units": MeasurementUnits.KILOGRAMS_CARBON_DIOXIDE_EQ
+                }),
             )
-            info_map["data_origin"] = [("FeedEmissionsEstimator", "create_daily_land_use_change_feed_emissions_report")]
             om.add_variable(
                 "land_use_change_feed_emissions_across_pens",
                 daily_land_use_change_feed_emissions,
-                dict(info_map, **{"units": MeasurementUnits.KILOGRAMS_CARBON_DIOXIDE_EQ}),
+                dict(info_map, **{
+                    "data_origin": [("FeedEmissionsEstimator", "create_daily_land_use_change_feed_emissions_report")],
+                    "units": MeasurementUnits.KILOGRAMS_CARBON_DIOXIDE_EQ
+                }),
             )
         else:
             AnimalModuleReporter.data_padder(
@@ -477,17 +479,21 @@ class AnimalModuleReporter:
                 info_map,
                 MeasurementUnits.KILOGRAMS_CARBON_DIOXIDE_EQ,
             )
-            info_map["data_origin"] = [("FeedEmissionsEstimator", "create_daily_purchased_feed_emissions_report")]
             om.add_variable(
                 f"purchased_feed_emissions_Pen_{pen_id}_animal_{pen_animal_name}_",
                 daily_purchased_feed_emissions,
-                dict(info_map, **{"units": MeasurementUnits.KILOGRAMS_CARBON_DIOXIDE_EQ}),
+                dict(info_map, **{
+                    "data_origin": [("FeedEmissionsEstimator", "create_daily_purchased_feed_emissions_report")],
+                    "units": MeasurementUnits.KILOGRAMS_CARBON_DIOXIDE_EQ
+                }),
             )
-            info_map["data_origin"] = [("FeedEmissionsEstimator", "create_daily_land_use_change_feed_emissions_report")]
             om.add_variable(
                 f"land_use_change_feed_emissions_Pen_{pen_id}_animal_{pen_animal_name}_",
                 daily_land_use_change_feed_emissions,
-                dict(info_map, **{"units": MeasurementUnits.KILOGRAMS_CARBON_DIOXIDE_EQ}),
+                dict(info_map, **{
+                    "data_origin": [("FeedEmissionsEstimator", "create_daily_land_use_change_feed_emissions_report")],
+                    "units": MeasurementUnits.KILOGRAMS_CARBON_DIOXIDE_EQ
+                }),
             )
 
     @classmethod
@@ -986,7 +992,7 @@ class AnimalModuleReporter:
 
         Parameters
         ----------
-        stillborn_calves : list[object]
+        stillborn_calves : list[StillbornCalfTypedDict]
             List of stillborn calves.
         report_name : str
             The string to be appended to the variable being reported to the OM.
@@ -1023,7 +1029,7 @@ class AnimalModuleReporter:
             stillborn_at_day_max,
             dict(info_map, **{"units": MeasurementUnits.SIMULATION_DAY}),
         )
-        for day in range(total_days):
+        for day in range(total_days+1):
             if daily_stillborn.get(day):
                 stillborn_count = len(daily_stillborn[day])
                 birth_weight = sum(stillborn_calf["birth_weight"] for stillborn_calf in daily_stillborn[day])
@@ -1069,7 +1075,7 @@ class AnimalModuleReporter:
 
         sold_at_day_min: int = sys.maxsize
         sold_at_day_max: int = 0
-        daily_sell: Dict[int, List[SoldAnimalTypedDict]] = {}
+        daily_sell: dict[int, List[SoldAnimalTypedDict]] = {}
 
         for animal in sold_animals:
             if sold_at_day := animal.get("sold_at_day"):
@@ -1092,7 +1098,7 @@ class AnimalModuleReporter:
             sold_at_day_max,
             dict(info_map, **{"units": MeasurementUnits.SIMULATION_DAY}),
         )
-        for day in range(total_days):
+        for day in range(total_days+1):
             if daily_sell.get(day):
                 sold_count = len(daily_sell[day])
                 sold_weight = sum(sold_animal["body_weight"] for sold_animal in daily_sell[day])
@@ -1158,7 +1164,7 @@ class AnimalModuleReporter:
         cow_events_by_id : dict[str, str]
             The dictionary of Cow events.
         """
-        empty_sold_animals: List[SoldAnimalTypedDict] = [{"sold_at_day": 0, "body_weight": 0}]
+        empty_sold_animals: list[SoldAnimalTypedDict] = [{"sold_at_day": 0, "body_weight": 0}]
         AnimalModuleReporter.report_sold_animal_information(herd_statistics)
         if herd_statistics.sold_calves_info:
             AnimalModuleReporter.report_sold_animal_information_sort_by_sell_day(
