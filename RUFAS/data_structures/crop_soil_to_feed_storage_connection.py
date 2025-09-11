@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import date
 from enum import Enum
-from typing import NamedTuple
+# from typing import NamedTuple
 
 from RUFAS.general_constants import GeneralConstants
 from RUFAS.rufas_time import RufasTime
@@ -67,6 +67,8 @@ class HarvestedCrop:
         The category of the crop (enum).
     config_name : str
         Name of the crop configuration that produced this harvested crop.
+    field_name : str
+        Name of the field from which this crop was harvested.
     rufas_ids : list[RUFAS_ID]
         List of RUFAS_IDs that this Harvested Crop may be fed as (unitless).
     harvest_time : date
@@ -264,8 +266,8 @@ class HarvestedCrop:
         return heat
 
 
-class HarvestedCropStorageType(NamedTuple):
-    """Used to couple a yield collected in the Crop and Soil module with the storage type it will be put in."""
+# class HarvestedCropStorageType(NamedTuple):
+#     """Used to couple a yield collected in the Crop and Soil module with the storage type it will be put in."""
 
-    harvested_crop: HarvestedCrop
-    storage_type: StorageType
+#     harvested_crop: HarvestedCrop
+#     storage_type: StorageType

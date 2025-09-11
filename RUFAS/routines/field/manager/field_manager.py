@@ -1,13 +1,14 @@
 from typing import List, Tuple, Any
 from datetime import date
 
+from RUFAS.data_structures.crop_soil_to_feed_storage_connection import HarvestedCrop
 from RUFAS.data_structures.events import FertilizerEvent, ManureEvent, TillageEvent, PlantingEvent, HarvestEvent
 from RUFAS.data_structures.manure_supplement_methods import ManureSupplementMethod
 from RUFAS.data_structures.manure_to_crop_soil_connection import (
     ManureEventNutrientRequest,
     ManureEventNutrientRequestResults,
 )
-from RUFAS.data_structures.crop_soil_to_feed_storage_connection import HarvestedCropStorageType
+# from RUFAS.data_structures.crop_soil_to_feed_storage_connection import HarvestedCropStorageType
 from RUFAS.data_structures.feed_storage_to_animal_connection import RUFAS_ID
 from RUFAS.input_manager import InputManager
 from RUFAS.output_manager import OutputManager
@@ -70,7 +71,7 @@ class FieldManager:
 
     def daily_update_routine(
         self, weather: Weather, time: RufasTime, manure_applications: list[ManureEventNutrientRequestResults]
-    ) -> list[HarvestedCropStorageType]:
+    ) -> list[HarvestedCrop]:
         """
         This method will run the daily routine in the field, which will be calling the manage field method on each
         field.
@@ -87,15 +88,15 @@ class FieldManager:
 
         Returns
         -------
-        list[HarvestedCropStorageType]
-            Crops that were harvested on the current day, paired with the storage types into which they will be placed.
+        list[HarvestedCrop]
+            Crops that were harvested on the current day.
 
         Notes
         -----
         Because different fields can have different latitudes, the day length has to be recalculated for each field.
 
         """
-        harvested_crops: list[HarvestedCropStorageType] = []
+        harvested_crops: list[HarvestedCrop] = []
         for field in self.fields:
             current_conditions = weather.get_current_day_conditions(time, field.field_data.absolute_latitude)
             info_map = {
