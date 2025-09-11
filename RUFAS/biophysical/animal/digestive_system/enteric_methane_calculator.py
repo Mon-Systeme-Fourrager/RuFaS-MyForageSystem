@@ -36,8 +36,9 @@ class EntericMethaneCalculator:
 
         """
         methane_results = {}
-        for model, usage in methane_models.items():
-            if usage:
+        for model, selected\
+                in methane_models.items():
+            if selected:
                 methane_emission = (
                     0.013 * (body_weight**0.75) * GeneralConstants.KCAL_TO_MJ
                 ) / GeneralConstants.MJ_CH4_TO_G_CH4
@@ -78,8 +79,8 @@ class EntericMethaneCalculator:
 
         """
         methane_results = {}
-        for model, usage in methane_models.items():
-            if usage:
+        for model, selected in methane_models.items():
+            if selected:
                 crude_protein_concentration = nutrition_supply.crude_protein_percentage
                 ethyl_ester_concentration = nutrition_supply.fat_percentage
                 neutral_detergent_fiber_concentration = nutrition_supply.ndf_percentage
@@ -244,8 +245,8 @@ class EntericMethaneCalculator:
         ethyl_ester_concentration = nutrient_amounts.fat_percentage
         starch_concentration = nutrient_amounts.starch_percentage
         methane_results = {}
-        for model, usage in methane_models.items():
-            if model == "Mutian" and usage:
+        for model, selected in methane_models.items():
+            if model == "Mutian" and selected:
                 methane_emission = (
                     -126
                     + 11.3 * dry_matter_intake
@@ -254,7 +255,7 @@ class EntericMethaneCalculator:
                     + 0.148 * body_weight
                 )
                 methane_results[model] = methane_emission
-            elif model == "Mills" and usage:
+            elif model == "Mills" and selected:
                 mitscherlich_parameter_a = animal_constants.MITS_PARAMETER_A
                 mitscherlich_parameter_b = animal_constants.MITS_PARAMETER_B
                 mitscherlich_parameter_c = -0.0011 * starch_concentration / acid_detergent_fiber_concentration + 0.0045
@@ -263,7 +264,7 @@ class EntericMethaneCalculator:
                 ) * exp(-mitscherlich_parameter_c * metabolizable_energy_intake * GeneralConstants.KCAL_TO_MJ)
                 methane_emission = methane_emission_MJ / GeneralConstants.MJ_CH4_TO_G_CH4
                 methane_results[model] = methane_emission
-            elif model == "IPCC" and usage:
+            elif model == "IPCC" and selected:
                 soluble_residue = (
                     GeneralConstants.FRACTION_TO_PERCENTAGE
                     - ash_concentration
@@ -338,8 +339,8 @@ class EntericMethaneCalculator:
             - ethyl_ester_concentration
         )
         methane_results = {}
-        for model, usage in methane_models.items():
-            if model == "Mills" and usage:
+        for model, selected in methane_models.items():
+            if model == "Mills" and selected:
                 mitscherlich_parameter_a = animal_constants.MITS_PARAMETER_A
                 mitscherlich_parameter_b = animal_constants.MITS_PARAMETER_B
                 mitscherlich_parameter_c = -0.0011 * starch_concentration / acid_detergent_fiber_concentration + 0.0045
@@ -348,7 +349,7 @@ class EntericMethaneCalculator:
                 ) * exp(-mitscherlich_parameter_c * metabolizable_energy_intake * GeneralConstants.KCAL_TO_MJ)
                 methane_emission = methane_emission_MJ / GeneralConstants.MJ_CH4_TO_G_CH4
                 methane_results[model] = methane_emission
-            elif model == "IPCC" and usage:
+            elif model == "IPCC" and selected:
                 gross_energy_concentration = (
                     0.263 * crude_protein_concentration
                     + 0.522 * ethyl_ester_concentration
