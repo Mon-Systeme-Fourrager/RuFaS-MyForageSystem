@@ -45,6 +45,7 @@ class EnergyEstimator:
                 diesel_consumption_data_item["field_production_size"],
                 tractor,
                 diesel_consumption_data_item.get("clay_percent", 0),
+                diesel_consumption_data_item.get("mass"),
             )
             estimator.report_diesel_consumption(
                 diesel_consumption_data_item,
@@ -262,6 +263,7 @@ class EnergyEstimator:
         field_production_size: float,
         tractor: Tractor,
         clay_percent: float,
+        application_mass: float | None = None,
     ) -> float:
         """
         General estimate of diesel fuel consumption for a given attachment type and tractor size.
@@ -278,6 +280,8 @@ class EnergyEstimator:
             The specifications of the tractor.
         clay_percent : float
             The clay percentage of the field under production (unitless).
+        application_mass : float | None = None
+            The mass of a manure or fertilizer application (kg).
 
         Returns
         -------
@@ -287,22 +291,20 @@ class EnergyEstimator:
         diesel_consumption_tractor_implement_liter_ha = 0.0
 
         for implement in tractor.implements:
-            crop_yield_ton_ha = crop_yield *GeneralConstants.KILOGRAMS_TO_MEGAGRAMS
+            crop_yield_ton_ha = crop_yield * GeneralConstants.KILOGRAMS_TO_MEGAGRAMS
             total_power_needed_kW = self._calculate_total_power_needed(
                 tractor,
                 implement,
                 crop_yield_ton_ha,
                 field_production_size,
                 clay_percent,
-            )
-            tractor_implement_operation_time_hr = implement.calculate_operation_time_hr(
-                field_production_size, crop_yield_ton_ha
+                application_mass
             )
             
             specific_fuel_consumption_liter_per_kWh = UserConstants.SPECIFIC_FUEL_CONSUMPTION
 
             tractor_implement_operation_time_hr = implement.calculate_operation_time_hr(
-                field_production_size, crop_yield_ton_ha
+                field_production_size, crop_yield_ton_ha, application_mass
             )
             diesel_consumption_tractor_implement_liter_ha = (
                 specific_fuel_consumption_liter_per_kWh
@@ -319,6 +321,7 @@ class EnergyEstimator:
         crop_yield_ton_per_ha: float,
         field_production_size_ha: float,
         clay_percent: float,
+        application_mass: float | None = None,
     ) -> float:
         """
         Calculates the total power needed to perform the field operation by the tractor and implement where applicable.
@@ -327,6 +330,6 @@ class EnergyEstimator:
         tractor_axel_power = tractor.calculate_axel_power(implement)
         tractor_implement_drawbar_power = implement.calculate_drawbar_power(clay_percent)
         tractor_implement_PTO_power_needed = implement.calculate_needed_PTO(
-            crop_yield_ton_per_ha, field_production_size_ha
+            crop_yield_ton_per_ha, field_production_size_ha, application_mass
         )
         return tractor_axel_power + tractor_implement_drawbar_power + tractor_implement_PTO_power_needed
