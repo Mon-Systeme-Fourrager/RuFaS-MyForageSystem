@@ -65,7 +65,7 @@ class Storage(Processor):
         self,
         name: str,
         is_housing_emissions_calculator: bool,
-        cover: str,
+        cover: str | StorageCover,
         storage_time_period: int | None,
         surface_area: float,
         capacity: float = inf,
@@ -116,7 +116,7 @@ class Storage(Processor):
                 error_message = (
                     f"Processor '{self.name}' received a ManureStream without pen manure data, "
                     "which is required for housing emissions calculations. Cannot place a handler "
-                    "before Open Lot/Compost Bedded Pack in the manure processor connection chain."
+                    "before Open Lot/Bedded Pack in the manure processor connection chain."
                 )
             else:
                 error_message = f"Processor '{self.name}' received an incompatible ManureStream."
