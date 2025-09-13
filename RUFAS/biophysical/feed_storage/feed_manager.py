@@ -99,7 +99,6 @@ class FeedManager:
         self,
         feed_config: dict[str, list[Any]],
         nutrient_standard: NutrientStandard,
-        crop_to_rufas_ids_mapping: dict[str, list[RUFAS_ID]],
     ) -> None:
         self._om = OutputManager()
         self._available_feeds: list[NASEMFeed | NRCFeed] = self._setup_available_feeds(feed_config, nutrient_standard)
@@ -112,11 +111,8 @@ class FeedManager:
 
         available_feed_ids = [feed.rufas_id for feed in self.available_feeds]
         self.crop_to_rufas_id: dict[str, RUFAS_ID] = {}
-        for crop, rufas_ids in crop_to_rufas_ids_mapping.items():
-            rufas_id = self._select_rufas_id_for_harvested_crop(rufas_ids, available_feed_ids)
-            if rufas_id is None:
-                continue
-            self.crop_to_rufas_id[crop] = rufas_id
+        # TODO get feed storage config from IM and instantiate all feed storages
+        # TODO from feed storage config get all rufas IDs and complete self.crop_to_rufas_id dict for use in sim engine.
 
         self._cumulative_feed_requests: dict[RUFAS_ID, float] = {feed.rufas_id: 0.0 for feed in self.available_feeds}
         self._cumulative_purchased_feeds_fed: dict[RUFAS_ID, float] = {
