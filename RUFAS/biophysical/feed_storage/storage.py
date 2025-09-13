@@ -58,8 +58,6 @@ class Storage:
 
     Attributes
     ----------
-    acceptable_crops : list[CropCategory]
-        The list of crop categories that this storage can recieve.
     capacity : float
         The maximum capacity of the storage, currently set to infinity.
     stored : list[HarvestedCrop]

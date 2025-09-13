@@ -1,7 +1,6 @@
 from typing import Any, TypedDict
 
 from RUFAS.data_structures.crop_soil_to_feed_storage_connection import (
-    CropCategory,
     StorageType,
 )
 from RUFAS.data_structures.feed_storage_to_animal_connection import RUFAS_ID
@@ -19,7 +18,6 @@ class CropConfiguration(TypedDict):
 
     name: str
     plant_category: PlantCategory
-    crop_category: CropCategory
     rufas_ids: list[RUFAS_ID]
     is_nitrogen_fixer: bool
     minimum_temperature: float
@@ -123,12 +121,10 @@ class CropDataFactory:
             If the crop type is not valid for the crop category.
 
         """
-        crop_category = CropCategory(config["crop_category"])
         plant_category = PlantCategory(config["plant_category"])
         storage_type = StorageType(config["storage_type"])
 
         config["plant_category"] = plant_category
-        config["crop_category"] = crop_category
         config["storage_type"] = storage_type
 
         new_config: CropConfiguration = CropConfiguration(**config)
