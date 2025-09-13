@@ -2174,14 +2174,6 @@
           "description": "Plant category of the crop configuration.",
           "pattern": "^(warm_annual_legume|cool_annual_legume|perennial_legume|warm_annual|cool_annual|perennial|tree)$"
         },
-        "rufas_ids": {
-          "type": "array",
-          "description": "List of RuFaS Feed IDs which harvests from this crop configuration can be fed to animals as. Must be selected from the \"rufas_id\" of the feed library used.",
-          "properties": {
-            "type": "number",
-            "minimum": 1
-          }
-        },
         "is_nitrogen_fixer": {
           "type": "bool",
           "description": "Whether the crop configuration is a nitrogen fixer."
@@ -2283,11 +2275,6 @@
         "root_distribution_param_c": {
           "type": "number",
           "description": "Empirical root distribution parameter c (unitless). See Fan, Jianling, et al. \"Root distribution by depth for temperate agricultural crops.\" Field Crops Research 189 (2016): 68-74, table 1."
-        },
-        "storage_type": {
-          "type": "string",
-          "description": "Type of storage in which the harvests from this crop will be stored.",
-          "pattern": "^(Protected Indoors|Protected Wrapped|Protected Tarped|Unprotected|Baleage|Dry|High Moisture|Bunker|Pile|Bag)$"
         },
         "optimal_harvest_index": {
           "type": "number",
@@ -5970,7 +5957,7 @@
   },
   "feed_storage_input_properties": {
     "data_collection_app_compatible": false,
-    "dry_grain": {
+    "grain_storage": {
       "type": "array",
       "description": "A list of dry grain types that can be stored in a dry grain storage unit.",
       "properties": {
@@ -5991,7 +5978,7 @@
         "storage_type": {
           "type": "string",
           "description": "Type of feed storage unit.",
-          "pattern": "^(DryGrain|HighMoistureGrain|HayProtectedIndoor|HayProtectedWrapped|HayProtectedTarped|HayUnprotected|Baleage|SilageBag|SilageBunker|SilagePile)$"
+          "pattern": "^(DryGrain|HighMoistureGrain)$"
         },
         "dry_grain_dm_loss_coefficient": {
           "type": "number",
@@ -5999,42 +5986,15 @@
           "minimum": 0.0,
           "maximum": 0.1,
           "default": 0.1
-        }
-      }
-    },
-    "high_moisture_grain": {
-      "type": "array",
-      "description": "A list of high moisture grain types that can be stored in a high moisture grain storage unit.",
-      "properties": {
-        "type": "object",
-        "description": "High moisture grain storage unit.",
-        "name": {
-          "type": "string",
-          "description": "User defined name of the feed storage unit."
         },
-        "crop_name": {
-          "type": "string",
-          "description": "Name of crop to be stored in the feed storage unit."
-        },
-        "field_name": {
-          "type": "string",
-          "description": "Name of the field associated with the crop to be stored in feed storage unit."
-        },
-        "storage_type": {
-          "type": "string",
-          "description": "Type of feed storage unit.",
-          "pattern": "^(DryGrain|HighMoistureGrain|HayProtectedIndoor|HayProtectedWrapped|HayProtectedTarped|HayUnprotected|Baleage|SilageBag|SilageBunker|SilagePile)$"
-        },
-        "high_moisture_grain_dm_loss_coefficient": {
+        "rufas_id": {
           "type": "number",
-          "description": "Dry matter loss coefficient for high moisture grain storage (unitless).",
-          "minimum": 0.0,
-          "maximum": 0.1,
-          "default": 0.05
+          "description": "RuFaS Feed ID which harvests from the crop stored in this unit can be fed to animals as. Must be selected from the \"rufas_id\" of the feed library used.",
+          "minimum": 1
         }
       }
     },
-    "hay": {
+    "hay_storage": {
       "type": "array",
       "description": "A list of hay types that can be stored in a hay storage unit.",
       "properties": {
@@ -6055,7 +6015,7 @@
         "storage_type": {
           "type": "string",
           "description": "Type of feed storage unit.",
-          "pattern": "^(DryGrain|HighMoistureGrain|HayProtectedIndoor|HayProtectedWrapped|HayProtectedTarped|HayUnprotected|Baleage|SilageBag|SilageBunker|SilagePile)$"
+          "pattern": "^(ProtectedIndoor|ProtectedWrapped|ProtectedTarped|Unprotected)$"
         },
         "hay_bale_diameter": {
           "type": "number",
@@ -6077,6 +6037,11 @@
           "minimum": 0.0,
           "maximum": 1.0,
           "default": 0.88
+        },
+        "rufas_id": {
+          "type": "number",
+          "description": "RuFaS Feed ID which harvests from the crop stored in this unit can be fed to animals as. Must be selected from the \"rufas_id\" of the feed library used.",
+          "minimum": 1
         }
       }
     },
@@ -6101,7 +6066,7 @@
         "storage_type": {
           "type": "string",
           "description": "Type of feed storage unit.",
-          "pattern": "^(DryGrain|HighMoistureGrain|HayProtectedIndoor|HayProtectedWrapped|HayProtectedTarped|HayUnprotected|Baleage|SilageBag|SilageBunker|SilagePile)$"
+          "pattern": "^(Baleage)$"
         },
         "baleage_initial_storage_dry_matter": {
           "type": "number",
@@ -6116,10 +6081,15 @@
           "minimum": 30,
           "maximum": 60,
           "default": 45
+        },
+        "rufas_id": {
+          "type": "number",
+          "description": "RuFaS Feed ID which harvests from the crop stored in this unit can be fed to animals as. Must be selected from the \"rufas_id\" of the feed library used.",
+          "minimum": 1
         }
       }
     },
-    "silage": {
+    "silage_storage": {
       "type": "array",
       "description": "A list of silage types that can be stored in a silage storage unit.",
       "properties": {
@@ -6140,7 +6110,7 @@
         "storage_type": {
           "type": "string",
           "description": "Type of feed storage unit.",
-          "pattern": "^(DryGrain|HighMoistureGrain|HayProtectedIndoor|HayProtectedWrapped|HayProtectedTarped|HayUnprotected|Baleage|SilageBag|SilageBunker|SilagePile)$"
+          "pattern": "^(Bag|Bunker|Pile)$"
         },
         "silage_initial_storage_dry_matter": {
           "type": "number",
@@ -6148,6 +6118,11 @@
           "minimum": 0.0,
           "maximum": 1.0,
           "default": 0.35
+        },
+        "rufas_id": {
+          "type": "number",
+          "description": "RuFaS Feed ID which harvests from the crop stored in this unit can be fed to animals as. Must be selected from the \"rufas_id\" of the feed library used.",
+          "minimum": 1
         }
       }
     }

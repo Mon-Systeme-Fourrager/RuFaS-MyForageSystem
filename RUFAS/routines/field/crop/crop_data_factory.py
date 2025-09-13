@@ -1,8 +1,5 @@
 from typing import Any, TypedDict
 
-from RUFAS.data_structures.crop_soil_to_feed_storage_connection import (
-    StorageType,
-)
 from RUFAS.data_structures.feed_storage_to_animal_connection import RUFAS_ID
 from RUFAS.input_manager import InputManager
 from RUFAS.output_manager import OutputManager
@@ -39,7 +36,6 @@ class CropConfiguration(TypedDict):
     max_root_depth: float
     root_distribution_param_da: float
     root_distribution_param_c: float
-    storage_type: StorageType
     optimal_harvest_index: float
     minimum_harvest_index: float
     dry_matter_percentage: float
@@ -122,10 +118,8 @@ class CropDataFactory:
 
         """
         plant_category = PlantCategory(config["plant_category"])
-        storage_type = StorageType(config["storage_type"])
 
         config["plant_category"] = plant_category
-        config["storage_type"] = storage_type
 
         new_config: CropConfiguration = CropConfiguration(**config)
         return new_config

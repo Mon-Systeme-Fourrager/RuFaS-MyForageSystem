@@ -242,7 +242,7 @@ class SimulationEngine:
         self.weather = Weather(weather_data, self.time)
 
         self.field_manager: FieldManager = FieldManager()
-        crop_config_to_rufas_ids_map = self.field_manager.get_crop_configs_to_rufas_ids()
+        # crop_config_to_rufas_ids_map = self.field_manager.get_crop_configs_to_rufas_ids()
 
         nutrient_standard = NutrientStandard(self.im.get_data("config.nutrient_standard"))
         feed_class_config = self.im.get_data("feed")
@@ -251,7 +251,7 @@ class SimulationEngine:
         self.feed_manager: FeedManager = FeedManager(
             feed_class_config,
             nutrient_standard,
-            crop_config_to_rufas_ids_map,
+            # crop_config_to_rufas_ids_map,
         )
 
         ration_interval_length = self.im.get_data("animal.ration.formulation_interval")
