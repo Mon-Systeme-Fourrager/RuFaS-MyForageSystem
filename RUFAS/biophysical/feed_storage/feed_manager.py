@@ -168,18 +168,15 @@ class FeedManager:
     def receive_crop(
         self,
         harvested_crop: HarvestedCrop,
-        storage_type: StorageType,
         simulation_day: int,
     ) -> None:
         """
-        Receives a harvested crop and assigns it to a storage unit.
+        Receives a harvested crop and assigns it to the proper storage unit.
 
         Parameters
         ----------
         harvested_crop : HarvestedCrop
             The harvested crop to be stored.
-        storage_type : StorageType
-            The type of storage to use for this crop.
         simulation_day : int
             The current simulation day, used for tracking storage time.
 

@@ -100,6 +100,7 @@ class HarvestedCrop:
     """
 
     config_name: str
+    field_name: str
     rufas_ids: list[RUFAS_ID]
     harvest_time: date
     storage_time: date

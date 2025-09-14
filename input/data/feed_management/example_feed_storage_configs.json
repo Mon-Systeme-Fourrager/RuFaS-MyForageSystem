@@ -17,6 +17,14 @@
       "rufas_id": 44
     },
     {
+      "name": "corn_grain_storage_2",
+      "crop_name": "corn_grain",
+      "field_name": "field_2",
+      "storage_type": "DryGrain",
+      "dry_grain_dm_loss_coefficient": 0.1,
+      "rufas_id": 44
+    },
+    {
       "name": "soybean_grain_storage_1",
       "crop_name": "soybean_grain",
       "field_name": "field_1",
@@ -91,7 +99,7 @@
       "rufas_id": 198
     }
   ],
-  "baleage": [
+  "baleage_storage": [
     {
       "name": "alfalfa_baleage_1",
       "crop_name": "alfalfa_baleage",
@@ -143,6 +151,16 @@
       "name": "alfalfa_hay_storage_1",
       "crop_name": "alfalfa_hay",
       "field_name": "field_1",
+      "storage_type": "ProtectedTarped",
+      "hay_bale_diameter": 1.8,
+      "hay_initial_storage_dry_matter": 0.88,
+      "hay_target_dry_matter": 0.88,
+      "rufas_id": 108
+    },
+    {
+      "name": "alfalfa_hay_storage_2",
+      "crop_name": "alfalfa_hay",
+      "field_name": "field_2",
       "storage_type": "ProtectedTarped",
       "hay_bale_diameter": 1.8,
       "hay_initial_storage_dry_matter": 0.88,

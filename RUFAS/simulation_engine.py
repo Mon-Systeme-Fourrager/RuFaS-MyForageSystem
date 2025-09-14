@@ -95,12 +95,12 @@ class SimulationEngine:
         next_harvest_dates: dict[str, date | None] = {}
         for harvested_crop in harvested_crops:
             self.feed_manager.receive_crop(
-                harvested_crop.harvested_crop, harvested_crop.storage_type, self.time.simulation_day
+                harvested_crop, self.time.simulation_day
             )
-            if harvested_crop.harvested_crop.config_name not in next_harvest_dates:
-                crop_config_name = harvested_crop.harvested_crop.config_name
+            if harvested_crop.config_name not in next_harvest_dates:
+                crop_config_name = harvested_crop.config_name
                 next_harvest_date = self.field_manager.get_next_harvest_dates([crop_config_name])
-                next_harvest_dates[harvested_crop.harvested_crop.config_name] = next_harvest_date.get(crop_config_name)
+                next_harvest_dates[harvested_crop.config_name] = next_harvest_date.get(crop_config_name)
 
         is_time_to_recalculate_max_daily_feeds = self.next_max_daily_feed_recalculation == self.time.current_date
         if is_time_to_recalculate_max_daily_feeds:
