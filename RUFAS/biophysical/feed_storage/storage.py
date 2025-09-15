@@ -100,6 +100,7 @@ class Storage:
         Recalculates a single nutrient percentage after dry matter loss.
 
     """
+
     # TODO add feed storage config - extract all common parameters to here
     # TODO figure out how to pass feed storage config to subclasses
     def __init__(self, storage_config: dict[str, str | float], capacity: float = float("inf")) -> None:

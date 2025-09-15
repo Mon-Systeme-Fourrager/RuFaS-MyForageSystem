@@ -121,8 +121,9 @@ class FeedManager:
         """Returns the list of available feeds."""
         return self._available_feeds
 
-    def _create_all_storages(self, feed_storage_configs: dict[str, Any], feed_storage_instances: dict[str, list[str]]
-                             ) -> None:
+    def _create_all_storages(
+        self, feed_storage_configs: dict[str, Any], feed_storage_instances: dict[str, list[str]]
+    ) -> None:
         """Creates all feed storage instances based on the provided configurations.
 
         Parameters
@@ -133,7 +134,8 @@ class FeedManager:
             A dictionary that contains feed storage instance names.
         """
         all_configs: list[dict[str, Any]] = [
-            storage_config for storage_config_list in feed_storage_configs.values()
+            storage_config
+            for storage_config_list in feed_storage_configs.values()
             for storage_config in storage_config_list
         ]
         storage_name_counts = Counter(storage_config.get("name") for storage_config in all_configs)
@@ -147,9 +149,7 @@ class FeedManager:
             config["name"]: config for config in all_configs if "name" in config
         }
 
-        instance_names: list[str] = [
-            name for names in feed_storage_instances.values() for name in names
-        ]
+        instance_names: list[str] = [name for names in feed_storage_instances.values() for name in names]
 
         for instance_name in instance_names:
             storage_config = configs_by_name.get(instance_name)

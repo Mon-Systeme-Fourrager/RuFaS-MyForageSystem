@@ -253,6 +253,7 @@ class ProtectedIndoors(Hay):
     """
     Represents protected indoors hay storage, a subclass of Hay.
     """
+
     def __init__(self, config: dict[str, str | float]) -> None:
         super().__init__(config)
 
