@@ -1,9 +1,10 @@
 from datetime import date
 from typing import Any, Literal
 
+from RUFAS.biophysical.feed_storage.feed_storage_enum import StorageType
 from RUFAS.data_structures.crop_soil_to_feed_storage_connection import (
     HarvestedCrop,
-    StorageType,
+    # StorageType,
 )
 from RUFAS.data_structures.feed_storage_to_animal_connection import (
     FeedCategorization,
@@ -25,26 +26,26 @@ from RUFAS.util import Utility
 from RUFAS.units import MeasurementUnits
 from RUFAS.output_manager import OutputManager
 
-from .baleage import Baleage
-from .grain import Dry, HighMoisture
-from .hay import ProtectedIndoors, ProtectedTarped, ProtectedWrapped, Unprotected
-from .silage import Bag, Bunker, Pile
+# from .baleage import Baleage
+# from .grain import Dry, HighMoisture
+# from .hay import ProtectedIndoors, ProtectedTarped, ProtectedWrapped, Unprotected
+# from .silage import Bag, Bunker, Pile
 from .storage import Storage
 from .purchased_feed_storage import PurchasedFeed, PurchasedFeedStorage
 
-"""Maps each StorageType enum element to the associated Storage subclass."""
-STORAGE_TYPE_TO_CLASS_MAP: dict[StorageType, type[Storage]] = {
-    StorageType.PROTECTED_INDOORS: ProtectedIndoors,
-    StorageType.PROTECTED_WRAPPED: ProtectedWrapped,
-    StorageType.PROTECTED_TARPED: ProtectedTarped,
-    StorageType.UNPROTECTED: Unprotected,
-    StorageType.BALEAGE: Baleage,
-    StorageType.DRY: Dry,
-    StorageType.HIGH_MOISTURE: HighMoisture,
-    StorageType.BUNKER: Bunker,
-    StorageType.PILE: Pile,
-    StorageType.BAG: Bag,
-}
+# """Maps each StorageType enum element to the associated Storage subclass."""
+# STORAGE_TYPE_TO_CLASS_MAP: dict[StorageType, type[Storage]] = {
+#     StorageType.PROTECTED_INDOORS: ProtectedIndoors,
+#     StorageType.PROTECTED_WRAPPED: ProtectedWrapped,
+#     StorageType.PROTECTED_TARPED: ProtectedTarped,
+#     StorageType.UNPROTECTED: Unprotected,
+#     StorageType.BALEAGE: Baleage,
+#     StorageType.DRY: Dry,
+#     StorageType.HIGH_MOISTURE: HighMoisture,
+#     StorageType.BUNKER: Bunker,
+#     StorageType.PILE: Pile,
+#     StorageType.BAG: Bag,
+# }
 
 """Ratio of the price of an on-farm price to the price of buying that feed from an off farm source."""
 ON_FARM_TO_PURCHASED_PRICE_RATION = 0.01
@@ -109,6 +110,7 @@ class FeedManager:
         self._om = OutputManager()
         self._available_feeds: list[NASEMFeed | NRCFeed] = self._setup_available_feeds(feed_config, nutrient_standard)
         self.active_storages: dict[StorageType, Storage] = {}
+        self._create_all_storages(feed_storage_configs, feed_storage_instances)
         self.purchased_feed_storage: PurchasedFeedStorage = PurchasedFeedStorage(self._available_feeds)
 
         purchase_allowances: list[dict[str, int | float]] = feed_config["allowances"]
@@ -117,7 +119,6 @@ class FeedManager:
 
         available_feed_ids = [feed.rufas_id for feed in self.available_feeds]
         self.crop_to_rufas_id: dict[str, RUFAS_ID] = {}
-        # TODO get feed storage config from IM and instantiate all feed storages
         # TODO from feed storage config get all rufas IDs and complete self.crop_to_rufas_id dict for use in sim engine.
 
         self._cumulative_feed_requests: dict[RUFAS_ID, float] = {feed.rufas_id: 0.0 for feed in self.available_feeds}
@@ -133,6 +134,29 @@ class FeedManager:
     def available_feeds(self) -> list[NASEMFeed | NRCFeed]:
         """Returns the list of available feeds."""
         return self._available_feeds
+
+    def _create_all_storages(self, feed_storage_configs: dict[str, Any], feed_storage_instances: dict[str, list[str]]
+                             ) -> None:
+        """Creates all feed storage instances based on the provided configurations.
+
+        Parameters
+        ----------
+        feed_storage_configs : dict[str, Any]
+            A dictionary that contains configurations for all available feed storage types.
+        feed_storage_instances : dict[str, list[str]]
+            A dictionary that contains feed storage instance names.
+        """
+        for storage_instance_names in feed_storage_instances.values():
+            for storage_instance_name in storage_instance_names:
+                for storage_config_list in feed_storage_configs.keys():
+                    for storage_config in feed_storage_configs[storage_config_list]:
+                        storage_config_name = storage_config.get("name")
+                        if storage_config_name == storage_instance_name:
+                            storage_type_str = storage_config.get("storage_type")
+                            storage_initializer = StorageType.get_storage_class(storage_type_str)
+                            storage = storage_initializer(storage_config)
+                            self.active_storages[storage_instance_name] = storage
+        print(self.active_storages)
 
     def report_feed_manager_balance(self, simulation_day: int) -> None:
         """Reports the balance of feed purchased, requested, and fed to date."""
@@ -203,11 +227,8 @@ class FeedManager:
         #         f"Crop of category '{harvested_crop.category}' is not compatible with storage type '{storage_type}'. "
         #         f"Compatible storage types are: {', '.join([cls.__name__ for cls in compatible_storage_classes])}"
         #     )
-
-        if storage_type not in self.active_storages:
-            self.active_storages[storage_type] = STORAGE_TYPE_TO_CLASS_MAP[storage_type]()
-
-        self.active_storages[storage_type].receive_crop(harvested_crop, simulation_day)
+        pass
+        # self.active_storages[storage_type].receive_crop(harvested_crop, simulation_day)
 
     def process_degradations(self, weather: Weather, time: RufasTime) -> None:
         """

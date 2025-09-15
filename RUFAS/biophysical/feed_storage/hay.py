@@ -42,10 +42,10 @@ class Hay(Storage):
         Calculates the protein loss in the hay.
     """
 
-    def __init__(self, capacity: float = float("inf")) -> None:
+    def __init__(self, config: dict[str, str | float], capacity: float = float("inf")) -> None:
+        super().__init__(config, capacity)
         im = InputManager()
         self.bale_size: float = im.get_data("feed_management.hay_bale_diameter")
-        super().__init__(capacity)
         self.additional_dry_matter_loss_coefficient = 0.0
 
     def process_degradations(self, weather: Weather, time: RufasTime) -> None:
@@ -254,8 +254,8 @@ class ProtectedIndoors(Hay):
     """
     Represents protected indoors hay storage, a subclass of Hay.
     """
-
-    pass
+    def __init__(self, config: dict[str, str | float]) -> None:
+        super().__init__(config)
 
 
 class ProtectedWrapped(Hay):
@@ -263,8 +263,8 @@ class ProtectedWrapped(Hay):
     Represents protected wrapped hay storage, a subclass of Hay.
     """
 
-    def __init__(self, capacity: float = float("inf")) -> None:
-        super().__init__(capacity)
+    def __init__(self, config: dict[str, str | float]) -> None:
+        super().__init__(config)
         self.additional_dry_matter_loss_coefficient = PROTECTED_WRAPPED_ADDITIONAL_LOSS_COEFFICIENT
 
 
@@ -273,8 +273,8 @@ class ProtectedTarped(Hay):
     Represents protected tarped hay storage, a subclass of Hay.
     """
 
-    def __init__(self, capacity: float = float("inf")) -> None:
-        super().__init__(capacity)
+    def __init__(self, config: dict[str, str | float]) -> None:
+        super().__init__(config)
         self.additional_dry_matter_loss_coefficient = PROTECTED_TARPED_ADDITIONAL_LOSS_COEFFICIENT
 
 
@@ -289,8 +289,8 @@ class Unprotected(Hay):
 
     """
 
-    def __init__(self, capacity: float = float("inf")) -> None:
-        super().__init__(capacity)
+    def __init__(self, config: dict[str, str | float]) -> None:
+        super().__init__(config)
         self.additional_dry_matter_loss_coefficient = UNPROTECTED_OUTDOOR_ADDITIONAL_LOSS_COEFFICIENT
         self.ndf_loss_coefficient = 0.17
         self.crude_protein_loss_coefficient = 0.4

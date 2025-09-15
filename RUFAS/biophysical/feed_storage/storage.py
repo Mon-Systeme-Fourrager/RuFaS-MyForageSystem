@@ -100,10 +100,14 @@ class Storage:
         Recalculates a single nutrient percentage after dry matter loss.
 
     """
-
-    def __init__(self, capacity: float = float("inf")):
+    # TODO add feed storage config - extract all common parameters to here
+    # TODO figure out how to pass feed storage config to subclasses
+    def __init__(self, storage_config: dict[str, str | float], capacity: float = float("inf")) -> None:
         self.capacity = capacity
         self.stored: list[HarvestedCrop] = []
+        self.storage_name = storage_config.get("storage_name")
+        self.field_name = storage_config.get("field_name")
+        self.crop_name = storage_config.get("crop_name")
         self.crude_protein_loss_coefficient = 0.0
         self.starch_loss_coefficient = 0.0
         self.adf_loss_coefficient = 0.0

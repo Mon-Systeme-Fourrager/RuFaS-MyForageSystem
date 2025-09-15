@@ -8,8 +8,8 @@ class Grain(Storage):
     Inherits from Storage.
     """
 
-    def __init__(self, capacity: float = float("inf")):
-        super().__init__(capacity)
+    def __init__(self, config: dict[str, str | float], capacity: float = float("inf")):
+        super().__init__(config, capacity)
 
 
 class Dry(Grain):
@@ -18,8 +18,8 @@ class Dry(Grain):
 
     Inherits from Grain.
     """
-
-    pass
+    def __init__(self, config: dict[str, str | float]) -> None:
+        super().__init__(config)
 
 
 class HighMoisture(Grain):
@@ -28,5 +28,5 @@ class HighMoisture(Grain):
 
     Inherits from Grain.
     """
-
-    pass
+    def __init__(self, config: dict[str, str | float]) -> None:
+        super().__init__(config)

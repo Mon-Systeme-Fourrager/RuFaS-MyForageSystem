@@ -5978,7 +5978,7 @@
         "storage_type": {
           "type": "string",
           "description": "Type of feed storage unit.",
-          "pattern": "^(DryGrain|HighMoistureGrain)$"
+          "pattern": "^(Dry|HighMoisture)$"
         },
         "dry_grain_dm_loss_coefficient": {
           "type": "number",
@@ -6123,6 +6123,12 @@
           "type": "number",
           "description": "RuFaS Feed ID which harvests from the crop stored in this unit can be fed to animals as. Must be selected from the \"rufas_id\" of the feed library used.",
           "minimum": 1
+        },
+        "size": {
+          "type": "number",
+          "description": "Size of the silage storage (tons).",
+          "minimum": 1.0,
+          "default": 100.0
         }
       }
     }

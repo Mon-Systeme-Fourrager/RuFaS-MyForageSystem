@@ -247,7 +247,6 @@ class SimulationEngine:
         feeds_config = self.im.get_data("feed")
         feed_storage_configs = self.im.get_data("feed_storage_configurations")
         feed_storage_instances = self.im.get_data("feed_storage_instances")
-        print(feed_storage_instances)
         self.feed_manager: FeedManager = FeedManager(
             feeds_config,
             nutrient_standard,

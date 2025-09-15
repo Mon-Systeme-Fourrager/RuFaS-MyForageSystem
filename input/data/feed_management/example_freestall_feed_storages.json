@@ -1,6 +1,5 @@
 {
-    "feed_storages":
-    [
+    "feed_storages":[
         "cereal_silage_storage_1",
         "alfalfa_silage_storage_1",
         "corn_grain_storage_2",

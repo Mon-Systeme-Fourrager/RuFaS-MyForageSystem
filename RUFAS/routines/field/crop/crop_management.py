@@ -357,7 +357,6 @@ class CropManagement:
         harvested_crop = HarvestedCrop(
             config_name=self.data.name,
             field_name=field_name,
-            rufas_ids=self.data.rufas_ids,
             harvest_time=time.current_date.date(),
             storage_time=time.current_date.date(),
             fresh_mass=self.wet_yield_collected * field_size,

@@ -6,8 +6,6 @@ from enum import Enum
 from RUFAS.general_constants import GeneralConstants
 from RUFAS.rufas_time import RufasTime
 
-from .feed_storage_to_animal_connection import RUFAS_ID
-
 
 class StorageType(Enum):
     """
@@ -41,8 +39,6 @@ class HarvestedCrop:
         Name of the crop configuration that produced this harvested crop.
     field_name : str
         Name of the field from which this crop was harvested.
-    rufas_ids : list[RUFAS_ID]
-        List of RUFAS_IDs that this Harvested Crop may be fed as (unitless).
     harvest_time : date
         The time at which the crop was harvested.
     storage_time : date
@@ -101,7 +97,6 @@ class HarvestedCrop:
 
     config_name: str
     field_name: str
-    rufas_ids: list[RUFAS_ID]
     harvest_time: date
     storage_time: date
     last_time_degraded: date = field(init=False)

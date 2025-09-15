@@ -1,5 +1,4 @@
 from dataclasses import replace
-from typing import Optional
 
 from RUFAS.general_constants import GeneralConstants
 from RUFAS.data_structures.crop_soil_to_feed_storage_connection import HarvestedCrop
@@ -31,8 +30,8 @@ class Silage(Storage):
 
     """
 
-    def __init__(self, capacity: float = float("inf")):
-        super().__init__(capacity)
+    def __init__(self, config: dict[str, str | float], capacity: float = float("inf")) -> None:
+        super().__init__(config, capacity)
         self.om = OutputManager()
 
     def process_degradations(self, weather: Weather, time: RufasTime) -> None:
@@ -299,17 +298,12 @@ class Bunker(Silage):
     Class representing the Bunker type of Silage storage.
     """
 
-    def __init__(self, bunker_size: Optional[str] = None):
+    def __init__(self, config: dict[str, str | float]):
         """
-        Initializes a Bunker instance with optional bunker size.
-
-        Parameters
-        ----------
-        bunker_size : Optional[str], optional
-            The size of the bunker, by default None
+        Initializes a Bunker instance.
         """
-        super().__init__()
-        self.bunker_size = bunker_size
+        super().__init__(config)
+        self.bunker_size = config["size"]
 
 
 class Pile(Silage):
@@ -317,17 +311,12 @@ class Pile(Silage):
     Class representing the Pile type of Silage storage.
     """
 
-    def __init__(self, pile_size: Optional[str] = None):
+    def __init__(self, config: dict[str, str | float]) -> None:
         """
-        Initializes a Pile instance with optional pile size.
-
-        Parameters
-        ----------
-        pile_size : Optional[str], optional
-            The size of the pile, by default None
+        Initializes a Pile instance.
         """
-        super().__init__()
-        self.pile_size = pile_size
+        super().__init__(config)
+        self.pile_size = config["size"]
 
 
 class Bag(Silage):
@@ -335,14 +324,9 @@ class Bag(Silage):
     Class representing the Bag type of Silage storage.
     """
 
-    def __init__(self, bag_size: Optional[int] = None):
+    def __init__(self, config: dict[str, str | float]) -> None:
         """
-        Initializes a Bag instance with optional bag size.
-
-        Parameters
-        ----------
-        bag_size : Optional[int], optional
-            The diameter of the bag in feet, by default None
+        Initializes a Bag instance.
         """
-        super().__init__()
-        self.bag_size = bag_size
+        super().__init__(config)
+        self.bag_size = config["size"]
