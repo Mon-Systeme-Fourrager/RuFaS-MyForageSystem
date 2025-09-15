@@ -214,7 +214,6 @@ class FeedManager:
         for storage in self.active_storages.values():
             if storage.crop_name == crop_name and storage.field_name == field_name:
                 storage.receive_crop(harvested_crop, simulation_day)
-                print("we got a match")
                 return
         else:
             info_map = {
@@ -227,7 +226,6 @@ class FeedManager:
                 f"No storage found for crop '{crop_name}' from field '{field_name}'. Crop will be exported",
                 info_map
             )
-            print("this is happening")
 
     def process_degradations(self, weather: Weather, time: RufasTime) -> None:
         """
@@ -515,6 +513,7 @@ class FeedManager:
             "units": MeasurementUnits.DRY_KILOGRAMS,
             "simulation_day": simulation_day,
         }
+
         total_purchased_feed_deductions: dict[RUFAS_ID, float] = {feed.rufas_id: 0.0 for feed in self._available_feeds}
         total_farmgrown_feed_deductions: dict[RUFAS_ID, float] = {feed.rufas_id: 0.0 for feed in self._available_feeds}
 
@@ -611,10 +610,8 @@ class FeedManager:
             True if the feed can be fed to animals, False otherwise.
         """
         if isinstance(feed, HarvestedCrop):
-            is_feedable = True if rufas_id in self.crop_to_rufas_id.values() else False
-        else:
-            is_feedable = feed.rufas_id == rufas_id
-        return is_feedable
+            return self._lookup_storage_rufas_id(feed.config_name) == rufas_id
+        return feed.rufas_id == rufas_id
 
     def _setup_available_feeds(
         self, feed_config: dict[str, list[Any]], nutrient_standard: NutrientStandard
