@@ -45,7 +45,20 @@ def extract_properties(d: dict) -> dict:
         _default = _d.pop("default")
         prop["default"] = _default if _default is None else float(_default) if _type == "number" else int(
             _default) if _type == "integer" else _default
-    prop.update(**{k: v for k, v in _d.items() if not isinstance(v, dict)})
+
+    for k in list(_d):
+        if not isinstance(_d[k], dict):
+            prop[k] = _d.pop(k)
+
+    properties = {}
+    for k, v in _d.items():
+        properties[k] = extract_properties(d=v)
+    if len(properties) > 0:
+        if len(properties) == 1 and set(properties.keys()) == {"properties"}:
+            prop.update(properties)
+        else:
+            prop["properties"] = properties
+
     return prop
 
 
@@ -55,9 +68,6 @@ def create_schema_properties(meta: dict) -> dict[str, ...]:
         if isinstance(v, dict):
             if "type" in v:
                 res[k] = extract_properties(d=v)
-                for k2, v2 in v.items():
-                    if isinstance(v2, dict):
-                        res[k][k2] = extract_properties(d=v2)
             else:
                 res[k] = {
                     "type": "object",
