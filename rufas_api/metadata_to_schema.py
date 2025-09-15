@@ -45,7 +45,7 @@ def extract_properties(d: dict) -> dict:
         _default = _d.pop("default")
         prop["default"] = _default if _default is None else float(_default) if _type == "number" else int(
             _default) if _type == "integer" else _default
-    prop.update(**_d)
+    prop.update(**{k: v for k, v in _d.items() if not isinstance(v, dict)})
     return prop
 
 
