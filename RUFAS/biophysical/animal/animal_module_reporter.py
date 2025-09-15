@@ -9,7 +9,6 @@ from RUFAS.biophysical.animal.data_types.animal_population import AnimalPopulati
 from RUFAS.biophysical.animal.data_types.animal_typed_dicts import SoldAnimalTypedDict, StillbornCalfTypedDict
 from RUFAS.biophysical.animal.data_types.herd_statistics import HerdStatistics
 from RUFAS.biophysical.animal.data_types.reproduction import HerdReproductionStatistics
-from RUFAS.biophysical.animal.herd_manager import HerdManager
 from RUFAS.biophysical.animal.milk.milk_production import MilkProduction
 from RUFAS.biophysical.animal.data_types.animal_manure_excretions import AnimalManureExcretions
 from RUFAS.data_structures.animal_to_manure_connection import ManureStream
@@ -513,7 +512,7 @@ class AnimalModuleReporter:
         AnimalModuleReporter.report_daily_feed_emissions(ration_across_pens, "ALL", "", herd_manager, simulation_day)
 
     @classmethod
-    def _report_daily_ration_per_pen(cls, pen: Pen, simulation_day: int, herd_manager: HerdManager) -> dict[str, float]:
+    def _report_daily_ration_per_pen(cls, pen: Pen, simulation_day: int, herd_manager) -> dict[str, float]:
         """
         Calculates and reports the total amounts of feed fed to animals in a pen in a given day.
 
@@ -563,7 +562,7 @@ class AnimalModuleReporter:
         ration_total: dict[str, float],
         pen_id: int | str,
         pen_animal_name: str,
-        herd_manager: HerdManager,
+        herd_manager,
         simulation_day: int,
     ) -> None:
         """
@@ -1285,7 +1284,7 @@ class AnimalModuleReporter:
         )
 
     @classmethod
-    def report_daily_reports(cls, herd_manager: HerdManager, simulation_day: int) -> None:
+    def report_daily_reports(cls, herd_manager, simulation_day: int) -> None:
         """
         Calls all reporter methods that should happen at the end of each day.
 
