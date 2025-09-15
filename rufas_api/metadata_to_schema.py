@@ -57,12 +57,12 @@ def create_schema_properties(meta: dict) -> dict[str, ...]:
                 res[k] = extract_properties(d=v)
                 for k2, v2 in v.items():
                     if isinstance(v2, dict):
-                        if "type" in v2:
-                            res[k][k2] = extract_properties(d=v2)
-                        else:
-                            res[k][k2] = create_schema_properties(meta=v2)
+                        res[k][k2] = extract_properties(d=v2)
             else:
-                res[k] = create_schema_properties(meta=v)
+                res[k] = {
+                    "type": "object",
+                    "properties": create_schema_properties(meta=v)
+                }
         else:
             if not k == 'data_collection_app_compatible':
                 res[k] = v
