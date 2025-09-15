@@ -64,7 +64,8 @@ def create_schema_properties(meta: dict) -> dict[str, ...]:
             else:
                 res[k] = create_schema_properties(meta=v)
         else:
-            res[k] = v
+            if not k == 'data_collection_app_compatible':
+                res[k] = v
     return res
 
 
