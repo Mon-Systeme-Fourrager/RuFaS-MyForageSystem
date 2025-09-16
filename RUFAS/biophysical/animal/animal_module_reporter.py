@@ -1271,7 +1271,6 @@ class AnimalModuleReporter:
         -------
         None
         """
-
         info_map = {
             "class": AnimalModuleReporter.__name__,
             "function": AnimalModuleReporter._record_animal_events.__name__,
