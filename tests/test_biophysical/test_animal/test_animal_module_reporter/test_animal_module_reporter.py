@@ -1163,8 +1163,6 @@ def test_report_305d_milk(mocker: MockerFixture) -> None:
 
 def test_report_end_of_simulation_empty_sold_animal_info(mocker: MockerFixture) -> None:
     """Unit test for report_end_of_simulation() with no sold animals"""
-    om = OutputManager()
-
     mock_report_sold_animal_information = mocker.patch.object(AnimalModuleReporter, "report_sold_animal_information")
     mock_report_sold_animal_information_sort_by_sell_day = mocker.patch.object(
         AnimalModuleReporter, "report_sold_animal_information_sort_by_sell_day"
@@ -1205,8 +1203,6 @@ def test_report_end_of_simulation_empty_sold_animal_info(mocker: MockerFixture) 
 
 def test_report_end_of_simulation(mocker: MockerFixture) -> None:
     """Unit test for report_end_of_simulation()"""
-    om = OutputManager()
-
     mock_report_sold_animal_information = mocker.patch.object(AnimalModuleReporter, "report_sold_animal_information")
     mock_report_sold_animal_information_sort_by_sell_day = mocker.patch.object(
         AnimalModuleReporter, "report_sold_animal_information_sort_by_sell_day"
