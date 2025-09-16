@@ -182,23 +182,25 @@ def test_manage_harvest(
     get_crop = mocker.patch.object(
         crop_manager,
         "_get_harvested_crop",
-        return_value=(expected_val := HarvestedCrop(
-            config_name="mock_crop",
-            field_name="mock_field",
-            harvest_time=mock_time.current_date.date(),
-            storage_time=mock_time.current_date.date(),
-            fresh_mass=1234.5,
-            dry_matter_percentage=42.0,
-            dry_matter_digestibility=DEFAULT_DRY_MATTER_DIGESTIBILITY,
-            crude_protein_percent=20.0,
-            non_protein_nitrogen=10.0,
-            starch=2.0,
-            adf=33.0,
-            ndf=43.0,
-            sugar=6.0,
-            lignin=7.0,
-            ash=10.0,
-        )),
+        return_value=(
+            expected_val := HarvestedCrop(
+                config_name="mock_crop",
+                field_name="mock_field",
+                harvest_time=mock_time.current_date.date(),
+                storage_time=mock_time.current_date.date(),
+                fresh_mass=1234.5,
+                dry_matter_percentage=42.0,
+                dry_matter_digestibility=DEFAULT_DRY_MATTER_DIGESTIBILITY,
+                crude_protein_percent=20.0,
+                non_protein_nitrogen=10.0,
+                starch=2.0,
+                adf=33.0,
+                ndf=43.0,
+                sugar=6.0,
+                lignin=7.0,
+                ash=10.0,
+            )
+        ),
     )
     record_yield = mocker.patch.object(crop_manager, "_record_yield")
     transfer_residue = mocker.patch.object(crop_manager, "_transfer_residue")

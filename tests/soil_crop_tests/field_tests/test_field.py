@@ -502,9 +502,7 @@ def test_check_crop_harvest_schedule(
     filter_events = mocker.patch.object(
         field, "_filter_events", return_value=(remaining_harvest_events, current_harvest_events)
     )
-    harvest_crop = mocker.patch.object(
-        field, "_harvest_crop", return_value=[HarvestedCrop(mocker.MagicMock())]
-    )
+    harvest_crop = mocker.patch.object(field, "_harvest_crop", return_value=[HarvestedCrop(mocker.MagicMock())])
     harvest_heat_scheduled = mocker.patch.object(field, "_harvest_heat_scheduled_crops")
 
     harvest_crop_calls = []

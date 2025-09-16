@@ -180,9 +180,7 @@ def test_daily_simulation(
     mock_field_daily_update_routine = mocker.patch.object(
         simulation_engine.field_manager,
         "daily_update_routine",
-        return_value=(
-            mock_harvested_crops := [crop_1, crop_2]
-        ),
+        return_value=(mock_harvested_crops := [crop_1, crop_2]),
     )
     expected_harvested_crops_config_names = [
         [harvest_crop.harvested_crop.config_name] for harvest_crop in mock_harvested_crops
