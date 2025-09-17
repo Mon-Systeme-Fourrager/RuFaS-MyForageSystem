@@ -7,3 +7,5 @@ class Paths:
     metadata_default_properties: Path = metadata_properties / 'default.json'
 
     generated_files: Path = Path(__file__).parent / 'automatically_generated'
+    generated_default_properties_specs: Path = generated_files / 'default_properties_specs.yaml'
+

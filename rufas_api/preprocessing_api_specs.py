@@ -151,13 +151,12 @@ def write_openapi_specs(
 if __name__ == "__main__":
     from rufas_api.config import Paths
 
-    path_specs = Paths.generated_files / 'openapi_specs.yml'
-    path_specs.parent.mkdir(parents=True, exist_ok=True)
+    Paths.generated_files.mkdir(parents=True, exist_ok=True)
 
     specs_schemas = {
         "default": create_schema_properties(meta=read_metadata(path_metadata=Paths.metadata_default_properties))
     }
     write_openapi_specs(
         schemas=specs_schemas,
-        path_file=path_specs,
+        path_file=Paths.generated_default_properties_specs,
     )
