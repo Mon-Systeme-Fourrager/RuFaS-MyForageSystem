@@ -53,9 +53,13 @@ def extract_properties(d: dict) -> dict:
     properties = {}
     for k, v in _d.items():
         properties[k] = extract_properties(d=v)
+
     if len(properties) > 0:
-        if len(properties) == 1 and set(properties.keys()) == {"properties"}:
-            prop.update(properties)
+        if len(properties) == 1:
+            if _type == "array":
+                prop['items'] = properties['properties'].get('properties', properties['properties'])
+            elif _type == "object":
+                prop['properties'] = properties
         else:
             prop["properties"] = properties
 
