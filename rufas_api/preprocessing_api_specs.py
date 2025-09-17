@@ -9,7 +9,7 @@ from yaml import dump as dump_yaml
 from rufas_api import __version__
 
 
-def read_meta_data(path_metadata: Path) -> dict:
+def read_metadata(path_metadata: Path) -> dict:
     return loads(path_metadata.read_text())
 
 
@@ -155,7 +155,7 @@ if __name__ == "__main__":
     path_specs.parent.mkdir(parents=True, exist_ok=True)
 
     specs_schemas = {
-        "default": create_schema_properties(meta=read_meta_data(path_metadata=Paths.metadata_default_properties))
+        "default": create_schema_properties(meta=read_metadata(path_metadata=Paths.metadata_default_properties))
     }
     write_openapi_specs(
         schemas=specs_schemas,
