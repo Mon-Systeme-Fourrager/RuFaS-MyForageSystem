@@ -3,8 +3,6 @@ from dataclasses import dataclass
 from json import loads, dump
 from pathlib import Path
 
-from rufas_api.config import Paths
-
 
 def read_meta_data(path_metadata: Path) -> dict:
     return loads(path_metadata.read_text())
@@ -84,6 +82,8 @@ def create_schema_properties(meta: dict) -> dict[str, ...]:
 
 
 if __name__ == "__main__":
+    from rufas_api.config import Paths
+
     meta_data = read_meta_data(path_metadata=Paths.metadata_default_properties)
     didi = create_schema_properties(meta=meta_data)
 
