@@ -1,7 +1,12 @@
 from copy import deepcopy
 from dataclasses import dataclass
-from json import loads, dump
+from json import loads
 from pathlib import Path
+from typing import Any
+
+from yaml import dump as dump_yaml
+
+from rufas_api import __version__
 
 
 def read_meta_data(path_metadata: Path) -> dict:
@@ -81,11 +86,78 @@ def create_schema_properties(meta: dict) -> dict[str, ...]:
     return res
 
 
+def create_openapi_specs(
+        specs_default_properties: dict[str, Any]
+) -> dict[str, Any]:
+    return {
+        "openapi": "3.1.0",
+        "info": {
+            "title": "RuFaS API",
+            "summary": "API for running the Ruminant Farm Systems (RuFaS) simulator",
+            "description": f"Specifications for using RuFaS API {__version__}.",
+            "termsOfService": "https://github.com/RuminantFarmSystems/RuFaS",
+            "contact": {
+                "name": "RuFaS Team",
+                "email": "contact@rufas.org",
+                "url": "https://www.rufas.org",
+            },
+            "license": {
+                "name": "GPLv3",
+                "url": "https: // www.gnu.org / licenses / gpl - 3.0.html",
+            },
+            "version": __version__,
+        },
+        "servers": [
+            {
+                "url": "http://localhost:8000/v1",
+                "description": "Local development server",
+            }
+        ],
+        "paths": {
+            "/metadata/schema": {
+                "get": {
+                    "summary": "Get JSON Schema",
+                    "responses": {
+                        "200": {
+                            "description": "JSON Schema for input validation",
+                            "content": {"application/json": {"schema": {"type": "object"}}},
+                        }
+                    },
+                }
+            },
+        },
+        "components": {
+            "schemas": {
+                "default": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": specs_default_properties,
+                }
+            }
+        },
+    }
+
+
+def write_openapi_specs(
+        schemas: dict[str, dict[str, Any]],
+        path_file: Path,
+) -> None:
+    openapi_specs = create_openapi_specs(
+        specs_default_properties=schemas['default'],
+    )
+    path_file.write_text(dump_yaml(openapi_specs, sort_keys=False))
+
+
 if __name__ == "__main__":
     from rufas_api.config import Paths
 
-    meta_data = read_meta_data(path_metadata=Paths.metadata_default_properties)
-    didi = create_schema_properties(meta=meta_data)
+    path_specs = Paths.generated_files / 'openapi_specs.yml'
+    path_specs.parent.mkdir(parents=True, exist_ok=True)
 
-    with (Path(__file__).parent / 'schema_props.json').open(mode='w') as f:
-        dump(didi, f, indent=3)
+    specs_schemas = {
+        "default": create_schema_properties(meta=read_meta_data(path_metadata=Paths.metadata_default_properties))
+    }
+    write_openapi_specs(
+        schemas=specs_schemas,
+        path_file=path_specs,
+    )
