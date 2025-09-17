@@ -88,4 +88,4 @@ if __name__ == "__main__":
     didi = create_schema_properties(meta=meta_data)
 
     with (Path(__file__).parent / 'schema_props.json').open(mode='w') as f:
-        dump(didi, f)
+        dump(didi, f, indent=3)
