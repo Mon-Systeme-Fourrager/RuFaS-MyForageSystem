@@ -158,3 +158,68 @@ def test_determine_housing_carbon_dioxide_emissions(
 ) -> None:
     """Tests the calculation of carbon dioxide emission."""
     assert handler.determine_housing_carbon_dioxide_emissions(barn_area, barn_temperature) == expected
+
+
+@pytest.mark.parametrize(
+    "manure_stream,housing_emission,expected_degradable_solids,expected_non_degradable_solids,expected_total_solids",
+    [
+        (ManureStream(
+            water=0.0,
+            ammoniacal_nitrogen=0.0,
+            nitrogen=0.0,
+            phosphorus=0.0,
+            potassium=0.0,
+            ash=0.0,
+            non_degradable_volatile_solids=100,
+            degradable_volatile_solids=100,
+            total_solids=0.0,
+            volume=0.0,
+            methane_production_potential=0.24,
+            pen_manure_data=None
+        ), 10, 53.75, 53.75, 107.5),
+        (ManureStream(
+            water=0.0,
+            ammoniacal_nitrogen=0.0,
+            nitrogen=0.0,
+            phosphorus=0.0,
+            potassium=0.0,
+            ash=0.0,
+            non_degradable_volatile_solids=100,
+            degradable_volatile_solids=100,
+            total_solids=0.0,
+            volume=0.0,
+            methane_production_potential=0.24,
+            pen_manure_data=None
+        ), 0, 100, 100, 200),
+        (ManureStream(
+            water=0.0,
+            ammoniacal_nitrogen=0.0,
+            nitrogen=0.0,
+            phosphorus=0.0,
+            potassium=0.0,
+            ash=0.0,
+            non_degradable_volatile_solids=0,
+            degradable_volatile_solids=0,
+            total_solids=0.0,
+            volume=0.0,
+            methane_production_potential=0.24,
+            pen_manure_data=None
+        ), 10, 0, 0, 0)
+    ],
+)
+def test_apply_volatile_solid_loss(handler: SingleStreamHandler,
+                                   manure_stream: ManureStream,
+                                   housing_emission: float,
+                                   expected_degradable_solids: float,
+                                   expected_non_degradable_solids: float,
+                                   expected_total_solids: float
+                                   ) -> None:
+    """Tests the function _apply_volatile_solid_loss()."""
+    handler.manure_stream = manure_stream
+
+    degradable_solids, non_degradable_solids, total_solids = (
+        handler._apply_volatile_solid_loss(housing_emission))
+
+    assert degradable_solids == expected_degradable_solids
+    assert total_solids == expected_total_solids
+    assert non_degradable_solids == expected_non_degradable_solids
