@@ -3,6 +3,8 @@ import re
 from enum import Enum
 from typing import Any, Callable, Union, Sequence
 
+from build.lib.RUFAS.input_manager import InputManager
+
 
 class ElementState(Enum):
     """
@@ -1612,6 +1614,7 @@ class CrossValidator:
     def __init__(self) -> None:
         self._alias_pool: dict[str, Any] = {}
         self._event_logs: list[dict[str, str | dict[str, str]]] = []
+        self.im = InputManager()
 
     def cross_validate_data(
         self, im_variable_pool: dict[str, Any], cross_validation_rules: list[dict[str, Any]]
@@ -1673,11 +1676,12 @@ class CrossValidator:
         ----------
         target_and_save_block : dict[str, dict[str, Any]]
             A dictionary containing the "target and save block" of the cross-validation rule.
+
         """
         sections = ["variables", "constants"]
         for section in sections:
-            for key, value in target_and_save_block.get(section, []):
-                self._alias_pool[key] = value
+            for key, address in target_and_save_block[section].items():
+                self._alias_pool[key] = self.im.get_data(address)
 
     def _evaluate_expression(self, expression_block: dict[str, Any]) -> Any:
         """
