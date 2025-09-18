@@ -12,17 +12,16 @@ SLICE_START = -365
 SLICE_END = -364
 FINAL_DAY_SLICE_START = -1
 
-PURCHASED_FEED_STORAGE_FILTER = {
-    "name": "Purchased Feeds in Storage",
-    "description": "Gathers the amounts of purchased feeds in storage on a particular day.",
-    "filters": ["PurchasedFeedStorage.report_stored_purchased_feeds.stored_feed_.*daily_storage_levels.*"],
+PURCHASED_FEED_FED_TOTALS_FILTER = {
+    "name": "Purchased Feed Totals",
+    "description": "Gathers the amounts of purchased feeds fed in final year.",
+    "filters": [".*purchased_feed_.*fed_to_date.*"],
     "slice_start": SLICE_START,
 }
-
-PURCHASED_FEED_TOTALS_FILTER = {
+DEDUCTED_FEED_FED_TOTALS_FILTER = {
     "name": "Purchased Feed Totals",
-    "description": "Gathers the amounts of feeds purchased in final year.",
-    "filters": ["FeedManager.report_cumulative_purchased_feeds.*_purchased_to_date.*"],
+    "description": "Gathers the amounts of purchased feeds fed in final year.",
+    "filters": [".*_deduct_feeds_from_inventory.purchased_feed_.*"],
     "slice_start": SLICE_START,
 }
 TIME_FILTER = {
@@ -67,8 +66,7 @@ HOMEGROWN_FEEDS_AND_FERTILIZERS_FILTERS: dict[str, dict[str, Any]] = {
 """
 Patterns for matching purchased feed storage and totals in the output variables.
 """
-PURCHASED_FEED_PATTERN = r"_(\d+)_purchased_to_date.*"
-DAILY_STORAGE_LEVELS_PATTERN = r"_(\d+).daily_storage_levels$"
+PURCHASED_FEED_PATTERN = r"_(\d+)_fed_to_date.*"
 
 """
 These are constants for calculating the embedded emissions of synthetic nitrogen and phosphorus fertilizer. Their units
@@ -121,7 +119,26 @@ class EmissionsEstimator:
             "function": self._calculate_purchased_feed_emissions.__name__,
         }
 
-        purchased_feeds_fed_totals = 10
+        purchased_feeds_deducted = self.om.filter_variables_pool(DEDUCTED_FEED_FED_TOTALS_FILTER)
+        purchased_feeds_deducted_fed_totals = defaultdict(float)
+        for key, value in purchased_feeds_deducted.items():
+            if match := re.search('_(\\d+)_fed.*', key):
+                feed_id = match.group(1)
+                values = value.get("values") or [0.0]
+                purchased_feeds_deducted_fed_totals[feed_id] = sum(values)
+        print(purchased_feeds_deducted_fed_totals)
+        print("whoa")
+
+        purchased_feeds_fed = self.om.filter_variables_pool(PURCHASED_FEED_FED_TOTALS_FILTER)
+        purchased_feeds_fed_totals = defaultdict(float)
+        for key, value in purchased_feeds_fed.items():
+            if match := re.search(PURCHASED_FEED_PATTERN, key):
+                feed_id = match.group(1)
+                values = value.get("values") or [0.0]
+                purchased_feeds_fed_totals[feed_id] = values[-1] - values[0]
+
+        print(purchased_feeds_fed_totals)
+        print("whoa")
 
         self.om.add_variable(
             "purchased_feed_fed_totals", purchased_feeds_fed_totals, {**info_map, "units": MeasurementUnits.KILOGRAMS}
@@ -131,66 +148,6 @@ class EmissionsEstimator:
         emissions_info = {**info_map, "units": MeasurementUnits.KILOGRAMS_CARBON_DIOXIDE_PER_KILOGRAM_DRY_MATTER}
         self.om.add_variable("total_purchased_feed_emissions", total_emissions, emissions_info)
         self.om.add_variable("total_land_use_change_emissions", land_use_emissions, emissions_info)
-
-    def _get_stored_purchased_feeds(self) -> dict[str, Any]:
-        """Gathers the amounts of purchased feeds in storage on a particular day.
-
-        Returns
-        -------
-        dict[str, Any]
-            A dictionary containing the storage levels of purchased feeds.
-        """
-        info_map = {
-            "class": self.__class__.__name__,
-            "function": self._get_stored_purchased_feeds.__name__,
-        }
-        stored_feeds = self.om.filter_variables_pool(PURCHASED_FEED_STORAGE_FILTER)
-        if not stored_feeds:
-            self.om.add_warning("No Purchased Feeds in Storage", "No purchased feeds were found in storage.", info_map)
-        return stored_feeds
-
-    def _calculate_purchased_storage_totals(
-        self, stored_feeds: dict[str, Any]
-    ) -> tuple[dict[str, float], dict[str, float]]:
-        """Calculates the starting and ending storage levels of purchased feeds.
-
-        Parameters
-        ----------
-        stored_feeds : dict[str, Any]
-            A dictionary containing the storage levels of purchased feeds.
-
-        Returns
-        -------
-        tuple[dict[str, float], dict[str, float]]
-            A tuple containing the starting and ending storage levels of purchased feeds.
-        """
-        start_totals = defaultdict(float)
-        end_totals = defaultdict(float)
-        for key, value in stored_feeds.items():
-            if match := re.search(DAILY_STORAGE_LEVELS_PATTERN, key):
-                feed_id = match.group(1)
-                values = value.get("values") or [0.0]
-                start_totals[feed_id] = values[0]
-                end_totals[feed_id] = values[-1]
-        return start_totals, end_totals
-
-    def _calculate_purchased_feed_amounts(self) -> dict[str, float]:
-        """
-        Calculates the amounts of purchased feeds during the time period.
-
-        Returns
-        -------
-        dict[str, float]
-            A dictionary containing the amounts of purchased feeds during the time period.
-        """
-        purchased_feeds = self.om.filter_variables_pool(PURCHASED_FEED_TOTALS_FILTER)
-        totals = defaultdict(float)
-        for key, value in purchased_feeds.items():
-            if match := re.search(PURCHASED_FEED_PATTERN, key):
-                feed_id = match.group(1)
-                values = value.get("values") or [0.0]
-                totals[feed_id] = values[-1] - values[0]
-        return totals
 
     def _gather_homegrown_feeds_and_fertilizer_apps(
         self,
