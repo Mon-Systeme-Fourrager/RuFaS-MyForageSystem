@@ -55,7 +55,6 @@ class Handler(Processor):
         self.cleaning_water_recycle_fraction = cleaning_water_recycle_fraction
         self.use_parlor_flush = use_parlor_flush
         self._prefix = f"Manure.{self.__class__.__name__}.{self.handler_type}.{self.name}"
-        self._received_manure = ManureStream.make_empty_manure_stream()
 
     def receive_manure(self, manure_stream: ManureStream) -> None:
         """
@@ -75,7 +74,6 @@ class Handler(Processor):
                 info_map,
             )
             raise ValueError("ValueError: Invalid manure stream for handler processor.")
-        self._received_manure = manure_stream
 
     def process_manure(self, conditions: CurrentDayConditions, time: RufasTime) -> dict[str, ManureStream]:
         """
