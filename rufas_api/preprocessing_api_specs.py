@@ -97,8 +97,8 @@ def create_schema_properties(meta: dict) -> dict[str, ...]:
     return res
 
 
-def create_schemas(meta: dict) -> dict[str, Any]:
-    res = {
+def create_schemas(meta: dict[str, Any]) -> dict[str, Any]:
+    res: dict[str, Any] = {
         "type": "object",
         "description": meta.get("description", ""),
         "properties": create_schema_properties(meta=meta)
