@@ -131,25 +131,6 @@ def create_openapi_specs(
             },
             "version": __version__,
         },
-        "servers": [
-            {
-                "url": "http://localhost:8000/v1",
-                "description": "Local development server",
-            }
-        ],
-        "paths": {
-            "/metadata/schema": {
-                "get": {
-                    "summary": "Get JSON Schema",
-                    "responses": {
-                        "200": {
-                            "description": "JSON Schema for input validation",
-                            "content": {"application/json": {"schema": {"type": "object"}}},
-                        }
-                    },
-                }
-            },
-        },
         "components": {
             "schemas": {
                 **specs_default_properties
