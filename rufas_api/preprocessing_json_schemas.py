@@ -1,6 +1,9 @@
+"""Create JSON Schemas compliant with OpenAPI 3.1 sepcs
+"""
+
 from copy import deepcopy
 from dataclasses import dataclass
-from json import loads
+from json import loads, dumps as dump_json
 from pathlib import Path
 from typing import Any
 
@@ -139,14 +142,14 @@ def create_openapi_specs(
     }
 
 
-def write_openapi_specs(
+def write_schemas(
         schemas: dict[str, dict[str, Any]],
-        path_file: Path,
+        path_dir: Path,
+        is_yaml: bool = False,
 ) -> None:
-    openapi_specs = create_openapi_specs(
-        specs_default_properties=schemas,
-    )
-    path_file.write_text(dump_yaml(openapi_specs, sort_keys=False))
+    func, kwargs = (dump_yaml, {}) if is_yaml else (dump_json, {"indent": 4})
+    for k, v in schemas.items():
+        (path_dir / f"schema_{k}.json").write_text(func(v, sort_keys=False, **kwargs))
 
 
 if __name__ == "__main__":
@@ -156,8 +159,9 @@ if __name__ == "__main__":
 
     specs_schemas = {
         "default": create_schemas(meta=read_metadata(path_metadata=Paths.metadata_default_properties))
+        "default": create_schemas(meta=read_metadata(path_metadata=Paths.metadata_default_properties)),
     }
-    write_openapi_specs(
+    write_schemas(
         schemas=specs_schemas,
-        path_file=Paths.generated_default_properties_specs,
+        path_dir=Paths.generated_files,
     )
