@@ -38,6 +38,8 @@ def get_python_type(field_type: str) -> _Var:
             raise Exception(f"Unknown field type: {field_type}")
     return res
 
+def _get_required_properties(d: dict) -> list[str]:
+    return [k for k, v in d.items() if 'default' not in v]
 
 def extract_properties(d: dict) -> dict:
     _d = deepcopy(d)
@@ -66,6 +68,10 @@ def extract_properties(d: dict) -> dict:
         else:
             prop["properties"] = properties
 
+        if _type == 'object':
+            if len(required_properties := _get_required_properties(d=properties)) > 0:
+                prop['required'] = required_properties
+
     return prop
 
 
@@ -80,6 +86,9 @@ def create_schema_properties(meta: dict) -> dict[str, ...]:
                     "type": "object",
                     "properties": create_schema_properties(meta=v)
                 }
+                if len(required_properties := _get_required_properties(d=res[k]['properties'])) > 0:
+                    res[k]["required"] = required_properties
+
         else:
             if not k == 'data_collection_app_compatible':
                 res[k] = v
