@@ -1414,6 +1414,20 @@ class InputManager:
             raise e
 
     def extract_target_and_save_block(self, target_and_save_block: dict[str, dict[str, Any]]) -> dict[str, Any]:
+        """
+        Retrieves the alias value to pass to the CrossValidator for processing.
+
+        Parameters
+        ----------
+        target_and_save_block : dict[str, dict[str, Any]]
+            A dictionary containing the "target and save block" of the cross-validation rule.
+
+        Returns
+        -------
+        dict[str, Any]
+            A alias name - value pair dictionary.
+
+        """
         target_and_save_results = {}
         self.cross_validator.check_target_and_save_block(target_and_save_block)
         sections = ["variables", "constants"]

@@ -3199,6 +3199,7 @@ def test_delete_data_metadata_not_found(
 
 
 def test_extract_target_and_save_block(mocker: MockerFixture) -> None:
+    """Tests the function to extract the target and save block."""
     im = InputManager()
     mock_check = mocker.patch.object(CrossValidator, "check_target_and_save_block")
     mock_get_data = mocker.patch.object(im, "get_data", return_value=1)

@@ -2002,6 +2002,7 @@ def test_extract_input_data_by_key_list_key_error(
     [("test1", 16.4, {"test1": 16.4}), ("test2", 924.6, {"test1": 13, "test2": 924.6})],
 )
 def test_save_to_alias_pool(alias_name: str, value: Any, expected_pool: dict[str, Any]) -> None:
+    """Test the function _save_to_alias_pool()"""
     validator = CrossValidator()
     validator._alias_pool = {"test1": 13}
     validator._save_to_alias_pool(alias_name, value)
@@ -2016,12 +2017,14 @@ def test_save_to_alias_pool(alias_name: str, value: Any, expected_pool: dict[str
     ],
 )
 def test_get_alias_value_returns(pool: dict[str, Any], alias: str, expected: Any) -> None:
+    """Test the function _get_alias_value()"""
     v = CrossValidator()
     v._alias_pool = dict(pool)
     assert v._get_alias_value(alias) == expected
 
 
 def test_get_alias_value_raises_key_error_when_missing() -> None:
+    """Test the function _get_alias_value() when getting unavailable keys names."""
     v = CrossValidator()
     v._alias_pool = {"exists": 10}
 
@@ -2032,6 +2035,7 @@ def test_get_alias_value_raises_key_error_when_missing() -> None:
 
 
 def test_target_and_save(mocker: MockerFixture) -> None:
+    """Test the function target_and_save()"""
     v = CrossValidator()
     mock_save = mocker.patch.object(v, "_save_to_alias_pool")
     v._target_and_save({"a": 1, "b": 1, "c": "value"})
