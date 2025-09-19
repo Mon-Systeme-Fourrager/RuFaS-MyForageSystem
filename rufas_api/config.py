@@ -9,3 +9,4 @@ class Paths:
     generated_files: Path = Path(__file__).parent / 'automatically_generated'
     generated_default_properties_specs: Path = generated_files / 'default_properties_specs.yaml'
 
+    generated_pydantic_models: Path = generated_files / 'default_properties_models.yaml'
