@@ -127,7 +127,7 @@ def create_openapi_specs(
             },
             "license": {
                 "name": "GPLv3",
-                "url": "https: // www.gnu.org / licenses / gpl - 3.0.html",
+                "url": "https://www.gnu.org/licenses/gpl-3.0.html",
             },
             "version": __version__,
         },
