@@ -38,8 +38,10 @@ def get_python_type(field_type: str) -> _Var:
             raise Exception(f"Unknown field type: {field_type}")
     return res
 
+
 def _get_required_properties(d: dict) -> list[str]:
     return [k for k, v in d.items() if 'default' not in v]
+
 
 def extract_properties(d: dict) -> dict:
     _d = deepcopy(d)
@@ -95,6 +97,19 @@ def create_schema_properties(meta: dict) -> dict[str, ...]:
     return res
 
 
+def create_schemas(meta: dict) -> dict[str, Any]:
+    res = {
+        "type": "object",
+        "description": meta.get("description", ""),
+        "properties": create_schema_properties(meta=meta)
+    }
+
+    if len(required_properties := _get_required_properties(d=res['properties'])) > 0:
+        res["required"] = required_properties
+
+    return res
+
+
 def create_openapi_specs(
         specs_default_properties: dict[str, Any]
 ) -> dict[str, Any]:
@@ -137,11 +152,7 @@ def create_openapi_specs(
         },
         "components": {
             "schemas": {
-                "default": {
-                    "type": "object",
-                    "additionalProperties": False,
-                    "properties": specs_default_properties,
-                }
+                **specs_default_properties
             }
         },
     }
@@ -152,7 +163,7 @@ def write_openapi_specs(
         path_file: Path,
 ) -> None:
     openapi_specs = create_openapi_specs(
-        specs_default_properties=schemas['default'],
+        specs_default_properties=schemas,
     )
     path_file.write_text(dump_yaml(openapi_specs, sort_keys=False))
 
@@ -163,7 +174,7 @@ if __name__ == "__main__":
     Paths.generated_files.mkdir(parents=True, exist_ok=True)
 
     specs_schemas = {
-        "default": create_schema_properties(meta=read_metadata(path_metadata=Paths.metadata_default_properties))
+        "default": create_schemas(meta=read_metadata(path_metadata=Paths.metadata_default_properties))
     }
     write_openapi_specs(
         schemas=specs_schemas,
