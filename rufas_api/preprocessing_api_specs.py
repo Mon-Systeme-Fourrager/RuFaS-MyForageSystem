@@ -62,7 +62,7 @@ def extract_properties(d: dict) -> dict:
     if len(properties) > 0:
         if len(properties) == 1:
             if _type == "array":
-                prop['items'] = properties['properties'].get('properties', properties['properties'])
+                prop['items'] = properties['properties']
             elif _type == "object":
                 prop['properties'] = properties
         else:
