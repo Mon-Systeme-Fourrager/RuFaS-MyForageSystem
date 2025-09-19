@@ -2,7 +2,7 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator
 
-from rufas_api import preprocessing_api_specs
+from rufas_api import preprocessing_json_schemas
 
 PATH_METADATA = Path(__file__).parent / "sources/metadata"
 
@@ -22,12 +22,12 @@ def verify_json_schema_structure(d: dict) -> list[bool]:
 
 
 def test_read_metadata_returns_dict():
-    metadata = preprocessing_api_specs.read_metadata(path_metadata=PATH_METADATA / 'default.json')
+    metadata = preprocessing_json_schemas.read_metadata(path_metadata=PATH_METADATA / 'default.json')
     assert isinstance(metadata, dict)
 
 
 def test_create_schema_properties_returns_valid_json_schema():
-    api_specs = preprocessing_api_specs.create_schema_properties(
-        meta=preprocessing_api_specs.read_metadata(path_metadata=PATH_METADATA / 'default.json'))
+    api_specs = preprocessing_json_schemas.create_schema_properties(
+        meta=preprocessing_json_schemas.read_metadata(path_metadata=PATH_METADATA / 'default.json'))
     Draft202012Validator.check_schema(schema=api_specs)
     assert all(verify_json_schema_structure(d=api_specs)), 'The JSON schema structure was not valid'
