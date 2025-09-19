@@ -9,8 +9,6 @@ from typing import Any
 
 from yaml import dump as dump_yaml
 
-from rufas_api import __version__
-
 
 def read_metadata(path_metadata: Path) -> dict:
     return loads(path_metadata.read_text())
@@ -111,35 +109,6 @@ def create_schemas(meta: dict[str, Any]) -> dict[str, Any]:
         res["required"] = required_properties
 
     return res
-
-
-def create_openapi_specs(
-        specs_default_properties: dict[str, Any]
-) -> dict[str, Any]:
-    return {
-        "openapi": "3.1.0",
-        "info": {
-            "title": "RuFaS API",
-            "summary": "API for running the Ruminant Farm Systems (RuFaS) simulator",
-            "description": f"Specifications for using RuFaS API {__version__}.",
-            "termsOfService": "https://github.com/RuminantFarmSystems/RuFaS",
-            "contact": {
-                "name": "RuFaS Team",
-                "email": "contact@rufas.org",
-                "url": "https://www.rufas.org",
-            },
-            "license": {
-                "name": "GPLv3",
-                "url": "https://www.gnu.org/licenses/gpl-3.0.html",
-            },
-            "version": __version__,
-        },
-        "components": {
-            "schemas": {
-                **specs_default_properties
-            }
-        },
-    }
 
 
 def write_schemas(
