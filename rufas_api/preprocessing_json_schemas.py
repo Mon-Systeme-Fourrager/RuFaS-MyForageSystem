@@ -126,11 +126,7 @@ if __name__ == "__main__":
 
     Paths.generated_files.mkdir(parents=True, exist_ok=True)
 
-    specs_schemas = {
-        "default": create_schemas(meta=read_metadata(path_metadata=Paths.metadata_default_properties)),
-        "tasks_properties": create_schemas(meta=read_metadata(path_metadata=Paths.metadata_tasks_properties))
-    }
     write_schemas(
-        schemas=specs_schemas,
+        schemas={k: create_schemas(meta=read_metadata(path_metadata=v)) for k, v in Paths.metadata.items()},
         path_dir=Paths.generated_files,
     )
