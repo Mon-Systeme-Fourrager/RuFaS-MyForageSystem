@@ -286,8 +286,9 @@ def test_report_feed_storage_levels(feed_manager: FeedManager, mocker: MockerFix
     mock_report_stored_feeds.assert_called_once_with(mock_time, "mock_suffix")
 
 
-def test_report_cumulative_purchased_feeds(feed_manager: FeedManager, mock_available_feeds: list[Feed],
-                                           mocker: MockerFixture) -> None:
+def test_report_cumulative_purchased_feeds(
+    feed_manager: FeedManager, mock_available_feeds: list[Feed], mocker: MockerFixture
+) -> None:
     """Test that the Feed Manager reports cumulative purchased feeds correctly."""
     simulation_day = 100
     feed_manager._om = (mock_om := MagicMock(auto_spec=OutputManager))
