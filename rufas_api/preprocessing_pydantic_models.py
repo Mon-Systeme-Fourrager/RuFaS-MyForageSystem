@@ -14,10 +14,9 @@ def get_schemas(path_dir_schemas: Path) -> Generator[dict, None, None]:
                 yield load_yaml(f)
 
 
-if __name__ == "__main__":
+def main():
     from rufas_api.config import Paths
     from datamodel_code_generator import InputFileType, generate, DataModelType
-
     paths = (v for v in Paths.generated_files.iterdir() if v.suffix in ('.json', 'yaml', 'yml'))
     for pth in paths:
         generate(
@@ -29,3 +28,7 @@ if __name__ == "__main__":
             no_alias=True,
             use_default_kwarg=True
         )
+
+
+if __name__ == "__main__":
+    main()
