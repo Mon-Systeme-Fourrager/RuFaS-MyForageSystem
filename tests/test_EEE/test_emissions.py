@@ -434,10 +434,10 @@ def test_calculate_emissions_string_keys_basic(em: EmissionsEstimator, mocker: M
     """Emissions are calculated for known string feed IDs; unknown IDs are ignored."""
     mock_add_variable = mocker.patch.object(em.om, "add_variable")
 
-    em.calculate_emissions({"50": 10.0, "51": 5.0, "999": 7.0})
+    em.calculate_emissions({50: 10.0, 51: 5.0, 999: 7.0})
 
-    expected_purchased = {"50": 10.0 * 1.0, "51": 5.0 * 2.0}
-    expected_luc = {"50": 10.0 * 0.1, "51": 5.0 * 0.2}
+    expected_purchased = {50: 10.0 * 1.0, 51: 5.0 * 2.0}
+    expected_luc = {50: 10.0 * 0.1, 51: 5.0 * 0.2}
 
     assert mock_add_variable.call_count == 2
 
@@ -458,10 +458,10 @@ def test_calculate_emissions_int_keys_stringified(em: EmissionsEstimator, mocker
     """Int feed IDs are stringified for factor lookup, but output dict keeps original key types."""
     mock_add_variable = mocker.patch.object(em.om, "add_variable")
 
-    em.calculate_emissions({"50": 1.5, "100": 2.0})
+    em.calculate_emissions({50: 1.5, 100: 2.0})
 
-    expected_purchased = {"50": 1.5 * 1.0, "100": 2.0 * 26.3}
-    expected_luc = {"50": 1.5 * 0.1, "100": 2.0 * 2.63}
+    expected_purchased = {50: 1.5 * 1.0, 100: 2.0 * 26.3}
+    expected_luc = {50: 1.5 * 0.1, 100: 2.0 * 2.63}
 
     assert mock_add_variable.call_count == 2
 
