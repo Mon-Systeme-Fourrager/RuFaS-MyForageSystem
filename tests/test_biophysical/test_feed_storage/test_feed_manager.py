@@ -347,7 +347,8 @@ def test_manage_daily_feed_request(feed_manager: FeedManager, mocker: MockerFixt
         return_value={1: 1.1, 2: 2.2, 3: 3.3, 4: 4.4, 5: 5.5},
     )
     mock_purchase_feed = mocker.patch.object(feed_manager, "purchase_feed")
-    mock_deduct_feeds_from_inventory = mocker.patch.object(feed_manager, "_deduct_feeds_from_inventory")
+    mock_deduct_feeds_from_inventory = mocker.patch.object(feed_manager, "_deduct_feeds_from_inventory",
+                                                           return_value={})
     mocker.patch.object(feed_manager, "report_stored_farmgrown_feeds")
 
     requested_feed = RequestedFeed(requested_feed={1: 0.8, 3: 3.3, 5: 7.5})
@@ -359,7 +360,7 @@ def test_manage_daily_feed_request(feed_manager: FeedManager, mocker: MockerFixt
 
     result = feed_manager.manage_daily_feed_request(requested_feed=requested_feed, time=mock_time)
 
-    assert result is True
+    assert result == (True, {})
     mock_query_available_feed_totals.assert_called_once_with(list(requested_feed.requested_feed.keys()))
     mock_purchase_feed.assert_called_once_with(
         pytest.approx(expected_feeds_to_purchase), mock_time, purchase_type="daily_feed_request"
@@ -397,7 +398,7 @@ def test_manage_daily_feed_request_unfulfillable(feed_manager: FeedManager, mock
 
     result = feed_manager.manage_daily_feed_request(requested_feed=requested_feed, time=mock_time)
 
-    assert result is False
+    assert result == (False, {})
     mock_query_available_feed_totals.assert_called_once_with(list(requested_feed.requested_feed.keys()))
     mock_purchase_feed.assert_not_called()
     mock_deduct_feeds_from_inventory.assert_not_called()
