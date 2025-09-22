@@ -272,8 +272,24 @@ class FeedManager:
             self._om.add_variable(f"stored_feed_{rufas_id}_dm", mass["dry_matter_mass"], info_map)
             self._om.add_variable(f"stored_feed_{rufas_id}_wet", mass["fresh_mass"], info_map)
 
-    def manage_daily_feed_request(self, requested_feed: RequestedFeed, time: RufasTime) -> bool:
-        """Returns true if requested feeds can be provided, either through on-farm feeds or by purchasing."""
+    def manage_daily_feed_request(self, requested_feed: RequestedFeed, time: RufasTime
+                                  ) -> tuple[bool, dict[str, dict[RUFAS_ID, float]]]:
+        """Manages the daily feed request by checking available inventory and purchasing additional feed if necessary.
+
+        Parameters
+        ----------
+        requested_feed : RequestedFeed
+            The feeds and amounts requested for feeding on the current day.
+        time : RufasTime
+            RufasTime instance containing the current time of the simulation.
+
+        Returns
+        -------
+        tuple[bool, dict[str, dict[RUFAS_ID, float]]]
+            A tuple where the first element is True if the feed request can be fulfilled (False otherwise),
+            and the second element is a dictionary detailing the amounts of feed deducted from purchased and
+            farmgrown sources.
+        """
         current_feed_totals = self._query_available_feed_totals(list(requested_feed.requested_feed.keys()))
         feeds_to_remove_from_inventory = {id: 0.0 for id in requested_feed.requested_feed.keys()}
         feeds_to_purchase = {id: 0.0 for id in requested_feed.requested_feed.keys()}
@@ -286,7 +302,7 @@ class FeedManager:
             ) <= self.runtime_purchase_allowance.allowances[feed_id] + tolerance
             is_request_unfulfillable = not is_fulfillable_with_inventory and not is_fulfillable_with_purchase
             if is_request_unfulfillable:
-                return False
+                return False, {}
             self._om.add_variable(
                 f"{feed_id}_requested_amount",
                 amount_requested,
@@ -313,11 +329,11 @@ class FeedManager:
                 feeds_to_purchase[feed_id] = amount_requested - available_amount
 
         self.purchase_feed(feeds_to_purchase, time, purchase_type="daily_feed_request")
-        self._deduct_feeds_from_inventory(feeds_to_remove_from_inventory, time.simulation_day)
+        daily_feeds_fed = self._deduct_feeds_from_inventory(feeds_to_remove_from_inventory, time.simulation_day)
         for storage in self.active_storages.values():
             storage.remove_empty_crops()
         self.purchased_feed_storage.remove_empty_crops()
-        return True
+        return True, daily_feeds_fed
 
     def get_total_projected_inventory(self, inventory_date: date, weather: Weather, time: RufasTime) -> TotalInventory:
         """
@@ -545,7 +561,8 @@ class FeedManager:
         purchased_feed = PurchasedFeed(rufas_id, purchase_amount, time.current_date.date())
         self.purchased_feed_storage.receive_feed(purchased_feed)
 
-    def _deduct_feeds_from_inventory(self, feeds_to_deduct: dict[RUFAS_ID, float], simulation_day: int) -> None:
+    def _deduct_feeds_from_inventory(self, feeds_to_deduct: dict[RUFAS_ID, float], simulation_day: int
+                                     ) -> dict[str, dict[RUFAS_ID, float]]:
         """
         Removes feeds from storage in a FIFO manner.
 
@@ -555,6 +572,13 @@ class FeedManager:
             Mapping of RuFaS Feed IDs to the amounts of feed that will be removed from storage (kg dry matter).
         simulation_day : int
             The current simulation day, used for tracking feed removal.
+
+        Returns
+        -------
+        dict[str, dict[RUFAS_ID, float]]
+            A dictionary with two keys: 'purchased' and 'farmgrown'. Each key maps to another dictionary that contains
+            the RuFaS Feed IDs and the corresponding amounts of feed deducted (kg dry matter) from purchased and
+            farmgrown sources, respectively.
 
         Raises
         ------
@@ -621,6 +645,8 @@ class FeedManager:
                 amount,
                 info_map,
             )
+
+        return {"purchased": total_purchased_feed_deductions, "farmgrown": total_farmgrown_feed_deductions}
 
     def _gather_available_feeds(self) -> list[HarvestedCrop | PurchasedFeed]:
         """
