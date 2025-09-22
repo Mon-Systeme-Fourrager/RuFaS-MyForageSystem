@@ -2069,8 +2069,7 @@ def test_check_target_and_save_block_message_contains_all_invalid_keys() -> None
     assert len(cv._event_logs) == 3
     assert all(any(f"Unsupported keys {k} provided." in e["message"] for e in cv._event_logs) for k in ("a", "b", "c"))
 
-    
-    
+
 @pytest.mark.parametrize(
     "expression_block, eager_termination",
     [
