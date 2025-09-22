@@ -292,6 +292,6 @@ class SimulationEngine:
 
         self.manure_manager: ManureManager = ManureManager()
 
-        self.emissions_estimator = EmissionsEstimator()
+        self.emissions_estimator: EmissionsEstimator = EmissionsEstimator()
         feed_manager_available_feed_ids = [feed.rufas_id for feed in self.feed_manager.available_feeds]
         self.emissions_estimator.check_available_purchased_feed_data(feed_manager_available_feed_ids)

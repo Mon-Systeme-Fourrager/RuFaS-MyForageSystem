@@ -216,7 +216,7 @@ class EmissionsEstimator:
 
     def calculate_emissions(
         self,
-        purchased_feeds: dict[str, float],
+        purchased_feeds: dict[int, float],
     ) -> None:
         """Calculates the emissions from purchased feeds and land use changes."""
         purchased_feed_emissions: dict[str, float] = {}
