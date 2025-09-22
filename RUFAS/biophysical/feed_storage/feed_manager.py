@@ -272,8 +272,9 @@ class FeedManager:
             self._om.add_variable(f"stored_feed_{rufas_id}_dm", mass["dry_matter_mass"], info_map)
             self._om.add_variable(f"stored_feed_{rufas_id}_wet", mass["fresh_mass"], info_map)
 
-    def manage_daily_feed_request(self, requested_feed: RequestedFeed, time: RufasTime
-                                  ) -> tuple[bool, dict[str, dict[RUFAS_ID, float]]]:
+    def manage_daily_feed_request(
+        self, requested_feed: RequestedFeed, time: RufasTime
+    ) -> tuple[bool, dict[str, dict[RUFAS_ID, float]]]:
         """Manages the daily feed request by checking available inventory and purchasing additional feed if necessary.
 
         Parameters
@@ -561,8 +562,9 @@ class FeedManager:
         purchased_feed = PurchasedFeed(rufas_id, purchase_amount, time.current_date.date())
         self.purchased_feed_storage.receive_feed(purchased_feed)
 
-    def _deduct_feeds_from_inventory(self, feeds_to_deduct: dict[RUFAS_ID, float], simulation_day: int
-                                     ) -> dict[str, dict[RUFAS_ID, float]]:
+    def _deduct_feeds_from_inventory(
+        self, feeds_to_deduct: dict[RUFAS_ID, float], simulation_day: int
+    ) -> dict[str, dict[RUFAS_ID, float]]:
         """
         Removes feeds from storage in a FIFO manner.
 

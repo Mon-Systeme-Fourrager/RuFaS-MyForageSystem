@@ -95,8 +95,9 @@ class EmissionsEstimator:
         county_code = self.im.get_data("config.FIPS_county_code")
 
         purchased_feed_emissions_data = self.im.get_data("purchased_feeds_emissions")
-        self.purchased_feed_emissions_by_location = self._get_feed_emissions_data(county_code,
-                                                                                  purchased_feed_emissions_data)
+        self.purchased_feed_emissions_by_location = self._get_feed_emissions_data(
+            county_code, purchased_feed_emissions_data
+        )
 
         land_use_change_emissions_data = self.im.get_data("purchased_feed_land_use_change_emissions")
         self.land_use_change_emissions_by_location = self._get_feed_emissions_data(

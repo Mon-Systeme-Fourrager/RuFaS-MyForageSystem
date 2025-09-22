@@ -347,8 +347,9 @@ def test_manage_daily_feed_request(feed_manager: FeedManager, mocker: MockerFixt
         return_value={1: 1.1, 2: 2.2, 3: 3.3, 4: 4.4, 5: 5.5},
     )
     mock_purchase_feed = mocker.patch.object(feed_manager, "purchase_feed")
-    mock_deduct_feeds_from_inventory = mocker.patch.object(feed_manager, "_deduct_feeds_from_inventory",
-                                                           return_value={})
+    mock_deduct_feeds_from_inventory = mocker.patch.object(
+        feed_manager, "_deduct_feeds_from_inventory", return_value={}
+    )
     mocker.patch.object(feed_manager, "report_stored_farmgrown_feeds")
 
     requested_feed = RequestedFeed(requested_feed={1: 0.8, 3: 3.3, 5: 7.5})
