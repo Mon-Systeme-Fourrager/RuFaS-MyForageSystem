@@ -17,12 +17,12 @@ def get_schemas(path_dir_schemas: Path) -> Generator[dict, None, None]:
 def main():
     from rufas_api.config import Paths
     from datamodel_code_generator import InputFileType, generate, DataModelType
-    paths = (v for v in Paths.generated_files.iterdir() if v.suffix in ('.json', 'yaml', 'yml'))
+    paths = (v for v in Paths.GENERATED_FILES.iterdir() if v.suffix in ('.json', 'yaml', 'yml'))
     for pth in paths:
         generate(
             input_=pth,
             input_file_type=InputFileType.JsonSchema if pth.suffix == '.json' else InputFileType.Yaml,
-            output=Paths.generated_files / f"{pth.stem.replace('schema_', 'model_')}.py",
+            output=Paths.GENERATED_FILES / f"{pth.stem.replace('schema_', 'model_')}.py",
             output_model_type=DataModelType.PydanticV2BaseModel,
             field_constraints=True,
             no_alias=True,

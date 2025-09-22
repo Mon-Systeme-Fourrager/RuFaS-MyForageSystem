@@ -2,11 +2,12 @@ from pathlib import Path
 
 
 class Paths:
-    _root: Path = Path(__file__).parents[1]
-    metadata_properties: Path = _root / 'input/metadata/properties'
-    metadata: dict[str, Path] = {
-        'default_properties': metadata_properties / 'default.json',
-        'tasks_properties': metadata_properties / 'tasks_properties.json',
+    _ROOT: Path = Path(__file__).parents[1]
+    _INPUTS: Path = _ROOT / 'input'
+    _METADATA_PROPERTIES: Path = _ROOT / 'input/metadata/properties'
+    METADATA: dict[str, Path] = {
+        'default_properties': _METADATA_PROPERTIES / 'default.json',
+        'tasks_properties': _METADATA_PROPERTIES / 'tasks_properties.json'
     }
 
-    generated_files: Path = Path(__file__).parent / 'automatically_generated'
+    GENERATED_FILES: Path = Path(__file__).parent / 'automatically_generated'

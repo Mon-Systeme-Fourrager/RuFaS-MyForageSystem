@@ -124,9 +124,9 @@ def write_schemas(
 if __name__ == "__main__":
     from rufas_api.config import Paths
 
-    Paths.generated_files.mkdir(parents=True, exist_ok=True)
+    Paths.GENERATED_FILES.mkdir(parents=True, exist_ok=True)
 
     write_schemas(
-        schemas={k: create_schemas(meta=read_metadata(path_metadata=v)) for k, v in Paths.metadata.items()},
-        path_dir=Paths.generated_files,
+        schemas={k: create_schemas(meta=read_metadata(path_metadata=v)) for k, v in Paths.METADATA.items()},
+        path_dir=Paths.GENERATED_FILES,
     )
