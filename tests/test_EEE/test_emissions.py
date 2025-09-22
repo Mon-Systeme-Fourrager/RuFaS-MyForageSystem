@@ -26,6 +26,10 @@ def em(mocker: MockerFixture) -> EmissionsEstimator:
     }
     em.purchased_feed_emissions_by_location = {"50": 1.0, "51": 2.0, "52": 3.0, "100": 26.3}
     em.land_use_change_emissions_by_location = {"50": 0.1, "51": 0.2, "52": 0.3, "100": 2.63}
+
+    em._missing_purchased_ids = set()
+    em._missing_land_use_ids = set()
+
     return em
 
 
@@ -211,6 +215,54 @@ def test_estimate_emissions(
     mock_homegrown.assert_called_once_with(
         homegrown_feeds, fertilizer_applications, manure_applications, manure_requests
     )
+
+
+def test_check_available_purchased_feed_data_with_missing(em: EmissionsEstimator, mocker: MockerFixture) -> None:
+    """Verifies warnings and set updates when some IDs are missing from both purchased and LUC dicts."""
+    warn_spy = mocker.spy(em.om, "add_warning")
+
+    available: list[int] = [52, 100, 103]
+
+    em.check_available_purchased_feed_data(available)
+
+    assert warn_spy.call_count == 2
+
+    titles = [call.args[0] for call in warn_spy.call_args_list]
+    messages = [call.args[1] for call in warn_spy.call_args_list]
+
+    assert "Missing Purchased Feed Emissions Data" in titles
+    assert "Missing Land Use Change Purchased Feed Emissions Data" in titles
+    assert (
+        "Missing emissions data for RuFaS feed IDs: 103. "
+        "These feeds will be omitted from purchased feed emissions estimations."
+        in messages
+    )
+    assert (
+        "Missing land use change emissions data for RuFaS feed IDs: 103. "
+        "These feeds will be omitted from land use change purchased feed emissions estimations."
+        in messages
+    )
+
+    assert em._missing_purchased_ids == {"103"}
+    assert em._missing_land_use_ids == {"103"}
+
+
+def test_check_available_purchased_feed_data_accumulates_across_calls(
+    em: EmissionsEstimator, mocker: MockerFixture
+) -> None:
+    """Confirms that missing ID tracking accumulates (set union) over multiple invocations."""
+    em._missing_purchased_ids.update({"999"})
+    em._missing_land_use_ids.update({"999"})
+
+    warn_spy = mocker.spy(em.om, "add_warning")
+
+    em.check_available_purchased_feed_data([50, 51, 52, 100, 103])
+
+    em.check_available_purchased_feed_data([108])
+
+    assert warn_spy.call_count == 4
+    assert em._missing_purchased_ids == {"999", "103", "108"}
+    assert em._missing_land_use_ids == {"999", "103", "108"}
 
 
 def test_gather_homegrown_feeds_and_fertilizer_apps(mocker: MockerFixture, em: EmissionsEstimator) -> None:
