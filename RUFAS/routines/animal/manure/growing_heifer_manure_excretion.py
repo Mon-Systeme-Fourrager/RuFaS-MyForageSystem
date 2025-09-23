@@ -3,6 +3,7 @@ from typing import Dict, Tuple
 from RUFAS.data_structures.animal_manure_excretions import AnimalManureExcretions
 from RUFAS.general_constants import GeneralConstants
 from RUFAS.routines.animal.manure.general_manure import calculate_phosphorus_excretion_values
+from RUFAS.user_constants import UserConstants
 
 
 def manure_calculations(
@@ -52,7 +53,6 @@ def manure_calculations(
         "N": "percent of DM",
     }
     """
-    # TODO: Same TODOs as in dry_cow_manure_excretion.py - GitHub Issue #1219
     nutrient_amounts = nutrient_amount
     nutrient_concentrations = nutrient_conc
     dry_matter_intake = nutrient_amounts["dm"]
@@ -97,7 +97,7 @@ def manure_calculations(
         15.1
         + 0.83
         * (dry_matter_intake * GeneralConstants.KG_TO_GRAMS)
-        * (CP_concentration * GeneralConstants.PROTEIN_TO_NITROGEN)
+        * (CP_concentration * UserConstants.PROTEIN_TO_NITROGEN)
         / GeneralConstants.FRACTION_TO_PERCENTAGE
     ) * GeneralConstants.GRAMS_TO_KG
 
@@ -106,7 +106,7 @@ def manure_calculations(
         0.345
         + 0.317
         * (dry_matter_intake * GeneralConstants.KG_TO_GRAMS)
-        * (CP_concentration * GeneralConstants.PROTEIN_TO_NITROGEN)
+        * (CP_concentration * UserConstants.PROTEIN_TO_NITROGEN)
         / GeneralConstants.FRACTION_TO_PERCENTAGE
     ) * GeneralConstants.GRAMS_TO_KG
 

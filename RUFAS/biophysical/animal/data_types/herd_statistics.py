@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from RUFAS.biophysical.animal import animal_constants
 from RUFAS.biophysical.animal.data_types.animal_typed_dicts import SoldAnimalTypedDict
+from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 
 
 @dataclass
@@ -42,6 +43,8 @@ class HerdStatistics:
         Total count of heifers categorized as "Heifer III", (unitless).
     cow_num : int
         Total count of cows in the herd, (unitless).
+    stillborn_calf_num  : int
+        Number of stillborn calves during a specific period, (unitless).
     sold_calf_num : int
         Number of calves sold during a specific period, (unitless).
     sold_heiferIII_oversupply_num : int
@@ -54,6 +57,8 @@ class HerdStatistics:
         Number of cows that exited the herd, totalled for both sales and deaths, (unitless).
     sold_cow_num : int
         Number of cows sold during the specific period, (unitless).
+    born_calf_num : int
+        The total amount of calf born, including stillborn, newborn and sold.
     calf_percent : float
         Proportion of calves in the herd expressed as a percentage, (unitless).
     heiferI_percent : float
@@ -145,6 +150,9 @@ class HerdStatistics:
         Percentage statistics of culled animals, categorized by culling reasons, (unitless).
     percent_cow_for_parity : dict[str, float]
         Percentage of cows available for each parity class, calculated based on total counts, (unitless).
+    total_enteric_methane : dict[AnimalType, dict[str, float]]
+        Total amount of enteric methane, grouped by animal types and methods (g/day).
+
     """
 
     avg_calving_to_preg_time: dict[str, float]
@@ -159,6 +167,7 @@ class HerdStatistics:
     sold_cows_info: list[SoldAnimalTypedDict]
     sold_and_died_cows_info: list[SoldAnimalTypedDict]
 
+    # TODO: Maybe break this list down into smaller lists GitHub Issue #1215
     herd_num = 0
     calf_num = 0
     heiferI_num = 0
@@ -166,12 +175,14 @@ class HerdStatistics:
     heiferIII_num = 0
     cow_num = 0
 
+    stillborn_calf_num = 0
     sold_calf_num = 0
     sold_heiferIII_oversupply_num = 0
     bought_heifer_num = 0
     sold_heiferII_num = 0
     cow_herd_exit_num = 0
     sold_cow_num = 0
+    born_calf_num = 0
 
     calf_percent = 0.0
     heiferI_percent = 0.0
@@ -228,6 +239,9 @@ class HerdStatistics:
     cull_reason_stats_percent: dict[str, float]
     percent_cow_for_parity: dict[str, float]
 
+    animals_deaths_by_stage: dict[AnimalType, int]
+    total_enteric_methane: dict[AnimalType, dict[str, float]]
+
     def __init__(self) -> None:
         """
         Initializes a HerdStatistics object and set the default values for all dictionary and list attributes.
@@ -269,11 +283,30 @@ class HerdStatistics:
             "greater_than_3": 0.0,
         }
 
+        self.stillborn_calf_info = []
         self.sold_calves_info = []
         self.sold_heiferIIIs_info = []
         self.sold_heiferIIs_info = []
         self.sold_cows_info = []
         self.sold_and_died_cows_info = []
+
+        self.animals_deaths_by_stage: dict[AnimalType, int] = {
+            AnimalType.CALF: 0,
+            AnimalType.HEIFER_I: 0,
+            AnimalType.HEIFER_II: 0,
+            AnimalType.HEIFER_III: 0,
+            AnimalType.LAC_COW: 0,
+            AnimalType.DRY_COW: 0,
+        }
+
+        self.total_enteric_methane: dict[AnimalType, dict[str, float]] = {
+            AnimalType.CALF: {},
+            AnimalType.HEIFER_I: {},
+            AnimalType.HEIFER_II: {},
+            AnimalType.HEIFER_III: {},
+            AnimalType.LAC_COW: {},
+            AnimalType.DRY_COW: {},
+        }
 
     def reset_daily_stats(self) -> None:
         """Resets daily-based attributes."""
@@ -283,12 +316,14 @@ class HerdStatistics:
         self.heiferIII_num = 0
         self.cow_num = 0
 
+        self.stillborn_calf_num = 0
         self.sold_calf_num = 0
         self.sold_heiferIII_oversupply_num = 0
         self.bought_heifer_num = 0
         self.sold_heiferII_num = 0
         self.cow_herd_exit_num = 0
         self.sold_cow_num = 0
+        self.born_calf_num = 0
 
         self.calf_percent = 0.0
         self.heiferI_percent = 0.0
@@ -296,6 +331,7 @@ class HerdStatistics:
         self.heiferIII_percent = 0.0
         self.cow_percent = 0.0
 
+        # TODO: Check if all the following variables need to reset daily GitHub Issue #1215
         self.CIDR_count = 0
         self.preg_check_num_h = 0
         self.preg_check_num = 0
@@ -336,6 +372,24 @@ class HerdStatistics:
         self.avg_heifer_culling_age = 0.0
         self.avg_cow_culling_age = 0.0
         self.avg_mature_body_weight = 0.0
+
+        self.animals_deaths_by_stage: dict[AnimalType, int] = {
+            AnimalType.CALF: 0,
+            AnimalType.HEIFER_I: 0,
+            AnimalType.HEIFER_II: 0,
+            AnimalType.HEIFER_III: 0,
+            AnimalType.LAC_COW: 0,
+            AnimalType.DRY_COW: 0,
+        }
+
+        self.total_enteric_methane: dict[AnimalType, dict[str, float]] = {
+            AnimalType.CALF: {},
+            AnimalType.HEIFER_I: {},
+            AnimalType.HEIFER_II: {},
+            AnimalType.HEIFER_III: {},
+            AnimalType.LAC_COW: {},
+            AnimalType.DRY_COW: {},
+        }
 
     def reset_parity(self) -> None:
         """Resets parity-based attributes."""

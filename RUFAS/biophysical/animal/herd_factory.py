@@ -387,7 +387,7 @@ class HerdFactory:
                 animal_type=AnimalType.CALF.value,
             )
             calf = Animal(args)
-            if not calf.sold:
+            if not (calf.sold or calf.stillborn):
                 self.pre_animal_population.calves.append(calf)
                 birth_date_str: str = self.time.current_date.strftime("%Y-%m-%d")
                 calf.net_merit = AnimalGenetics.assign_net_merit_value_to_animals_entering_herd(
@@ -410,7 +410,7 @@ class HerdFactory:
         birth_date: datetime.datetime = simulation_start_date - datetime.timedelta(days=days_born)
         return birth_date.strftime("%Y-%m-%d")
 
-    def _init_animal_from_data(self, animal_type: str, animal_data: dict[str, Any]) -> Animal:
+    def _init_animal_from_data(self, animal_type: str, animal_data: Any) -> Animal:
         """Function to initialize an animal object from input data"""
         animal_data.update(id=self.pre_animal_population.next_id())
         if animal_type == "calf":
@@ -536,16 +536,16 @@ class HerdFactory:
             "heiferII": self.pre_animal_population.heiferIIs,
             "heiferIII": self.pre_animal_population.heiferIIIs,
             "cow": self.pre_animal_population.cows,
-            "cows_parity_1_milking": self.pre_animal_population.cows_parity_1_milking,
-            "cows_parity_2_milking": self.pre_animal_population.cows_parity_2_milking,
-            "cows_parity_3_milking": self.pre_animal_population.cows_parity_3_milking,
-            "cows_parity_4_milking": self.pre_animal_population.cows_parity_4_milking,
-            "cows_parity_5_milking": self.pre_animal_population.cows_parity_5_milking,
-            "cows_parity_1_not_milking": self.pre_animal_population.cows_parity_1_not_milking,
-            "cows_parity_2_not_milking": self.pre_animal_population.cows_parity_2_not_milking,
-            "cows_parity_3_not_milking": self.pre_animal_population.cows_parity_3_not_milking,
-            "cows_parity_4_not_milking": self.pre_animal_population.cows_parity_4_not_milking,
-            "cows_parity_5_not_milking": self.pre_animal_population.cows_parity_5_not_milking,
+            "cows_parity_1_milking": self.pre_animal_population.filter_cow_status(1, True),
+            "cows_parity_2_milking": self.pre_animal_population.filter_cow_status(2, True),
+            "cows_parity_3_milking": self.pre_animal_population.filter_cow_status(3, True),
+            "cows_parity_4_milking": self.pre_animal_population.filter_cow_status(4, True),
+            "cows_parity_5_milking": self.pre_animal_population.filter_cow_status(5, True),
+            "cows_parity_1_not_milking": self.pre_animal_population.filter_cow_status(1, False),
+            "cows_parity_2_not_milking": self.pre_animal_population.filter_cow_status(2, False),
+            "cows_parity_3_not_milking": self.pre_animal_population.filter_cow_status(3, False),
+            "cows_parity_4_not_milking": self.pre_animal_population.filter_cow_status(4, False),
+            "cows_parity_5_not_milking": self.pre_animal_population.filter_cow_status(5, False),
             "replacement": self.pre_animal_population.replacement,
         }
         pre_animals = PRE_ANIMAL_DATA[animal_type]

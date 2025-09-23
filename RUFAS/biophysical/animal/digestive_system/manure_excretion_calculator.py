@@ -2,9 +2,10 @@ from typing import Tuple
 
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
 from RUFAS.biophysical.animal.data_types.nutrition_data_structures import NutritionSupply
-from RUFAS.data_structures.animal_manure_excretions import AnimalManureExcretions
+from RUFAS.biophysical.animal.data_types.animal_manure_excretions import AnimalManureExcretions
 
 from RUFAS.general_constants import GeneralConstants
+from RUFAS.user_constants import UserConstants
 
 
 class ManureExcretionCalculator:
@@ -193,7 +194,7 @@ class ManureExcretionCalculator:
             15.1
             + 0.83
             * (dry_matter_intake * GeneralConstants.KG_TO_GRAMS)
-            * (crude_protein_concentration * GeneralConstants.PROTEIN_TO_NITROGEN)
+            * (crude_protein_concentration * UserConstants.PROTEIN_TO_NITROGEN)
             * GeneralConstants.PERCENTAGE_TO_FRACTION
         ) * GeneralConstants.GRAMS_TO_KG
 
@@ -201,7 +202,7 @@ class ManureExcretionCalculator:
             0.345
             + 0.317
             * (dry_matter_intake * GeneralConstants.KG_TO_GRAMS)
-            * (crude_protein_concentration * GeneralConstants.PROTEIN_TO_NITROGEN)
+            * (crude_protein_concentration * UserConstants.PROTEIN_TO_NITROGEN)
             * GeneralConstants.PERCENTAGE_TO_FRACTION
         ) * GeneralConstants.GRAMS_TO_KG
 
@@ -413,7 +414,7 @@ class ManureExcretionCalculator:
             20.3
             + 0.654
             * (dry_matter_intake * GeneralConstants.KG_TO_GRAMS)
-            * (crude_protein_concentration * GeneralConstants.PROTEIN_TO_NITROGEN)
+            * (crude_protein_concentration * UserConstants.PROTEIN_TO_NITROGEN)
             * GeneralConstants.PERCENTAGE_TO_FRACTION
         ) * GeneralConstants.GRAMS_TO_KG
 
@@ -595,7 +596,7 @@ class ManureExcretionCalculator:
             15.1
             + 0.83
             * (dry_matter_intake * GeneralConstants.KG_TO_GRAMS)
-            * (crude_protein_concentration * GeneralConstants.PROTEIN_TO_NITROGEN)
+            * (crude_protein_concentration * UserConstants.PROTEIN_TO_NITROGEN)
             / GeneralConstants.FRACTION_TO_PERCENTAGE
         ) * GeneralConstants.GRAMS_TO_KG
 
@@ -603,7 +604,7 @@ class ManureExcretionCalculator:
             0.345
             + 0.317
             * (dry_matter_intake * GeneralConstants.KG_TO_GRAMS)
-            * (crude_protein_concentration * GeneralConstants.PROTEIN_TO_NITROGEN)
+            * (crude_protein_concentration * UserConstants.PROTEIN_TO_NITROGEN)
             * GeneralConstants.PERCENTAGE_TO_FRACTION
         ) * GeneralConstants.GRAMS_TO_KG
 

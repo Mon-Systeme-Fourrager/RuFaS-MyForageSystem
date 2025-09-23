@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import collections
 import json
 import os
 import sys
@@ -10,6 +9,7 @@ from functools import partial
 from pathlib import Path
 from typing import Any, Counter, TextIO, Union, Callable
 
+import collections
 import numpy as np
 import pandas as pd
 import psutil
@@ -18,6 +18,7 @@ from RUFAS.general_constants import GeneralConstants
 from RUFAS.graph_generator import GraphGenerator
 from RUFAS.report_generator import ReportGenerator
 from RUFAS.units import MeasurementUnits
+from RUFAS.user_constants import UserConstants
 from RUFAS.util import Utility
 
 DISCLAIMER_MESSAGE = "Under construction, use the results with caution."
@@ -1192,7 +1193,7 @@ class OutputManager(object):
         else:
             raise NotADirectoryError("The specified path must be a directory")
 
-    def _load_filter_file_content(self, path: Path) -> tuple[list[dict[str, str | int]], str | None]:
+    def _load_filter_file_content(self, path: Path) -> tuple[list[dict[str, Any]], str | None]:
         """
         Loads and processes the content of a filter file from the specified path.
 
@@ -1572,13 +1573,17 @@ class OutputManager(object):
             report_file_path = report_dir / self.generate_file_name(f"report_{filter_file}", "csv")
             if report_generator.reports:
                 if has_cross_references and has_data_significant_digits:
+                    significant_digits_limited_reports = ", ".join(
+                        f"'{report}'" for report in limited_significant_digits_reports
+                    )
+                    cross_referenced_reports = ", ".join(f"'{report}'" for report in cross_ref_reports)
                     self.add_warning(
                         "Report Generation Warning",
-                        "Reports generated have both cross references and data significant digits. Significant digits "
-                        f"were limited for the following reports: "
-                        f"{', '.join(f'\"{report}\"' for report in limited_significant_digits_reports)}. "
+                        "Reports generated have both cross references and data significant digits. "
+                        "Significant digits were limited for the following reports: "
+                        f"{significant_digits_limited_reports}. "
                         "Results may be affected for the following cross-referenced reports: "
-                        f"{', '.join(f'\"{report}\"' for report in cross_ref_reports)}.",
+                        f"{cross_referenced_reports}.",
                         info_map,
                     )
                 self.create_directory(report_dir)
@@ -1607,7 +1612,7 @@ class OutputManager(object):
         if "data_significant_digits" in filter_content:
             filtered_pool = {
                 key: (
-                    Utility.round_numeric_values_in_dict(value, filter_content["data_significant_digits"])
+                    Utility.round_numeric_values_in_dict(value, int(filter_content["data_significant_digits"]))
                     if isinstance(value, dict)
                     else value
                 )
@@ -2107,6 +2112,89 @@ class OutputManager(object):
                 f"{warnings_count} warning(s), and {logs_count} log(s).\n"
             )
 
+    def summarize_e2e_test_results(self, json_output_directory: Path, output_prefixes: list[str]) -> None:
+        """
+        Summarizes the end-to-end test results by gathering the results from all the e2e tests and readies them to be
+        printed out to the console.
+        This method is intended to be called at the end of an end-to-end testing run.
+
+        Parameters
+        ----------
+        json_output_directory : Path
+            The directory where the JSON output files are located.
+        output_prefixes : list[str]
+            A list of output prefixes to look for in the filenames.
+        """
+        info_map = {
+            "class": self.__class__.__name__,
+            "function": self.summarize_e2e_test_results.__name__,
+        }
+        self.add_log(
+            "Attempting to open e2e test results directory",
+            "Opening e2e test results directory to read results files",
+            info_map,
+        )
+        module_headers: list[str] = ["Animal", "CropAndSoil", "Manure"]
+        e2e_results_summary: dict[str, dict[str, bool | str]] = {
+            prefix: {header: "n/a" for header in module_headers} for prefix in output_prefixes
+        }
+        all_results_files = os.listdir(json_output_directory)
+        for filename in all_results_files:
+            if "comparison" not in filename.lower() or not filename.endswith(".json"):
+                continue
+            file_path = json_output_directory / filename
+            try:
+                with open(file_path, "r") as file:
+                    data: dict[str, Any] = json.load(file)
+            except Exception as exc:
+                self.add_error("File path invalid.", f"Failed to read {file_path}: {exc}", info_map)
+                continue
+
+            matched_prefix = next((prefix for prefix in output_prefixes if prefix.lower() in filename.lower()), None)
+            if matched_prefix is None:
+                self.add_error(
+                    "Invalid e2e output prefix", f"No matching output_prefix found in filename: {filename}", info_map
+                )
+                continue
+
+            for key, value in data.items():
+                if key == "DISCLAIMER":
+                    continue
+                module = self._normalize_module_header(key)
+                e2e_results_summary[matched_prefix][module] = value["values"][0]
+
+        self.add_log(
+            "Successfully opened e2e test results directory", "Directory opened and files successfully read", info_map
+        )
+
+        self._print_e2e_results_summary(e2e_results_summary)
+
+    def _print_e2e_results_summary(self, e2e_results_summary: dict[str, dict[str, bool | str]]) -> None:
+        """
+        Prints the end-to-end results summary to the console.
+        """
+        sys.stdout.write("Summary of e2e results:\n\n")
+        for prefix, results in e2e_results_summary.items():
+            sys.stdout.write(f"{prefix} results:\n")
+            for module, result in results.items():
+                result = "Passing" if result is True else "Failing" if result is False else result
+                sys.stdout.write(f"  {module}: {result}\n")
+            sys.stdout.write("\n")
+
+    @staticmethod
+    def _normalize_module_header(json_key: str) -> str:
+        """
+        Normalizes the module header from a JSON key.
+        """
+        module = json_key.split(".", 1)[0].lower()
+        if module == "animal":
+            return "Animal"
+        if module == "crop_and_soil":
+            return "CropAndSoil"
+        if module == "manure":
+            return "Manure"
+        return json_key.split(".", 1)[0]
+
     def set_exclude_info_maps_flag(self, exclude_info_maps: bool) -> None:
         """
         Sets the exclude_info_maps flag to the given value.
@@ -2413,6 +2501,38 @@ class OutputManager(object):
             else:
                 validator = key_validators[key]
                 validator(value, key, filter_name)
+
+    def validate_filter_constant_content(self, filters_dir_path: Path) -> None:
+        """
+        Validates the content of the filters, including keys and values.
+
+        Parameters
+        ----------
+        filters_dir_path : Path
+            Path of the directory containing the files containing the keys for filtering.
+
+        """
+        list_of_filter_files = self._list_filter_files_in_dir(filters_dir_path)
+        for filter_file in list_of_filter_files:
+            input_path = filters_dir_path / filter_file
+            filter_contents, direction = self._load_filter_file_content(input_path)
+            for content in filter_contents:
+                for name, new_value in content.get("constants", {}).items():
+                    if not hasattr(UserConstants, name):
+                        continue
+                    old_value = getattr(UserConstants, name)
+                    if new_value == old_value:
+                        continue
+
+                    setattr(UserConstants, name, new_value)
+                    self.add_warning(
+                        "UserConstants overwritten.",
+                        f"{name} overwritten by report filter; now set to {new_value}",
+                        info_map={
+                            "class": self.__class__.__name__,
+                            "function": self.validate_filter_content.__name__,
+                        },
+                    )
 
     def validate_direction(self, value: Any, content_name: str, filter_name: str) -> None:
         """

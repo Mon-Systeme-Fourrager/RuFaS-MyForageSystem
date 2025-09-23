@@ -83,6 +83,13 @@
         "default": 100,
         "minimum": 6
       },
+      "lactating_fraction":{
+        "type":"number",
+        "description": "The fraction of cows that are lactating",
+        "default": 0.8,
+        "minimum":0.01,
+        "maximum": 1.0
+      },
       "breed": {
         "type": "string",
         "default": "HO",
@@ -775,10 +782,72 @@
       "default": 0
     },
     "methane_model": {
-      "description": "Methane Model (select one) -- The method used to estimate enteric methane emissions for lactating cows",
-      "type": "string",
-      "default": "IPCC",
-      "pattern": "^(Mills|Mutian|IPCC)$"
+      "type": "object",
+      "description": "Methane emission models to use",
+      "calves": {
+        "type": "object",
+        "description": "Methane emission models to use fro calves.",
+        "Pattanaik": {
+          "type": "bool",
+          "default": true
+        }
+      },
+      "heiferIs": {
+        "type": "object",
+        "description": "Methane emission models to heiferIs.",
+        "IPCC": {
+          "type": "bool",
+          "default": true
+        }
+      },
+      "heiferIIs": {
+        "type": "object",
+        "description": "Methane emission models to heiferIIs.",
+        "IPCC": {
+          "type": "bool",
+          "default": true
+        }
+      },
+      "heiferIIIs": {
+        "type": "object",
+        "description": "Methane emission models to heiferIIIs.",
+        "IPCC": {
+          "type": "bool",
+          "default": true
+        }
+      },
+      "cows": {
+        "type": "object",
+        "description": "Methane emission models to cows.",
+        "dry cows": {
+          "type": "object",
+          "description": "Methane emission models to dry cows.",
+          "IPCC": {
+            "type": "bool",
+            "default": true
+          },
+          "Mills": {
+            "type": "bool",
+            "default": false
+          }
+        },
+        "lactating cows": {
+          "type": "object",
+          "description": "Methane emission models to lactating cows.",
+          "IPCC": {
+            "type": "bool",
+            "default": true
+          },
+          "Mills": {
+            "type": "bool",
+            "default": false
+          },
+          "Mutian": {
+            "type": "bool",
+            "default": false
+          }
+        }
+      }
     },
     "ration": {
       "type": "object",
@@ -864,7 +933,7 @@
           "nullable": true
         },
         "first_parlor_processor": {
-          "description": "Name of the parlor cleaning manure handler assigned to this pen. Must be a parlor cleaning handler listed in the manure processors configuration input file  (default file name: manure_processor_configs.json).",
+          "description": "Name of the parlor cleaning manure handler assigned to this pen. Must be a parlor cleaning handler listed in the manure processors configuration input file  (default file name: example_freestall_processor_configs.json).",
           "type": "string",
           "nullable": true
         },
@@ -3871,6 +3940,12 @@
           "type": "number",
           "description": "Cost of Feed (US dollars/kg DM)",
           "minimum": 0
+        },
+        "buffer": {
+          "type": "number",
+          "description": "Fractional number 0 to 1 as a cushion for feed purchases to help plan for herd fluctuations and feed shrink.",
+          "minimum": 0,
+          "maximum": 1
         }
       }
     },
@@ -4092,7 +4167,7 @@
       "properties": {
         "type": "number",
         "minimum": 0,
-        "maximum": 12,
+        "maximum": 80,
         "default": 0
       }
     },
@@ -4102,7 +4177,7 @@
       "properties": {
         "type": "number",
         "minimum": 0,
-        "maximum": 8,
+        "maximum": 80,
         "default": 0
       }
     },
@@ -4122,7 +4197,7 @@
       "properties": {
         "type": "number",
         "minimum": 0,
-        "maximum": 85,
+        "maximum": 95,
         "default": 0
       }
     },
@@ -4132,7 +4207,7 @@
       "properties": {
         "type": "number",
         "minimum": 0,
-        "maximum": 66,
+        "maximum": 95,
         "default": 0
       }
     },
@@ -4142,7 +4217,7 @@
       "properties": {
         "type": "number",
         "minimum": 0,
-        "maximum": 25,
+        "maximum": 95,
         "default": 0
       }
     },
@@ -4171,7 +4246,7 @@
       "description": "Processing adjustment factor.",
       "properties": {
         "type": "number",
-        "minimum": 0.87,
+        "minimum": 0.0,
         "maximum": 1.04,
         "default": 0.87
       }
@@ -4493,7 +4568,7 @@
       "properties": {
         "type": "number",
         "minimum": 0,
-        "maximum": 8,
+        "maximum": 60,
         "default": 0
       }
     },
@@ -4503,7 +4578,7 @@
       "properties": {
         "type": "number",
         "minimum": 0,
-        "maximum": 12,
+        "maximum": 80,
         "default": 0
       }
     },
@@ -4513,7 +4588,7 @@
       "properties": {
         "type": "number",
         "minimum": 0,
-        "maximum": 66,
+        "maximum": 95,
         "default": 0
       }
     },
@@ -4523,7 +4598,7 @@
       "properties": {
         "type": "number",
         "minimum": 0,
-        "maximum": 85,
+        "maximum": 95,
         "default": 0
       }
     },
@@ -4533,7 +4608,7 @@
       "properties": {
         "type": "number",
         "minimum": 0,
-        "maximum": 89,
+        "maximum": 95,
         "default": 0
       }
     },
@@ -4543,7 +4618,7 @@
       "properties": {
         "type": "number",
         "minimum": 0,
-        "maximum": 25,
+        "maximum": 95,
         "default": 0
       }
     },
@@ -4553,7 +4628,7 @@
       "properties": {
         "type": "number",
         "minimum": 0,
-        "maximum": 80,
+        "maximum": 100,
         "default": 0
       }
     },
@@ -4613,7 +4688,7 @@
       "properties": {
         "type": "number",
         "minimum": 0,
-        "maximum": 32,
+        "maximum": 100,
         "default": 0
       }
     },
@@ -4623,7 +4698,7 @@
       "properties": {
         "type": "number",
         "minimum": 0,
-        "maximum": 57,
+        "maximum": 100,
         "default": 0
       }
     },
@@ -4633,7 +4708,7 @@
       "properties": {
         "type": "number",
         "minimum": 0,
-        "maximum": 57,
+        "maximum": 100,
         "default": 0
       }
     },
@@ -4643,7 +4718,7 @@
       "properties": {
         "type": "number",
         "minimum": 0,
-        "maximum": 40,
+        "maximum": 100,
         "default": 0
       }
     },
@@ -4653,7 +4728,7 @@
       "properties": {
         "type": "number",
         "minimum": 0,
-        "maximum": 67,
+        "maximum": 100,
         "default": 0
       }
     },
@@ -4663,7 +4738,7 @@
       "properties": {
         "type": "number",
         "minimum": 0,
-        "maximum": 25,
+        "maximum": 100,
         "default": 0
       }
     },
@@ -5225,7 +5300,7 @@
         "processor_type": {
           "type": "string",
           "description": "The type of storage used.",
-          "pattern": "^(SlurryStorageOutdoor|SlurryStorageUnderfloor|AnaerobicLagoon|Composting|OpenLot|CompostBeddedPackBarn)$"
+          "pattern": "^(SlurryStorageOutdoor|SlurryStorageUnderfloor|AnaerobicLagoon|Composting|OpenLot|BeddedPack|DailySpread)$"
         },
         "capacity": {
           "type": "number",
@@ -5255,6 +5330,11 @@
           "type": "string",
           "description": "Composting method, applicable only to the composting storage type.",
           "pattern": "^(intensive windrow|passive windrow|static pile)$",
+          "nullable": true
+        },
+        "is_mixed": {
+          "type": "bool",
+          "description": "Indicator for if the bedded pack is regularly mixed to promote composting activity.",
           "nullable": true
         }
       }
@@ -5879,228 +5959,79 @@
   "end_to_end_test_result_path_properties": {
     "data_collection_app_compatible": false,
     "end_to_end_test_result_paths": {
-      "type": "array",
+      "type": "object",
       "description": "List of paths to results used to execute end-to-end testing, as well as the domain that they are in.",
-      "properties": {
-        "type": "object",
-        "domain": {
-          "type": "string",
-          "description": "Indicates which domain of RuFaS is being tested with the associated paths."
-        },
-        "expected_results_path": {
-          "type": "string",
-          "description": "Path to the file with the expected results for the specified domain."
-        },
-        "actual_results_path": {
-          "type": "string",
-          "description": "Path to the file with the actual results for the specified domain."
-        },
-        "tolerance": {
-          "type": "number",
-          "description": "The relative tolerance (expressed as a percent) used to compare expected and actual results for changed values found in the e2e results comparison.",
-          "default": 0.0,
-          "minimum": 0.0
+      "freestall_e2e": {
+        "type": "array",
+        "properties": {
+          "type": "object",
+          "domain": {
+            "type": "string",
+            "description": "Indicates which domain of RuFaS is being tested with the associated paths."
+          },
+          "expected_results_path": {
+            "type": "string",
+            "description": "Path to the file with the expected results for the specified domain."
+          },
+          "actual_results_path": {
+            "type": "string",
+            "description": "Path to the file with the actual results for the specified domain."
+          },
+          "tolerance": {
+            "type": "number",
+            "description": "The relative tolerance (expressed as a percent) used to compare expected and actual results for changed values found in the e2e results comparison.",
+            "default": 0.0,
+            "minimum": 0.0
+          }
         }
-      }
-    }
-  },
-  "end_to_end_testing_input_properties": {
-    "data_collection_app_compatible": false,
-    "reusable_values": {
-      "type": "object",
-      "fresh_mass": {
-        "type": "number"
       },
-      "dry_matter_digestibility": {
-        "type": "number"
-      }
-    },
-    "hay_values": {
-      "type": "object",
-      "category": {
-        "type": "string"
-      },
-      "crop_type": {
-        "type": "string"
-      },
-      "dry_matter_percentage": {
-        "type": "number"
-      },
-      "config_name": {
-        "type": "string",
-        "description": "Name of the crop configuration that produced this harvested crop."
-      },
-      "rufas_ids": {
-          "type": "array",
-          "description": "List of RuFaS Feed IDs which harvests from this crop configuration can be fed to animals as. Must be selected from the \"rufas_id\" of the feed library used.",
-          "properties": {
-            "type": "number"
+      "open_lot_e2e": {
+        "type": "array",
+        "properties": {
+          "type": "object",
+          "domain": {
+            "type": "string",
+            "description": "Indicates which domain of RuFaS is being tested with the associated paths."
+          },
+          "expected_results_path": {
+            "type": "string",
+            "description": "Path to the file with the expected results for the specified domain."
+          },
+          "actual_results_path": {
+            "type": "string",
+            "description": "Path to the file with the actual results for the specified domain."
+          },
+          "tolerance": {
+            "type": "number",
+            "description": "The relative tolerance (expressed as a percent) used to compare expected and actual results for changed values found in the e2e results comparison.",
+            "default": 0.0,
+            "minimum": 0.0
           }
-        },
-      "lignin": {
-        "type": "number"
+        }
       },
-      "crude_protein_percent": {
-        "type": "number"
-      },
-      "non_protein_nitrogen": {
-        "type": "number"
-      },
-      "starch": {
-        "type": "number"
-      },
-      "adf": {
-        "type": "number"
-      },
-      "ndf": {
-        "type": "number"
-      },
-      "sugar": {
-        "type": "number"
-      },
-      "ash": {
-        "type": "number"
-      }
-    },
-    "baleage_values": {
-      "type": "object",
-      "category": {
-        "type": "string"
-      },
-      "crop_type": {
-        "type": "string"
-      },
-      "dry_matter_percentage": {
-        "type": "number"
-      },
-      "config_name": {
-        "type": "string",
-        "description": "Name of the crop configuration that produced this harvested crop."
-      },
-      "rufas_ids": {
-          "type": "array",
-          "description": "List of RuFaS Feed IDs which harvests from this crop configuration can be fed to animals as. Must be selected from the \"rufas_id\" of the feed library used.",
-          "properties": {
-            "type": "number"
+      "no_animal_e2e": {
+        "type": "array",
+        "properties": {
+          "type": "object",
+          "domain": {
+            "type": "string",
+            "description": "Indicates which domain of RuFaS is being tested with the associated paths."
+          },
+          "expected_results_path": {
+            "type": "string",
+            "description": "Path to the file with the expected results for the specified domain."
+          },
+          "actual_results_path": {
+            "type": "string",
+            "description": "Path to the file with the actual results for the specified domain."
+          },
+          "tolerance": {
+            "type": "number",
+            "description": "The relative tolerance (expressed as a percent) used to compare expected and actual results for changed values found in the e2e results comparison.",
+            "default": 0.0,
+            "minimum": 0.0
           }
-        },
-      "lignin": {
-        "type": "number"
-      },
-      "crude_protein_percent": {
-        "type": "number"
-      },
-      "non_protein_nitrogen": {
-        "type": "number"
-      },
-      "starch": {
-        "type": "number"
-      },
-      "adf": {
-        "type": "number"
-      },
-      "ndf": {
-        "type": "number"
-      },
-      "sugar": {
-        "type": "number"
-      },
-      "ash": {
-        "type": "number"
-      }
-    },
-    "grain_values": {
-      "type": "object",
-      "category": {
-        "type": "string"
-      },
-      "crop_type": {
-        "type": "string"
-      },
-      "dry_matter_percentage": {
-        "type": "number"
-      },
-      "config_name": {
-        "type": "string",
-        "description": "Name of the crop configuration that produced this harvested crop."
-      },
-      "rufas_ids": {
-          "type": "array",
-          "description": "List of RuFaS Feed IDs which harvests from this crop configuration can be fed to animals as. Must be selected from the \"rufas_id\" of the feed library used.",
-          "properties": {
-            "type": "number"
-          }
-        },
-      "lignin": {
-        "type": "number"
-      },
-      "crude_protein_percent": {
-        "type": "number"
-      },
-      "non_protein_nitrogen": {
-        "type": "number"
-      },
-      "starch": {
-        "type": "number"
-      },
-      "adf": {
-        "type": "number"
-      },
-      "ndf": {
-        "type": "number"
-      },
-      "sugar": {
-        "type": "number"
-      },
-      "ash": {
-        "type": "number"
-      }
-    },
-    "silage_values": {
-      "type": "object",
-      "category": {
-        "type": "string"
-      },
-      "crop_type": {
-        "type": "string"
-      },
-      "dry_matter_percentage": {
-        "type": "number"
-      },
-      "config_name": {
-        "type": "string",
-        "description": "Name of the crop configuration that produced this harvested crop."
-      },
-      "rufas_ids": {
-          "type": "array",
-          "description": "List of RuFaS Feed IDs which harvests from this crop configuration can be fed to animals as. Must be selected from the \"rufas_id\" of the feed library used.",
-          "properties": {
-            "type": "number"
-          }
-        },
-      "lignin": {
-        "type": "number"
-      },
-      "crude_protein_percent": {
-        "type": "number"
-      },
-      "non_protein_nitrogen": {
-        "type": "number"
-      },
-      "starch": {
-        "type": "number"
-      },
-      "adf": {
-        "type": "number"
-      },
-      "ndf": {
-        "type": "number"
-      },
-      "sugar": {
-        "type": "number"
-      },
-      "ash": {
-        "type": "number"
+        }
       }
     }
   },

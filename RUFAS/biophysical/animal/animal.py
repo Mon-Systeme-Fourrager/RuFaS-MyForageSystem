@@ -184,6 +184,7 @@ class Animal:
         self.body_weight_history: list[BodyWeightHistory] = []
         self.pen_history: list[PenHistory] = []
         self.sold_at_day: int | None = None
+        self.stillborn_day: int | None = None
         self.dead_at_day: int | None = None
         self.events = AnimalEvents()
 
@@ -1033,6 +1034,19 @@ class Animal:
         self.reproduction.cow_resynch_program = cow_resynch_program
 
     @property
+    def stillborn(self) -> bool:
+        """
+        Checks if the object is stillborn based on the presence and value of `stillborn_day`.
+
+        Returns
+        -------
+        bool
+            True if `stillborn_day` is not None and greater than or equal to 0, otherwise False.
+
+        """
+        return True if (self.stillborn_day is not None and self.stillborn_day >= 0) else False
+
+    @property
     def sold(self) -> bool:
         """
         Checks if the object is sold based on the presence and value of `sold_at_day`.
@@ -1103,8 +1117,8 @@ class Animal:
         self._assign_sex_to_newborn_calf()
 
         if random() < AnimalConfig.still_birth_rate:
-            self.sold_at_day = simulation_day
-            self.events.add_event(0, 0, animal_constants.STILL_BIRTH)
+            self.stillborn_day = simulation_day
+            self.events.add_event(0, simulation_day, animal_constants.STILL_BIRTH)
 
         is_sold = (
             True
@@ -1145,7 +1159,7 @@ class Animal:
 
     def _determine_heifer_reproduction_programs(
         self, args: HeiferIIValuesTypedDict | HeiferIIIValuesTypedDict
-    ) -> tuple[HeiferReproductionProtocol, HeiferTAISubProtocol | HeiferSynchEDSubProtocol]:
+    ) -> tuple[HeiferReproductionProtocol | None, HeiferTAISubProtocol | HeiferSynchEDSubProtocol | None]:
         """
         Determines the reproduction program and sub-program for a heifer.
 
@@ -1281,7 +1295,7 @@ class Animal:
         )
         self.nutrients.perform_daily_phosphorus_update(nutrients_inputs)
 
-    def _daily_digestive_system_update(self) -> None:
+    def _daily_digestive_system_update(self) -> dict[AnimalType, dict[str, float]]:
         """
         Performs the daily digestive system updates for the animal.
 
@@ -1306,7 +1320,8 @@ class Animal:
             fat_content=MilkProduction.fat_percent,
             protein_content=self.milk_production.true_protein_content,
         )
-        self.digestive_system.process_digestion(digestive_system_inputs)
+        digestion_output = self.digestive_system.process_digestion(digestive_system_inputs)
+        return digestion_output
 
     def daily_milking_update(self, time: RufasTime) -> None:
         """
@@ -1531,7 +1546,8 @@ class Animal:
 
         self._daily_nutrients_update()
 
-        self._daily_digestive_system_update()
+        digestion_outputs = self._daily_digestive_system_update()
+        daily_routines_output.daily_digestion_output = digestion_outputs
 
         self.daily_milking_update(time)
 
@@ -1886,7 +1902,7 @@ class Animal:
             If the animal_type is not present in the mapping dictionary.
 
         """
-        mapping: dict[AnimalType, Callable[[], dict[str, Any]]] = {
+        mapping: dict[AnimalType, Callable[[], Any]] = {
             AnimalType.CALF: self._get_calf_values,
             AnimalType.HEIFER_I: self._get_heiferI_values,
             AnimalType.HEIFER_II: self._get_heiferII_values,
@@ -2248,7 +2264,7 @@ class Animal:
             calf_requirements = CalfRationManager.calc_requirements(
                 self.days_born, self.body_weight, previous_temperature, calf_intake
             )
-            # TODO: do not use dummy values for calf calcium and phosphorus requirements - issue pending.
+            # TODO: do not use dummy values for calf calcium and phosphorus requirements - issue 2517.
             return NutritionRequirements(
                 maintenance_energy=calf_requirements["ne_maint"],
                 growth_energy=calf_requirements["ne_gain"],
