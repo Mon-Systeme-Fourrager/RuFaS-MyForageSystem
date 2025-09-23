@@ -27,6 +27,7 @@ def mock_silage_config() -> dict:
         "size": 1000.0,
     }
 
+
 @pytest.fixture
 def silage(mock_silage_config: dict[str, Any]) -> Silage:
     return Silage(config=mock_silage_config)

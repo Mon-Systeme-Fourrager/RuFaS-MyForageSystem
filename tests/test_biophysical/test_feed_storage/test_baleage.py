@@ -1,3 +1,4 @@
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -15,7 +16,20 @@ from .sample_crop_data import sample_crop_data
 
 
 @pytest.fixture
-def baleage(mocker: MockerFixture) -> Baleage:
+def mock_baleage_config() -> dict:
+    """Pytest fixture to create a mock baleage configuration dictionary."""
+    return {
+        "name": "baleage",
+        "rufas_id": 1,
+        "field_name": "field_1",
+        "crop_name": "corn",
+        "initial_storage_dry_matter": 45.0,
+        "post_wilting_moisture_percentage": 40.0,
+    }
+
+
+@pytest.fixture
+def baleage(mock_baleage_config: dict[str, Any]) -> Baleage:
     """
     Pytest fixture to create a Baleage instance for testing.
 
@@ -25,9 +39,7 @@ def baleage(mocker: MockerFixture) -> Baleage:
         An instance of the Baleage class.
 
     """
-    im = InputManager()
-    mocker.patch.object(im, "get_data", return_value=45)
-    return Baleage()
+    return Baleage(config=mock_baleage_config)
 
 
 @pytest.fixture
