@@ -25,71 +25,105 @@ def test_processor_init_error() -> None:
     "storage_processor, manure_stream, expected_result",
     [
         (
-                AnaerobicLagoon(
-                    name="test_lagoon",
-                    cover=StorageCover.NO_COVER,
-                    storage_time_period=10,
-                    surface_area=100,
-                    capacity=1000,
-                ),
-                ManureStream(
-                    water=1000.0, ammoniacal_nitrogen=10.0, nitrogen=20.0, phosphorus=5.0, potassium=8.0, ash=2.0,
-                    non_degradable_volatile_solids=15.0, degradable_volatile_solids=25.0, total_solids=50.0, volume=1.5,
-                    methane_production_potential=0.24, pen_manure_data=None
-                ),
-                True
+            AnaerobicLagoon(
+                name="test_lagoon",
+                cover=StorageCover.NO_COVER,
+                storage_time_period=10,
+                surface_area=100,
+                capacity=1000,
+            ),
+            ManureStream(
+                water=1000.0,
+                ammoniacal_nitrogen=10.0,
+                nitrogen=20.0,
+                phosphorus=5.0,
+                potassium=8.0,
+                ash=2.0,
+                non_degradable_volatile_solids=15.0,
+                degradable_volatile_solids=25.0,
+                total_solids=50.0,
+                volume=1.5,
+                methane_production_potential=0.24,
+                pen_manure_data=None,
+            ),
+            True,
         ),
         (
-                AnaerobicLagoon(
-                    name="test_lagoon",
-                    cover=StorageCover.NO_COVER,
-                    storage_time_period=10,
-                    surface_area=100,
-                    capacity=1000,
-                ),
-                ManureStream(
-                    water=1000.0, ammoniacal_nitrogen=10.0, nitrogen=20.0, phosphorus=5.0, potassium=8.0, ash=2.0,
-                    non_degradable_volatile_solids=15.0, degradable_volatile_solids=25.0, total_solids=50.0, volume=1.5,
-                    methane_production_potential=0.24, pen_manure_data=MagicMock(auto_spec=PenManureData)
-                ),
-                False
+            AnaerobicLagoon(
+                name="test_lagoon",
+                cover=StorageCover.NO_COVER,
+                storage_time_period=10,
+                surface_area=100,
+                capacity=1000,
+            ),
+            ManureStream(
+                water=1000.0,
+                ammoniacal_nitrogen=10.0,
+                nitrogen=20.0,
+                phosphorus=5.0,
+                potassium=8.0,
+                ash=2.0,
+                non_degradable_volatile_solids=15.0,
+                degradable_volatile_solids=25.0,
+                total_solids=50.0,
+                volume=1.5,
+                methane_production_potential=0.24,
+                pen_manure_data=MagicMock(auto_spec=PenManureData),
+            ),
+            False,
         ),
         (
-                BeddedPack(
-                    name="test_lagoon",
-                    is_mixed=True,
-                    storage_time_period=10,
-                    surface_area=100,
-                    cover=StorageCover.NO_COVER,
-                ),
-                ManureStream(
-                    water=1000.0, ammoniacal_nitrogen=10.0, nitrogen=20.0, phosphorus=5.0, potassium=8.0, ash=2.0,
-                    non_degradable_volatile_solids=15.0, degradable_volatile_solids=25.0, total_solids=50.0, volume=1.5,
-                    methane_production_potential=0.24, pen_manure_data=None
-                ),
-                False
+            BeddedPack(
+                name="test_lagoon",
+                is_mixed=True,
+                storage_time_period=10,
+                surface_area=100,
+                cover=StorageCover.NO_COVER,
+            ),
+            ManureStream(
+                water=1000.0,
+                ammoniacal_nitrogen=10.0,
+                nitrogen=20.0,
+                phosphorus=5.0,
+                potassium=8.0,
+                ash=2.0,
+                non_degradable_volatile_solids=15.0,
+                degradable_volatile_solids=25.0,
+                total_solids=50.0,
+                volume=1.5,
+                methane_production_potential=0.24,
+                pen_manure_data=None,
+            ),
+            False,
         ),
         (
-                BeddedPack(
-                    name="test_lagoon",
-                    is_mixed=True,
-                    storage_time_period=10,
-                    surface_area=100,
-                    cover=StorageCover.NO_COVER,
-                ),
-                ManureStream(
-                    water=1000.0, ammoniacal_nitrogen=10.0, nitrogen=20.0, phosphorus=5.0, potassium=8.0, ash=2.0,
-                    non_degradable_volatile_solids=15.0, degradable_volatile_solids=25.0, total_solids=50.0, volume=1.5,
-                    methane_production_potential=0.24, pen_manure_data=MagicMock(auto_spec=PenManureData)
-                ),
-                True
-        )
-    ]
+            BeddedPack(
+                name="test_lagoon",
+                is_mixed=True,
+                storage_time_period=10,
+                surface_area=100,
+                cover=StorageCover.NO_COVER,
+            ),
+            ManureStream(
+                water=1000.0,
+                ammoniacal_nitrogen=10.0,
+                nitrogen=20.0,
+                phosphorus=5.0,
+                potassium=8.0,
+                ash=2.0,
+                non_degradable_volatile_solids=15.0,
+                degradable_volatile_solids=25.0,
+                total_solids=50.0,
+                volume=1.5,
+                methane_production_potential=0.24,
+                pen_manure_data=MagicMock(auto_spec=PenManureData),
+            ),
+            True,
+        ),
+    ],
 )
 def test_check_manure_stream_compatibility(
-        storage_processor: Storage,
-        manure_stream: ManureStream,
-        expected_result: bool
+    storage_processor: Storage, manure_stream: ManureStream, expected_result: bool
 ) -> None:
     """Tests that ManureStreams are correctly checked for compatibility."""
     assert storage_processor.check_manure_stream_compatibility(manure_stream) == expected_result
