@@ -2,10 +2,11 @@ name: Format, Lint, Test, Coverage, and Type Checking
 
 on:
   push:
-    branches: [ dev ]
+    branches:
+      - dev-api
+      - 4-create-api
   pull_request:
-    branches: [ dev ]
-  workflow_dispatch:
+    branches: [ dev-api ]
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
