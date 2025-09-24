@@ -6,7 +6,7 @@ import numpy as np
 
 from RUFAS.biophysical.animal.animal import Animal
 from RUFAS.biophysical.animal.data_types.animal_population import AnimalPopulationStatistics
-from RUFAS.biophysical.animal.data_types.animal_typed_dicts import SoldAnimalTypedDict
+from RUFAS.biophysical.animal.data_types.animal_typed_dicts import SoldAnimalTypedDict, StillbornCalfTypedDict
 from RUFAS.biophysical.animal.data_types.herd_statistics import HerdStatistics
 from RUFAS.biophysical.animal.data_types.reproduction import HerdReproductionStatistics
 from RUFAS.biophysical.animal.milk.milk_production import MilkProduction
@@ -562,7 +562,7 @@ class AnimalModuleReporter:
         ration_total: dict[str, float],
         pen_id: int | str,
         pen_animal_name: str,
-        animal_manager,
+        herd_manager,
         simulation_day: int,
     ) -> None:
         """
@@ -576,8 +576,10 @@ class AnimalModuleReporter:
             The unique number identifying a pen. Use `ALL` when the given ration is the sum of mulitple pens' rations.
         pen_animal_name : str
             The name of the animal combination in a pen.
-        animal_manager : AnimalManager
+        herd_manager : HerdManager
             The AnimalManager instance being reported.
+        simulation_day : int
+            Day of simulation.
 
         """
         classname = AnimalModuleReporter.__name__
@@ -587,10 +589,10 @@ class AnimalModuleReporter:
             "function": funcname,
         }
         daily_purchased_feed_emissions = (
-            animal_manager.feeds_emissions_estimator.create_daily_purchased_feed_emissions_report(ration_total)
+            herd_manager.feeds_emissions_estimator.create_daily_purchased_feed_emissions_report(ration_total)
         )
         daily_land_use_change_feed_emissions = (
-            animal_manager.feeds_emissions_estimator.create_daily_land_use_change_feed_emissions_report(ration_total)
+            herd_manager.feeds_emissions_estimator.create_daily_land_use_change_feed_emissions_report(ration_total)
         )
         if pen_id == "ALL":
             info_map["data_origin"] = [("FeedEmissionsEstimator", "create_daily_purchased_feed_emissions_report")]
@@ -889,6 +891,16 @@ class AnimalModuleReporter:
             dict(info_map, **{"units": MeasurementUnits.ANIMALS}),
         )
         om.add_variable(
+            "born_calf_num",
+            herd_statistics.born_calf_num,
+            dict(info_map, **{"units": MeasurementUnits.ANIMALS}),
+        )
+        om.add_variable(
+            "stillborn_calf_num",
+            herd_statistics.stillborn_calf_num,
+            dict(info_map, **{"units": MeasurementUnits.ANIMALS}),
+        )
+        om.add_variable(
             "daily_milk_production",
             herd_statistics.daily_milk_production,
             dict(info_map, **{"units": MeasurementUnits.KILOGRAMS_PER_DAY}),
@@ -1112,6 +1124,74 @@ class AnimalModuleReporter:
             om.add_variable("parity", animal["parity"], dict(info_map, **{"units": MeasurementUnits.UNITLESS}))
 
     @classmethod
+    def report_stillborn_calves_information(
+        cls, stillborn_calves: list[StillbornCalfTypedDict] | list[dict[str, int]], report_name: str, total_days: int
+    ) -> None:
+        """
+        Adds a dictionary of sold animal information to the output manager on daily basis.
+
+        Parameters
+        ----------
+        stillborn_calves : list[object]
+            List of stillborn calves.
+        report_name : str
+            The string to be appended to the variable being reported to the OM.
+        total_days : int
+            The total number of days in the simulation
+        """
+
+        info_map = {
+            "class": AnimalModuleReporter.__name__,
+            "function": AnimalModuleReporter.report_stillborn_calves_information.__name__,
+        }
+
+        stillborn_at_day_min: int = sys.maxsize
+        stillborn_at_day_max: int = 0
+        daily_stillborn: Dict[int, List[StillbornCalfTypedDict]] = {}
+
+        for animal in stillborn_calves:
+            if animal["stillborn_day"] < stillborn_at_day_min:
+                stillborn_at_day_min = animal["stillborn_day"]
+            if animal["stillborn_day"] > stillborn_at_day_max:
+                stillborn_at_day_max = animal["stillborn_day"]
+            if daily_stillborn.get(animal["stillborn_day"]):
+                daily_stillborn[animal["stillborn_day"]].append(animal)
+            else:
+                daily_stillborn[animal["stillborn_day"]] = [animal]
+
+        om.add_variable(
+            f"{report_name}_first_stillborn_event",
+            stillborn_at_day_min,
+            dict(info_map, **{"units": MeasurementUnits.SIMULATION_DAY}),
+        )
+        om.add_variable(
+            f"{report_name}_last_stillborn_event",
+            stillborn_at_day_max,
+            dict(info_map, **{"units": MeasurementUnits.SIMULATION_DAY}),
+        )
+        for day in range(total_days):
+            if daily_stillborn.get(day):
+                stillborn_count = len(daily_stillborn[day])
+                birth_weight = sum(stillborn_calf["birth_weight"] for stillborn_calf in daily_stillborn[day])
+                om.add_variable(
+                    f"{report_name}_stillborn_count",
+                    stillborn_count,
+                    dict(info_map, **{"units": MeasurementUnits.ANIMALS}),
+                )
+                om.add_variable(
+                    f"{report_name}_stillborn_birth_weight",
+                    birth_weight,
+                    dict(info_map, **{"units": MeasurementUnits.KILOGRAMS}),
+                )
+            else:
+                om.add_variable(
+                    f"{report_name}_stillborn_count", 0, dict(info_map, **{"units": MeasurementUnits.ANIMALS})
+                )
+                om.add_variable(
+                    f"{report_name}_stillborn_birth_weight", 0, dict(info_map, **{"units": MeasurementUnits.KILOGRAMS})
+                )
+
+    @classmethod
     def report_sold_animal_information_sort_by_sell_day(
         cls, sold_animals: list[SoldAnimalTypedDict], report_name: str, total_days: int
     ) -> None:
@@ -1210,10 +1290,10 @@ class AnimalModuleReporter:
 
         Parameters
         ----------
-        animal_manager : AnimalManager
-            Instance of AnimalManager class.
-        available_feeds : Dict[str, Dict[str, Any]]
-            Available feeds dictionary from the Feed class object.
+        herd_manager : HerdManager
+            Instance of HerdManager class.
+        simulation_day: int
+            Day of simulation.
         """
         herd_statistics = herd_manager.herd_statistics
         AnimalModuleReporter.report_daily_animal_population(herd_statistics, simulation_day)
@@ -1225,6 +1305,17 @@ class AnimalModuleReporter:
             AnimalModuleReporter.report_pen_manure_properties(pen, simulation_day)
             if pen.animal_combination.name == "LAC_COW":
                 AnimalModuleReporter.report_milk(pen, simulation_day)
+        info_map = {
+            "class": AnimalModuleReporter.__name__,
+            "function": AnimalModuleReporter.report_daily_reports.__name__,
+        }
+        if herd_statistics.total_enteric_methane:
+            for animal_type, methane_amount in herd_statistics.total_enteric_methane.items():
+                om.add_variable(
+                    f"{animal_type}_total_enteric_methane",
+                    herd_statistics.total_enteric_methane[animal_type],
+                    dict(info_map, **{"units": MeasurementUnits.GRAMS}),
+                )
 
     @classmethod
     def report_end_of_simulation(
@@ -1309,6 +1400,16 @@ class AnimalModuleReporter:
                 "sold_cows",
                 time.simulation_day,
             )
+
+        if herd_statistics.stillborn_calf_info:
+            AnimalModuleReporter.report_stillborn_calves_information(
+                herd_statistics.stillborn_calf_info, "stillborn_calves", time.simulation_day
+            )
+        else:
+            AnimalModuleReporter.report_stillborn_calves_information(
+                [{"stillborn_day": 0, "birth_weight": 0}], "stillborn_calves", time.simulation_day
+            )
+
         AnimalModuleReporter._record_animal_events(cows, time.simulation_day)
         AnimalModuleReporter._record_animal_events(heiferIIs, time.simulation_day)
         AnimalModuleReporter._record_heiferIIs_conception_rate(herd_reproduction_statistics)
@@ -1330,7 +1431,6 @@ class AnimalModuleReporter:
         -------
         None
         """
-
         info_map = {
             "class": AnimalModuleReporter.__name__,
             "function": AnimalModuleReporter._record_animal_events.__name__,
