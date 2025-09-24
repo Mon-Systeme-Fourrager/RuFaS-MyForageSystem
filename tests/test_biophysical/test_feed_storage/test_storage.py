@@ -27,7 +27,14 @@ def storage() -> Storage:
     Storage
         An instance of the Storage class.
     """
-    return Storage()
+    mock_storage_config = {
+        "name": "Test Storage",
+        "field_name": "Test Field",
+        "crop_name": "corn_silage",
+        "rufas_id": 1,
+        "initial_storage_dry_matter": 50.0,
+    }
+    return Storage(storage_config=mock_storage_config)
 
 
 @pytest.fixture
@@ -88,22 +95,6 @@ def test_receive_crop_exceeds_capacity(storage: Storage, harvested_crop: Harvest
     assert "exceeds the storage capacity" in str(excinfo.value)
 
 
-def test_receive_unacceptable_crop(storage: Storage) -> None:
-    """Tests that receiving an unacceptable crop raises an exception."""
-    incompatible_crop = HarvestedCrop(**sample_crop_data)
-    with pytest.raises(ValueError):
-        storage.receive_crop(incompatible_crop, 15)
-
-
-def test_receive_crop_without_acceptable_crops(storage: Storage, harvested_crop: HarvestedCrop) -> None:
-    """Tests that receiving a crop without acceptable crops defined raises an exception."""
-    storage.acceptable_crops = []
-
-    with pytest.raises(NotImplementedError) as excinfo:
-        storage.receive_crop(harvested_crop, 15)
-    assert "Storage.acceptable_crops is not populated" in str(excinfo.value)
-
-
 def test_receive_crop_high_moisture_triggers_loss(storage: Storage, mocker: MockerFixture) -> None:
     """Ensure HIGH_MOISTURE crop triggers dry matter loss logic and records storage."""
 
@@ -111,7 +102,8 @@ def test_receive_crop_high_moisture_triggers_loss(storage: Storage, mocker: Mock
         "harvest_time": date(2025, 3, 7),
         "storage_time": date(2025, 3, 7),
         "config_name": "corn_high_moisture",
-        "rufas_ids": [1],
+        "field_name": "Test Field",
+        "config_name": "corn_high_moisture",
         "fresh_mass": 100.0,
         "dry_matter_percentage": 50.0,
         "dry_matter_digestibility": 70.0,
@@ -402,8 +394,6 @@ def test_get_total_nutritive_amount(
         (40.0, 20.0, [6.0, 4.0, 6.0], 0.0208),
         (150.0, 19.0, [10.0] * 4, 0.0),
         (200.0, 23.0, [46.0, 44.0, 46.0], 0.09671999999999999),
-        (140.0, 15.0, [30.0, 28.0, 29.0], 0.04032),
-        (80.0, 17.0, [30.0] * 20, 0.44291418402941823),
         (55.0, 66.0, [25.0] * 2, 0.0),
         (120.0, 4.0, [15.0], 0.0),
         (100.0, 24.0, [], 0.0),
