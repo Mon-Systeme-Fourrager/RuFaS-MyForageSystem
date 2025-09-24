@@ -10,7 +10,7 @@ def get_schemas(path_dir_schemas: Path) -> Generator[dict, None, None]:
         with p.open(mode='r') as f:
             if (ext := p.suffix) == '.json':
                 yield load_json(f)
-            elif ext in ('.yaml', 'yml'):
+            elif ext in ('.yaml', '.yml'):
                 yield load_yaml(f)
 
 
