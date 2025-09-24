@@ -401,7 +401,7 @@ class FeedManager:
         self.purchase_feed(feeds_to_purchase, time, purchase_type="ration_interval")
 
     def _query_available_feed_totals(
-        self, query_feed_ids: list[RUFAS_ID], stored_crops: list[HarvestedCrop] | None = None
+        self, query_feed_ids: list[RUFAS_ID], stored_crops: dict[RUFAS_ID, float] | None = None
     ) -> dict[RUFAS_ID, float]:
         """
         Gets the current dry matter mass of each feed ID currently in storage.
@@ -410,7 +410,7 @@ class FeedManager:
         ----------
         query_feed_ids : list[RUFAS_ID]
             List of RuFaS Feed IDs to get amounts of feed stored for.
-        stored_crops : list[HarvestedCrop] | None, default None
+        stored_crops : dict[RUFAS_ID, float] | None, default None
             Stored crops to tally feed amounts from. If None, tallies feed amounts from all feeds currently stored.
 
         Returns
@@ -580,6 +580,7 @@ class FeedManager:
         for storage in self.active_storages.values():
             if storage.crop_name == crop_name:
                 return storage.rufas_feed_id
+        return None
 
     def _gather_available_feeds(self) -> list[HarvestedCrop | PurchasedFeed]:
         """
@@ -600,13 +601,13 @@ class FeedManager:
 
         return all_available_feeds
 
-    def _check_feed_availability(self, rufas_id: int, feed: HarvestedCrop | PurchasedFeed) -> bool:
+    def _check_feed_availability(self, target_rufas_id: int, feed: HarvestedCrop | PurchasedFeed) -> bool:
         """
         Helper function that checks if a feed can be fed to animals based on the RuFaS ID and the feeds to deduct.
 
         Parameters
         ----------
-        rufas_id : RUFAS_ID
+        target_rufas_id : RUFAS_ID
             RuFaS Feed ID of the feed that is being checked (unitless).
         feed : HarvestedCrop | PurchasedFeed
             The feed object to check for availability.
@@ -616,9 +617,20 @@ class FeedManager:
         bool
             True if the feed can be fed to animals, False otherwise.
         """
-        if isinstance(feed, HarvestedCrop):
-            return self._lookup_storage_rufas_id(feed.config_name) == rufas_id
-        return feed.rufas_id == rufas_id
+        if isinstance(feed, PurchasedFeed):
+            return feed.rufas_id == target_rufas_id and float(feed.dry_matter_mass) > 1e-6
+        name = getattr(feed, "config_name", None) or getattr(feed, "crop_name", None)
+
+        if not name:
+            return False
+
+        rufas_id = self.crop_to_rufas_id.get(name)
+        if rufas_id is None:
+            rufas_id = self._lookup_storage_rufas_id(name)
+            if rufas_id is None:
+                return False
+
+        return rufas_id == target_rufas_id and float(feed.dry_matter_mass) > 1e-6
 
     def _setup_available_feeds(
         self, feed_config: dict[str, list[Any]], nutrient_standard: NutrientStandard

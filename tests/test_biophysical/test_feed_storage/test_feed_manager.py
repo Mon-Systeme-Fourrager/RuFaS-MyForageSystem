@@ -85,8 +85,16 @@ def feed_manager(mocker: MockerFixture, mock_available_feeds: list[NASEMFeed | N
     feed_manager._cumulative_purchased_feeds_fed = {feed.rufas_id: 0.0 for feed in mock_available_feeds}
     feed_manager._cumulative_farmgrown_feeds_fed = {feed.rufas_id: 0.0 for feed in mock_available_feeds}
     feed_manager._cumulative_purchased_feeds = {feed.rufas_id: 0.0 for feed in mock_available_feeds}
+    mock_pile_config = {
+        "name": "silage",
+        "rufas_id": 1,
+        "field_name": "field_1",
+        "crop_name": "corn",
+        "initial_storage_dry_matter": 500.0,
+        "size": 1000.0,
+    }
 
-    feed_manager.active_storages = {"example_pile": Pile()}
+    feed_manager.active_storages = {"example_pile": Pile(config=mock_pile_config)}
     feed_manager.purchased_feed_storage = PurchasedFeedStorage(mock_available_feeds)
     feed_manager._om = mocker.Mock(spec=OutputManager)
     feed_manager.runtime_purchase_allowance = RuntimePurchaseAllowance(
@@ -344,36 +352,43 @@ def test_get_total_projected_inventory(
 ) -> None:
     """Test that the total projected inventory is collected correctly."""
     storage_1, storage_2, storage_3 = (MagicMock(auto_spec=Dry), MagicMock(auto_spec=Pile), MagicMock(auto_spec=Bag))
+    storage_1.rufas_feed_id = 1
+    storage_2.rufas_feed_id = 2
+    storage_3.rufas_feed_id = 3
+
     feed_manager.active_storages = {"example_dry": storage_1, "example_pile": storage_2, "example_bag": storage_3}
     feed_manager._available_feeds = mock_available_feeds
 
-    mocker.patch.object(
-        storage_1,
-        "project_degradations",
-        return_value=(storage_1_projected_crops := [MagicMock(auto_spec=HarvestedCrop)]),
-    )
-    mocker.patch.object(
-        storage_2,
-        "project_degradations",
-        return_value=(storage_2_projected_crops := [MagicMock(auto_spec=HarvestedCrop) for _ in range(3)]),
-    )
-    mocker.patch.object(
-        storage_3,
-        "project_degradations",
-        return_value=(storage_3_projected_crops := [MagicMock(auto_spec=HarvestedCrop)]),
-    )
-    expected_projected_crops = storage_1_projected_crops + storage_2_projected_crops + storage_3_projected_crops
+    s1_crops = [MagicMock(auto_spec=HarvestedCrop)]
+    s1_crops[0].dry_matter_mass = 10.0
+
+    s2_crops = [MagicMock(auto_spec=HarvestedCrop) for _ in range(3)]
+    for i, dm in enumerate([20.0, 30.0, 5.0]):
+        s2_crops[i].dry_matter_mass = dm
+
+    s3_crops = [MagicMock(auto_spec=HarvestedCrop)]
+    s3_crops[0].dry_matter_mass = 7.5
+
+    mocker.patch.object(storage_1, "project_degradations", return_value=s1_crops)
+    mocker.patch.object(storage_2, "project_degradations", return_value=s2_crops)
+    mocker.patch.object(storage_3, "project_degradations", return_value=s3_crops)
+
+    expected_projected_crops = {
+        1: 10.0,
+        2: 20.0 + 30.0 + 5.0,
+        3: 7.5,
+    }
 
     mock_query_available_feed_totals = mocker.patch.object(
         feed_manager, "_query_available_feed_totals", return_value={1: 1.1, 2: 2.2, 3: 3.3, 4: 4.4, 5: 5.5}
     )
     expected_available_feed_rufas_ids = [feed.rufas_id for feed in mock_available_feeds]
-
     expected_inventory = {1: 1.1, 2: 2.2, 3: 3.3, 4: 4.4, 5: 5.5}
 
     expected_days_in_the_future = 3
     mock_time = MagicMock(auto_spec=RufasTime)
     mock_time.current_date = datetime.today()
+
     result = feed_manager.get_total_projected_inventory(
         inventory_date=(inventory_date := datetime.today().date() + timedelta(days=expected_days_in_the_future)),
         weather=MagicMock(auto_spec=Weather),
@@ -476,19 +491,9 @@ def test_manage_ration_interval_purchases(
 
 
 def test_query_available_feed_totals(
-    feed_manager: FeedManager, mocker: MockerFixture, mock_available_feeds: list[NASEMFeed | NRCFeed]
+    feed_manager: FeedManager, mock_available_feeds: list[NASEMFeed | NRCFeed]
 ) -> None:
-    """Test that totals of available feeds are calculated correctly."""
-    mock_all_farmgrown_feeds_held: list[HarvestedCrop] = [
-        feed_1 := MagicMock(auto_spec=HarvestedCrop),
-        feed_2 := MagicMock(auto_spec=HarvestedCrop),
-        feed_3 := MagicMock(auto_spec=HarvestedCrop),
-    ]
-    feed_1.rufas_ids, feed_2.rufas_ids, feed_3.rufas_ids = ([1, 5, 7], [2, 4, 6], [3, 8, 10])
-    feed_1.dry_matter_mass, feed_2.dry_matter_mass, feed_3.dry_matter_mass = (1.1, 2.2, 3.3)
-
-    mocker.patch.object(feed_manager, "_select_rufas_id_for_harvested_crop", side_effect=[1, 2, None])
-
+    """Totals are farmgrown(projected dict) + purchased storage."""
     feed_manager.purchased_feed_storage = PurchasedFeedStorage(mock_available_feeds)
     feed_manager.purchased_feed_storage.receive_feed(
         PurchasedFeed(rufas_id=2, dry_matter_mass=2.2, storage_time=datetime.today().date())
@@ -497,26 +502,26 @@ def test_query_available_feed_totals(
         PurchasedFeed(rufas_id=5, dry_matter_mass=5.5, storage_time=datetime.today().date())
     )
 
-    expected_feed_totals = {1: 1.1, 2: 4.4, 3: 0.0}
+    projected_farmgrown = {1: 1.1, 2: 2.2}
 
-    result = feed_manager._query_available_feed_totals([1, 2, 3], mock_all_farmgrown_feeds_held)
+    expected = {1: 1.1, 2: 2.2 + 2.2, 3: 0.0}
 
-    assert result == expected_feed_totals
+    result = feed_manager._query_available_feed_totals([1, 2, 3], projected_farmgrown)
+
+    assert result == expected
 
 
 def test_query_available_feed_totals_no_stored_crops_input(
-    feed_manager: FeedManager, mocker: MockerFixture, mock_available_feeds: list[NASEMFeed | NRCFeed]
+    feed_manager: FeedManager, mock_available_feeds: list[NASEMFeed | NRCFeed]
 ) -> None:
     """Test that totals of available feeds are calculated correctly when user did not specify the stored_crops input."""
     feed_1, feed_2, feed_3 = (MagicMock(auto_spec=HarvestedCrop) for _ in range(3))
-    feed_1.rufas_ids, feed_2.rufas_ids, feed_3.rufas_ids = ([1, 5, 7], [2, 4, 6], [3, 8, 10])
     feed_1.dry_matter_mass, feed_2.dry_matter_mass, feed_3.dry_matter_mass = (1.1, 2.2, 3.3)
 
     storage_1, storage_2 = (MagicMock(auto_spec=Dry), MagicMock(auto_spec=Pile))
+    storage_1.rufas_feed_id, storage_2.rufas_feed_id = 1, 2
     storage_1.stored, storage_2.stored = [feed_1], [feed_2, feed_3]
     feed_manager.active_storages = {"example_dry": storage_1, "example_pile": storage_2}
-
-    mocker.patch.object(feed_manager, "_select_rufas_id_for_harvested_crop", side_effect=[1, 2, None])
 
     feed_manager.purchased_feed_storage = PurchasedFeedStorage(mock_available_feeds)
     feed_manager.purchased_feed_storage.receive_feed(
@@ -526,7 +531,7 @@ def test_query_available_feed_totals_no_stored_crops_input(
         PurchasedFeed(rufas_id=5, dry_matter_mass=5.5, storage_time=datetime.today().date())
     )
 
-    expected_feed_totals = {1: 1.1, 2: 4.4, 3: 0.0}
+    expected_feed_totals = {1: 1.1, 2: 7.7, 3: 0.0}
 
     result = feed_manager._query_available_feed_totals([1, 2, 3], None)
 
@@ -621,11 +626,23 @@ def test_deduct_feeds_from_inventory(
     """Test that feeds are removed correctly from inventory."""
     harvested_crop.rufas_ids, harvested_crop.fresh_mass, harvested_crop.dry_matter_percentage = [1], grown_amount, 100.0
     harvested_crop.storage_time = grown_date
+    harvested_crop.config_name = "corn"
     purchased_feed.rufas_id, purchased_feed.dry_matter_mass = 1, purchased_amount
     purchased_feed.storage_time = purchased_date
-    feed_manager.active_storages["example_bag"] = Bag()
+    bag_config = {
+        "name": "silage",
+        "rufas_id": 1,
+        "field_name": "field_1",
+        "crop_name": "corn",
+        "initial_storage_dry_matter": 500.0,
+        "size": 1000.0,
+    }
+    feed_manager.active_storages["example_bag"] = Bag(config=bag_config)
     feed_manager.active_storages["example_bag"].stored = [harvested_crop]
     feed_manager.purchased_feed_storage.stored = [purchased_feed]
+    feed_manager.crop_to_rufas_id = {"corn": 1}
+    feed_manager.active_storages["example_bag"].crop_name = "corn"
+    feed_manager.active_storages["example_bag"].rufas_feed_id = 1
     feeds_to_deduct = {1: 75.0}
     mock_time = MagicMock(auto_spec=RufasTime)
     mock_simulation_day = 15
