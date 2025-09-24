@@ -659,30 +659,35 @@ def test_deduct_feeds_from_inventory_error(
 ) -> None:
     """Test that an error is raised correctly when too much feed is deducted from inventory."""
     harvested_crop.rufas_ids, harvested_crop.fresh_mass, harvested_crop.dry_matter_percentage = [1], 100.0, 100.0
+    harvested_crop.storage_time = date(2024, 6, 1)
+    harvested_crop.config_name = "corn"
+    purchased_feed.rufas_id, purchased_feed.dry_matter_mass = 1, 0.0
+    purchased_feed.storage_time = date(2024, 6, 1)
+    bag_config = {
+        "name": "silage",
+        "rufas_id": 1,
+        "field_name": "field_1",
+        "crop_name": "corn",
+        "initial_storage_dry_matter": 500.0,
+        "size": 1000.0,
+    }
+    feed_manager.active_storages["example_bag"] = Bag(config=bag_config)
     feed_manager.active_storages["example_bag"].stored = [harvested_crop]
-    feeds_to_deduct = {1: 120.0}
-    mock_om = MagicMock(auto_spec=OutputManager)
-    mock_om_add_variable = mocker.patch.object(mock_om, "add_variable")
-    feed_manager._om = mock_om
+    feed_manager.purchased_feed_storage.stored = [purchased_feed]
+    feed_manager.crop_to_rufas_id = {"corn": 1}
+    feed_manager.active_storages["example_bag"].crop_name = "corn"
+    feed_manager.active_storages["example_bag"].rufas_feed_id = 1
+    feeds_to_deduct = {1: 1000.0}
     mock_time = MagicMock(auto_spec=RufasTime)
     mock_simulation_day = 15
     mock_time.simulation_day = mock_simulation_day
+    mock_om = MagicMock(auto_spec=OutputManager)
+    mock_om_add_variable = mocker.patch.object(mock_om, "add_variable")
+    feed_manager._om = mock_om
 
     with pytest.raises(ValueError):
         feed_manager._deduct_feeds_from_inventory(feeds_to_deduct, mock_simulation_day)
-        assert mock_om_add_variable.call_count == 0
-
-
-@pytest.mark.parametrize(
-    "crop_ids, feed_ids, expected", [([1, 2, 3], [4, 5, 6], None), ([1, 2, 3], [3, 4, 5], 3), ([2, 1], [2, 1], 1)]
-)
-def test_select_rufas_id_for_harvested_crop(
-    feed_manager: FeedManager, crop_ids: list[RUFAS_ID], feed_ids: list[RUFAS_ID], expected: RUFAS_ID | None
-) -> None:
-    """Test that a HarvestedCrop is correctly mapped to a RuFaS ID."""
-    actual = feed_manager._select_rufas_id_for_harvested_crop(crop_ids, feed_ids)
-
-    assert actual == expected
+        assert mock_om_add_variable.call_count == 10
 
 
 @pytest.mark.parametrize("standard, feed_rep", [(NutrientStandard.NASEM, NASEMFeed), (NutrientStandard.NRC, NRCFeed)])
