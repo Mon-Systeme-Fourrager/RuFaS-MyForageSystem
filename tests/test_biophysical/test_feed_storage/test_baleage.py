@@ -24,6 +24,7 @@ def mock_baleage_config() -> dict:
         "crop_name": "corn",
         "initial_storage_dry_matter": 45.0,
         "post_wilting_moisture_percentage": 40.0,
+        "bale_density": 200.0,
     }
 
 
