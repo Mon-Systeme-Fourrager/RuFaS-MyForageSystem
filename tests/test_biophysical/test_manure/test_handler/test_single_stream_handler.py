@@ -280,6 +280,6 @@ def test_apply_volatile_solid_loss(
 def test_report_gas_emissions(handler: SingleStreamHandler, mocker: MockerFixture) -> None:
     """Tests the function _report_gas_emissions()."""
     mock_report = mocker.patch.object(Processor, "_report_processor_output")
-    handler._report_gas_emissions(10,10,2)
+    handler._report_gas_emissions(10, 10, 2)
 
     assert mock_report.call_count == 2

@@ -182,8 +182,9 @@ class SingleStreamHandler(Handler):
 
         return {"manure": output_stream}
 
-    def _report_gas_emissions(self, housing_CO2_emissions: float, housing_methane_emissions: float,
-                              simulation_day: int) -> None:
+    def _report_gas_emissions(
+        self, housing_CO2_emissions: float, housing_methane_emissions: float, simulation_day: int
+    ) -> None:
         """
         Reports the gas emissions in single stream handler.
 
