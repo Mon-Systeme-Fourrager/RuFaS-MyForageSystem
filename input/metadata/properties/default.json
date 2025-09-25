@@ -6060,6 +6060,12 @@
           "type": "number",
           "description": "RuFaS Feed ID which harvests from the crop stored in this unit can be fed to animals as. Must be selected from the \"rufas_id\" of the feed library used.",
           "minimum": 1
+        },
+        "capacity": {
+          "type": "number",
+          "description": "Maximum capacity of the storage (kg dry matter).",
+          "minimum": 0,
+          "default": 1e10
         }
       }
     },
@@ -6118,6 +6124,12 @@
           "type": "number",
           "description": "RuFaS Feed ID which harvests from the crop stored in this unit can be fed to animals as. Must be selected from the \"rufas_id\" of the feed library used.",
           "minimum": 1
+        },
+        "capacity": {
+          "type": "number",
+          "description": "Maximum capacity of the storage (kg dry matter).",
+          "minimum": 0,
+          "default": 1e10
         }
       }
     },
@@ -6169,6 +6181,12 @@
           "type": "number",
           "description": "RuFaS Feed ID which harvests from the crop stored in this unit can be fed to animals as. Must be selected from the \"rufas_id\" of the feed library used.",
           "minimum": 1
+        },
+        "capacity": {
+          "type": "number",
+          "description": "Maximum capacity of the storage (kg dry matter).",
+          "minimum": 0,
+          "default": 1e10
         }
       }
     },
@@ -6212,6 +6230,12 @@
           "description": "Size of the silage storage (tons).",
           "minimum": 0.0,
           "default": 0.0
+        },
+        "capacity": {
+          "type": "number",
+          "description": "Maximum capacity of the storage (kg dry matter).",
+          "minimum": 0,
+          "default": 1e10
         }
       }
     }

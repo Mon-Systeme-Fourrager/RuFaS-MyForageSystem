@@ -12,6 +12,11 @@ class Baleage(Storage):
     """
     Class representing Baleage storage, a subclass of Storage.
 
+    Parameters
+    ----------
+    config : dict[str, str | float]
+        Configuration dictionary for the baleage storage.
+
     Attributes
     ----------
     bale_density : float
@@ -25,8 +30,8 @@ class Baleage(Storage):
         Calculates the protein loss specific to Baleage storage.
     """
 
-    def __init__(self, config: dict[str, str | float], capacity: float = float("inf")) -> None:
-        super().__init__(config, capacity)
+    def __init__(self, config: dict[str, str | float]) -> None:
+        super().__init__(config)
         self.post_wilting_moisture_percentage: float = float(config["post_wilting_moisture_percentage"])
         self.bale_density: float = float(config["bale_density"])
 

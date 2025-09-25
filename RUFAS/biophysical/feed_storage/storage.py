@@ -65,12 +65,12 @@ class Storage:
             - crop_name: Name of the crop associated with the storage (str).
             - rufas_id: RuFaS Feed ID associated with the storage (int).
             - initial_storage_dry_matter: Initial dry matter percentage of the crop when first stored (float).
-    capacity : float, optional
+            - capacity: The maximum capacity of the storage (float).
 
     Attributes
     ----------
     capacity : float
-        The maximum capacity of the storage, currently set to infinity.
+        The maximum capacity of the storage.
     stored : list[HarvestedCrop]
         A list of HarvestedCrop objects representing the crops stored.
     storage_name : str
@@ -122,8 +122,8 @@ class Storage:
 
     """
 
-    def __init__(self, storage_config: dict[str, str | float], capacity: float = float("inf")) -> None:
-        self.capacity: float = capacity
+    def __init__(self, storage_config: dict[str, str | float]) -> None:
+        self.capacity: float = float(storage_config["capacity"])
         self.stored: list[HarvestedCrop] = []
         self.storage_name: str = str(storage_config["name"])
         self.field_name: str = str(storage_config["field_name"])

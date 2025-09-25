@@ -19,6 +19,16 @@ class Silage(Storage):
     """
     Class representing the Silage storage type, inheriting from Storage.
 
+    Parameters
+    ----------
+    config : dict[str, str | float]
+        Configuration dictionary for the silage storage.
+
+    Attributes
+    ----------
+    om : OutputManager
+        OutputManager instance for logging variables.
+
     Methods
     -------
     calculate_days_of_effluent_loss_to_process(crop: HarvestedCrop, time: RufasTime)
@@ -30,8 +40,8 @@ class Silage(Storage):
 
     """
 
-    def __init__(self, config: dict[str, str | float], capacity: float = float("inf")) -> None:
-        super().__init__(config, capacity)
+    def __init__(self, config: dict[str, str | float]) -> None:
+        super().__init__(config)
         self.om = OutputManager()
 
     def process_degradations(self, weather: Weather, time: RufasTime) -> None:

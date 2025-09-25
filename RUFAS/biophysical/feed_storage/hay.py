@@ -30,10 +30,19 @@ class Hay(Storage):
     """
     Represents a Hay storage subclass of Storage.
 
+    Parameters
+    ----------
+    config : dict[str, str | float]
+        Configuration dictionary for the hay storage.
+
     Attributes
     ----------
     bale_size : float
         Diameter of the hay bale in meters.
+    target_dry_matter : float
+        The target dry matter content of hay after drying down in storage (unitless).
+    additional_dry_matter_loss_coefficient : float
+        Coefficient determining how much additional dry matter is lost in hayed crops (unitless).
 
     Methods
     -------
@@ -41,8 +50,8 @@ class Hay(Storage):
         Calculates the protein loss in the hay.
     """
 
-    def __init__(self, config: dict[str, str | float], capacity: float = float("inf")) -> None:
-        super().__init__(config, capacity)
+    def __init__(self, config: dict[str, str | float]) -> None:
+        super().__init__(config)
         self.bale_size: float = float(config["bale_size"])
         self.target_dry_matter: float = float(config["target_dry_matter"])
         self.additional_dry_matter_loss_coefficient: float = float(config["additional_dry_matter_loss_coefficient"])
