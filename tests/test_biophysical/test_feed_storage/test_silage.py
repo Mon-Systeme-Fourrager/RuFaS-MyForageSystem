@@ -25,6 +25,7 @@ def mock_silage_config() -> dict:
         "crop_name": "corn",
         "initial_storage_dry_matter": 500.0,
         "size": 1000.0,
+        "capacity": 1_000_000.0,
     }
 
 

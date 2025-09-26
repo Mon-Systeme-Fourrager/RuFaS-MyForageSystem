@@ -91,6 +91,7 @@ def feed_manager(mocker: MockerFixture, mock_available_feeds: list[NASEMFeed | N
         "crop_name": "corn",
         "initial_storage_dry_matter": 500.0,
         "size": 1000.0,
+        "capacity": 1_000_000.0,
     }
 
     feed_manager.active_storages = {"example_pile": Pile(config=mock_pile_config)}
@@ -635,6 +636,7 @@ def test_deduct_feeds_from_inventory(
         "crop_name": "corn",
         "initial_storage_dry_matter": 500.0,
         "size": 1000.0,
+        "capacity": 1_000_000.0,
     }
     feed_manager.active_storages["example_bag"] = Bag(config=bag_config)
     feed_manager.active_storages["example_bag"].stored = [harvested_crop]
@@ -669,6 +671,7 @@ def test_deduct_feeds_from_inventory_error(
         "crop_name": "corn",
         "initial_storage_dry_matter": 500.0,
         "size": 1000.0,
+        "capacity": 1_000_000.0,
     }
     feed_manager.active_storages["example_bag"] = Bag(config=bag_config)
     feed_manager.active_storages["example_bag"].stored = [harvested_crop]

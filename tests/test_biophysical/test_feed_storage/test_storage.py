@@ -33,6 +33,7 @@ def storage() -> Storage:
         "crop_name": "corn_silage",
         "rufas_id": 1,
         "initial_storage_dry_matter": 50.0,
+        "capacity": 1_000_000.0,
     }
     return Storage(storage_config=mock_storage_config)
 

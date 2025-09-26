@@ -36,6 +36,7 @@ def mock_storage_config() -> dict:
         "initial_storage_dry_matter": 300.0,
         "bale_size": 1.2,
         "target_dry_matter": 85.0,
+        "capacity": 1_000_000.0,
     }
 
 
