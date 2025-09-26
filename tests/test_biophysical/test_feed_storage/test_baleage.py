@@ -15,7 +15,7 @@ from .sample_crop_data import sample_crop_data
 
 
 @pytest.fixture
-def mock_baleage_config() -> dict:
+def mock_baleage_config() -> dict[str, Any]:
     """Pytest fixture to create a mock baleage configuration dictionary."""
     return {
         "name": "baleage",

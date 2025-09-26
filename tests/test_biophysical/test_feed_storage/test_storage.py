@@ -27,7 +27,7 @@ def storage() -> Storage:
     Storage
         An instance of the Storage class.
     """
-    mock_storage_config = {
+    mock_storage_config: dict[str, str | float] = {
         "name": "Test Storage",
         "field_name": "Test Field",
         "crop_name": "corn_silage",
@@ -99,26 +99,23 @@ def test_receive_crop_exceeds_capacity(storage: Storage, harvested_crop: Harvest
 def test_receive_crop_high_moisture_triggers_loss(storage: Storage, mocker: MockerFixture) -> None:
     """Ensure HIGH_MOISTURE crop triggers dry matter loss logic and records storage."""
 
-    high_moisture_crop_data = {
-        "harvest_time": date(2025, 3, 7),
-        "storage_time": date(2025, 3, 7),
-        "config_name": "corn_high_moisture",
-        "field_name": "Test Field",
-        "config_name": "corn_high_moisture",
-        "fresh_mass": 100.0,
-        "dry_matter_percentage": 50.0,
-        "dry_matter_digestibility": 70.0,
-        "crude_protein_percent": 10.0,
-        "non_protein_nitrogen": 5.0,
-        "starch": 30.0,
-        "adf": 7.0,
-        "ndf": 15.0,
-        "lignin": 3.0,
-        "sugar": 20.0,
-        "ash": 6.0,
-    }
-
-    crop = HarvestedCrop(**high_moisture_crop_data)
+    crop = HarvestedCrop(
+        harvest_time=date(2025, 3, 7),
+        storage_time=date(2025, 3, 7),
+        field_name="Test Field",
+        config_name="corn_high_moisture",
+        fresh_mass=100.0,
+        dry_matter_percentage=50.0,
+        dry_matter_digestibility=70.0,
+        crude_protein_percent=10.0,
+        non_protein_nitrogen=5.0,
+        starch=30.0,
+        adf=7.0,
+        ndf=15.0,
+        lignin=3.0,
+        sugar=20.0,
+        ash=6.0
+    )
 
     mock_remove_dm = mocker.spy(crop, "remove_dry_matter_mass")
     mock_record = mocker.patch.object(storage, "_record_stored_crops")
@@ -242,7 +239,7 @@ def test_project_degradations(
     storage: Storage, harvested_crop: HarvestedCrop, time: RufasTime, weather: Weather, mocker: MockerFixture
 ) -> None:
     """Test that degradations are projected correctly, and GRAIN crops are skipped."""
-    loss_values = {
+    loss_values: dict[str, float] = {
         "gaseous_dry_matter_loss": 100.0,
         "crude_protein_percent": 2.0,
         "starch": 2.1,
@@ -252,9 +249,9 @@ def test_project_degradations(
         "ash": 2.5,
         "fresh_mass": 900.0,
         "dry_matter_percentage": 33.0,
-        "last_time_degraded": date(2025, 3, 4),
+        "last_time_degraded": 25,
     }
-    expected_last_time_degraded = date(2025, 3, 4)
+    expected_last_time_degraded = 25
 
     degradable_crops = [replace(harvested_crop) for _ in range(2)]
     grain_crop = replace(harvested_crop)
