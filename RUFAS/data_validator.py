@@ -1660,7 +1660,7 @@ class CrossValidator:
         """
         self._alias_pool[alias_name] = value
 
-    def _get_alias_value(self, alias_name: str) -> Any:
+    def _get_alias_value(self, alias_name: str, eager_termination: bool) -> Any:
         """
         Retrieves the value associated with the specified alias name from the alias pool.
 
@@ -1668,26 +1668,36 @@ class CrossValidator:
         ----------
         alias_name : str
             The alias of the value to retrieve.
+        eager_termination : bool
+            Whether to raise an error if the expression is not successfully evaluated.
 
         Returns
         -------
         Any
             The value associated with the specified alias name from the alias pool.
+
+        Raises
+        ------
+        KeyError
+            Raises the error when the alias name provided does not have value in the alias pool.
+
         """
-        try:
-            return self._alias_pool[alias_name]
-        except KeyError:
+        value = self._alias_pool.get(alias_name, None)
+        if value is None:
             self._event_logs.append(
                 {
                     "error": "Alias name not found.",
-                    "message": f"{alias_name} doe not exits in the alias pool of cross validator.",
+                    "message": f"{alias_name} does not exist in the alias pool of cross validator.",
                     "info_map": {
                         "class": CrossValidator.__name__,
                         "function": CrossValidator._get_alias_value.__name__,
                     },
                 }
             )
-            return None
+            if eager_termination:
+                raise ValueError(f"Unknown alias name: {alias_name}")
+
+        return value
 
     def _target_and_save(self, target_and_save_result: dict[str, Any]) -> None:
         """
@@ -1705,7 +1715,8 @@ class CrossValidator:
         for alias_key, value in target_and_save_result.items():
             self._save_to_alias_pool(alias_key, value)
 
-    def check_target_and_save_block(self, target_and_save_block: dict[str, dict[str, Any]]) -> None:
+    def check_target_and_save_block(self, target_and_save_block: dict[str, dict[str, Any]],
+                                    eager_termination: bool) -> None:
         """Check if the target and save block is valid."""
         for section in target_and_save_block.keys():
             if section not in ["variables", "constants"]:
@@ -1720,6 +1731,9 @@ class CrossValidator:
                         },
                     }
                 )
+                if eager_termination:
+                    raise ValueError(f"Unknown block: {section}. "
+                                     "target_and_save_block should only have variables and constants blocks.")
 
     def _evaluate_expression(self, expression_block: dict[str, Any], eager_termination: bool) -> tuple[Any, bool]:
         """
