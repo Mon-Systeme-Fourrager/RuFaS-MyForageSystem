@@ -1745,17 +1745,13 @@ def test_dump_variable_names_and_contexts_no_values(
 
     mocker.patch.object(mock_output_manager, "_get_flat_variables_pool", return_value=mock_flat_pool)
 
-    mock_generate_file_name = mocker.patch.object(
-        mock_output_manager, "generate_file_name", return_value="dummy_name"
-    )
+    mock_generate_file_name = mocker.patch.object(mock_output_manager, "generate_file_name", return_value="dummy_name")
     mock_list_to_file_txt = mocker.patch.object(mock_output_manager, "_list_to_file_txt")
 
     mock_output_manager.dump_variable_names_and_contexts(Path("dummy_path"), False, format_option="verbose")
 
     mock_generate_file_name.assert_called_once_with("variable_names", "txt")
-    mock_list_to_file_txt.assert_called_once_with(
-        expected_output, Path("dummy_path", "dummy_name")
-    )
+    mock_list_to_file_txt.assert_called_once_with(expected_output, Path("dummy_path", "dummy_name"))
 
 
 def test_set_variables_pool_with_override(
@@ -1770,9 +1766,7 @@ def test_set_variables_pool_with_override(
     assert mock_output_manager.current_pool_size == 999
 
 
-def test_set_variables_pool_without_override(
-    mock_output_manager: OutputManager, mocker: MockerFixture
-) -> None:
+def test_set_variables_pool_without_override(mock_output_manager: OutputManager, mocker: MockerFixture) -> None:
     """Sets variables_pool and calculates current_pool_size via sys.getsizeof on repr(new_pool)."""
     new_pool: dict[str, dict[str, Any]] = {"x": {"values": [1, 2, 3], "info_maps": [{"u": "kg"}]}}
 
