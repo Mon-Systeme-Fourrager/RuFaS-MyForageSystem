@@ -111,7 +111,7 @@ class OutputManager(object):
 
     Class Attributes
     ----------------
-    pool_element_type : dict[str, list[Any]]
+    pool_element_type : dict[str, Any]
         Type alias for the pool elements
     JSON_OUTPUT_MAX_RECURSIVE_DEPTH : int
         Maximum depth for recursive serialization in JSON output files (default: 4)
@@ -158,7 +158,7 @@ class OutputManager(object):
     """
 
     __instance = None
-    pool_element_type = dict[str, list[Any]]
+    pool_element_type = dict[str, Any]
     JSON_OUTPUT_MAX_RECURSIVE_DEPTH = 4
 
     def __new__(cls) -> OutputManager:
@@ -359,7 +359,7 @@ class OutputManager(object):
         units = info_map.get("units")
         if units is None:
             raise KeyError(f"'units' was not found in info_map for call to 'add_variable()' for {name}.")
-        if isinstance(units, dict) and len(info_map.get("units")) != len(value) and value != {}:
+        if isinstance(units, dict) and len(info_map["units"]) != len(value) and value != {}:
             raise KeyError(f"'units' missing in units dict for a variable in {name}.")
         units = self._stringify_units(units)
 
@@ -1488,7 +1488,7 @@ class OutputManager(object):
             The directory for saving JSONs containing filtered simulation output.
 
         """
-        info_map = {
+        info_map: dict[str, Any] = {
             "class": self.__class__.__name__,
             "function": self.save_results.__name__,
         }
