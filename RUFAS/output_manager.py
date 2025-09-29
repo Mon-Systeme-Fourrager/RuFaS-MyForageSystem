@@ -1435,31 +1435,23 @@ class OutputManager(object):
 
     def load_saved_pools(self) -> None:
         """
-        Filters saved pools of data by applying specific filter criteria.
-
-        This method iterates over JSON files in the saved pool directory. It then loads each file as the OutputManager
-        variable pool and applies the filter by calling the `filter_variables_pool()` method. The results are
-        aggregated into a single dictionary,
-        combining entries under the same key by extending lists of info_maps and values.
-
-        Notes
-        -----
-        This function has a side effect that modifies the variable_pool of the OutputManager
+        Loads saved pools of data from JSON files in the saved_pool_chunks_path directory and merges them into
+        a single variables pool.
         """
-        filtered_pool: dict[str, OutputManager.pool_element_type] = {}
+        merged_pool: dict[str, OutputManager.pool_element_type] = {}
         list_of_dumped_files = self._sort_saved_chunk_files()
         for file in list_of_dumped_files:
             self.load_variables_pool_from_file(file)
             for key, value in self.variables_pool.items():
-                if key in filtered_pool.keys():
-                    filtered_pool[key]["info_maps"].extend(value["info_maps"])
-                    filtered_pool[key]["values"].extend(value["values"])
+                if key not in merged_pool:
+                    merged_pool[key] = value
                 else:
-                    filtered_pool[key] = value
+                    merged_pool[key]["info_maps"].extend(value["info_maps"])
+                    merged_pool[key]["values"].extend(value["values"])
             self.current_pool_size = 0
             self._set_variables_pool({}, pool_size_override=0)
 
-        self._set_variables_pool(filtered_pool, pool_size_override=sys.getsizeof(filtered_pool))
+        self._set_variables_pool(merged_pool, pool_size_override=sys.getsizeof(merged_pool))
 
     def save_results(  # noqa: C901
         self,
@@ -1950,7 +1942,15 @@ class OutputManager(object):
         *,
         pool_size_override: int | None = None,
     ) -> None:
-        """Assigns the variables pool and updates the cached size."""
+        """Assigns the variables pool and updates the cached size.
+
+        Parameters
+        ----------
+        new_pool : dict[str, OutputManager.pool_element_type]
+            The new variables pool to be assigned.
+        pool_size_override : int | None, optional
+            If provided, this value will be used to set the current pool size instead of calculating it.
+        """
 
         self.variables_pool = new_pool
         if pool_size_override is not None:
