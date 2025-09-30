@@ -1811,16 +1811,19 @@ def test_get_flat_variables_pool_nested_is_flattened_and_non_dict_skipped(
     mock_output_manager: OutputManager,
 ) -> None:
     """Flattens nested pools and skips non-dict entries at the pool level."""
-    mock_output_manager.variables_pool = cast(Any, {
-        "poolA": {
-            "var1": {"values": [1], "info_maps": [{"units": "kg"}]},
-            "var2": {"values": [2], "info_maps": [{"units": "kg"}]},
+    mock_output_manager.variables_pool = cast(
+        Any,
+        {
+            "poolA": {
+                "var1": {"values": [1], "info_maps": [{"units": "kg"}]},
+                "var2": {"values": [2], "info_maps": [{"units": "kg"}]},
+            },
+            "poolB": {
+                "v3": {"values": [3], "info_maps": [{"units": "m"}]},
+            },
+            "not_a_pool": 42,
         },
-        "poolB": {
-            "v3": {"values": [3], "info_maps": [{"units": "m"}]},
-        },
-        "not_a_pool": 42,
-    })
+    )
 
     result = mock_output_manager._get_flat_variables_pool()
 
