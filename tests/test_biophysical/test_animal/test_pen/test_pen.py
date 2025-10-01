@@ -835,8 +835,9 @@ def test_get_manure_streams(
     assert list(result.keys()) == expected_result_keys
     assert mock_apply_bedding.call_count == len(manure_streams)
 
-    expected_calls = (1 + len(manure_streams)) if animal_combination == \
-        AnimalCombination.LAC_COW else len(manure_streams)
+    expected_calls = (
+        (1 + len(manure_streams)) if animal_combination == AnimalCombination.LAC_COW else len(manure_streams)
+    )
     assert mock_split.call_count == expected_calls
 
     if animal_combination == AnimalCombination.LAC_COW:
@@ -847,16 +848,16 @@ def test_get_manure_streams(
 
         for call in mock_split.call_args_list[1:]:
             assert call.kwargs["stream_type"] == StreamType.GENERAL
-            assert pytest.approx(
-                call.kwargs["manure_stream_deposition_split"]
-            ) == pytest.approx(call.kwargs["split_ratio"])
+            assert pytest.approx(call.kwargs["manure_stream_deposition_split"]) == pytest.approx(
+                call.kwargs["split_ratio"]
+            )
 
     else:
         for call in mock_split.call_args_list:
             assert call.kwargs["stream_type"] == StreamType.GENERAL
-            assert pytest.approx(
-                call.kwargs["manure_stream_deposition_split"]
-            ) == pytest.approx(call.kwargs["split_ratio"])
+            assert pytest.approx(call.kwargs["manure_stream_deposition_split"]) == pytest.approx(
+                call.kwargs["split_ratio"]
+            )
 
 
 @pytest.mark.parametrize(
