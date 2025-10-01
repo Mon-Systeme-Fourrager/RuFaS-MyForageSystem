@@ -701,7 +701,7 @@ class Pen:
             general_substream_proportion = float(stream.get("stream_proportion", 1.0))
             split_ratio = general_substream_proportion * general_stream_proportion
             manure_stream_deposit_split = (
-                general_substream_proportion if parlor_stream_proportion is None else split_ratio
+                general_substream_proportion if parlor_stream_proportion is not None else split_ratio
             )
             manure_stream = total_stream.split_stream(
                 split_ratio=split_ratio,

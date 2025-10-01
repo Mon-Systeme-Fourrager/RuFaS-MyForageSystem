@@ -846,18 +846,22 @@ def test_get_manure_streams(
         assert parlor_call.kwargs["stream_type"] == StreamType.PARLOR
         assert parlor_call.kwargs["manure_stream_deposition_split"] == 0.0
 
-        for call in mock_split.call_args_list[1:]:
+        non_parlor = 1.0 - 0.25
+        for i, call in enumerate(mock_split.call_args_list[1:]):
+            prop = float(manure_streams[i]["stream_proportion"])
+            expected_split_ratio = prop * non_parlor
+            expected_deposition = prop
+
             assert call.kwargs["stream_type"] == StreamType.GENERAL
-            assert pytest.approx(call.kwargs["manure_stream_deposition_split"]) == pytest.approx(
-                call.kwargs["split_ratio"]
-            )
+            assert pytest.approx(call.kwargs["split_ratio"]) == pytest.approx(expected_split_ratio)
+            assert pytest.approx(call.kwargs["manure_stream_deposition_split"]) == pytest.approx(expected_deposition)
 
     else:
-        for call in mock_split.call_args_list:
+        for i, call in enumerate(mock_split.call_args_list):
+            proportion = float(manure_streams[i]["stream_proportion"])
             assert call.kwargs["stream_type"] == StreamType.GENERAL
-            assert pytest.approx(call.kwargs["manure_stream_deposition_split"]) == pytest.approx(
-                call.kwargs["split_ratio"]
-            )
+            assert pytest.approx(call.kwargs["split_ratio"]) == pytest.approx(proportion)
+            assert pytest.approx(call.kwargs["manure_stream_deposition_split"]) == pytest.approx(proportion)
 
 
 @pytest.mark.parametrize(
