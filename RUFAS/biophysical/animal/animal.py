@@ -1079,6 +1079,7 @@ class Animal:
 
     @property
     def milk_statistics(self) -> MilkProductionStatistics:
+        """Returns the milk statistics for the animal."""
         if not self.animal_type.is_cow:
             raise TypeError()
         return MilkProductionStatistics(

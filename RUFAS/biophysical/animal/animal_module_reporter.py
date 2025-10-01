@@ -1,6 +1,6 @@
 import sys
 from dataclasses import asdict
-from typing import Any, Dict, List
+from typing import Any
 
 from RUFAS.biophysical.animal.data_types.animal_population import AnimalPopulationStatistics
 from RUFAS.biophysical.animal.data_types.animal_typed_dicts import SoldAnimalTypedDict, StillbornCalfTypedDict
@@ -33,8 +33,8 @@ class AnimalModuleReporter:
         full_variable_to_add: str,
         thing_to_add: Any,
         simulation_day: int,
-        info_map: Dict[str, Any],
-        units: Dict[str, MeasurementUnits] | MeasurementUnits,
+        info_map: dict[str, Any],
+        units: dict[str, MeasurementUnits] | MeasurementUnits,
     ) -> None:
         """
         Pads a variable in OutputManager for entries that it "missed" relative to another variable.
@@ -64,7 +64,7 @@ class AnimalModuleReporter:
             The info_map to use when padding.
         units: Dict[str, str] | str
             Units for the variable being added, in the format provided in the main call to add_variable,
-            (e.g. the one following the call of data_padder).
+            (e.g., the one following the call of data_padder).
 
         """
         if simulation_day > 0 and reference_variable in om.variables_pool:
@@ -159,17 +159,17 @@ class AnimalModuleReporter:
         }
 
         for milk_stats in milk_reports:
-            milk_data_update: dict[str, int | float] = asdict(milk_stats)
-            milk_data_update["lactating"] = milk_stats.is_milking
-            milk_data_update["estimated_daily_milk_produced"] = milk_stats.estimated_daily_milk_produced
-            milk_data_update["milk_protein"] = milk_stats.milk_protein
-            milk_data_update["milk_fat"] = milk_stats.milk_fat
-            milk_data_update["milk_lactose"] = milk_stats.milk_lactose
-            milk_data_update["parity"] = milk_stats.parity
-            milk_data_update["cow_id"] = milk_stats.cow_id
-            milk_data_update["pen_id"] = milk_stats.pen_id
-            milk_data_update["simulation_day"] = simulation_day
-            om.add_variable("milk_data_at_milk_update", milk_data_update, info_map)
+            updated_milk_data: dict[str, int | float] = asdict(milk_stats)
+            updated_milk_data["lactating"] = milk_stats.is_milking
+            updated_milk_data["estimated_daily_milk_produced"] = milk_stats.estimated_daily_milk_produced
+            updated_milk_data["milk_protein"] = milk_stats.milk_protein
+            updated_milk_data["milk_fat"] = milk_stats.milk_fat
+            updated_milk_data["milk_lactose"] = milk_stats.milk_lactose
+            updated_milk_data["parity"] = milk_stats.parity
+            updated_milk_data["cow_id"] = milk_stats.cow_id
+            updated_milk_data["pen_id"] = milk_stats.pen_id
+            updated_milk_data["simulation_day"] = simulation_day
+            om.add_variable("milk_data_at_milk_update", updated_milk_data, info_map)
 
     @classmethod
     def report_ration_per_animal(
@@ -181,19 +181,21 @@ class AnimalModuleReporter:
         simulation_day: int,
     ) -> None:
         """
-        For each pen, adds the average ration per animal to the OutputManager.
+        Reports the ration consumption per animal along with additional simulation details.
 
         Parameters
         ----------
-        pen : Pen
-            Pen object.
+        pen_base_name : str
+            The base name of the pen for which the ration report is created.
+        ration_per_animal : dict[RUFAS_ID, float]
+            A dictionary mapping animal identifiers (RUFAS_ID) to the amount of ration consumption
+            per animal in kilograms.
+        total_dry_matter : float
+            The total dry matter intake for all animals in the pen.
+        num_animals : int
+            The number of animals present in the pen during the simulation.
         simulation_day : int
-            Day of simulation.
-
-        Returns
-        -------
-        dict[int, float]
-            Map of RuFaS Feed IDs to amounts of that feed in the ration (kg dry matter).
+            The current simulation day when the ration report is generated.
 
         """
         info_map = {
@@ -263,14 +265,22 @@ class AnimalModuleReporter:
         simulation_day: int,
     ) -> None:
         """
-        Adds the average ration per animal of a pen to the OutputManager.
+        Reports the average nutrient requirements for a pen of animals over a simulation period.
 
         Parameters
         ----------
-        pen : Pen
-            Pen object.
+        pen_base_name : str
+            The identifier for the pen in which the group of animals resides.
+        average_nutrition_requirements : NutritionRequirements
+            The average nutrient requirements for the pen, encapsulated in a NutritionRequirements object.
+        average_body_weight : float
+            The average body weight of the animals in the pen.
+        average_milk_production_reduction : float
+            The average milk production reduction for these animals.
+        num_animals : int
+            The number of animals present in the pen.
         simulation_day : int
-            Day of simulation.
+            The current day in the simulation for which data is being reported.
 
         """
         info_map = {
@@ -304,13 +314,17 @@ class AnimalModuleReporter:
         cls, pen_base_name: str, average_nutrition_evaluation: NutritionEvaluationResults, simulation_day: int
     ) -> None:
         """
-        Reports the average nutrient evaluation results for a pen.
+        Reports the average nutritional evaluation results for a specific pen and simulation day.
+
         Parameters
         ----------
-        pen : Pen
-            Pen object.
+        pen_base_name : str
+            The base name of the pen for which the nutrient evaluation data is reported.
+        average_nutrition_evaluation : NutritionEvaluationResults
+            Contains the average values of nutrient evaluation differences for various metrics
+            such as energy, protein, and minerals.
         simulation_day : int
-            Day of simulation.
+            Represents the simulation day for which the nutrient evaluation report is generated.
         """
         info_map = {
             "class": AnimalModuleReporter.__name__,
@@ -348,14 +362,18 @@ class AnimalModuleReporter:
         cls, pen_base_name: str, metabolizable_energy: float, num_animals: int, simulation_day: int
     ) -> None:
         """
-        Report the total metabolizable energy of a pen's average ration to the Output Manager as "MEdiet".
+        Reports the metabolizable energy of the diet for a specified pen.
 
         Parameters
         ----------
-        pen : Pen
-            Pen object.
+        pen_base_name : str
+            The base name of the pen for which the metabolizable energy is reported.
+        metabolizable_energy : float
+            The value of the metabolizable energy in the given units.
+        num_animals : int
+            The number of animals present in the pen.
         simulation_day : int
-            Day of simulation.
+            The specific day in the simulation when this data is captured.
 
         """
         units = MeasurementUnits.MEGACALORIES
@@ -424,6 +442,15 @@ class AnimalModuleReporter:
 
     @classmethod
     def report_enteric_methane_emission(cls, enteric_methane_emission_by_pen: dict[str, float]) -> None:
+        """
+        Report Animal Module enteric methane emission data to Output Manager.
+
+        Parameters
+        ----------
+        enteric_methane_emission_by_pen : dict[str, float]
+            Dictionary containing enteric methane emission values for each pen.
+
+        """
         info_map = {
             "class": AnimalModuleReporter.__name__,
             "function": AnimalModuleReporter.report_enteric_methane_emission.__name__,
@@ -750,23 +777,23 @@ class AnimalModuleReporter:
         parity_3 = herd_statistics.num_cow_for_parity["3"]
         parity_4 = herd_statistics.num_cow_for_parity["4"]
         parity_5 = herd_statistics.num_cow_for_parity["5"]
-        parity_greater_than_3 = herd_statistics.num_cow_for_parity["greater_than_3"]
+        parity_greater_than_5 = herd_statistics.num_cow_for_parity["greater_than_5"]
         om.add_variable("num_cow_for_parity_1", parity_1, dict(info_map, **{"units": MeasurementUnits.ANIMALS}))
         om.add_variable("num_cow_for_parity_2", parity_2, dict(info_map, **{"units": MeasurementUnits.ANIMALS}))
         om.add_variable("num_cow_for_parity_3", parity_3, dict(info_map, **{"units": MeasurementUnits.ANIMALS}))
         om.add_variable("num_cow_for_parity_4", parity_4, dict(info_map, **{"units": MeasurementUnits.ANIMALS}))
         om.add_variable("num_cow_for_parity_5", parity_5, dict(info_map, **{"units": MeasurementUnits.ANIMALS}))
         om.add_variable(
-            "num_cow_for_parity_greater_than_3",
-            parity_greater_than_3,
-            dict(info_map, **{"units": MeasurementUnits.ANIMALS}),
+            "num_cow_for_parity_greater_than_5",
+            parity_greater_than_5,
+            dict(info_map, **{"units": MeasurementUnits.ANIMALS})
         )
         calving_to_preg_time_1 = herd_statistics.avg_calving_to_preg_time["1"]
         calving_to_preg_time_2 = herd_statistics.avg_calving_to_preg_time["2"]
         calving_to_preg_time_3 = herd_statistics.avg_calving_to_preg_time["3"]
         calving_to_preg_time_4 = herd_statistics.avg_calving_to_preg_time["4"]
         calving_to_preg_time_5 = herd_statistics.avg_calving_to_preg_time["5"]
-        calving_to_preg_time_greater_than_3 = herd_statistics.avg_calving_to_preg_time["greater_than_3"]
+        calving_to_preg_time_greater_than_5 = herd_statistics.avg_calving_to_preg_time["greater_than_5"]
         om.add_variable(
             "calving_to_preg_time_1", calving_to_preg_time_1, dict(info_map, **{"units": MeasurementUnits.DAYS})
         )
@@ -783,8 +810,8 @@ class AnimalModuleReporter:
             "calving_to_preg_time_5", calving_to_preg_time_5, dict(info_map, **{"units": MeasurementUnits.DAYS})
         )
         om.add_variable(
-            "calving_to_preg_time_greater_than_3",
-            calving_to_preg_time_greater_than_3,
+            "calving_to_preg_time_greater_than_5",
+            calving_to_preg_time_greater_than_5,
             dict(info_map, **{"units": MeasurementUnits.DAYS}),
         )
         avg_age_for_calving_1 = herd_statistics.avg_age_for_calving["1"]
@@ -792,7 +819,7 @@ class AnimalModuleReporter:
         avg_age_for_calving_3 = herd_statistics.avg_age_for_calving["3"]
         avg_age_for_calving_4 = herd_statistics.avg_age_for_calving["4"]
         avg_age_for_calving_5 = herd_statistics.avg_age_for_calving["5"]
-        avg_age_for_calving_greater_than_3 = herd_statistics.avg_age_for_calving["greater_than_3"]
+        avg_age_for_calving_greater_than_5 = herd_statistics.avg_age_for_calving["greater_than_5"]
         om.add_variable(
             "avg_age_for_calving_1", avg_age_for_calving_1, dict(info_map, **{"units": MeasurementUnits.DAYS})
         )
@@ -809,8 +836,8 @@ class AnimalModuleReporter:
             "avg_age_for_calving_5", avg_age_for_calving_5, dict(info_map, **{"units": MeasurementUnits.DAYS})
         )
         om.add_variable(
-            "avg_age_for_calving_greater_than_3",
-            avg_age_for_calving_greater_than_3,
+            "avg_age_for_calving_greater_than_5",
+            avg_age_for_calving_greater_than_5,
             dict(info_map, **{"units": MeasurementUnits.DAYS}),
         )
         cull_reason_stats_units = {
@@ -933,7 +960,7 @@ class AnimalModuleReporter:
 
         stillborn_at_day_min: int = sys.maxsize
         stillborn_at_day_max: int = 0
-        daily_stillborn: Dict[int, List[StillbornCalfTypedDict]] = {}
+        daily_stillborn: dict[int, list[StillbornCalfTypedDict]] = {}
 
         for animal in stillborn_calves:
             if animal["stillborn_day"] < stillborn_at_day_min:
@@ -1001,7 +1028,7 @@ class AnimalModuleReporter:
 
         sold_at_day_min: int = sys.maxsize
         sold_at_day_max: int = 0
-        daily_sell: dict[int, List[SoldAnimalTypedDict]] = {}
+        daily_sell: dict[int, list[SoldAnimalTypedDict]] = {}
 
         for animal in sold_animals:
             if sold_at_day := animal.get("sold_at_day"):
@@ -1045,7 +1072,7 @@ class AnimalModuleReporter:
     @classmethod
     def report_305d_milk(cls, average_herd_305_days_milk_production: float) -> None:
         """
-        Adds herd mean of latest_milk_production_305days to output manager,
+        Adds herd mean of latest_milk_production_305days to the output manager,
         though only for lactating cows with nonzero values.
 
         Parameters
@@ -1177,9 +1204,6 @@ class AnimalModuleReporter:
         simulation_day : int
             The current simulation day.
 
-        Returns
-        -------
-        None
         """
         info_map = {
             "class": AnimalModuleReporter.__name__,
@@ -1312,7 +1336,7 @@ class AnimalModuleReporter:
             "number_of_parity_3_cows": MeasurementUnits.ANIMALS,
             "number_of_parity_4_cows": MeasurementUnits.ANIMALS,
             "number_of_parity_5_cows": MeasurementUnits.ANIMALS,
-            "number_of_parity_6_and_more_cows": MeasurementUnits.ANIMALS,
+            "number_of_parity_6_or_more_cows": MeasurementUnits.ANIMALS,
             "average_calf_age": MeasurementUnits.DAYS,
             "average_heiferI_age": MeasurementUnits.DAYS,
             "average_heiferII_age": MeasurementUnits.DAYS,

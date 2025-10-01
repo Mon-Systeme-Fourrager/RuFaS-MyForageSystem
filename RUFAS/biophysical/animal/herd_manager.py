@@ -1,7 +1,7 @@
 from collections import defaultdict
 from datetime import date, timedelta
 import math
-from typing import Any, Optional
+from typing import Any
 
 from RUFAS.biophysical.animal import animal_constants
 from RUFAS.biophysical.animal.animal import Animal
@@ -1577,14 +1577,14 @@ class HerdManager:
         parity_3_cows = [cow for cow in self.cows if cow.reproduction.calves == 3]
         parity_4_cows = [cow for cow in self.cows if cow.reproduction.calves == 4]
         parity_5_cows = [cow for cow in self.cows if cow.reproduction.calves == 5]
-        parity_greater_than_3_cows = [cow for cow in self.cows if cow.reproduction.calves > 3]
+        parity_greater_than_5_cows = [cow for cow in self.cows if cow.reproduction.calves > 5]
         self.herd_statistics.num_cow_for_parity = {
             "1": len(parity_1_cows),
             "2": len(parity_2_cows),
             "3": len(parity_3_cows),
             "4": len(parity_4_cows),
             "5": len(parity_5_cows),
-            "greater_than_3": len(parity_greater_than_3_cows),
+            "greater_than_5": len(parity_greater_than_5_cows),
         }
         self.herd_statistics.avg_age_for_parity = {
             "1": sum([cow.days_born for cow in parity_1_cows]) / len(parity_1_cows) if len(parity_1_cows) > 0 else 0,
@@ -1592,9 +1592,9 @@ class HerdManager:
             "3": sum([cow.days_born for cow in parity_3_cows]) / len(parity_3_cows) if len(parity_3_cows) > 0 else 0,
             "4": sum([cow.days_born for cow in parity_4_cows]) / len(parity_4_cows) if len(parity_4_cows) > 0 else 0,
             "5": sum([cow.days_born for cow in parity_5_cows]) / len(parity_5_cows) if len(parity_5_cows) > 0 else 0,
-            "greater_than_3": (
-                sum([cow.days_born for cow in parity_greater_than_3_cows]) / len(parity_greater_than_3_cows)
-                if len(parity_greater_than_3_cows) > 0
+            "greater_than_5": (
+                sum([cow.days_born for cow in parity_greater_than_5_cows]) / len(parity_greater_than_5_cows)
+                if len(parity_greater_than_5_cows) > 0
                 else 0
             ),
         }
@@ -1604,8 +1604,8 @@ class HerdManager:
         parity_3_calving_age = [cow.events.get_most_recent_date(animal_constants.NEW_BIRTH) for cow in parity_3_cows]
         parity_4_calving_age = [cow.events.get_most_recent_date(animal_constants.NEW_BIRTH) for cow in parity_4_cows]
         parity_5_calving_age = [cow.events.get_most_recent_date(animal_constants.NEW_BIRTH) for cow in parity_5_cows]
-        parity_greater_than_3_calving_age = [
-            cow.events.get_most_recent_date(animal_constants.NEW_BIRTH) for cow in parity_greater_than_3_cows
+        parity_greater_than_5_calving_age = [
+            cow.events.get_most_recent_date(animal_constants.NEW_BIRTH) for cow in parity_greater_than_5_cows
         ]
 
         parity_1_calving_age = [calving_age for calving_age in parity_1_calving_age if calving_age > 0]
@@ -1613,8 +1613,8 @@ class HerdManager:
         parity_3_calving_age = [calving_age for calving_age in parity_3_calving_age if calving_age > 0]
         parity_4_calving_age = [calving_age for calving_age in parity_4_calving_age if calving_age > 0]
         parity_5_calving_age = [calving_age for calving_age in parity_5_calving_age if calving_age > 0]
-        parity_greater_than_3_calving_age = [
-            calving_age for calving_age in parity_greater_than_3_calving_age if calving_age > 0
+        parity_greater_than_5_calving_age = [
+            calving_age for calving_age in parity_greater_than_5_calving_age if calving_age > 0
         ]
         self.herd_statistics.avg_age_for_calving = {
             "1": (sum(parity_1_calving_age) / len(parity_1_calving_age)) if len(parity_1_calving_age) > 0 else 0,
@@ -1622,9 +1622,9 @@ class HerdManager:
             "3": (sum(parity_3_calving_age) / len(parity_3_calving_age)) if len(parity_3_calving_age) > 0 else 0,
             "4": (sum(parity_4_calving_age) / len(parity_4_calving_age)) if len(parity_4_calving_age) > 0 else 0,
             "5": (sum(parity_5_calving_age) / len(parity_5_calving_age)) if len(parity_5_calving_age) > 0 else 0,
-            "greater_than_3": (
-                (sum(parity_greater_than_3_calving_age) / len(parity_greater_than_3_calving_age))
-                if len(parity_greater_than_3_calving_age) > 0
+            "greater_than_5": (
+                (sum(parity_greater_than_5_calving_age) / len(parity_greater_than_5_calving_age))
+                if len(parity_greater_than_5_calving_age) > 0
                 else 0
             ),
         }
@@ -1644,8 +1644,8 @@ class HerdManager:
         parity_5_calving_to_pregnancy_time = [
             cow.reproduction.reproduction_statistics.calving_to_pregnancy_time for cow in parity_5_cows
         ]
-        parity_greater_than_3_calving_to_pregnancy_time = [
-            cow.reproduction.reproduction_statistics.calving_to_pregnancy_time for cow in parity_greater_than_3_cows
+        parity_greater_than_5_calving_to_pregnancy_time = [
+            cow.reproduction.reproduction_statistics.calving_to_pregnancy_time for cow in parity_greater_than_5_cows
         ]
 
         parity_1_calving_to_pregnancy_time = [
@@ -1673,9 +1673,9 @@ class HerdManager:
             for calving_to_pregnancy_time in parity_5_calving_to_pregnancy_time
             if calving_to_pregnancy_time > 0
         ]
-        parity_greater_than_3_calving_to_pregnancy_time = [
+        parity_greater_than_5_calving_to_pregnancy_time = [
             calving_to_pregnancy_time
-            for calving_to_pregnancy_time in parity_greater_than_3_calving_to_pregnancy_time
+            for calving_to_pregnancy_time in parity_greater_than_5_calving_to_pregnancy_time
             if calving_to_pregnancy_time > 0
         ]
         self.herd_statistics.avg_calving_to_preg_time = {
@@ -1704,12 +1704,12 @@ class HerdManager:
                 if len(parity_5_calving_to_pregnancy_time) > 0
                 else 0
             ),
-            "greater_than_3": (
+            "greater_than_5": (
                 (
-                    sum(parity_greater_than_3_calving_to_pregnancy_time)
-                    / len(parity_greater_than_3_calving_to_pregnancy_time)
+                    sum(parity_greater_than_5_calving_to_pregnancy_time)
+                    / len(parity_greater_than_5_calving_to_pregnancy_time)
                 )
-                if len(parity_greater_than_3_calving_to_pregnancy_time) > 0
+                if len(parity_greater_than_5_calving_to_pregnancy_time) > 0
                 else 0
             ),
         }
@@ -1849,8 +1849,8 @@ class HerdManager:
         self.herd_statistics.sold_cow_num += len(sold_cows)
 
         for parity in self.herd_statistics.parity_culling_stats_range.keys():
-            if parity == "greater_than_3":
-                culled_cows_with_current_parity = [cow for cow in sold_and_died_cows if cow.reproduction.calves > 3]
+            if parity == "greater_than_5":
+                culled_cows_with_current_parity = [cow for cow in sold_and_died_cows if cow.reproduction.calves > 5]
             else:
                 current_parity = int(parity)
                 culled_cows_with_current_parity = [
@@ -1998,6 +1998,7 @@ class HerdManager:
         )
 
     def report_ration_interval_data(self, simulation_day: int) -> None:
+        """Reports the ration interval data for the herd."""
         for pen in self.all_pens:
             if not pen.is_populated:
                 continue

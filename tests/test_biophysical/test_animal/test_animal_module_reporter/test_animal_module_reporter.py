@@ -1275,7 +1275,7 @@ def test_report_animal_population_statistics(mocker: MockerFixture) -> None:
             number_of_parity_3_cows=1,
             number_of_parity_4_cows=1,
             number_of_parity_5_cows=1,
-            number_of_parity_6_and_more_cows=0,
+            number_of_parity_6_or_more_cows=0,
             average_calf_age=1.1,
             average_heiferI_age=2.2,
             average_heiferII_age=3.3,
