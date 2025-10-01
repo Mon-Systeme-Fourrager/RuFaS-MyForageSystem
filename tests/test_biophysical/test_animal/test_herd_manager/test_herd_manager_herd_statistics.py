@@ -337,7 +337,8 @@ def test_update_cow_parity_statistics(
     parity_4_cows, parity_4_stats = mock_cows_with_specific_parity(number_of_parity_4_cows, parity=4)
     parity_5_cows, parity_5_stats = mock_cows_with_specific_parity(number_of_parity_5_cows, parity=5)
     parity_6_or_more_cows, parity_6_or_more_stats = mock_cows_with_specific_parity(
-        number_of_parity_6_or_more_cows, parity=6)
+        number_of_parity_6_or_more_cows, parity=6
+    )
 
     expected_num_cow_for_parity = {
         "1": number_of_parity_1_cows,
@@ -360,7 +361,7 @@ def test_update_cow_parity_statistics(
 
     herd_manager.herd_statistics.cow_num = total_number_of_cows
     herd_manager.cows = (
-            parity_1_cows + parity_2_cows + parity_3_cows + parity_4_cows + parity_5_cows + parity_6_or_more_cows
+        parity_1_cows + parity_2_cows + parity_3_cows + parity_4_cows + parity_5_cows + parity_6_or_more_cows
     )
     herd_manager.herd_statistics.reset_parity()
     herd_manager._update_cow_parity_statistics()

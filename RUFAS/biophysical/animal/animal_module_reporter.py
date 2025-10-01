@@ -786,7 +786,7 @@ class AnimalModuleReporter:
         om.add_variable(
             "num_cow_for_parity_greater_than_5",
             parity_greater_than_5,
-            dict(info_map, **{"units": MeasurementUnits.ANIMALS})
+            dict(info_map, **{"units": MeasurementUnits.ANIMALS}),
         )
         calving_to_preg_time_1 = herd_statistics.avg_calving_to_preg_time["1"]
         calving_to_preg_time_2 = herd_statistics.avg_calving_to_preg_time["2"]
