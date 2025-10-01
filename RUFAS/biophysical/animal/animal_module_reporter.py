@@ -1305,10 +1305,6 @@ class AnimalModuleReporter:
             AnimalModuleReporter.report_pen_manure_properties(pen, simulation_day)
             if pen.animal_combination.name == "LAC_COW":
                 AnimalModuleReporter.report_milk(pen, simulation_day)
-        info_map = {
-            "class": AnimalModuleReporter.__name__,
-            "function": AnimalModuleReporter.report_daily_reports.__name__,
-        }
 
     @classmethod
     def report_end_of_simulation(

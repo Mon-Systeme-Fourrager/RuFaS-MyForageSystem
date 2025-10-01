@@ -324,7 +324,6 @@ class EntericMethaneCalculator:
             - crude_protein_concentration
             - ethyl_ester_concentration
         )
-        methane_results = {}
         if methane_model == "Mills":
             mitscherlich_parameter_a = animal_constants.MITS_PARAMETER_A
             mitscherlich_parameter_b = animal_constants.MITS_PARAMETER_B
