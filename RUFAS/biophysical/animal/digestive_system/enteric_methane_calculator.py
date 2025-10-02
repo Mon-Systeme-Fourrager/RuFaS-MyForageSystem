@@ -28,7 +28,7 @@ class EntericMethaneCalculator:
         Returns
         -------
         float
-            The amount of methane emission for calf (g/day) corresponding to each method.
+            The amount of methane emission for calf (g/day).
 
         References
         ----------
@@ -141,7 +141,7 @@ class EntericMethaneCalculator:
         Returns
         -------
         float
-            The daily enteric emissions for cows, the calculation model used is the key (g/day).
+            The daily enteric emissions for cows (g/day).
 
         """
         dry_matter_intake = nutrient_amounts.dry_matter
