@@ -1694,6 +1694,7 @@ class CrossValidator:
 
     def _evaluate_condition(self, condition_clause: dict[str, Any]) -> bool:
         """
+
         Evaluates if a single condition is satisfied based on the provided condition clause.
 
         Parameters
