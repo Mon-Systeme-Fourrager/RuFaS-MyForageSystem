@@ -634,7 +634,6 @@ class HerdManager:
 
         animal_manure_excretions_by_pen: dict[str, AnimalManureExcretions] = {}
         herd_manager_output: dict[str, ManureStream] = {}
-        enteric_methane_emission_by_pen: dict[str, float] = {}
         for pen in self.all_pens:
             animal_manure_excretions_by_pen[f"{pen.animal_combination.name}_PEN_{pen.id}"] = pen.total_manure_excretion
             herd_manager_output.update(pen.get_manure_streams())
@@ -645,7 +644,6 @@ class HerdManager:
         AnimalModuleReporter.report_herd_statistics_data(self.herd_statistics, time.simulation_day)
         AnimalModuleReporter.report_manure_excretions(animal_manure_excretions_by_pen, time.simulation_day)
         AnimalModuleReporter.report_manure_streams(herd_manager_output, time.simulation_day)
-        AnimalModuleReporter.report_enteric_methane_emission(enteric_methane_emission_by_pen)
         AnimalModuleReporter.report_milk(self.daily_milk_report, time.simulation_day)
         AnimalModuleReporter.report_305d_milk(self.average_herd_305_days_milk_production)
         self._report_ration(time.simulation_day)

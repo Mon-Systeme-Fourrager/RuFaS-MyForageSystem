@@ -459,34 +459,6 @@ def test_report_daily_ration_per_pen(mocker: MockerFixture) -> None:
     )
 
 
-def test_report_enteric_methane_emission(mocker: MockerFixture) -> None:
-    """Unit test for report_enteric_methane_emission()"""
-    om = OutputManager()
-    mock_om_add_variable = mocker.patch.object(om, "add_variable")
-    enteric_methane_emission_by_pen = {
-        "0_CALF": 1.1,
-        "1_GROWING": 2.2,
-        "2_CLOSEUP": 3.3,
-        "3_LAC_COW": 4.4,
-    }
-
-    AnimalModuleReporter.report_enteric_methane_emission(enteric_methane_emission_by_pen)
-
-    assert mock_om_add_variable.call_args_list == [
-        call(
-            f"enteric_methane_emission_for_{pen_id_combination}",
-            enteric_methane_emission,
-            {
-                "class": AnimalModuleReporter.__name__,
-                "function": AnimalModuleReporter.report_enteric_methane_emission.__name__,
-                "data_origin": [("HerdManager", "daily_routines")],
-                "units": MeasurementUnits.GRAMS,
-            },
-        )
-        for pen_id_combination, enteric_methane_emission in enteric_methane_emission_by_pen.items()
-    ]
-
-
 def test_report_manure_streams_key_error(mocker: MockerFixture) -> None:
     """Unit test for report_manure_streams() when the input has the wrong key"""
     om = OutputManager()
