@@ -1973,7 +1973,6 @@ class CrossValidator:
                 raise KeyError("Missing required field in conditional clause.")
         return valid
 
-
     def _evaluate_equal_condition(self, left_hand_value: Any, right_hand_value: Any) -> bool:
         return left_hand_value == right_hand_value
 
