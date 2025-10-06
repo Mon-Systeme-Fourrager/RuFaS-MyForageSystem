@@ -83,13 +83,6 @@
         "default": 100,
         "minimum": 6
       },
-      "lactating_fraction":{
-        "type":"number",
-        "description": "The fraction of cows that are lactating",
-        "default": 0.8,
-        "minimum":0.01,
-        "maximum": 1.0
-      },
       "breed": {
         "type": "string",
         "default": "HO",
@@ -129,6 +122,13 @@
           "maximum": 1.0,
           "default": 0.9
         }
+      },
+      "milking_cow_fraction": {
+        "type": "number",
+        "description": "Fraction of cows assumed to be in milk at any given time (305/365 is the default).",
+        "default": 0.8365,
+        "minimum": 0.0,
+        "maximum": 1.0
       },
       "annual_milk_yield": {
         "type": "number",
@@ -785,67 +785,43 @@
       "type": "object",
       "description": "Methane emission models to use",
       "calves": {
-        "type": "object",
-        "description": "Methane emission models to use fro calves.",
-        "Pattanaik": {
-          "type": "bool",
-          "default": true
-        }
+        "type": "string",
+        "description": "Methane emission models to use for calves.",
+        "pattern": "^(Pattanaik)$",
+        "default": "Pattanaik"
       },
       "heiferIs": {
-        "type": "object",
-        "description": "Methane emission models to heiferIs.",
-        "IPCC": {
-          "type": "bool",
-          "default": true
-        }
+        "type": "string",
+        "description": "Methane emission models to use for heiferIs.",
+        "default": "IPCC",
+        "pattern": "^(IPCC)$"
       },
       "heiferIIs": {
-        "type": "object",
-        "description": "Methane emission models to heiferIIs.",
-        "IPCC": {
-          "type": "bool",
-          "default": true
-        }
+        "type": "string",
+        "description": "Methane emission models to use for heiferIIs.",
+        "default": "IPCC",
+        "pattern": "^(IPCC)$"
       },
       "heiferIIIs": {
-        "type": "object",
-        "description": "Methane emission models to heiferIIIs.",
-        "IPCC": {
-          "type": "bool",
-          "default": true
-        }
+        "type": "string",
+        "description": "Methane emission models to use for heiferIIIs.",
+        "default": "IPCC",
+        "pattern": "^(IPCC)$"
       },
       "cows": {
         "type": "object",
-        "description": "Methane emission models to cows.",
+        "description": "Methane emission models for cows.",
         "dry cows": {
-          "type": "object",
-          "description": "Methane emission models to dry cows.",
-          "IPCC": {
-            "type": "bool",
-            "default": true
-          },
-          "Mills": {
-            "type": "bool",
-            "default": false
-          }
+          "type": "string",
+          "description": "Methane emission models for dry cows.",
+          "default": "IPCC",
+          "pattern": "^(IPCC|Mills)$"
         },
         "lactating cows": {
-          "type": "object",
-          "description": "Methane emission models to lactating cows.",
-          "IPCC": {
-            "type": "bool",
-            "default": true
-          },
-          "Mills": {
-            "type": "bool",
-            "default": false
-          },
-          "Mutian": {
-            "type": "bool",
-            "default": false
-          }
+          "type": "string",
+          "description": "Methane emission models for lactating cows.",
+          "default": "IPCC",
+          "pattern": "^(IPCC|Mills|Mutian)$"
         }
       }
     },
@@ -2124,13 +2100,6 @@
           "description": "The standard deviation for of Wood's parameter n."
         }
       }
-    },
-    "milking_cow_fraction": {
-      "type": "number",
-      "description": "Fraction of cows assumed to be in milk at any given time (305/365 is the default).",
-      "default": 0.8365,
-      "minimum": 0.0,
-      "maximum": 1.0
     }
   },
   "crop_schedule_properties": {
@@ -4027,6 +3996,13 @@
         "maximum": 1,
         "default": 0.0
       }
+    },
+    "max_daily_feed_recalculations_per_year": {
+        "type": "number",
+        "description": "The maximum number of feed recalculations that can be performed per year.",
+        "minimum": 1,
+        "maximum": 365,
+        "default": 4
     },
     "allowances": {
       "type": "array",
