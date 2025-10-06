@@ -1,6 +1,5 @@
 from unittest.mock import MagicMock, call
 
-from RUFAS.biophysical.feed_storage.feed_storage_enum import StorageType
 from RUFAS.biophysical.feed_storage.storage import Storage
 import pytest
 from datetime import date, datetime, timedelta
@@ -370,14 +369,44 @@ def test_translate_crop_config_name_to_rufas_id(
     assert result == expected_next_harvest_dates_rufas_ids
 
 
-def test_receive_crop_success(feed_manager: FeedManager, harvested_crop: HarvestedCrop) -> None:
-    try:
-        feed_manager.receive_crop(
-            harvested_crop=harvested_crop,
-            simulation_day=15,
-        )
-    except ValueError:
-        pytest.fail("Unexpected ValueError raised")
+def test_receive_crop_routes_to_matching_storage(mocker, feed_manager: FeedManager, harvested_crop: HarvestedCrop):
+    """Tests that receive_crop routes to the correct storage, and warns if no match."""
+    storage = next(iter(feed_manager.active_storages.values()))
+    storage.crop_name = harvested_crop.config_name
+    storage.field_name = harvested_crop.field_name
+
+    mocked_receive = mocker.patch.object(storage, "receive_crop")
+
+    feed_manager._om.add_warning = MagicMock()
+
+    feed_manager.receive_crop(harvested_crop, simulation_day=15)
+
+    mocked_receive.assert_called_once_with(harvested_crop, 15)
+    feed_manager._om.add_warning.assert_not_called()
+
+
+def test_receive_crop_warns_when_no_matching_storage(mocker, feed_manager: FeedManager, harvested_crop: HarvestedCrop):
+    """Tests that receive_crop warns when no storage matches the crop."""
+    for s in feed_manager.active_storages.values():
+        s.crop_name = "not-" + harvested_crop.config_name
+        s.field_name = "not-" + harvested_crop.field_name
+        mocker.patch.object(s, "receive_crop")
+
+    feed_manager._om.add_warning = MagicMock()
+
+    feed_manager.receive_crop(harvested_crop, simulation_day=42)
+
+    for s in feed_manager.active_storages.values():
+        s.receive_crop.assert_not_called()
+
+    feed_manager._om.add_warning.assert_called_once()
+    title, message, info = feed_manager._om.add_warning.call_args.args
+    assert title == "No matching storage for crop"
+    assert harvested_crop.config_name in message
+    assert harvested_crop.field_name in message
+    assert info["class"] == feed_manager.__class__.__name__
+    assert info["function"] == feed_manager.receive_crop.__name__
+    assert info["simulation_day"] == 42
 
 
 def test_process_degradations(feed_manager: FeedManager, mocker: MockerFixture) -> None:
@@ -418,23 +447,21 @@ def test_report_stored_farmgrown_feeds(
     mock_crop_1, mock_crop_2, mock_crop_3, mock_crop_4, mock_crop_5 = (
         MagicMock(auto_spec=HarvestedCrop) for _ in range(5)
     )
-    mock_crop_1.rufas_ids = [1, 6, 8]
-    setattr(mock_crop_1, "dry_matter_mass", 10.0)
-    mock_crop_2.rufas_ids = [1, 2, 5, 7]
-    setattr(mock_crop_2, "dry_matter_mass", 10.0)
-    mock_crop_3.rufas_ids = [9, 18, 27]
-    setattr(mock_crop_3, "dry_matter_mass", 10.0)
-    mock_crop_4.rufas_ids = [3, 5, 10]
-    setattr(mock_crop_4, "dry_matter_mass", 10.0)
-    mock_crop_5.rufas_ids = [144, 233, 158]
-    setattr(mock_crop_5, "dry_matter_mass", 10.0)
+    for crop in (mock_crop_1, mock_crop_2, mock_crop_3, mock_crop_4, mock_crop_5):
+        crop.dry_matter_mass = 10.0
+        crop.fresh_mass = 20.0
+
     mock_storage_1, mock_storage_2 = (MagicMock(auto_spec=Dry), MagicMock(auto_spec=Pile))
-    mock_storage_1.stored, mock_storage_2.stored = [mock_crop_1, mock_crop_2], [mock_crop_3, mock_crop_4, mock_crop_5]
+    mock_storage_1.rufas_feed_id = 1
+    mock_storage_2.rufas_feed_id = 999
+    mock_storage_1.stored = [mock_crop_1, mock_crop_2]
+    mock_storage_2.stored = [mock_crop_3, mock_crop_4, mock_crop_5]
+
     feed_manager.active_storages = {"example_dry": mock_storage_1, "example_pile": mock_storage_2}
 
     feed_manager.report_stored_farmgrown_feeds(mock_time, "mock_suffix")
 
-    assert mock_om_add_variable.call_count == 10
+    assert mock_om_add_variable.call_count == 2 * len(mock_available_feeds)
 
 
 def test_manage_daily_feed_request(feed_manager: FeedManager, mocker: MockerFixture) -> None:
@@ -842,6 +869,169 @@ def test_deduct_feeds_from_inventory_error(
     with pytest.raises(ValueError):
         feed_manager._deduct_feeds_from_inventory(feeds_to_deduct, mock_simulation_day)
         assert mock_om_add_variable.call_count == 10
+
+
+def test__deduct_from_farmgrown_fifo_and_skip_zero_mass(feed_manager: FeedManager) -> None:
+    """Consumes in FIFO order, skips zero-mass entries, updates cumulative dict."""
+    feed_id = 1
+
+    c1 = MagicMock(spec=["dry_matter_mass", "remove_feed_mass"])
+    c1.dry_matter_mass = 10.0
+    c2 = MagicMock(spec=["dry_matter_mass", "remove_feed_mass"])
+    c2.dry_matter_mass = 0.0
+    c3 = MagicMock(spec=["dry_matter_mass", "remove_feed_mass"])
+    c3.dry_matter_mass = 8.0
+
+    remaining, deducted = feed_manager._deduct_from_farmgrown(feed_id, remaining=15.0, farmgrown_feeds=[c1, c2, c3])
+
+    assert deducted == 15.0
+    assert remaining == pytest.approx(0.0, abs=1e-9)
+
+    c1.remove_feed_mass.assert_called_once_with(10.0)
+    c2.remove_feed_mass.assert_not_called()
+    c3.remove_feed_mass.assert_called_once_with(5.0)
+
+    assert feed_manager._cumulative_farmgrown_feeds_fed.get(feed_id, 0.0) == pytest.approx(15.0)
+
+
+def test__deduct_from_farmgrown_breaks_when_remainder_small(feed_manager: FeedManager) -> None:
+    """If remaining <= 1e-3 at loop start, it breaks immediately (no calls, no updates)."""
+    feed_id = 1
+
+    c = MagicMock(spec=["dry_matter_mass", "remove_feed_mass"])
+    c.dry_matter_mass = 100.0
+
+    remaining, deducted = feed_manager._deduct_from_farmgrown(feed_id, remaining=5e-4, farmgrown_feeds=[c])
+
+    assert deducted == 0.0
+    assert remaining == 5e-4
+    c.remove_feed_mass.assert_not_called()
+    assert feed_manager._cumulative_farmgrown_feeds_fed.get(feed_id, 0.0) == pytest.approx(0.0)
+
+
+def test__deduct_from_purchased_fifo_and_skip_zero_mass(feed_manager: FeedManager) -> None:
+    """Consumes purchased feeds in FIFO order, skips zero-mass entries, updates cumulative dict."""
+    feed_id = 1
+
+    p1 = MagicMock(spec=["dry_matter_mass", "remove_dry_matter_mass"])
+    p1.dry_matter_mass = 12.0
+    p2 = MagicMock(spec=["dry_matter_mass", "remove_dry_matter_mass"])
+    p2.dry_matter_mass = 0.0
+    p3 = MagicMock(spec=["dry_matter_mass", "remove_dry_matter_mass"])
+    p3.dry_matter_mass = 5.0
+
+    remaining, deducted = feed_manager._deduct_from_purchased(feed_id, remaining=14.0, purchased_feeds=[p1, p2, p3])
+
+    assert deducted == 14.0
+    assert remaining == pytest.approx(0.0, abs=1e-9)
+
+    p1.remove_dry_matter_mass.assert_called_once_with(12.0)
+    p2.remove_dry_matter_mass.assert_not_called()
+    p3.remove_dry_matter_mass.assert_called_once_with(2.0)
+
+    assert feed_manager._cumulative_purchased_feeds_fed.get(feed_id, 0.0) == pytest.approx(14.0)
+
+
+def test__deduct_from_purchased_breaks_when_remaining_small(feed_manager: FeedManager) -> None:
+    """If remaining <= 1e-3 at loop start, it breaks immediately (no calls, no updates)."""
+    feed_id = 1
+
+    p = MagicMock(spec=["dry_matter_mass", "remove_dry_matter_mass"])
+    p.dry_matter_mass = 100.0
+
+    remaining, deducted = feed_manager._deduct_from_purchased(feed_id, remaining=5e-4, purchased_feeds=[p])
+
+    assert deducted == 0.0
+    assert remaining == 5e-4
+    p.remove_dry_matter_mass.assert_not_called()
+    assert feed_manager._cumulative_purchased_feeds_fed.get(feed_id, 0.0) == pytest.approx(0.0)
+
+
+def test_lookup_storage_rufas_id(feed_manager: FeedManager) -> None:
+    """Test that the storage rufas_id lookup works correctly."""
+    storage_1, storage_2 = (MagicMock(auto_spec=Dry), MagicMock(auto_spec=Pile))
+    storage_1.crop_name = "corn"
+    storage_2.crop_name = "hay"
+    storage_1.rufas_feed_id, storage_2.rufas_feed_id = 1, 2
+    feed_manager.active_storages = {"example_dry": storage_1, "example_pile": storage_2}
+
+    assert feed_manager._lookup_storage_rufas_id("corn") == 1
+    assert feed_manager._lookup_storage_rufas_id("hay") == 2
+
+
+def test_lookup_storage_rufas_id_error(feed_manager: FeedManager) -> None:
+    """Test that an error is raised when looking up a non-existent storage."""
+    storage_1 = MagicMock(auto_spec=Dry)
+    storage_1.crop_name = "corn"
+    storage_1.rufas_feed_id = 1
+    feed_manager.active_storages = {"example_dry": storage_1}
+    with pytest.raises(ValueError, match="No rufas id found for crop name 'non_existent_storage'."):
+        feed_manager._lookup_storage_rufas_id("non_existent_storage")
+
+
+def test_gather_available_feeds_by_id_groups_and_sorts() -> None:
+    """Test that farmgrown feeds are grouped by rufas_id and sorted by storage_time, and that purchased feeds
+    are grouped by rufas_id.
+    """
+    fm = FeedManager.__new__(FeedManager)
+    fm.crop_to_rufas_id = {"corn": 1, "alfalfa": 2}
+
+    s1 = MagicMock(spec=["rufas_feed_id", "stored"])
+    s1.rufas_feed_id = 1
+    older = MagicMock(spec=["dry_matter_mass", "storage_time"])
+    older.dry_matter_mass = 10.0
+    older.storage_time = date(2024, 6, 1)
+    newer = MagicMock(spec=["dry_matter_mass", "storage_time"])
+    newer.dry_matter_mass = 5.0
+    newer.storage_time = date(2024, 6, 5)
+    zero = MagicMock(spec=["dry_matter_mass", "storage_time"])
+    zero.dry_matter_mass = 0.0  # should be skipped
+    zero.storage_time = date(2024, 6, 3)
+    s1.stored = [newer, older, zero]  # out of order on purpose
+
+    s2 = MagicMock(spec=["rufas_feed_id", "stored"])
+    s2.rufas_feed_id = 2
+    c2 = MagicMock(spec=["dry_matter_mass", "storage_time"])
+    c2.dry_matter_mass = 8.0
+    c2.storage_time = date(2024, 6, 2)
+    s2.stored = [c2]
+
+    s3 = MagicMock(spec=["rufas_feed_id", "stored"])
+    s3.rufas_feed_id = 99
+    c3 = MagicMock(spec=["dry_matter_mass", "storage_time"])
+    c3.dry_matter_mass = 12.0
+    c3.storage_time = date(2024, 6, 1)
+    s3.stored = [c3]
+
+    fm.active_storages = {"s1": s1, "s2": s2, "s3": s3}
+
+    p1 = MagicMock(spec=["dry_matter_mass", "rufas_id"])
+    p1.dry_matter_mass = 4.0
+    p1.rufas_id = 1
+
+    p1b = MagicMock(spec=["dry_matter_mass", "rufas_id"])
+    p1b.dry_matter_mass = 2.0
+    p1b.rufas_id = 1
+
+    p2 = MagicMock(spec=["dry_matter_mass", "rufas_id"])
+    p2.dry_matter_mass = 7.0
+    p2.rufas_id = 2
+
+    p_zero = MagicMock(spec=["dry_matter_mass", "rufas_id"])
+    p_zero.dry_matter_mass = 1e-9
+    p_zero.rufas_id = 1
+
+    fm.purchased_feed_storage = MagicMock(spec=["stored"])
+    fm.purchased_feed_storage.stored = [p1, p_zero, p2, p1b]
+
+    farmgrown_by_id, purchased_by_id = fm._gather_available_feeds_by_id()
+
+    assert set(farmgrown_by_id.keys()) == {1, 2}
+    assert farmgrown_by_id[1] == [older, newer]
+    assert farmgrown_by_id[2] == [c2]
+    assert set(purchased_by_id.keys()) == {1, 2}
+    assert purchased_by_id[1] == [p1, p1b]
+    assert purchased_by_id[2] == [p2]
 
 
 @pytest.mark.parametrize("standard, feed_rep", [(NutrientStandard.NASEM, NASEMFeed), (NutrientStandard.NRC, NRCFeed)])
