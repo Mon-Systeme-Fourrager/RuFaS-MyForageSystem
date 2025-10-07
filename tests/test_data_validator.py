@@ -39,10 +39,10 @@ def mock_input_array_data_for_fix_data() -> Dict[str, Dict[str, Any] | List[Any]
     ],
 )
 def test_bool_type_validator(
-        input_data_value: bool,
-        dummy_variable_properties: Dict[str, Any],
-        expected_result: bool,
-        mocker: MockerFixture,
+    input_data_value: bool,
+    dummy_variable_properties: Dict[str, Any],
+    expected_result: bool,
+    mocker: MockerFixture,
 ) -> None:
     """
     Unit test for function _bool_type_validator in file input_manager.py
@@ -114,10 +114,10 @@ def test_bool_type_validator(
     ],
 )
 def test_number_type_validator(
-        dummy_value: int,
-        dummy_variable_properties: Dict[str, int],
-        expected_result: bool,
-        mocker: MockerFixture,
+    dummy_value: int,
+    dummy_variable_properties: Dict[str, int],
+    expected_result: bool,
+    mocker: MockerFixture,
 ) -> None:
     """Unit test for function _number_type_validator in file input_manager.py"""
 
@@ -159,9 +159,9 @@ def test_number_type_validator(
         ("cow", {"pattern": r"cow", "minimum_length": 1, "maximum_length": 5}, True),
         ("cow", {"pattern": r".{3}", "minimum_length": 1}, True),
         (
-                "COW",
-                {"pattern": r"cow", "minimum_length": 1, "maximum_length": 5},
-                False,
+            "COW",
+            {"pattern": r"cow", "minimum_length": 1, "maximum_length": 5},
+            False,
         ),
         ("cow", {"minimum_length": 1, "maximum_length": 5}, True),
         ("cow", {"minimum_length": 5}, False),
@@ -172,10 +172,10 @@ def test_number_type_validator(
     ],
 )
 def test_string_type_validator(
-        dummy_value: int,
-        dummy_variable_properties: Dict[str, int],
-        expected_result: bool,
-        mocker: MockerFixture,
+    dummy_value: int,
+    dummy_variable_properties: Dict[str, int],
+    expected_result: bool,
+    mocker: MockerFixture,
 ) -> None:
     """Unit test for _string_type_validator function in file input_manager.py"""
     var_path: list[str | int] = ["dummy_var_path"]
@@ -211,57 +211,56 @@ def test_string_type_validator(
     "dummy_variable_properties, dummy_element_hierarchy, expected_value, expected_result",
     [
         (
-                {
-                    "type": "array",
-                    "default": [1, 2, 3, 4, 5],
-                    "minimum_length": 5,
-                    "maximum_length": 10,
-                },
-                ["element1"],
-                [1, 2, 3, 4, 5],
-                True,
+            {
+                "type": "array",
+                "default": [1, 2, 3, 4, 5],
+                "minimum_length": 5,
+                "maximum_length": 10,
+            },
+            ["element1"],
+            [1, 2, 3, 4, 5],
+            True,
         ),
         (
-                {
-                    "type": "array",
-                    "default": [],
-                    "minimum_length": 0,
-                    "maximum_length": 5,
-                },
-                ["element2"],
-                [],
-                True,
+            {
+                "type": "array",
+                "default": [],
+                "minimum_length": 0,
+                "maximum_length": 5,
+            },
+            ["element2"],
+            [],
+            True,
         ),
         (
-                {
-                    "type": "array",
-                    "default": [1, 2, 3, 4, 5],
-                    "minimum_length": 5,
-                    "maximum_length": 10,
-                },
-                ["element3"],
-                [1, 2, 3, 4, 5],
-                True,
+            {
+                "type": "array",
+                "default": [1, 2, 3, 4, 5],
+                "minimum_length": 5,
+                "maximum_length": 10,
+            },
+            ["element3"],
+            [1, 2, 3, 4, 5],
+            True,
         ),
         (
-                {
-                    "type": "array",
-                    "default": [1, 2, 3],
-                    "minimum_length": 2,
-                    "maximum_length": 5,
-                },
-                ["element4", "element5"],
-                [1, 2, 3],
-                True,
+            {
+                "type": "array",
+                "default": [1, 2, 3],
+                "minimum_length": 2,
+                "maximum_length": 5,
+            },
+            ["element4", "element5"],
+            [1, 2, 3],
+            True,
         ),
     ],
 )
 def test_fix_array_type_fixable_data(
-        dummy_variable_properties: Dict[str, Any],
-        dummy_element_hierarchy: List[str],
-        expected_value: List[Any],
-        expected_result: bool,
-        mocker: MockerFixture,
+    dummy_variable_properties: Dict[str, Any],
+    dummy_element_hierarchy: List[str],
+    expected_value: List[Any],
+    expected_result: bool
 ) -> None:
     """Unit test for fixable array-type data for _fix_data function in file input_manager.py"""
 
@@ -319,48 +318,47 @@ def test_fix_array_type_fixable_data(
     "dummy_variable_properties, dummy_element_hierarchy, expected_result",
     [
         (
-                {
-                    "type": "array",
-                    "minimum_length": 5,
-                    "maximum_length": 10,
-                },
-                ["element6"],
-                False,
+            {
+                "type": "array",
+                "minimum_length": 5,
+                "maximum_length": 10,
+            },
+            ["element6"],
+            False,
         ),
         (
-                {
-                    "type": "array",
-                    "minimum_length": 0,
-                    "maximum_length": 5,
-                },
-                ["element7"],
-                False,
+            {
+                "type": "array",
+                "minimum_length": 0,
+                "maximum_length": 5,
+            },
+            ["element7"],
+            False,
         ),
         (
-                {
-                    "type": "array",
-                    "minimum_length": 2,
-                    "maximum_length": 5,
-                },
-                ["element8"],
-                False,
+            {
+                "type": "array",
+                "minimum_length": 2,
+                "maximum_length": 5,
+            },
+            ["element8"],
+            False,
         ),
         (
-                {
-                    "type": "array",
-                    "minimum_length": 2,
-                    "maximum_length": 5,
-                },
-                ["element9", "element10"],
-                False,
+            {
+                "type": "array",
+                "minimum_length": 2,
+                "maximum_length": 5,
+            },
+            ["element9", "element10"],
+            False,
         ),
     ],
 )
 def test_fix_array_type_critical_data(
-        dummy_variable_properties: Dict[str, Any],
-        dummy_element_hierarchy: List[str],
-        expected_result: bool,
-        mocker: MockerFixture,
+    dummy_variable_properties: Dict[str, Any],
+    dummy_element_hierarchy: List[str],
+    expected_result: bool,
 ) -> None:
     """Unit test for critical array-type data for _fix_data function in file input_manager.py"""
     dummy_input_data = mock_input_array_data_for_fix_data()
@@ -417,60 +415,59 @@ def mock_input_string_data_for_fix_data() -> dict[str, str | dict[str, Any]]:
     "dummy_variable_properties, dummy_element_hierarchy, expected_value, expected_result",
     [
         (
-                {
-                    "type": "str",
-                    "default": "cow",
-                    "pattern": r"cow",
-                    "minimum_length": 1,
-                    "maximum_length": 5,
-                },
-                ["element1"],
-                "cow",
-                True,
+            {
+                "type": "str",
+                "default": "cow",
+                "pattern": r"cow",
+                "minimum_length": 1,
+                "maximum_length": 5,
+            },
+            ["element1"],
+            "cow",
+            True,
         ),
         (
-                {
-                    "type": "str",
-                    "default": "",
-                    "minimum_length": 0,
-                    "maximum_length": 5,
-                },
-                ["element2"],
-                "",
-                True,
+            {
+                "type": "str",
+                "default": "",
+                "minimum_length": 0,
+                "maximum_length": 5,
+            },
+            ["element2"],
+            "",
+            True,
         ),
         (
-                {
-                    "type": "str",
-                    "default": "cow",
-                    "pattern": r"cow",
-                    "minimum_length": 2,
-                    "maximum_length": 5,
-                },
-                ["element3"],
-                "cow",
-                True,
+            {
+                "type": "str",
+                "default": "cow",
+                "pattern": r"cow",
+                "minimum_length": 2,
+                "maximum_length": 5,
+            },
+            ["element3"],
+            "cow",
+            True,
         ),
         (
-                {
-                    "type": "str",
-                    "default": "cow",
-                    "pattern": r"cow",
-                    "minimum_length": 2,
-                    "maximum_length": 5,
-                },
-                ["element4", "element5"],
-                "cow",
-                True,
+            {
+                "type": "str",
+                "default": "cow",
+                "pattern": r"cow",
+                "minimum_length": 2,
+                "maximum_length": 5,
+            },
+            ["element4", "element5"],
+            "cow",
+            True,
         ),
     ],
 )
 def test_fix_string_type_fixable_data(
-        dummy_variable_properties: dict[str, Any],
-        dummy_element_hierarchy: list[str],
-        expected_value: str,
-        expected_result: bool,
-        mocker: MockerFixture,
+    dummy_variable_properties: dict[str, Any],
+    dummy_element_hierarchy: list[str],
+    expected_value: str,
+    expected_result: bool
 ) -> None:
     """Unit test for fixable string-type data for _fix_data function in file input_manager.py"""
     dummy_input_data = mock_input_array_data_for_fix_data()
@@ -582,51 +579,51 @@ def test_fix_string_type_csv_data() -> None:
     "dummy_variable_properties, dummy_element_hierarchy, expected_result",
     [
         (
-                {
-                    "type": "str",
-                    "pattern": r"cow",
-                    "minimum_length": 1,
-                    "maximum_length": 5,
-                },
-                ["element6"],
-                False,
+            {
+                "type": "str",
+                "pattern": r"cow",
+                "minimum_length": 1,
+                "maximum_length": 5,
+            },
+            ["element6"],
+            False,
         ),
         (
-                {
-                    "type": "str",
-                    "pattern": r"cow",
-                    "minimum_length": 1,
-                    "maximum_length": 5,
-                },
-                ["element7"],
-                False,
+            {
+                "type": "str",
+                "pattern": r"cow",
+                "minimum_length": 1,
+                "maximum_length": 5,
+            },
+            ["element7"],
+            False,
         ),
         (
-                {
-                    "type": "str",
-                    "pattern": r"cow",
-                    "minimum_length": 1,
-                    "maximum_length": 5,
-                },
-                ["element8"],
-                False,
+            {
+                "type": "str",
+                "pattern": r"cow",
+                "minimum_length": 1,
+                "maximum_length": 5,
+            },
+            ["element8"],
+            False,
         ),
         (
-                {
-                    "type": "str",
-                    "pattern": r"cow",
-                    "minimum_length": 2,
-                    "maximum_length": 5,
-                },
-                ["element9", "element10"],
-                False,
+            {
+                "type": "str",
+                "pattern": r"cow",
+                "minimum_length": 2,
+                "maximum_length": 5,
+            },
+            ["element9", "element10"],
+            False,
         ),
     ],
 )
 def test_fix_string_type_critical_data(
-        dummy_variable_properties: dict[str, Any],
-        dummy_element_hierarchy: list[str],
-        expected_result: bool,
+    dummy_variable_properties: dict[str, Any],
+    dummy_element_hierarchy: list[str],
+    expected_result: bool,
 ) -> None:
     """Unit test for critical string-type data for _fix_data function in file input_manager.py"""
     dummy_input_data = mock_input_array_data_for_fix_data()
@@ -683,62 +680,61 @@ def mock_input_number_data_for_fix_data() -> Dict[str, Dict[str, int] | int]:
     "dummy_variable_properties, dummy_element_hierarchy, expected_value, expected_result, expected_warning_call_count",
     [
         (
-                {
-                    "type": "number",
-                    "default": 5,
-                    "minimum": 0,
-                    "maximum": 10,
-                },
-                ["element1"],
-                5,
-                True,
-                2,
+            {
+                "type": "number",
+                "default": 5,
+                "minimum": 0,
+                "maximum": 10,
+            },
+            ["element1"],
+            5,
+            True,
+            2,
         ),
         (
-                {
-                    "type": "number",
-                    "default": 0,
-                    "minimum": 0,
-                    "maximum": 10,
-                },
-                ["element2"],
-                0,
-                True,
-                2,
+            {
+                "type": "number",
+                "default": 0,
+                "minimum": 0,
+                "maximum": 10,
+            },
+            ["element2"],
+            0,
+            True,
+            2,
         ),
         (
-                {
-                    "type": "number",
-                    "default": 5,
-                    "minimum": 1,
-                    "maximum": 10,
-                },
-                ["element3"],
-                5,
-                True,
-                2,
+            {
+                "type": "number",
+                "default": 5,
+                "minimum": 1,
+                "maximum": 10,
+            },
+            ["element3"],
+            5,
+            True,
+            2,
         ),
         (
-                {
-                    "type": "number",
-                    "default": 5,
-                    "minimum": 0,
-                    "maximum": 10,
-                },
-                ["element4", "element5"],
-                5,
-                True,
-                2,
+            {
+                "type": "number",
+                "default": 5,
+                "minimum": 0,
+                "maximum": 10,
+            },
+            ["element4", "element5"],
+            5,
+            True,
+            2,
         ),
     ],
 )
 def test_fix_number_type_fixable_data(
-        dummy_variable_properties: dict[str, Any],
-        dummy_element_hierarchy: list[str],
-        expected_value: str,
-        expected_result: bool,
-        expected_warning_call_count: int,
-        mocker: MockerFixture,
+    dummy_variable_properties: dict[str, Any],
+    dummy_element_hierarchy: list[str],
+    expected_value: str,
+    expected_result: bool,
+    expected_warning_call_count: int
 ) -> None:
     """Unit test for fixable number-type data for _fix_data function in file input_manager.py"""
     dummy_input_data = mock_input_array_data_for_fix_data()
@@ -795,53 +791,52 @@ def test_fix_number_type_fixable_data(
     "dummy_variable_properties, dummy_element_hierarchy, expected_result, " "expected_warning_call_count",
     [
         (
-                {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 10,
-                },
-                ["element6"],
-                False,
-                0,
+            {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 10,
+            },
+            ["element6"],
+            False,
+            0,
         ),
         (
-                {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 10,
-                },
-                ["element7"],
-                False,
-                0,
+            {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 10,
+            },
+            ["element7"],
+            False,
+            0,
         ),
         (
-                {
-                    "type": "number",
-                    "minimum": 1,
-                    "maximum": 10,
-                },
-                ["element8"],
-                False,
-                0,
+            {
+                "type": "number",
+                "minimum": 1,
+                "maximum": 10,
+            },
+            ["element8"],
+            False,
+            0,
         ),
         (
-                {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 10,
-                },
-                ["element9", "element10"],
-                False,
-                0,
+            {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 10,
+            },
+            ["element9", "element10"],
+            False,
+            0,
         ),
     ],
 )
 def test_fix_number_type_critical_data(
-        dummy_variable_properties: dict[str, Any],
-        dummy_element_hierarchy: list[str],
-        expected_result: bool,
-        expected_warning_call_count: int,
-        mocker: MockerFixture,
+    dummy_variable_properties: dict[str, Any],
+    dummy_element_hierarchy: list[str],
+    expected_result: bool,
+    expected_warning_call_count: int
 ) -> None:
     """Unit test for critical number-type data for _fix_data function in file input_manager.py"""
     dummy_input_data = mock_input_array_data_for_fix_data()
@@ -882,46 +877,46 @@ def test_fix_number_type_critical_data(
     [
         # Success cases
         (
-                {
-                    "animal": {
-                        "herd_information": {
-                            "calf_num": 8,
-                            "heiferI_num": 44,
-                            "heiferII_num": 38,
-                            "heiferIII_num_springers": 12,
-                        }
+            {
+                "animal": {
+                    "herd_information": {
+                        "calf_num": 8,
+                        "heiferI_num": 44,
+                        "heiferII_num": 38,
+                        "heiferIII_num_springers": 12,
                     }
-                },
-                ["animal", "herd_information", "calf_num"],
-                8,
-                None,
+                }
+            },
+            ["animal", "herd_information", "calf_num"],
+            8,
+            None,
         ),
         (
-                {
-                    "manure_management_scenarios": [
-                        {"bedding_type": "straw", "manure_handler": "manual scraping"},
-                        {"bedding_type": "sawdust", "manure_handler": "flush system"},
-                    ]
-                },
-                ["manure_management_scenarios", 0, "bedding_type"],
-                "straw",
-                None,
+            {
+                "manure_management_scenarios": [
+                    {"bedding_type": "straw", "manure_handler": "manual scraping"},
+                    {"bedding_type": "sawdust", "manure_handler": "flush system"},
+                ]
+            },
+            ["manure_management_scenarios", 0, "bedding_type"],
+            "straw",
+            None,
         ),
         # Error cases
         (
-                {"animal": {"herd_information": {"calf_num": 8}}},
-                ["animal", "herd_information", "missing_key"],
-                None,
-                KeyError,
+            {"animal": {"herd_information": {"calf_num": 8}}},
+            ["animal", "herd_information", "missing_key"],
+            None,
+            KeyError,
         ),
         ([{"key": "value"}], [0, "nonexistent_key"], None, KeyError),
     ],
 )
 def test_extract_value_by_key_list(
-        input_data: Union[List[Any], Dict[str, Any]],
-        variable_path: List[Union[str, int]],
-        expected: Optional[Any],
-        expected_exception: Optional[Type[Exception]],
+    input_data: Union[List[Any], Dict[str, Any]],
+    variable_path: List[Union[str, int]],
+    expected: Optional[Any],
+    expected_exception: Optional[Type[Exception]],
 ) -> None:
     """
     Unit test for the _extract_value_by_key_list() method of the InputManager class.
@@ -967,58 +962,58 @@ def test_convert_variable_path_to_str(variable_path: List[Union[str, int]], expe
     [
         # Test case with valid object data
         (
-                ["data", "object"],
-                {"key": {"type": "string"}},
-                {"data": {"object": {"key": "value"}}},
-                False,
-                "blob_key",
-                True,
-                {"key": "value"},
-                True,
+            ["data", "object"],
+            {"key": {"type": "string"}},
+            {"data": {"object": {"key": "value"}}},
+            False,
+            "blob_key",
+            True,
+            {"key": "value"},
+            True,
         ),
         # Test case with invalid object data
         (
-                ["data", "object"],
-                {"key": {"type": "string"}},
-                {"data": {"object": "not_a_dict"}},
-                False,
-                "blob_key",
-                False,
-                "not_a_dict",
-                False,
+            ["data", "object"],
+            {"key": {"type": "string"}},
+            {"data": {"object": "not_a_dict"}},
+            False,
+            "blob_key",
+            False,
+            "not_a_dict",
+            False,
         ),
         (
-                ["data", "object", "nested"],
-                {"nested": {"type": "object", "properties": {"key": {"type": "string"}}}},
-                {"data": {"object": {"nested": {"key": 123}}}},
-                False,
-                "blob_key",
-                False,
-                {"nested": {"key": 123}},
-                False,
+            ["data", "object", "nested"],
+            {"nested": {"type": "object", "properties": {"key": {"type": "string"}}}},
+            {"data": {"object": {"nested": {"key": 123}}}},
+            False,
+            "blob_key",
+            False,
+            {"nested": {"key": 123}},
+            False,
         ),
         (
-                ["data", "early_failure"],
-                {"description": "a description", "key1": {"type": "string"}, "key2": {"type": "integer"}},
-                {"data": {"early_failure": {"key1": "valid", "key2": "not_an_integer"}}},  # key2 fails validation
-                True,
-                "blob_key",
-                False,
-                {"key1": "valid", "key2": "not_an_integer"},
-                False,
+            ["data", "early_failure"],
+            {"description": "a description", "key1": {"type": "string"}, "key2": {"type": "integer"}},
+            {"data": {"early_failure": {"key1": "valid", "key2": "not_an_integer"}}},  # key2 fails validation
+            True,
+            "blob_key",
+            False,
+            {"key1": "valid", "key2": "not_an_integer"},
+            False,
         ),
     ],
 )
 def test_object_type_validator(
-        mocker: MockerFixture,
-        variable_path: List[Union[str, int]],
-        variable_properties: Dict[str, Any],
-        input_data: Dict[str, Any],
-        eager_termination: bool,
-        properties_blob_key: str,
-        expected_result: bool,
-        patch_extract_return: Any,
-        patch_validate_return: bool,
+    mocker: MockerFixture,
+    variable_path: List[Union[str, int]],
+    variable_properties: Dict[str, Any],
+    input_data: Dict[str, Any],
+    eager_termination: bool,
+    properties_blob_key: str,
+    expected_result: bool,
+    patch_extract_return: Any,
+    patch_validate_return: bool,
 ) -> None:
     """
     Unit test for the _object_type_validator() method of the InputManager class.
@@ -1055,7 +1050,7 @@ def test_object_type_validator(
     ],
 )
 def test_object_type_validator_key_removal(
-        mocker: MockerFixture, data: dict[str, Any], removed_keys: list[str]
+    mocker: MockerFixture, data: dict[str, Any], removed_keys: list[str]
 ) -> None:
     """Tests that extraneous keys are properly removed by the _object_type_validator in Input Manager."""
     mocker.patch.object(DataValidator, "_extract_data_by_key_list", return_value=data)
@@ -1099,50 +1094,50 @@ def test_object_type_validator_key_removal(
     [
         # Input data is not a list
         (
-                ["data", "array"],
-                {"maximum_length": 5, "minimum_length": 1},
-                "not_a_list",
-                "blob_key",
-                False,
-                "Validation: array container is not a list",
+            ["data", "array"],
+            {"maximum_length": 5, "minimum_length": 1},
+            "not_a_list",
+            "blob_key",
+            False,
+            "Validation: array container is not a list",
         ),
         # Input list's length is less than the specified minimum length
         (
-                ["data", "array"],
-                {"maximum_length": 5, "minimum_length": 2},
-                [1],
-                "blob_key",
-                False,
-                "Validation: array length less than minimum",
+            ["data", "array"],
+            {"maximum_length": 5, "minimum_length": 2},
+            [1],
+            "blob_key",
+            False,
+            "Validation: array length less than minimum",
         ),
         # Input list's length exceeds the specified maximum length
         (
-                ["data", "array"],
-                {"maximum_length": 3, "minimum_length": 1},
-                [1, 2, 3, 4],
-                "blob_key",
-                False,
-                "Validation: array length greater than maximum",
+            ["data", "array"],
+            {"maximum_length": 3, "minimum_length": 1},
+            [1, 2, 3, 4],
+            "blob_key",
+            False,
+            "Validation: array length greater than maximum",
         ),
         # Input list's length is within the specified constraints
         (
-                ["data", "array"],
-                {"maximum_length": 5, "minimum_length": 1},
-                [1, 2, 3],
-                "blob_key",
-                True,
-                None,
+            ["data", "array"],
+            {"maximum_length": 5, "minimum_length": 1},
+            [1, 2, 3],
+            "blob_key",
+            True,
+            None,
         ),
     ],
 )
 def test_validate_array_container_properties(
-        mocker: MockerFixture,
-        variable_path: List[Union[str, int]],
-        variable_properties: Dict[str, Any],
-        input_data: Any,
-        properties_blob_key: str,
-        expected_result: bool,
-        expected_warning: str,
+    mocker: MockerFixture,
+    variable_path: List[Union[str, int]],
+    variable_properties: Dict[str, Any],
+    input_data: Any,
+    properties_blob_key: str,
+    expected_result: bool,
+    expected_warning: str,
 ) -> None:
     """
     Unit test for the _validate_array_container_properties() method of the InputManager class.
@@ -1171,113 +1166,113 @@ def test_validate_array_container_properties(
     [
         # Array extraction returns a non-list
         (
-                ["data", "array"],
-                {"properties": {"type": "integer"}},
-                {},
-                False,
-                "blob_key",
-                None,
-                False,
-                True,
-                False,
+            ["data", "array"],
+            {"properties": {"type": "integer"}},
+            {},
+            False,
+            "blob_key",
+            None,
+            False,
+            True,
+            False,
         ),
         # Array container properties are invalid
         (
-                ["data", "array"],
-                {"properties": {"type": "integer"}},
-                {"data": {"array": [1, 2, 3]}},
-                False,
-                "blob_key",
-                [1, 2, 3],
-                False,
-                True,
-                False,
+            ["data", "array"],
+            {"properties": {"type": "integer"}},
+            {"data": {"array": [1, 2, 3]}},
+            False,
+            "blob_key",
+            [1, 2, 3],
+            False,
+            True,
+            False,
         ),
         # Element validation within the array fails
         (
-                ["data", "array"],
-                {"properties": {"type": "integer"}},
-                {"data": {"array": [1, "two", 3]}},
-                False,
-                "blob_key",
-                [1, "two", 3],
-                True,
-                False,
-                False,
+            ["data", "array"],
+            {"properties": {"type": "integer"}},
+            {"data": {"array": [1, "two", 3]}},
+            False,
+            "blob_key",
+            [1, "two", 3],
+            True,
+            False,
+            False,
         ),
         # Successful validation of all elements
         (
-                ["data", "array"],
-                {"properties": {"type": "integer"}},
-                {"data": {"array": [1, 2, 3]}},
-                False,
-                "blob_key",
-                [1, 2, 3],
-                True,
-                True,
-                True,
+            ["data", "array"],
+            {"properties": {"type": "integer"}},
+            {"data": {"array": [1, 2, 3]}},
+            False,
+            "blob_key",
+            [1, 2, 3],
+            True,
+            True,
+            True,
         ),
         # Eager termination on element validation failure
         (
-                ["data", "array"],
-                {"properties": {"type": "integer"}},
-                {"data": {"array": [1, "two", 3]}},
-                True,
-                "blob_key",
-                [1, "two", 3],
-                True,
-                False,
-                False,
+            ["data", "array"],
+            {"properties": {"type": "integer"}},
+            {"data": {"array": [1, "two", 3]}},
+            True,
+            "blob_key",
+            [1, "two", 3],
+            True,
+            False,
+            False,
         ),
         # Nullable array that is None
         (
-                ["data", "array"],
-                {"properties": {"type": "integer"}, "nullable": True},
-                {"data": {"array": None}},
-                False,
-                "blob_key",
-                None,
-                True,
-                True,
-                True,
+            ["data", "array"],
+            {"properties": {"type": "integer"}, "nullable": True},
+            {"data": {"array": None}},
+            False,
+            "blob_key",
+            None,
+            True,
+            True,
+            True,
         ),
         # Nullable and null data passed
         (
-                ["data", "array"],
-                {"nullable": True},
-                {"data": {"array": None}},
-                True,
-                "blob_key",
-                None,
-                False,
-                False,
-                True,
+            ["data", "array"],
+            {"nullable": True},
+            {"data": {"array": None}},
+            True,
+            "blob_key",
+            None,
+            False,
+            False,
+            True,
         ),
         # Not nullable and null data passed
         (
-                ["data", "array"],
-                {},
-                {"data": {"array": None}},
-                True,
-                "blob_key",
-                None,
-                False,
-                False,
-                False,
+            ["data", "array"],
+            {},
+            {"data": {"array": None}},
+            True,
+            "blob_key",
+            None,
+            False,
+            False,
+            False,
         ),
     ],
 )
 def test_array_type_validator(
-        mocker: MockerFixture,
-        variable_path: List[Union[str, int]],
-        variable_properties: Dict[str, Any],
-        input_data: Dict[str, Any],
-        eager_termination: bool,
-        properties_blob_key: str,
-        patch_extract_return: Any,
-        patch_container_valid: bool,
-        patch_element_valid: bool,
-        expected_result: bool,
+    mocker: MockerFixture,
+    variable_path: List[Union[str, int]],
+    variable_properties: Dict[str, Any],
+    input_data: Dict[str, Any],
+    eager_termination: bool,
+    properties_blob_key: str,
+    patch_extract_return: Any,
+    patch_container_valid: bool,
+    patch_element_valid: bool,
+    expected_result: bool,
 ) -> None:
     """
     Unit test for the _array_type_validator() method of the InputManager class.
@@ -1339,14 +1334,14 @@ def test_array_type_validator(
     ],
 )
 def test_validate_input_by_type(
-        mocker: MockerFixture,
-        data_type: str,
-        input_value: Any,
-        expected_result: bool,
-        validator_return: bool,
-        fixable: bool,
-        fix_attempted: bool,
-        simple_type: bool,
+    mocker: MockerFixture,
+    data_type: str,
+    input_value: Any,
+    expected_result: bool,
+    validator_return: bool,
+    fixable: bool,
+    fix_attempted: bool,
+    simple_type: bool,
 ) -> None:
     """
     Unit test for the _validate_input_by_type method of the InputManager class.
@@ -1424,65 +1419,65 @@ def test_validate_input_by_type_key_error() -> None:
     "does_file_exist, metadata, expected_exception",
     [
         (
-                True,
-                {"files": {
-                    "file1": {"path": "valid/path/to/file1.csv", "type": "csv", "properties": "some properties"}}},
-                False,
+            True,
+            {"files": {
+                "file1": {"path": "valid/path/to/file1.csv", "type": "csv", "properties": "some properties"}}},
+            False,
         ),
         (
-                False,
-                {"files": {
-                    "file1": {"path": "valid/path/to/file1.json", "type": "json", "properties": "some properties"}}},
-                True,
+            False,
+            {"files": {
+                "file1": {"path": "valid/path/to/file1.json", "type": "json", "properties": "some properties"}}},
+            True,
         ),
         (
-                True,
-                {
-                    "files": {
-                        "file1": {
-                            "path": "valid/path/to/file1.txt",
-                            "type": "invalid_type",
-                            "properties": "some properties",
-                        }
+            True,
+            {
+                "files": {
+                    "file1": {
+                        "path": "valid/path/to/file1.txt",
+                        "type": "invalid_type",
+                        "properties": "some properties",
                     }
-                },
-                True,
+                }
+            },
+            True,
         ),
         (True, {"files": {"file1": {"path": "valid/path/to/file1.json", "properties": "some properties"}}}, True),
         (
-                True,
-                {
-                    "files": {
-                        "file1": {
-                            "path": "valid/path/to/file1.json",
-                            "type": "json",
-                            "properties": "some properties",
-                            "extra_key": "extra_value",
-                        }
+            True,
+            {
+                "files": {
+                    "file1": {
+                        "path": "valid/path/to/file1.json",
+                        "type": "json",
+                        "properties": "some properties",
+                        "extra_key": "extra_value",
                     }
-                },
-                True,
+                }
+            },
+            True,
         ),
         (
-                True,
-                {
-                    "files": {
-                        "file1": {
-                            "path": "valid/path/to/file1.json",
-                            "type": "json",
-                            "properties": "",
-                        }
+            True,
+            {
+                "files": {
+                    "file1": {
+                        "path": "valid/path/to/file1.json",
+                        "type": "json",
+                        "properties": "",
                     }
-                },
-                True,
+                }
+            },
+            True,
         ),
     ],
 )
 def test_validate_metadata(
-        mocker: MockerFixture,
-        does_file_exist: bool,
-        metadata: Dict[str, Any],
-        expected_exception: bool,
+    mocker: MockerFixture,
+    does_file_exist: bool,
+    metadata: Dict[str, Any],
+    expected_exception: bool,
 ) -> None:
     mocker.patch("os.path.isfile", return_value=does_file_exist)
     info_map = {
@@ -1507,53 +1502,53 @@ def test_validate_metadata(
     [
         ({"properties": {"a": {"type": "number"}}}, 2, 1, ["a"], False, [], ""),
         (
-                {"properties": {"a": {"b": {"type": "array", "properties": {}}}}},
-                3,
-                3,
-                ["a", "b", "properties"],
-                False,
-                "None",
-                "",
+            {"properties": {"a": {"b": {"type": "array", "properties": {}}}}},
+            3,
+            3,
+            ["a", "b", "properties"],
+            False,
+            "None",
+            "",
         ),
         (
-                {"properties": {"a": {"b": {"c": {"type": "bool"}}}}},
-                2,
-                3,
-                ["a", "b", "c"],
-                True,
-                "Max metadata depth exceeded.",
-                "Metadata depth exceeds maximum allowed depth of 2 at path ['a', 'b', 'c']",
+            {"properties": {"a": {"b": {"c": {"type": "bool"}}}}},
+            2,
+            3,
+            ["a", "b", "c"],
+            True,
+            "Max metadata depth exceeded.",
+            "Metadata depth exceeds maximum allowed depth of 2 at path ['a', 'b', 'c']",
         ),
         ({"properties": {"a": {"b": {"c": {"type": "string"}}}}}, 3, 3, ["a", "b", "c"], False, [], ""),
         (
-                {"properties": {"a": {"b": {"type": "invalid_type"}}}},
-                3,
-                2,
-                ["a", "b"],
-                True,
-                "Properties value type error",
-                "Properties 'type' value not in ['number', 'array', 'bool', 'string', 'object']",
+            {"properties": {"a": {"b": {"type": "invalid_type"}}}},
+            3,
+            2,
+            ["a", "b"],
+            True,
+            "Properties value type error",
+            "Properties 'type' value not in ['number', 'array', 'bool', 'string', 'object']",
         ),
         (
-                {"properties": {"a": {"b": {"c": {"type": "object", "unique_key": "yes"}}}}},
-                3,
-                3,
-                ["a", "b", "c"],
-                False,
-                "None",
-                "",
+            {"properties": {"a": {"b": {"c": {"type": "object", "unique_key": "yes"}}}}},
+            3,
+            3,
+            ["a", "b", "c"],
+            False,
+            "None",
+            "",
         ),
     ],
 )
 def test_validate_properties(
-        mocker: MockerFixture,
-        metadata: Dict[str, Any],
-        limit: int,
-        expected_depth: int,
-        expected_path: List[str],
-        should_raise: bool,
-        expected_error: str,
-        expected_err_msg: str,
+    mocker: MockerFixture,
+    metadata: Dict[str, Any],
+    limit: int,
+    expected_depth: int,
+    expected_path: List[str],
+    should_raise: bool,
+    expected_error: str,
+    expected_err_msg: str,
 ) -> None:
     """Tests _validate_properties() function in InputManager."""
     # Initiated to avoid the call of add_log in __init__ to be recorded
@@ -1590,64 +1585,64 @@ def test_validate_properties(
     "key_path,value,error_title,error_msg,should_raise",
     [
         (
-                ["some_key"],
-                {"default": "not_a_number", "minimum": 3, "maximum": 7},
-                "Invalid metadata default number value.",
-                "Invalid 'default' for '['some_key']': Expected a number but got <class 'str'>.",
-                True,
+            ["some_key"],
+            {"default": "not_a_number", "minimum": 3, "maximum": 7},
+            "Invalid metadata default number value.",
+            "Invalid 'default' for '['some_key']': Expected a number but got <class 'str'>.",
+            True,
         ),
         (
-                ["some_key"],
-                {"default": 5, "minimum": "not_a_number", "maximum": 7},
-                "Invalid metadata number properties minimum.",
-                "Invalid 'minimum' for '['some_key']': Expected a number but got <class 'str'>.",
-                True,
+            ["some_key"],
+            {"default": 5, "minimum": "not_a_number", "maximum": 7},
+            "Invalid metadata number properties minimum.",
+            "Invalid 'minimum' for '['some_key']': Expected a number but got <class 'str'>.",
+            True,
         ),
         (
-                ["some_key"],
-                {"default": 5, "minimum": 3, "maximum": "not_a_number"},
-                "Invalid metadata number properties maximum.",
-                "Invalid 'maximum' for '['some_key']': Expected a number but got <class 'str'>.",
-                True,
+            ["some_key"],
+            {"default": 5, "minimum": 3, "maximum": "not_a_number"},
+            "Invalid metadata number properties maximum.",
+            "Invalid 'maximum' for '['some_key']': Expected a number but got <class 'str'>.",
+            True,
         ),
         (
-                ["some_key"],
-                {"default": 2, "minimum": 3, "maximum": 7},
-                "Invalid metadata default.",
-                "Invalid 'default' for '['some_key']': 'default' 2 is less than 'minimum' 3",
-                True,
+            ["some_key"],
+            {"default": 2, "minimum": 3, "maximum": 7},
+            "Invalid metadata default.",
+            "Invalid 'default' for '['some_key']': 'default' 2 is less than 'minimum' 3",
+            True,
         ),
         (
-                ["some_key"],
-                {"default": 8, "minimum": 3, "maximum": 7},
-                "Invalid metadata default.",
-                "Invalid 'default' for '['some_key']': 'default' 8 is greater than 'maximum' 7",
-                True,
+            ["some_key"],
+            {"default": 8, "minimum": 3, "maximum": 7},
+            "Invalid metadata default.",
+            "Invalid 'default' for '['some_key']': 'default' 8 is greater than 'maximum' 7",
+            True,
         ),
         (
-                ["some_key"],
-                {"minimum": 5, "maximum": 3},
-                "Invalid range of acceptable numbers.",
-                "Invalid 'range' for key '['some_key']': 'minimum' value 5 is greater than 'maximum' value 3",
-                True,
+            ["some_key"],
+            {"minimum": 5, "maximum": 3},
+            "Invalid range of acceptable numbers.",
+            "Invalid 'range' for key '['some_key']': 'minimum' value 5 is greater than 'maximum' value 3",
+            True,
         ),
         (["some_key"], {"default": 5, "minimum": 3, "maximum": 8}, "", "", False),
         (
-                ["some_key"],
-                {"default": None, "minimum": 3, "maximum": 8},
-                "Invalid metadata default number value.",
-                "Invalid 'default' for '['some_key']': Value is not nullable and default is 'None'.",
-                True,
+            ["some_key"],
+            {"default": None, "minimum": 3, "maximum": 8},
+            "Invalid metadata default number value.",
+            "Invalid 'default' for '['some_key']': Value is not nullable and default is 'None'.",
+            True,
         ),
     ],
 )
 def test_metadata_number_validator(
-        mocker: MockerFixture,
-        key_path: List[str],
-        value: Dict[str, Any],
-        error_title: str,
-        error_msg: str,
-        should_raise: bool,
+    mocker: MockerFixture,
+    key_path: List[str],
+    value: Dict[str, Any],
+    error_title: str,
+    error_msg: str,
+    should_raise: bool,
 ) -> None:
     """Tests metadata_number_validator() method in InputManager"""
     mock_validate_properties_keys = mocker.patch(
@@ -1669,51 +1664,51 @@ def test_metadata_number_validator(
     "key_path,value,error_title,error_msg,should_raise",
     [
         (
-                ["some_key"],
-                {"default": 123, "pattern": None},
-                "Invalid metadata default string value.",
-                "Invalid 'default' for '['some_key']': Expected a string but got <class 'int'>",
-                True,
+            ["some_key"],
+            {"default": 123, "pattern": None},
+            "Invalid metadata default string value.",
+            "Invalid 'default' for '['some_key']': Expected a string but got <class 'int'>",
+            True,
         ),
         (
-                ["some_key"],
-                {"default": "abcdef", "pattern": r"^[0-9]+$"},
-                "Invalid metadata default string value.",
-                "Invalid 'default' for '['some_key']': 'default' value 'abcdef' does not match pattern ^[0-9]+$",
-                True,
+            ["some_key"],
+            {"default": "abcdef", "pattern": r"^[0-9]+$"},
+            "Invalid metadata default string value.",
+            "Invalid 'default' for '['some_key']': 'default' value 'abcdef' does not match pattern ^[0-9]+$",
+            True,
         ),
         (
-                ["some_key"],
-                {"default": None},
-                "Invalid metadata default string value.",
-                "Invalid 'default' for '['some_key']': Value is not nullable and default is 'None'",
-                True,
+            ["some_key"],
+            {"default": None},
+            "Invalid metadata default string value.",
+            "Invalid 'default' for '['some_key']': Value is not nullable and default is 'None'",
+            True,
         ),
         (
-                ["some_key"],
-                {"default": "abcdef", "pattern": 6789},
-                "Invalid metadata string properties pattern.",
-                "Invalid 'pattern' for '['some_key']': Expected a string but got <class 'int'>",
-                True,
+            ["some_key"],
+            {"default": "abcdef", "pattern": 6789},
+            "Invalid metadata string properties pattern.",
+            "Invalid 'pattern' for '['some_key']': Expected a string but got <class 'int'>",
+            True,
         ),
         (["some_key"], {"default": "12345", "pattern": r"^[0-9]+$"}, "", "", False),
         (["some_key"], {"default": "", "pattern": r"^[0-9]+$"}, "", "", False),
         (
-                ["some_key"],
-                {"default": "abcdef", "pattern": r"["},
-                "Invalid metadata string properties pattern.",
-                "Invalid 'pattern' for '['some_key']': 'pattern' value '[' is not a valid regex pattern.",
-                True,
+            ["some_key"],
+            {"default": "abcdef", "pattern": r"["},
+            "Invalid metadata string properties pattern.",
+            "Invalid 'pattern' for '['some_key']': 'pattern' value '[' is not a valid regex pattern.",
+            True,
         ),
     ],
 )
 def test_metadata_string_validator(
-        mocker: MockerFixture,
-        key_path: List[str],
-        value: Dict[str, Any],
-        error_title: str,
-        error_msg: str,
-        should_raise: bool,
+    mocker: MockerFixture,
+    key_path: List[str],
+    value: Dict[str, Any],
+    error_title: str,
+    error_msg: str,
+    should_raise: bool,
 ) -> None:
     """Tests _metadata_string_validator() method in InputManager"""
     mock_validate_properties_keys = mocker.patch(
@@ -1735,36 +1730,36 @@ def test_metadata_string_validator(
     "key_path,value,error_title,error_msg,should_raise",
     [
         (
-                ["some_key"],
-                {"default": "not_a_bool"},
-                "Invalid metadata default bool value.",
-                "Invalid 'default' for '['some_key']': Expected a bool but got <class 'str'>",
-                True,
+            ["some_key"],
+            {"default": "not_a_bool"},
+            "Invalid metadata default bool value.",
+            "Invalid 'default' for '['some_key']': Expected a bool but got <class 'str'>",
+            True,
         ),
         (
-                ["some_key"],
-                {"default": 1},
-                "Invalid metadata default bool value.",
-                "Invalid 'default' for '['some_key']': Expected a bool but got <class 'int'>",
-                True,
+            ["some_key"],
+            {"default": 1},
+            "Invalid metadata default bool value.",
+            "Invalid 'default' for '['some_key']': Expected a bool but got <class 'int'>",
+            True,
         ),
         (["some_key"], {"default": True}, "", "", False),
         (
-                ["some_key"],
-                {"default": None},
-                "Invalid metadata default bool value.",
-                "Invalid 'default' for '['some_key']': Value is not nullable and default is 'None'",
-                True,
+            ["some_key"],
+            {"default": None},
+            "Invalid metadata default bool value.",
+            "Invalid 'default' for '['some_key']': Value is not nullable and default is 'None'",
+            True,
         ),
     ],
 )
 def test_metadata_bool_validator(
-        mocker: MockerFixture,
-        key_path: List[str],
-        value: Dict[str, Any],
-        error_title: str,
-        error_msg: str,
-        should_raise: bool,
+    mocker: MockerFixture,
+    key_path: List[str],
+    value: Dict[str, Any],
+    error_title: str,
+    error_msg: str,
+    should_raise: bool,
 ) -> None:
     """Tests _metadata_bool_validator() method in InputManager"""
     mock_validate_properties_keys = mocker.patch(
@@ -1786,37 +1781,37 @@ def test_metadata_bool_validator(
     "key_path,value,error_title,error_msg,should_raise",
     [
         (
-                ["some_key"],
-                {"minimum_length": 5, "maximum_length": 3},
-                "Invalid metadata array length range.",
-                "Invalid length 'range' for key '['some_key']': 'minimum_length'"
-                " value 5 is greater than 'maximum_length' value 3",
-                True,
+            ["some_key"],
+            {"minimum_length": 5, "maximum_length": 3},
+            "Invalid metadata array length range.",
+            "Invalid length 'range' for key '['some_key']': 'minimum_length'"
+            " value 5 is greater than 'maximum_length' value 3",
+            True,
         ),
         (
-                ["some_key"],
-                {"minimum_length": "five"},
-                "Invalid metadata default array minimum length.",
-                "Invalid 'minimum_length' for '['some_key']':" " Expected a number but got <class 'str'>",
-                True,
+            ["some_key"],
+            {"minimum_length": "five"},
+            "Invalid metadata default array minimum length.",
+            "Invalid 'minimum_length' for '['some_key']':" " Expected a number but got <class 'str'>",
+            True,
         ),
         (
-                ["some_key"],
-                {"maximum_length": "three"},
-                "Invalid metadata default array maximum length.",
-                "Invalid 'maximum_length' for '['some_key']':" " Expected a number but got <class 'str'>",
-                True,
+            ["some_key"],
+            {"maximum_length": "three"},
+            "Invalid metadata default array maximum length.",
+            "Invalid 'maximum_length' for '['some_key']':" " Expected a number but got <class 'str'>",
+            True,
         ),
         (["some_key"], {"minimum_length": 1, "maximum_length": 5}, "", "", False),
     ],
 )
 def test_metadata_array_validator(
-        mocker: MockerFixture,
-        key_path: List[str],
-        value: Dict[str, Any],
-        error_title: str,
-        error_msg: str,
-        should_raise: bool,
+    mocker: MockerFixture,
+    key_path: List[str],
+    value: Dict[str, Any],
+    error_title: str,
+    error_msg: str,
+    should_raise: bool,
 ) -> None:
     """Tests _metadata_array_validator() method in InputManager"""
     mock_validate_properties_keys = mocker.patch(
@@ -1835,7 +1830,7 @@ def test_metadata_array_validator(
 
 
 def test_metadata_object_validator(
-        mocker: MockerFixture,
+    mocker: MockerFixture,
 ) -> None:
     """Tests _metadata_object_validator() method in InputManager"""
     mock_validate_properties_keys = mocker.patch(
@@ -1854,55 +1849,55 @@ def test_metadata_object_validator(
     [
         ({"id", "type"}, {"id", "name", "type"}, {"type": "num", "id": 123, "name": "example"}, ["root"], False, ""),
         (
-                {"type"},
-                {"type"},
-                {"type": "num", "id": 123},
-                ["root"],
-                True,
-                "Invalid keys ['id'] in num for ['root']. Valid keys are ['type'].",
+            {"type"},
+            {"type"},
+            {"type": "num", "id": 123},
+            ["root"],
+            True,
+            "Invalid keys ['id'] in num for ['root']. Valid keys are ['type'].",
         ),
         (
-                {"id"},
-                set(),
-                {"type": "num", "name": "example"},
-                ["root"],
-                True,
-                "Missing required keys ['id'] for ['root']. Required keys are ['id'].",
+            {"id"},
+            set(),
+            {"type": "num", "name": "example"},
+            ["root"],
+            True,
+            "Missing required keys ['id'] for ['root']. Required keys are ['id'].",
         ),
         (
-                {"id", "type"},
-                {"id", "type"},
-                {"type": "num", "id": 123, "extra": "data"},
-                ["root", "child"],
-                True,
-                "Invalid keys ['extra'] in num for ['root', 'child']. Valid keys are ['id', 'type'].",
+            {"id", "type"},
+            {"id", "type"},
+            {"type": "num", "id": 123, "extra": "data"},
+            ["root", "child"],
+            True,
+            "Invalid keys ['extra'] in num for ['root', 'child']. Valid keys are ['id', 'type'].",
         ),
         (
-                {"id", "type"},
-                {"id", "type"},
-                {"name": "example"},
-                ["root"],
-                True,
-                "Missing required keys ['id', 'type'] for ['root']. Required keys are ['id', 'type'].",
+            {"id", "type"},
+            {"id", "type"},
+            {"name": "example"},
+            ["root"],
+            True,
+            "Missing required keys ['id', 'type'] for ['root']. Required keys are ['id', 'type'].",
         ),
         (
-                {"type"},
-                {"type"},
-                {"type": "object"},
-                ["root"],
-                True,
-                "No unique keys for ['root']. At least one unique key is expected.",
+            {"type"},
+            {"type"},
+            {"type": "object"},
+            ["root"],
+            True,
+            "No unique keys for ['root']. At least one unique key is expected.",
         ),
     ],
 )
 def test_validate_metadata_properties_keys(
-        mocker: MockerFixture,
-        required_keys: set[str],
-        valid_keys: set[str],
-        properties: dict[str, Any],
-        path: list[str],
-        should_raise: bool,
-        expected_message: str,
+    mocker: MockerFixture,
+    required_keys: set[str],
+    valid_keys: set[str],
+    properties: dict[str, Any],
+    path: list[str],
+    should_raise: bool,
+    expected_message: str,
 ) -> None:
     """Test the validation of validate_metadata_properties_keys"""
     dv = DataValidator()
@@ -1974,7 +1969,7 @@ def test_extract_input_data_by_key_list_no_error(mocker: MockerFixture) -> None:
     ],
 )
 def test_extract_input_data_by_key_list_key_error(
-        var_path: List[str | int], var_name: str, called_during_initialization: bool, mocker: MockerFixture
+    var_path: List[str | int], var_name: str, called_during_initialization: bool, mocker: MockerFixture
 ) -> None:
     """Unit tests for making sure data were extracted when error occurs"""
     dummy_input_data: Dict[str, Any] = {"a": 1, "b": 2}
@@ -2100,7 +2095,7 @@ def test_check_target_and_save_block_message_contains_all_invalid_keys_eager_ter
     ],
 )
 def test_evaluate_expression_unknown_operation(
-        expression_block: dict[str, Any], eager_termination: bool, mocker: MockerFixture
+    expression_block: dict[str, Any], eager_termination: bool, mocker: MockerFixture
 ) -> None:
     """Unit tests for _evaluate_expression() in CrossValidator"""
     cross_validator = CrossValidator()
@@ -2130,7 +2125,7 @@ def test_evaluate_expression_unknown_operation(
     ],
 )
 def test_evaluate_expression_no_ordered_variables(
-        expression_block: dict[str, Any], eager_termination: bool, mocker: MockerFixture
+    expression_block: dict[str, Any], eager_termination: bool, mocker: MockerFixture
 ) -> None:
     """Test the behavior of _evaluate_expression when ordered_variables is missing or empty."""
     cross_validator = CrossValidator()
@@ -2154,25 +2149,25 @@ def test_evaluate_expression_no_ordered_variables(
         ({"operation": "sum", "ordered_variables": ["alias_0", "alias_1"], "apply_to": "group"}, [[], []], True),
         ({"operation": "difference", "ordered_variables": ["alias_0", "alias_1"], "apply_to": "group"}, [{}, {}], True),
         (
-                {"operation": "average", "ordered_variables": ["alias_0", "alias_1"], "apply_to": "group"},
-                [[1, 2, 3], {"a": 1, "b": 2}],
-                True,
+            {"operation": "average", "ordered_variables": ["alias_0", "alias_1"], "apply_to": "group"},
+            [[1, 2, 3], {"a": 1, "b": 2}],
+            True,
         ),
         (
-                {"operation": "product", "ordered_variables": ["alias_0", "alias_1"], "apply_to": "group"},
-                [[4, 5, 6], ["a", "b", "c"]],
-                False,
+            {"operation": "product", "ordered_variables": ["alias_0", "alias_1"], "apply_to": "group"},
+            [[4, 5, 6], ["a", "b", "c"]],
+            False,
         ),
         (
-                {"operation": "division", "ordered_variables": ["alias_0", "alias_1"], "apply_to": "group"},
-                [{"a": [], "b": []}, [{}, {}]],
-                False,
+            {"operation": "division", "ordered_variables": ["alias_0", "alias_1"], "apply_to": "group"},
+            [{"a": [], "b": []}, [{}, {}]],
+            False,
         ),
         ({"operation": "no_op", "ordered_variables": ["alias_0", "alias_1"], "apply_to": "group"}, [[{}], []], False),
     ],
 )
 def test_validate_expression_block_with_complex_variable_values_multiple_complex_variable(
-        expression_block: dict[str, Any], selected_variables: list[Any], eager_termination: bool
+    expression_block: dict[str, Any], selected_variables: list[Any], eager_termination: bool
 ) -> None:
     """
     Unit tests for _validate_expression_block_with_complex_variable_values() in CrossValidator when
@@ -2204,7 +2199,7 @@ def test_validate_expression_block_with_complex_variable_values_multiple_complex
     ],
 )
 def test_validate_expression_block_with_complex_variable_values_no_apply_to(
-        expression_block: dict[str, Any], selected_variables: list[Any], eager_termination: bool, mocker: MockerFixture
+    expression_block: dict[str, Any], selected_variables: list[Any], eager_termination: bool, mocker: MockerFixture
 ) -> None:
     """
     Unit tests for _validate_expression_block_with_complex_variable_values() in CrossValidator
@@ -2232,7 +2227,7 @@ def test_validate_expression_block_with_complex_variable_values_no_apply_to(
     ],
 )
 def test_validate_expression_block_with_complex_variable_values_unknown_apply_to_value(
-        expression_block: dict[str, Any], selected_variables: list[Any], eager_termination: bool, mocker: MockerFixture
+    expression_block: dict[str, Any], selected_variables: list[Any], eager_termination: bool, mocker: MockerFixture
 ) -> None:
     """
     Unit tests for _validate_expression_block_with_complex_variable_values() in CrossValidator
@@ -2258,25 +2253,25 @@ def test_validate_expression_block_with_complex_variable_values_unknown_apply_to
         ({"operation": "no_op", "ordered_variables": ["alias_0"], "apply_to": "individual"}, [[1, 2, 3]], [1, 2, 3]),
         ({"operation": "no_op", "ordered_variables": ["alias_0"], "apply_to": "individual"}, [[]], []),
         (
-                {"operation": "no_op", "ordered_variables": ["alias_0"], "apply_to": "individual", "save_as": "abc"},
-                [{"a": 1, "b": 2, "c": 3}],
-                [1, 2, 3],
+            {"operation": "no_op", "ordered_variables": ["alias_0"], "apply_to": "individual", "save_as": "abc"},
+            [{"a": 1, "b": 2, "c": 3}],
+            [1, 2, 3],
         ),
         ({"operation": "no_op", "ordered_variables": ["alias_0"], "apply_to": "individual"}, [{}], []),
         (
-                {"operation": "no_op", "ordered_variables": ["alias_0"], "apply_to": "individual", "save_as": "def"},
-                [{"a": [], "b": []}],
-                [[], []],
+            {"operation": "no_op", "ordered_variables": ["alias_0"], "apply_to": "individual", "save_as": "def"},
+            [{"a": [], "b": []}],
+            [[], []],
         ),
         (
-                {"operation": "no_op", "ordered_variables": ["alias_0"], "apply_to": "individual"},
-                [[{}, {}, {}]],
-                [{}, {}, {}],
+            {"operation": "no_op", "ordered_variables": ["alias_0"], "apply_to": "individual"},
+            [[{}, {}, {}]],
+            [{}, {}, {}],
         ),
     ],
 )
 def test_evaluate_expression_apply_to_individual(
-        expression_block: dict[str, Any], selected_variables: list[Any], expected_result: Any, mocker: MockerFixture
+    expression_block: dict[str, Any], selected_variables: list[Any], expected_result: Any, mocker: MockerFixture
 ) -> None:
     """
     Unit tests for _evaluate_expression() in CrossValidator when a complex variable is selected
@@ -2303,21 +2298,21 @@ def test_evaluate_expression_apply_to_individual(
         ({"operation": "sum", "ordered_variables": ["alias_0"], "apply_to": "group"}, [[1, 2, 3]], 6),
         ({"operation": "difference", "ordered_variables": ["alias_0"], "apply_to": "group"}, [[]], None),
         (
-                {"operation": "product", "ordered_variables": ["alias_0"], "apply_to": "group", "save_as": "abc"},
-                [{"a": 1, "b": 2, "c": 3}],
-                6,
+            {"operation": "product", "ordered_variables": ["alias_0"], "apply_to": "group", "save_as": "abc"},
+            [{"a": 1, "b": 2, "c": 3}],
+            6,
         ),
         ({"operation": "division", "ordered_variables": ["alias_0"], "apply_to": "group"}, [{}], None),
         ({"operation": "no_op", "ordered_variables": ["a", "b", "c"], "save_as": "def"}, [2, 5, 8], [2, 5, 8]),
         (
-                {"operation": "average", "ordered_variables": ["a", "b", "c", "d", "e", "f", "g", "h"]},
-                [8, 7, 6, 5, 4, 3, 2, 1],
-                4.5,
+            {"operation": "average", "ordered_variables": ["a", "b", "c", "d", "e", "f", "g", "h"]},
+            [8, 7, 6, 5, 4, 3, 2, 1],
+            4.5,
         ),
     ],
 )
 def test_evaluate_expression_apply_to_group(
-        expression_block: dict[str, Any], selected_variables: list[Any], expected_result: Any, mocker: MockerFixture
+    expression_block: dict[str, Any], selected_variables: list[Any], expected_result: Any, mocker: MockerFixture
 ) -> None:
     cross_validator = CrossValidator()
     mocker.patch.object(cross_validator, "_get_alias_value", side_effect=selected_variables)
@@ -2447,7 +2442,7 @@ def test_evaluate_is_null(value: Any, expected: bool) -> None:
 )
 @pytest.mark.parametrize("eager_termination", [True, False])
 def test_evaluate_is_type_supported_types(
-        data_type: str, left_value: Any, expected: bool, eager_termination: bool
+    data_type: str, left_value: Any, expected: bool, eager_termination: bool
 ) -> None:
     """Supported types honor bool/int nuances and case-insensitive type strings."""
     cv = CrossValidator()
