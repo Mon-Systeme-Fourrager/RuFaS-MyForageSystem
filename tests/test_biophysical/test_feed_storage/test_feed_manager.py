@@ -1,3 +1,4 @@
+from typing import Any, cast
 from unittest.mock import MagicMock, call
 
 from RUFAS.biophysical.feed_storage.storage import Storage
@@ -260,25 +261,26 @@ def test_feed_manager_init(mocker: MockerFixture, storage: Storage) -> None:
     ],
 )
 def test_create_all_storages(
-    mocker,
-    feed_storage_configs,
-    feed_storage_instances,
-    available_ids,
-    expected_keys,
-    expected_warning_calls,
-    raises_error,
-):
+    mocker: MockerFixture,
+    feed_storage_configs: dict[str, Any],
+    feed_storage_instances: dict[str, list[str]],
+    available_ids: list[int],
+    expected_keys: set[str],
+    expected_warning_calls: int,
+    raises_error: bool,
+) -> None:
     """Test FeedManager._create_all_storages using real StorageType classes."""
     mock_feed_manager = FeedManager.__new__(FeedManager)
     mock_feed_manager.active_storages = {}
     mock_feed_manager._om = mocker.Mock()
+    add_warning = mocker.patch.object(mock_feed_manager._om, "add_warning")
 
     mock_feed_manager._available_feeds = [MagicMock(rufas_id=i) for i in available_ids]
 
     if raises_error:
         with pytest.raises(ValueError):
             mock_feed_manager._create_all_storages(feed_storage_configs, feed_storage_instances)
-        assert mock_feed_manager._om.add_warning.call_count == 0
+        assert add_warning.call_count == 0
         return
 
     mock_feed_manager._create_all_storages(feed_storage_configs, feed_storage_instances)
@@ -289,7 +291,7 @@ def test_create_all_storages(
         assert hasattr(storage, "rufas_feed_id")
         assert hasattr(storage, "storage_name")
 
-    assert mock_feed_manager._om.add_warning.call_count == expected_warning_calls
+    assert add_warning.call_count == expected_warning_calls
 
 
 def test_available_feeds(feed_manager: FeedManager, mock_available_feeds: list[Feed]) -> None:
@@ -369,7 +371,8 @@ def test_translate_crop_config_name_to_rufas_id(
     assert result == expected_next_harvest_dates_rufas_ids
 
 
-def test_receive_crop_routes_to_matching_storage(mocker, feed_manager: FeedManager, harvested_crop: HarvestedCrop):
+def test_receive_crop_routes_to_matching_storage(mocker: MockerFixture, feed_manager: FeedManager,
+                                                 harvested_crop: HarvestedCrop) -> None:
     """Tests that receive_crop routes to the correct storage, and warns if no match."""
     storage = next(iter(feed_manager.active_storages.values()))
     storage.crop_name = harvested_crop.config_name
@@ -377,30 +380,31 @@ def test_receive_crop_routes_to_matching_storage(mocker, feed_manager: FeedManag
 
     mocked_receive = mocker.patch.object(storage, "receive_crop")
 
-    feed_manager._om.add_warning = MagicMock()
+    mock_add_warning = mocker.patch.object(feed_manager._om, "add_warning")
 
     feed_manager.receive_crop(harvested_crop, simulation_day=15)
 
     mocked_receive.assert_called_once_with(harvested_crop, 15)
-    feed_manager._om.add_warning.assert_not_called()
+    mock_add_warning.assert_not_called()
 
 
-def test_receive_crop_warns_when_no_matching_storage(mocker, feed_manager: FeedManager, harvested_crop: HarvestedCrop):
+def test_receive_crop_warns_when_no_matching_storage(mocker: MockerFixture, feed_manager: FeedManager,
+                                                     harvested_crop: HarvestedCrop) -> None:
     """Tests that receive_crop warns when no storage matches the crop."""
     for s in feed_manager.active_storages.values():
         s.crop_name = "not-" + harvested_crop.config_name
         s.field_name = "not-" + harvested_crop.field_name
         mocker.patch.object(s, "receive_crop")
 
-    feed_manager._om.add_warning = MagicMock()
+    mock_add_warning = mocker.patch.object(feed_manager._om, "add_warning")
 
     feed_manager.receive_crop(harvested_crop, simulation_day=42)
 
     for s in feed_manager.active_storages.values():
-        s.receive_crop.assert_not_called()
+        cast(MagicMock, s.receive_crop).assert_not_called()
 
-    feed_manager._om.add_warning.assert_called_once()
-    title, message, info = feed_manager._om.add_warning.call_args.args
+    mock_add_warning.assert_called_once()
+    title, message, info = mock_add_warning.call_args.args
     assert title == "No matching storage for crop"
     assert harvested_crop.config_name in message
     assert harvested_crop.field_name in message
