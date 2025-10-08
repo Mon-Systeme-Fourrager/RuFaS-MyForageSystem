@@ -1,4 +1,3 @@
-from importlib import import_module
 from importlib.metadata import PackageNotFoundError, version as get_installed_version
 import multiprocessing
 import random
@@ -817,9 +816,11 @@ class TaskManager:
         output_manager.add_log("Validation counts", f"{str(input_manager.elements_counter)}", info_map)
 
         if args.get("run_eee", False):
+            pass
             # TODO update path to `RUFAS.EEE.EEE_manager` when EEE is finalized and moved in either PR #2524 or #1299
-            eee_manager_module = import_module("RUFAS.routines.EEE.EEE_manager")
-            eee_manager_module.EEEManager.estimate_all()
+            # TODO update to be able to run EEE once farmgrown feed emissions are finalized #2580
+            # eee_manager_module = import_module("RUFAS.routines.EEE.EEE_manager")
+            # eee_manager_module.EEEManager.estimate_all()
 
         if export_input_data_to_csv:
             output_manager.create_directory(args["input_data_csv_export_path"])
@@ -849,6 +850,9 @@ class TaskManager:
         output_manager.print_errors_warnings_logs_counts(task_id)
         if should_flush_im_pool:
             input_manager.flush_pool()
+        if args.get("task_type") == TaskType.POST_PROCESSING:
+            save_results = True
+            produce_graphics = True
         if save_results:
             output_manager.save_results(
                 args["filters_directory"],
