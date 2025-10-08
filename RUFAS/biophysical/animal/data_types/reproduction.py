@@ -38,7 +38,7 @@ class ReproductionInputs:
     days_born: int
     days_in_pregnancy: int
     days_in_milk: int
-    net_merit: float
+    # net_merit: float
     phosphorus_for_gestation_required_for_calf: float
 
     @property

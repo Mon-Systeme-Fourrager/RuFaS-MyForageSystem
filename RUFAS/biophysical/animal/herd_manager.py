@@ -744,9 +744,7 @@ class HerdManager:
                 0.0072 * replacement.body_weight * GeneralConstants.KG_TO_GRAMS
             )
             replacement_birth_date = time.current_date.date() - timedelta(days=replacement.days_born)
-            replacement.net_merit = AnimalGenetics.assign_net_merit_value_to_animals_entering_herd(
-                replacement_birth_date.strftime("%Y-%m-%d"), replacement.breed
-            )
+            replacement.genetics = AnimalGenetics()
             animals_added.append(replacement)
             self.herd_statistics.bought_heifer_num += 1
 
