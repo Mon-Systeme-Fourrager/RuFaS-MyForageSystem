@@ -163,12 +163,12 @@ class RationOptimizer:
         ]
 
         if RationConfig.nutrient_standard is NutrientStandard.NRC:            
-            self.cow_constraints = [{"type": "ineq", "fun": func, "args": arguments} for func in self.constraint_functions]
+            self.cow_constraints = [{"type": "ineq", "fun": func, "args": arguments} for func in self.constraint_functions if func not in [self.NASEM_net_energy_constraint]]
 
             self.heifer_constraints = [
                 cons
                 for cons in self.cow_constraints
-                if cons["fun"] not in [self.NE_total_constraint, self.NE_lactation_constraint]
+                if cons["fun"] not in [self.NE_total_constraint, self.NE_lactation_constraint, self.NASEM_net_energy_constraint]
             ]
         elif RationConfig.nutrient_standard is NutrientStandard.NASEM:
             self.cow_constraints = [{"type": "ineq", "fun": func, "args": arguments} for func in self.constraint_functions if func not in [self.NE_total_constraint, self.NE_lactation_constraint, self.NE_growth_constraint, self.NE_maintenance_and_activity_constraint]]
@@ -381,12 +381,12 @@ class RationOptimizer:
             dry_matter_intake=dry_matter_intake,
             body_weight=ration_configuration.pen_average_body_weight,
             total_starch=total_starch,
-            enteric_methane=enteric_methane,
-            urinary_nitrogen=urinary_nitrogen
+            enteric_methane=ration_configuration.pen_average_enteric_methane,
+            urinary_nitrogen=ration_configuration.pen_average_urine_nitrogen
         )
         actual_lactation_net_energy_supply = NutritionSupplyCalculator.calculate_NASEM_net_energy(total_metabolizable_energy=total_metabolizable_energy
         )
-        actual_lactation_net_energy_requirement = ration_configuration.animal_requirements.lactation_energy
+        actual_lactation_net_energy_requirement = ration_configuration.animal_requirements.total_energy_requirement
 
         return actual_lactation_net_energy_supply - actual_lactation_net_energy_requirement
 

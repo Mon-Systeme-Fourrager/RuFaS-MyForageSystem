@@ -296,7 +296,7 @@ class NutritionSupplyCalculator:
         body_weight: float,
         total_starch: float
     ) -> float:
-        digestible_energy_NASEM_list: dict[RUFAS_ID, float] = {}
+        digestible_energy_NASEM_dict: dict[RUFAS_ID, float] = {}
         dFA = 0.73
         for feed in feeds:
             # TODO check NPN supp calc
@@ -306,8 +306,8 @@ class NutritionSupplyCalculator:
             dROM: float = 0.96
 
             digestible_energy_NASEM: float = 0.042 * feed.info.NDF * cls.calculate_NASEM_dNDF(feed, dry_matter_intake, body_weight, total_starch) + 0.0423 * feed.info.starch * cls.calculate_NASEM_dstarch(feed, dry_matter_intake, body_weight) + 0.0940 * feed.info.FA * dFA + 0.0565 * (RDP + feed.info.RUP * feed.info.dRUP - feed.info.NPN_source) + 0.0089 * feed.info.NPN_source + 0.040 * ROM * dROM - 0.318
-            digestible_energy_NASEM_list[feed.info.rufas_id] = digestible_energy_NASEM
-        total: float = sum(digestible_energy_NASEM_list)
+            digestible_energy_NASEM_dict[feed.info.rufas_id] = digestible_energy_NASEM
+        total: float = sum([feed.amount * digestible_energy_NASEM_dict[feed.info.rufas_id] for feed in feeds])
 
         return total
 
