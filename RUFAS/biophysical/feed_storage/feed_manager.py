@@ -664,9 +664,8 @@ class FeedManager:
                     self._cumulative_purchased_feeds_fed.get(feed_id, 0.0) + amount_to_remove
             remaining -= amount_to_remove
             deducted += amount_to_remove
-        return remaining, deducted
 
-        return {"purchased": total_purchased_feed_deductions, "farmgrown": total_farmgrown_feed_deductions}
+        return remaining, deducted
 
     def _lookup_storage_rufas_id(self, crop_name: str) -> RUFAS_ID:
         """
