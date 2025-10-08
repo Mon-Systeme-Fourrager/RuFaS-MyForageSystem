@@ -64,8 +64,8 @@ class RationConfig:
         initial_dry_matter_requirement: float,
         initial_protein_requirement: float,
         pen_average_body_weight: float = 0,
-        pen_average_enteric_methane : float  | None = None,
-        pen_average_urine_nitrogen : float  | None = None
+        pen_average_enteric_methane : float | None = None,
+        pen_average_urine_nitrogen : float | None = None
     ) -> None:
         """
         Initialize the RationConfig class with the provided feed information. If the input

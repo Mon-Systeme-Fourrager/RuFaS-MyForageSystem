@@ -327,7 +327,7 @@ class NutritionSupplyCalculator:
         gas_energy: float = 13.28 * enteric_methane * GeneralConstants.GRAMS_TO_KG
         urine_energy: float = 0.0146 * urinary_nitrogen * GeneralConstants.KG_TO_GRAMS
 
-        total: float = NASEM_digestible_energy -  gas_energy - urine_energy
+        total: float = NASEM_digestible_energy - gas_energy - urine_energy
         return total
 
     @classmethod
