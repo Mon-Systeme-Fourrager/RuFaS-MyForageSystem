@@ -108,7 +108,8 @@ class SimulationEngine:
                 crop for crop in self.feed_manager.crop_to_rufas_id.keys() if crop not in next_harvest_dates.keys()
             ]
             next_harvest_dates = self.field_manager.get_next_harvest_dates(crops_to_get_next_harvest_dates)
-            self.next_max_daily_feed_recalculation = self.time.current_date + self.max_daily_feed_recalculation_interval
+            self.next_max_daily_feed_recalculation: date = self.time.current_date
+            + self.max_daily_feed_recalculation_interval
 
         if next_harvest_dates != {}:
             total_projected_inventory = self.feed_manager.get_total_projected_inventory(
