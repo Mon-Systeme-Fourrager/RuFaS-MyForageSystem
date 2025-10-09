@@ -912,7 +912,7 @@ def test_deduct_from_storage_farmgrown_basic_fifo_updates_cumulative(
     fg2.dry_matter_mass = 200.0
     fg2.remove_feed_mass = MagicMock()
 
-    remaining, deducted = feed_manager._deduct_from_storage(
+    deducted = feed_manager._deduct_from_storage(
         feed_id=feed_id,
         remaining=450.0,
         feed_storages=[fg1, fg2],
@@ -921,7 +921,6 @@ def test_deduct_from_storage_farmgrown_basic_fifo_updates_cumulative(
     fg1.remove_feed_mass.assert_called_once_with(300.0)
     fg2.remove_feed_mass.assert_called_once_with(150.0)
 
-    assert remaining == pytest.approx(0.0)
     assert deducted == pytest.approx(450.0)
     assert feed_manager._cumulative_farmgrown_feeds_fed[feed_id] == pytest.approx(450.0)
 
@@ -940,7 +939,7 @@ def test_deduct_from_storage_purchased_skips_tiny_and_updates_cumulative(
     p2.dry_matter_mass = 100.0
     p2.remove_dry_matter_mass = MagicMock()
 
-    remaining, deducted = feed_manager._deduct_from_storage(
+    deducted = feed_manager._deduct_from_storage(
         feed_id=feed_id,
         remaining=50.0,
         feed_storages=[p1, p2],
@@ -949,7 +948,6 @@ def test_deduct_from_storage_purchased_skips_tiny_and_updates_cumulative(
     p1.remove_dry_matter_mass.assert_not_called()
     p2.remove_dry_matter_mass.assert_called_once_with(50.0)
 
-    assert remaining == pytest.approx(0.0)
     assert deducted == pytest.approx(50.0)
     assert feed_manager._cumulative_purchased_feeds_fed[feed_id] == pytest.approx(50.0)
 
@@ -966,7 +964,7 @@ def test_deduct_from_storage_breaks_early_when_remaining_met(feed_manager: "Feed
     s2.dry_matter_mass = 200.0
     s2.remove_feed_mass = MagicMock()
 
-    remaining, deducted = feed_manager._deduct_from_storage(
+    deducted = feed_manager._deduct_from_storage(
         feed_id=feed_id,
         remaining=50.0,
         feed_storages=[s1, s2],
@@ -975,7 +973,6 @@ def test_deduct_from_storage_breaks_early_when_remaining_met(feed_manager: "Feed
     s1.remove_feed_mass.assert_called_once_with(50.0)
     s2.remove_feed_mass.assert_not_called()
 
-    assert remaining == pytest.approx(0.0)
     assert deducted == pytest.approx(50.0)
     assert feed_manager._cumulative_farmgrown_feeds_fed[feed_id] == pytest.approx(50.0)
 
