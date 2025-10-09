@@ -677,7 +677,7 @@ class Pen:
             volume=pen_animal_excretions.manure_mass / ManureConstants.SLURRY_MANURE_DENSITY,
             methane_production_potential=methane_production_potential,
             pen_manure_data=total_pen_manure_data,
-            bedding_non_degradable_volatile_solids=
+            bedding_non_degradable_volatile_solids=0.0
         )
 
         if self.animal_combination == AnimalCombination.LAC_COW:
