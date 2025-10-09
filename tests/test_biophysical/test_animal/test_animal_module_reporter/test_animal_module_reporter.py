@@ -463,7 +463,7 @@ def test_report_enteric_methane_emission(mocker: MockerFixture) -> None:
     """Unit test for report_enteric_methane_emission()"""
     om = OutputManager()
     mock_om_add_variable = mocker.patch.object(om, "add_variable")
-    emission = {"pen1": 1000}
+    emission = {"pen1": 1000.0}
 
     AnimalModuleReporter.report_enteric_methane_emission(emission)
 
