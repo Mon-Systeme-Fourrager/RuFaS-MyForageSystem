@@ -442,6 +442,7 @@ class AnimalModuleReporter:
 
     @classmethod
     def report_enteric_methane_emission(cls, enteric_methane_emission_by_pen: dict[str, float]) -> None:
+        """Reports the amount of daily emission by pen."""
         info_map = {
             "class": AnimalModuleReporter.__name__,
             "function": AnimalModuleReporter.report_enteric_methane_emission.__name__,
