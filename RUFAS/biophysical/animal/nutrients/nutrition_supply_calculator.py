@@ -64,7 +64,7 @@ class NutritionSupplyCalculator:
 
         intake_nutrient_discount = cls.calculate_nutrient_intake_discount(feeds, body_weight)
         actual_tdn_percentages = {feed.info.rufas_id: feed.info.TDN * intake_nutrient_discount for feed in feeds}
-        
+
         calcium = cls.calculate_calcium_supply(feeds)
         phosphorus = cls.calculate_phosphorus_supply(feeds)
         dry_matter_intake = sum([feed.amount for feed in feeds])
@@ -102,7 +102,6 @@ class NutritionSupplyCalculator:
             )
             maintenance_energy = 0.0
             growth_energy = 0.0
-            
 
         return NutritionSupply(
             metabolizable_energy=total_metabolizable_energy,
@@ -272,10 +271,14 @@ class NutritionSupplyCalculator:
         dry_matter_intake: float,
         body_weight: float,
         total_starch: float
-        ) -> float:
-        dNDFbase: float = (0.75 * (feed.info.NDF - feed.info.lignin) * (1 - feed.info.lignin / feed.info.NDF) ** 0.667) / feed.info.lignin
+    ) -> float:
 
-        dNDF: float = dNDFbase - 0.0059 * (total_starch - 0.26) - 1.1 * ((dry_matter_intake / body_weight) - 0.035)
+        dNDFbase: float = (
+            0.75 * (feed.info.NDF - feed.info.lignin)
+            * (1 - feed.info.lignin / feed.info.NDF) ** 0.667) / feed.info.lignin
+
+        dNDF: float = (dNDFbase - 0.0059 * (total_starch - 0.26) - 1.1
+                       * ((dry_matter_intake / body_weight) - 0.035))
 
         return dNDF
 
@@ -307,11 +310,17 @@ class NutritionSupplyCalculator:
             else:
                 NPNsupp = 1.0
             RDP: float = (1 - feed.info.RUP) / feed.info.CP
-            ROM: float = 1 - feed.info.FA / 1.06 - feed.info.ash - feed.info.NDF - feed.info.starch - (feed.info.CP - 0.64 * NPNsupp)
+            ROM: float = (1 - feed.info.FA / 1.06 - feed.info.ash
+                          - feed.info.NDF - feed.info.starch - (feed.info.CP - 0.64 * NPNsupp))
             dROM: float = 0.96
 
             if feed.info.NDF > 0.0:
-                digestible_energy_NASEM: float = 0.042 * feed.info.NDF * cls.calculate_NASEM_dNDF(feed, dry_matter_intake, body_weight, total_starch) + 0.0423 * feed.info.starch * cls.calculate_NASEM_dstarch(feed, dry_matter_intake, body_weight) + 0.0940 * feed.info.FA * dFA + 0.0565 * (RDP + feed.info.RUP * feed.info.dRUP - feed.info.NPN_source) + 0.0089 * feed.info.NPN_source + 0.040 * ROM * dROM - 0.318
+                dNDF = cls.calculate_NASEM_dNDF(feed, dry_matter_intake, body_weight, total_starch)
+                dstarch = cls.calculate_NASEM_dstarch(feed, dry_matter_intake, body_weight)
+                digestible_energy_NASEM: float = (0.042 * feed.info.NDF * dNDF + 0.0423 * feed.info.starch
+                                                  * dstarch + 0.0940 * feed.info.FA * dFA + 0.0565
+                                                  * (RDP + feed.info.RUP * feed.info.dRUP - feed.info.NPN_source)
+                                                  + 0.0089 * feed.info.NPN_source + 0.040 * ROM * dROM - 0.318)
             else:
                 digestible_energy_NASEM = 0.0
             digestible_energy_NASEM_dict[feed.info.rufas_id] = digestible_energy_NASEM
@@ -328,10 +337,12 @@ class NutritionSupplyCalculator:
         total_starch: float,
         enteric_methane: float,
         urinary_nitrogen: float
-        ) -> float:
+    ) -> float:
 
-        NASEM_digestible_energy: float = cls.calculate_NASEM_digestible_energy(feeds, dry_matter_intake, body_weight, total_starch)
-        # TODO check the conversions below, seem to be in opposite kg-g formats required by calculations, ensure  this isn't a mistake
+        NASEM_digestible_energy: float = cls.calculate_NASEM_digestible_energy(
+            feeds, dry_matter_intake, body_weight, total_starch)
+        # TODO check the conversions below, seem to be in opposite kg-g formats required by calculations,
+        # ensure  this isn't a mistake
         gas_energy: float = 13.28 * enteric_methane * GeneralConstants.GRAMS_TO_KG
         urine_energy: float = 0.0146 * urinary_nitrogen * GeneralConstants.KG_TO_GRAMS
 
@@ -340,9 +351,9 @@ class NutritionSupplyCalculator:
 
     @classmethod
     def calculate_NASEM_net_energy(
-        cls,
-        total_metabolizable_energy: float
-        ) -> float:
+        cls, total_metabolizable_energy: float
+    ) -> float:
+
         net_energy: float = 0.66 * total_metabolizable_energy
         return net_energy
 

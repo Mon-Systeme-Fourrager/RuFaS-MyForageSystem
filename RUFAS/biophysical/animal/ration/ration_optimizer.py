@@ -164,16 +164,26 @@ class RationOptimizer:
             self.NASEM_net_energy_constraint
         ]
 
-        if arguments[0].nutrient_standard is NutrientStandard.NRC:            
-            self.cow_constraints = [{"type": "ineq", "fun": func, "args": arguments} for func in self.constraint_functions if func not in [self.NASEM_net_energy_constraint]]
+        if arguments[0].nutrient_standard is NutrientStandard.NRC:
+            self.cow_constraints = [
+                {"type": "ineq", "fun": func, "args": arguments}
+                for func in self.constraint_functions if func not in [
+                    self.NASEM_net_energy_constraint]]
 
             self.heifer_constraints = [
                 cons
                 for cons in self.cow_constraints
-                if cons["fun"] not in [self.NE_total_constraint, self.NE_lactation_constraint, self.NASEM_net_energy_constraint]
+                if cons["fun"] not in [self.NE_total_constraint,
+                                       self.NE_lactation_constraint,
+                                       self.NASEM_net_energy_constraint]
             ]
         elif arguments[0].nutrient_standard is NutrientStandard.NASEM:
-            self.cow_constraints = [{"type": "ineq", "fun": func, "args": arguments} for func in self.constraint_functions if func not in [self.NE_total_constraint, self.NE_lactation_constraint, self.NE_growth_constraint, self.NE_maintenance_and_activity_constraint]]
+            self.cow_constraints = [
+                {"type": "ineq", "fun": func, "args": arguments} for func in self.constraint_functions if func not in [
+                    self.NE_total_constraint,
+                    self.NE_lactation_constraint,
+                    self.NE_growth_constraint,
+                    self.NE_maintenance_and_activity_constraint]]
 
             self.heifer_constraints = self.cow_constraints
 
@@ -354,7 +364,10 @@ class RationOptimizer:
         )
 
     @staticmethod
-    def NASEM_net_energy_constraint(decision_vector: npt.NDArray[np.float64], ration_configuration: RationConfig) -> float:
+    def NASEM_net_energy_constraint(
+        decision_vector: npt.NDArray[np.float64],
+        ration_configuration: RationConfig
+    ) -> float:
         """
         Constraint method for net energy for lactation. Only applicable to lactating cows.
         This constraint is a simple check that the supply exceeds the requirement.
@@ -386,8 +399,8 @@ class RationOptimizer:
             enteric_methane=ration_configuration.pen_average_enteric_methane,
             urinary_nitrogen=ration_configuration.pen_average_urine_nitrogen
         )
-        actual_lactation_net_energy_supply = NutritionSupplyCalculator.calculate_NASEM_net_energy(total_metabolizable_energy=total_metabolizable_energy
-        )
+        actual_lactation_net_energy_supply = NutritionSupplyCalculator.calculate_NASEM_net_energy(
+            total_metabolizable_energy=total_metabolizable_energy)
         actual_lactation_net_energy_requirement = ration_configuration.animal_requirements.total_energy_requirement
 
         return actual_lactation_net_energy_supply - actual_lactation_net_energy_requirement

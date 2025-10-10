@@ -499,8 +499,8 @@ class Pen:
             animal.set_nutrition_requirements(self.housing_type, animal.daily_distance, 20.0, available_feeds)
             nutrient_supply = NutritionSupplyCalculator.calculate_nutrient_supply(
                 feeds_used=available_feeds, ration_formulation=self.ration, body_weight=animal.body_weight,
-                enteric_methane = animal.digestive_system.enteric_methane_emission,
-                urinary_nitrogen = animal.digestive_system.manure_excretion.urine_nitrogen
+                enteric_methane=animal.digestive_system.enteric_methane_emission,
+                urinary_nitrogen=animal.digestive_system.manure_excretion.urine_nitrogen
             )
             animal.nutrition_supply = nutrient_supply
             animal.nutrients.set_dry_matter_intake(nutrient_supply.dry_matter)
@@ -890,8 +890,8 @@ class Pen:
             animal.previous_nutrition_supply = animal.nutrition_supply
             animal.nutrition_supply = NutritionSupplyCalculator.calculate_nutrient_supply(
                 feeds_used=feeds_used, ration_formulation=ration_formulation, body_weight=animal.body_weight,
-                enteric_methane = animal.digestive_system.enteric_methane_emission,
-                urinary_nitrogen = animal.digestive_system.manure_excretion.urine_nitrogen
+                enteric_methane=animal.digestive_system.enteric_methane_emission,
+                urinary_nitrogen=animal.digestive_system.manure_excretion.urine_nitrogen
             )
             animal.nutrients.set_dry_matter_intake(animal.nutrition_supply.dry_matter)
             animal.nutrients.set_phosphorus_intake(animal.nutrition_supply.phosphorus)
