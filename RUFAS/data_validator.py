@@ -1626,6 +1626,18 @@ class CrossValidator:
     def __init__(self) -> None:
         self._alias_pool: dict[str, Any] = {}
         self._event_logs: list[dict[str, str | dict[str, str]]] = []
+        self.relation_mapping: dict[str, Callable] = {
+            "equal": lambda l, r, _e: self._evaluate_equal_condition(l, r),
+            "greater": lambda l, r, _e: self._evaluate_greater_condition(l, r),
+            "greater_or_equals_to": lambda l, r, _e: (
+                    self._evaluate_greater_condition(l, r) or
+                    self._evaluate_equal_condition(l, r)
+            ),
+            "not_equal": lambda l, r, _e: not self._evaluate_equal_condition(l, r),
+            "is_of_type": lambda l, r, e: self._evaluate_is_type(l, r, e),
+            "is_null": lambda l, _r, _e: self._evaluate_is_null(l),
+            "regex": lambda l, r, _e: self._evaluate_regex(l, r)
+        }
 
     def cross_validate_data(
         self, im_variable_pool: dict[str, Any], cross_validation_rules: list[dict[str, Any]]
@@ -1926,85 +1938,54 @@ class CrossValidator:
         left_hand, left_evaluated = self._evaluate_expression(condition_clause["left_expression"], eager_termination)
         right_hand, right_evaluated = self._evaluate_expression(condition_clause["right_expression"], eager_termination)
 
-        if left_evaluated and right_evaluated:
-            if condition_clause["relationship"] == "equal":
-                return self._evaluate_equal_condition(left_hand, right_hand)
-
-            elif condition_clause["relationship"] == "greater":
-                return self._evaluate_greater_condition(left_hand, right_hand)
-
-            elif condition_clause["relationship"] == "greater_or_equals_to":
-                return self._evaluate_greater_condition(
-                    left_hand, right_hand) or self._evaluate_equal_condition(left_hand, right_hand)
-
-            elif condition_clause["relationship"] == "not_equal":
-                return not self._evaluate_equal_condition(left_hand, right_hand)
-
-            elif condition_clause["relationship"] == "is_of_type":
-                return self._evaluate_is_type(left_hand, right_hand, eager_termination)
-
-            elif condition_clause["relationship"] == "is_null":
-                return self._evaluate_is_null(left_hand)
-
-            else:
-                return self._evaluate_regex(left_hand, right_hand)
-        else:
+        if not (left_evaluated and right_evaluated):
             return False
+        else:
+            evaluation_function = self.relation_mapping.get(condition_clause["relationship"])
+            return evaluation_function(left_hand, right_hand, eager_termination)
 
     def _validate_condition_clause(self, condition_clause: dict[str, Any], eager_termination: bool) -> bool:
         """Validate the whole condition block."""
         left_expression = condition_clause.get("left_hand", False)
         right_expression = condition_clause.get("left_hand", False)
         relationship = condition_clause.get("relationship", False)
+        fields = {
+            "left hand": left_expression,
+            "right hand": right_expression,
+            "relationship": relationship,
+        }
+        valid = True
         if self._validate_relationship(relationship, eager_termination):
-            valid: bool = True
-            if (not left_expression) or (not right_expression) or (not relationship):
-                if not left_expression:
-                    self._event_logs.append(
-                        {
-                            "error": "Missing required condition clause field",
-                            "message": "Missing the left expression field in condition clause.",
-                            "info_map": {
-                                "class": CrossValidator.__name__,
-                                "function": CrossValidator._evaluate_condition.__name__,
-                            },
-                        }
-                    )
-                    valid = False
-                if not right_expression:
-                    self._event_logs.append(
-                        {
-                            "error": "Missing required condition clause field",
-                            "message": "Missing the right expression field in condition clause.",
-                            "info_map": {
-                                "class": CrossValidator.__name__,
-                                "function": CrossValidator._evaluate_condition.__name__,
-                            },
-                        }
-                    )
-                    valid = False
-                if not relationship:
-                    self._event_logs.append(
-                        {
-                            "error": "Missing required condition clause field",
-                            "message": "Missing the relationship field in condition clause.",
-                            "info_map": {
-                                "class": CrossValidator.__name__,
-                                "function": CrossValidator._evaluate_condition.__name__,
-                            },
-                        }
-                    )
-                    valid = False
-                if eager_termination:
-                    raise KeyError("Missing required field in conditional clause.")
+            missing = [name for name, val in fields.items() if not val]
+            for name in missing:
+                self._log_missing_condition_clause_field(name)
+            if missing and eager_termination:
+                raise KeyError("Missing required field in conditional clause.")
+            elif missing:
+                valid = False
+
         else:
             valid = False
 
         return valid
 
+    def _log_missing_condition_clause_field(self, missing_field: str) -> None:
+        """Helper method to log the missing essential field in conditional clause."""
+        self._event_logs.append(
+            {
+                "error": "Missing required condition clause field",
+                "message": f"Missing the {missing_field} field in condition clause.",
+                "info_map": {
+                    "class": CrossValidator.__name__,
+                    "function": CrossValidator._evaluate_condition.__name__,
+                },
+            }
+        )
+
+
     def _validate_relationship(self, relationship: Any, eager_termination: bool) -> bool:
         """Validate if a valid relationship check is given."""
-        available_relationship = ["equal", "greater", "greater_or_equals_to", "not_equal", "is_of_type", "regex"]
+        available_relationship = self.relation_mapping.keys()
         if not isinstance(relationship, str):
             self._event_logs.append(
                 {
@@ -2131,5 +2112,18 @@ class CrossValidator:
         for clause in condition_clause_array:
             satisfied = self._evaluate_condition(clause, eager_termination)
             if not satisfied:
-                return False
+                self._event_logs.append(
+                    {
+                        "error": "Unsatisfied condition clause in conditional clause array.",
+                        "message": f"Condition not satisfied for condition clause: {clause}",
+                        "info_map": {
+                            "class": CrossValidator.__name__,
+                            "function": CrossValidator._evaluate_condition_clause_array.__name__,
+                        },
+                    }
+                )
+                if not eager_termination:
+                    return False
+                else:
+                    raise ValueError(f"Condition not satisfied for condition clause: {clause}.")
         return True

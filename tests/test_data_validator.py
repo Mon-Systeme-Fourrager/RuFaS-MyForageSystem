@@ -2655,7 +2655,10 @@ def test_evaluate_condition_clause_array_short_circuit_on_false(mocker: MockerFi
     cv = CrossValidator()
     mock = mocker.patch.object(cv, "_evaluate_condition", side_effect=[True, False, True])
 
-    valid = cv._evaluate_condition_clause_array([{}, {}, {}], eager_termination)
-
-    assert not valid
-    assert mock.call_count == 2
+    if eager_termination:
+        with pytest.raises(ValueError):
+            cv._evaluate_condition_clause_array([{}, {}, {}], eager_termination)
+    else:
+        valid = cv._evaluate_condition_clause_array([{}, {}, {}], eager_termination)
+        assert not valid
+        assert mock.call_count == 2
