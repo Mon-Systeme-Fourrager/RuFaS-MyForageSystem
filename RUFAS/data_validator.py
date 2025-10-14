@@ -2014,11 +2014,11 @@ class CrossValidator:
         else:
             return True
 
-    def _evaluate_equal_condition(self, left_hand_value: Any, right_hand_value: Any) -> bool:
+    def _evaluate_equal_condition(self, left_hand_value: Any, right_hand_value: Any) -> Any:
         """Evaluates equal condition."""
         return left_hand_value == right_hand_value
 
-    def _evaluate_greater_condition(self, left_hand_value: Any, right_hand_value: Any) -> bool:
+    def _evaluate_greater_condition(self, left_hand_value: Any, right_hand_value: Any) -> Any:
         """Evaluates greater than condition"""
         return left_hand_value > right_hand_value
 

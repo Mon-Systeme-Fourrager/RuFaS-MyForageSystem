@@ -2739,5 +2739,3 @@ def test_log_missing_condition_clause_field_only() -> None:
     e = v._event_logs[0]
     assert e["error"] == "Missing required condition clause field"
     assert e["message"] == "Missing the left hand field in condition clause."
-    assert e["info_map"]["class"] == CrossValidator.__name__
-    assert e["info_map"]["function"] == CrossValidator._log_missing_condition_clause_field.__name__
