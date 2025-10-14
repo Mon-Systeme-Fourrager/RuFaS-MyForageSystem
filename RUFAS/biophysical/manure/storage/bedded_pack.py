@@ -81,7 +81,8 @@ class BeddedPack(Storage):
         if manure_annual_temperature:
             storage_methane = BeddedPack.calculate_bedded_pack_methane_emission(
                 self.is_mixed,
-                self._manure_to_process.total_volatile_solids,
+                self._manure_to_process.manure_degradable_volatile_solids +
+                self._manure_to_process.manure_non_degradable_volatile_solids,
                 self._determine_barn_temperature(manure_annual_temperature),
                 self._manure_to_process.methane_production_potential
             )

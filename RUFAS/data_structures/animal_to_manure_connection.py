@@ -239,7 +239,8 @@ class ManureStream:
             pen_manure_data=(
                 self.pen_manure_data + other.pen_manure_data if self.pen_manure_data and other.pen_manure_data else None
             ),
-            bedding_volatile_solids=self.bedding_volatile_solids + other.bedding_volatile_solids
+            bedding_non_degradable_volatile_solids=self.bedding_non_degradable_volatile_solids +
+                                                   other.bedding_non_degradable_volatile_solids
         )
 
     @property
@@ -261,7 +262,7 @@ class ManureStream:
                 self.manure_degradable_volatile_solids,
                 self.total_solids,
                 self.volume,
-                self.bedding_volatile_solids
+                self.bedding_non_degradable_volatile_solids
             ]
         )
 
@@ -295,7 +296,7 @@ class ManureStream:
             volume=0.0,
             methane_production_potential=0.0,
             pen_manure_data=None,
-            bedding_volatile_solids=0.0
+            bedding_non_degradable_volatile_solids=0.0
         )
 
     def split_stream(
@@ -367,5 +368,5 @@ class ManureStream:
             volume=self.volume * split_ratio,
             methane_production_potential=self.methane_production_potential,
             pen_manure_data=split_pen_manure_data,
-            bedding_volatile_solids=self.bedding_volatile_solids * split_ratio
+            bedding_non_degradable_volatile_solids=self.bedding_non_degradable_volatile_solids * split_ratio
         )

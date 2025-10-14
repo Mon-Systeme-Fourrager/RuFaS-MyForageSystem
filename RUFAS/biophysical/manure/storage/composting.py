@@ -109,7 +109,8 @@ class Composting(Storage):
         if manure_annual_temperature:
             storage_methane = self._calculate_composting_methane_emissions(
                 manure_annual_temperature,
-                self._manure_to_process.total_volatile_solids,
+                self._manure_to_process.manure_degradable_volatile_solids +
+                self._manure_to_process.manure_non_degradable_volatile_solids,
                 self._composting_type,
                 self._manure_to_process.methane_production_potential,
             )
