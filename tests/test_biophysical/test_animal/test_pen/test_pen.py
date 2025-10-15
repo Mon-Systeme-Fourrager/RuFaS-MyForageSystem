@@ -1048,7 +1048,8 @@ def test_apply_bedding(
     assert pytest.approx(result.phosphorus) == expected_result.phosphorus
     assert pytest.approx(result.potassium) == expected_result.potassium
     assert pytest.approx(result.ash) == expected_result.ash
-    assert pytest.approx(result.manure_non_degradable_volatile_solids) == expected_result.manure_non_degradable_volatile_solids
+    assert pytest.approx(
+        result.manure_non_degradable_volatile_solids) == expected_result.manure_non_degradable_volatile_solids
     assert pytest.approx(result.manure_degradable_volatile_solids) == expected_result.manure_degradable_volatile_solids
     assert pytest.approx(result.total_solids) == expected_result.total_solids
     assert pytest.approx(result.volume) == expected_result.volume

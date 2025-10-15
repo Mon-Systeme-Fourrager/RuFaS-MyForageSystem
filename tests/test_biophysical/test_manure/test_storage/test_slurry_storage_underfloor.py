@@ -224,7 +224,7 @@ def test_apply_methane_emissions(
         ),
         call(
             volatile_solids=stored_manure.manure_non_degradable_volatile_solids
-                            + stored_manure.bedding_non_degradable_volatile_solids,
+            + stored_manure.bedding_non_degradable_volatile_solids,
             manure_temperature=dummy_manure_temperature,
             is_degradable=False,
         ),

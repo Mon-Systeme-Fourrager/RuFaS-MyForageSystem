@@ -195,7 +195,8 @@ class ContinuousMix(Digester):
             non_degradable_volatile_solids = 0.0
         else:
             degradable_volatile_solids_frac = (
-                    self._manure_in_digester.manure_degradable_volatile_solids / self._manure_in_digester.total_volatile_solids
+                self._manure_in_digester.manure_degradable_volatile_solids
+                / self._manure_in_digester.total_volatile_solids
             )
 
             degradable_volatile_solids = self._manure_in_digester.manure_degradable_volatile_solids - (

@@ -765,7 +765,6 @@ class Pen:
             bedding_mass=total_bedding_mass, bedding_volume=total_bedding_volume
         )
 
-
         return ManureStream(
             water=manure_stream.water + bedding.calculate_bedding_water(num_animals),
             ammoniacal_nitrogen=manure_stream.ammoniacal_nitrogen,

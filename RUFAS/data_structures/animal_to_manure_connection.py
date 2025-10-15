@@ -229,8 +229,10 @@ class ManureStream:
             phosphorus=self.phosphorus + other.phosphorus,
             potassium=self.potassium + other.potassium,
             ash=self.ash + other.ash,
-            manure_non_degradable_volatile_solids=self.manure_non_degradable_volatile_solids + other.manure_non_degradable_volatile_solids,
-            manure_degradable_volatile_solids=self.manure_degradable_volatile_solids + other.manure_degradable_volatile_solids,
+            manure_non_degradable_volatile_solids=self.manure_non_degradable_volatile_solids
+            + other.manure_non_degradable_volatile_solids,
+            manure_degradable_volatile_solids=self.manure_degradable_volatile_solids
+            + other.manure_degradable_volatile_solids,
             total_solids=self.total_solids + other.total_solids,
             volume=self.volume + other.volume,
             methane_production_potential=(
@@ -240,8 +242,8 @@ class ManureStream:
             pen_manure_data=(
                 self.pen_manure_data + other.pen_manure_data if self.pen_manure_data and other.pen_manure_data else None
             ),
-            bedding_non_degradable_volatile_solids=self.bedding_non_degradable_volatile_solids +
-                                                   other.bedding_non_degradable_volatile_solids
+            bedding_non_degradable_volatile_solids=self.bedding_non_degradable_volatile_solids
+            + other.bedding_non_degradable_volatile_solids
         )
 
     @property
@@ -270,8 +272,8 @@ class ManureStream:
     @property
     def total_volatile_solids(self) -> float:
         """Amount of the total volatile solids (kg)."""
-        return (self.manure_non_degradable_volatile_solids + self.manure_degradable_volatile_solids +
-                self.bedding_non_degradable_volatile_solids)
+        return (self.manure_non_degradable_volatile_solids
+                + self.manure_degradable_volatile_solids + self.bedding_non_degradable_volatile_solids)
 
     @property
     def mass(self) -> float:
