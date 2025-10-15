@@ -87,7 +87,7 @@ class TractorImplement:
         elif self.operation_type in [
             OperationType.LIQUID_MANURE_APPLICATION_BELOW_SURFACE,
             OperationType.LIQUID_MANURE_APPLICATION_SURFACE,
-        ]: #418c
+        ]:      # 418c
             return (self.throughput / application_mass) * self.field_efficiency
         return (
             self.field_speed_km_per_hr
@@ -95,7 +95,7 @@ class TractorImplement:
             * self.width_m
             * self.field_efficiency
             * GeneralConstants.SQUARE_METERS_TO_HECTARES
-        )  # 418a
+        )       # 418a
 
     def calculate_operation_time_hr(
         self,
@@ -150,9 +150,7 @@ class TractorImplement:
         coefficient_to_use = (
             application_mass
             if self.operation_type
-            in [OperationType.LIQUID_MANURE_APPLICATION_BELOW_SURFACE,
-                OperationType.LIQUID_MANURE_APPLICATION_SURFACE,
-            ]
+            in [OperationType.LIQUID_MANURE_APPLICATION_BELOW_SURFACE, OperationType.LIQUID_MANURE_APPLICATION_SURFACE]
             else crop_yield_ton_per_ha
         )
 
