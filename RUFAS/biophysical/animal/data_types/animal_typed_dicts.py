@@ -36,7 +36,8 @@ class NewBornCalfValuesTypedDict(TypedDict):
     days_born: int
     birth_weight: float
     initial_phosphorus: float
-    # net_merit: float
+    dam_tbv_fat: NotRequired[float]
+    dam_tbv_protein: NotRequired[float]
     body_weight_history: NotRequired[list[BodyWeightHistory]]
     pen_history: NotRequired[list[PenHistory]]
     conceptus_weight: NotRequired[float]
