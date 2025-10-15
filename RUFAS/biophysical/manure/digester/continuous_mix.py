@@ -206,8 +206,8 @@ class ContinuousMix(Digester):
             )
         return replace(
             self._manure_in_digester,
-            degradable_volatile_solids=degradable_volatile_solids,
-            non_degradable_volatile_solids=non_degradable_volatile_solids,
+            manure_degradable_volatile_solids=degradable_volatile_solids,
+            manure_non_degradable_volatile_solids=non_degradable_volatile_solids,
         )
 
     def _report_continuous_mix_outputs(

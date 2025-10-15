@@ -41,6 +41,7 @@ def test_process_manure_parlor_cleaning(mocker: MockerFixture) -> None:
         volume=0.0,
         methane_production_potential=0.24,
         pen_manure_data=pen,
+        bedding_non_degradable_volatile_solids=0.0
     )
     original_stream = handler.manure_stream
     add_error_patch = mocker.patch.object(handler._om, "add_error")
@@ -58,7 +59,7 @@ def test_process_manure_parlor_cleaning(mocker: MockerFixture) -> None:
     result = handler.process_manure(conditions, time_obj)
     add_error_patch.assert_not_called()
     expected_total_cleaning_water_volume = (cleaning_water_return + 0.0) * GeneralConstants.LITERS_TO_CUBIC_METERS
-    assert add_variable_patch.call_count == 18
+    assert add_variable_patch.call_count == 19
     assert original_stream.pen_manure_data is not None
     cleaning_patch.assert_called_once_with(
         original_stream.pen_manure_data.num_animals,

@@ -278,14 +278,15 @@ def test_report_manure_stream_valid_dict(mock_separator: Separator, time: RufasT
         "phosphorus": 5.0,
         "potassium": 8.0,
         "ash": 2.0,
-        "non_degradable_volatile_solids": 15.0,
-        "degradable_volatile_solids": 25.0,
+        "manure_non_degradable_volatile_solids": 15.0,
+        "manure_degradable_volatile_solids": 25.0,
         "total_solids": 50.0,
         "volume": 1.5,
         "mass": 1050.0,
         "total_volatile_solids": 40.0,
         "methane_production_potential": 0.24,
         "pen_manure_data": None,
+        "bedding_non_degradable_volatile_solids": 23
     }
     mock_om = mocker.patch.object(mock_separator, "_om", autospec=True)
     mock_separator._report_manure_stream(manure_dict, "test_stream", time.simulation_day)
