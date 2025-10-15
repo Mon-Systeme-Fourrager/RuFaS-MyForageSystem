@@ -896,6 +896,7 @@ class ManureManager:
             "manure_non_degradable_volatile_solids",
             "manure_degradable_volatile_solids",
             "total_solids",
+            "bedding_non_degradable_volatile_solids"
         ]
 
         for name, processor in self.all_processors.items():
