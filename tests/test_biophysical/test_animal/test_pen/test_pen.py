@@ -874,8 +874,8 @@ def test_get_manure_streams(
                 phosphorus=8.18,
                 potassium=6.6,
                 ash=0.88,
-                manure_non_degradable_volatile_solids=68.8,
-                manure_degradable_volatile_solids=81.8,
+                non_degradable_volatile_solids=68.8,
+                degradable_volatile_solids=81.8,
                 total_solids=258.0,
                 volume=12.80,
                 methane_production_potential=0.24,
@@ -898,8 +898,8 @@ def test_get_manure_streams(
                 phosphorus=35.68,
                 potassium=6.6,
                 ash=4.02,
-                manure_non_degradable_volatile_solids=68.8,
-                manure_degradable_volatile_solids=81.8,
+                non_degradable_volatile_solids=68.8,
+                degradable_volatile_solids=81.8,
                 total_solids=261.14,
                 volume=15.30,
                 methane_production_potential=0.24,
@@ -923,8 +923,8 @@ def test_get_manure_streams(
                 phosphorus=8.18,
                 potassium=6.6,
                 ash=0.88,
-                manure_non_degradable_volatile_solids=68.8,
-                manure_degradable_volatile_solids=81.8,
+                non_degradable_volatile_solids=68.8,
+                degradable_volatile_solids=81.8,
                 total_solids=258.0,
                 volume=12.80,
                 methane_production_potential=0.24,
@@ -947,8 +947,8 @@ def test_get_manure_streams(
                 phosphorus=35.68,
                 potassium=6.6,
                 ash=0.88,
-                manure_non_degradable_volatile_solids=3.14,
-                manure_degradable_volatile_solids=81.8,
+                non_degradable_volatile_solids=68.8,
+                degradable_volatile_solids=81.8,
                 total_solids=261.14,
                 volume=15.30,
                 methane_production_potential=0.24,
@@ -972,8 +972,8 @@ def test_get_manure_streams(
                 phosphorus=8.18,
                 potassium=6.6,
                 ash=0.88,
-                manure_non_degradable_volatile_solids=68.8,
-                manure_degradable_volatile_solids=81.8,
+                non_degradable_volatile_solids=68.8,
+                degradable_volatile_solids=81.8,
                 total_solids=258.0,
                 volume=12.80,
                 methane_production_potential=0.24,
@@ -996,8 +996,8 @@ def test_get_manure_streams(
                 phosphorus=35.68,
                 potassium=6.6,
                 ash=0.88,
-                manure_non_degradable_volatile_solids=3.14,
-                manure_degradable_volatile_solids=81.8,
+                non_degradable_volatile_solids=68.8,
+                degradable_volatile_solids=81.8,
                 total_solids=261.14,
                 volume=15.30,
                 methane_production_potential=0.24,
@@ -1049,8 +1049,8 @@ def test_apply_bedding(
     assert pytest.approx(result.potassium) == expected_result.potassium
     assert pytest.approx(result.ash) == expected_result.ash
     assert pytest.approx(
-        result.manure_non_degradable_volatile_solids) == expected_result.manure_non_degradable_volatile_solids
-    assert pytest.approx(result.manure_degradable_volatile_solids) == expected_result.manure_degradable_volatile_solids
+        result.non_degradable_volatile_solids) == expected_result.non_degradable_volatile_solids
+    assert pytest.approx(result.degradable_volatile_solids) == expected_result.degradable_volatile_solids
     assert pytest.approx(result.total_solids) == expected_result.total_solids
     assert pytest.approx(result.volume) == expected_result.volume
 
@@ -1071,8 +1071,8 @@ def test_apply_bedding_value_error(pen: Pen) -> None:
         phosphorus=8.18,
         potassium=6.6,
         ash=0.88,
-        manure_non_degradable_volatile_solids=68.8,
-        manure_degradable_volatile_solids=81.8,
+        non_degradable_volatile_solids=68.8,
+        degradable_volatile_solids=81.8,
         total_solids=258.0,
         volume=12.80,
         methane_production_potential=0.24,

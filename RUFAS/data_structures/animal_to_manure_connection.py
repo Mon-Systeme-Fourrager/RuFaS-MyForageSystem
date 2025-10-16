@@ -147,9 +147,9 @@ class ManureStream:
         Mass of potassium in the manure stream (kg).
     ash : float
         Mass of ash in the manure stream (kg).
-    manure_non_degradable_volatile_solids : float
+    non_degradable_volatile_solids : float
         Mass of non-degradable volatile solids in the manure stream (kg).
-    manure_degradable_volatile_solids : float
+    degradable_volatile_solids : float
         Mass of degradable volatile solids in the manure stream (kg).
     total_solids : float
         Mass of total solids in the manure stream (kg).
@@ -175,13 +175,13 @@ class ManureStream:
     phosphorus: float
     potassium: float
     ash: float
-    manure_non_degradable_volatile_solids: float
-    manure_degradable_volatile_solids: float
+    degradable_volatile_solids: float
+    non_degradable_volatile_solids: float
+    bedding_non_degradable_volatile_solids: float
     total_solids: float
     volume: float
     methane_production_potential: float
     pen_manure_data: PenManureData | None
-    bedding_non_degradable_volatile_solids: float
 
     MANURE_STREAM_UNITS = {
         "water": MeasurementUnits.KILOGRAMS,
@@ -190,15 +190,15 @@ class ManureStream:
         "phosphorus": MeasurementUnits.KILOGRAMS,
         "potassium": MeasurementUnits.KILOGRAMS,
         "ash": MeasurementUnits.KILOGRAMS,
-        "manure_non_degradable_volatile_solids": MeasurementUnits.KILOGRAMS,
-        "manure_degradable_volatile_solids": MeasurementUnits.KILOGRAMS,
+        "degradable_volatile_solids": MeasurementUnits.KILOGRAMS,
+        "non_degradable_volatile_solids": MeasurementUnits.KILOGRAMS,
+        "bedding_non_degradable_volatile_solids": MeasurementUnits.KILOGRAMS,
         "total_solids": MeasurementUnits.KILOGRAMS,
         "volume": MeasurementUnits.CUBIC_METERS,
         "mass": MeasurementUnits.KILOGRAMS,
         "total_volatile_solids": MeasurementUnits.KILOGRAMS,
         "methane_production_potential": MeasurementUnits.CUBIC_METERS_PER_KILOGRAM,
-        "pen_manure_data": None,
-        "bedding_non_degradable_volatile_solids": MeasurementUnits.KILOGRAMS
+        "pen_manure_data": None
     }
 
     def __add__(self, other: "ManureStream") -> "ManureStream":
@@ -229,10 +229,10 @@ class ManureStream:
             phosphorus=self.phosphorus + other.phosphorus,
             potassium=self.potassium + other.potassium,
             ash=self.ash + other.ash,
-            manure_non_degradable_volatile_solids=self.manure_non_degradable_volatile_solids
-            + other.manure_non_degradable_volatile_solids,
-            manure_degradable_volatile_solids=self.manure_degradable_volatile_solids
-            + other.manure_degradable_volatile_solids,
+            non_degradable_volatile_solids=self.non_degradable_volatile_solids
+                                           + other.non_degradable_volatile_solids,
+            degradable_volatile_solids=self.degradable_volatile_solids
+                                       + other.degradable_volatile_solids,
             total_solids=self.total_solids + other.total_solids,
             volume=self.volume + other.volume,
             methane_production_potential=(
@@ -261,8 +261,8 @@ class ManureStream:
                 self.phosphorus,
                 self.potassium,
                 self.ash,
-                self.manure_non_degradable_volatile_solids,
-                self.manure_degradable_volatile_solids,
+                self.non_degradable_volatile_solids,
+                self.degradable_volatile_solids,
                 self.total_solids,
                 self.volume,
                 self.bedding_non_degradable_volatile_solids
@@ -272,8 +272,8 @@ class ManureStream:
     @property
     def total_volatile_solids(self) -> float:
         """Amount of the total volatile solids (kg)."""
-        return (self.manure_non_degradable_volatile_solids
-                + self.manure_degradable_volatile_solids + self.bedding_non_degradable_volatile_solids)
+        return (self.non_degradable_volatile_solids
+                + self.degradable_volatile_solids + self.bedding_non_degradable_volatile_solids)
 
     @property
     def mass(self) -> float:
@@ -294,8 +294,8 @@ class ManureStream:
             phosphorus=0.0,
             potassium=0.0,
             ash=0.0,
-            manure_non_degradable_volatile_solids=0.0,
-            manure_degradable_volatile_solids=0.0,
+            non_degradable_volatile_solids=0.0,
+            degradable_volatile_solids=0.0,
             total_solids=0.0,
             volume=0.0,
             methane_production_potential=0.0,
@@ -366,8 +366,8 @@ class ManureStream:
             phosphorus=self.phosphorus * split_ratio,
             potassium=self.potassium * split_ratio,
             ash=self.ash * split_ratio,
-            manure_non_degradable_volatile_solids=self.manure_non_degradable_volatile_solids * split_ratio,
-            manure_degradable_volatile_solids=self.manure_degradable_volatile_solids * split_ratio,
+            non_degradable_volatile_solids=self.non_degradable_volatile_solids * split_ratio,
+            degradable_volatile_solids=self.degradable_volatile_solids * split_ratio,
             total_solids=self.total_solids * split_ratio,
             volume=self.volume * split_ratio,
             methane_production_potential=self.methane_production_potential,

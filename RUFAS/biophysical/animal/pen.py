@@ -690,8 +690,8 @@ class Pen:
             phosphorus=pen_animal_excretions.phosphorus * GeneralConstants.GRAMS_TO_KG,
             potassium=pen_animal_excretions.potassium * GeneralConstants.GRAMS_TO_KG,
             ash=0,
-            manure_non_degradable_volatile_solids=pen_animal_excretions.non_degradable_volatile_solids,
-            manure_degradable_volatile_solids=pen_animal_excretions.degradable_volatile_solids,
+            non_degradable_volatile_solids=pen_animal_excretions.non_degradable_volatile_solids,
+            degradable_volatile_solids=pen_animal_excretions.degradable_volatile_solids,
             total_solids=pen_animal_excretions.total_solids,
             volume=pen_animal_excretions.manure_mass / ManureConstants.SLURRY_MANURE_DENSITY,
             methane_production_potential=methane_production_potential,
@@ -776,17 +776,17 @@ class Pen:
                 if bedding.bedding_type != BeddingType.SAND
                 else manure_stream.ash + total_bedding_dry_solids
             ),
-            manure_non_degradable_volatile_solids=(
-                manure_stream.manure_non_degradable_volatile_solids
-                if bedding.bedding_type == BeddingType.SAND
-                else total_bedding_dry_solids
-            ),
-            manure_degradable_volatile_solids=manure_stream.manure_degradable_volatile_solids,
+            non_degradable_volatile_solids=manure_stream.non_degradable_volatile_solids,
+            degradable_volatile_solids=manure_stream.degradable_volatile_solids,
             total_solids=manure_stream.total_solids + total_bedding_dry_solids,
             volume=manure_stream.volume + total_bedding_volume,
             methane_production_potential=manure_stream.methane_production_potential,
             pen_manure_data=manure_stream.pen_manure_data,
-            bedding_non_degradable_volatile_solids=total_bedding_dry_solids
+            bedding_non_degradable_volatile_solids=(
+                0
+                if bedding.bedding_type == BeddingType.SAND
+                else total_bedding_dry_solids
+            )
         )
 
     def _calculate_manure_surface_area(self) -> float:

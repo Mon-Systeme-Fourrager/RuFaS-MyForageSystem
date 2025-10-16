@@ -144,15 +144,16 @@ class Separator(Processor):
             phosphorus=self.held_manure.phosphorus * self.phosphorus_efficiency,
             potassium=self.held_manure.potassium * self.potassium_efficiency,
             ash=self.held_manure.ash * self.ash_efficiency,
-            manure_non_degradable_volatile_solids=self.held_manure.manure_non_degradable_volatile_solids
-            * self.volatile_solids_efficiency,
-            manure_degradable_volatile_solids=self.held_manure.manure_degradable_volatile_solids
-            * self.volatile_solids_efficiency,
+            non_degradable_volatile_solids=self.held_manure.non_degradable_volatile_solids
+                                           * self.volatile_solids_efficiency,
+            degradable_volatile_solids=self.held_manure.degradable_volatile_solids
+                                       * self.volatile_solids_efficiency,
             total_solids=solid_manure_total_solids,
             volume=solid_manure_volume,
             methane_production_potential=self.held_manure.methane_production_potential,
             pen_manure_data=None,
             bedding_non_degradable_volatile_solids=self.held_manure.bedding_non_degradable_volatile_solids
+            * self.volatile_solids_efficiency
         )
         solid_stream_name = "SeparatedSolids"
         solid_manure_stream_dict = asdict(solid_manure_stream)
@@ -172,10 +173,10 @@ class Separator(Processor):
             phosphorus=self.held_manure.phosphorus * (1 - self.phosphorus_efficiency),
             potassium=self.held_manure.potassium * (1 - self.potassium_efficiency),
             ash=self.held_manure.ash * (1 - self.ash_efficiency),
-            manure_non_degradable_volatile_solids=self.held_manure.manure_non_degradable_volatile_solids
-            * (1 - self.volatile_solids_efficiency),
-            manure_degradable_volatile_solids=self.held_manure.manure_degradable_volatile_solids
-            * (1 - self.volatile_solids_efficiency),
+            non_degradable_volatile_solids=self.held_manure.non_degradable_volatile_solids
+                                           * (1 - self.volatile_solids_efficiency),
+            degradable_volatile_solids=self.held_manure.degradable_volatile_solids
+                                       * (1 - self.volatile_solids_efficiency),
             total_solids=liquid_manure_total_solids,
             volume=liquid_manure_volume,
             methane_production_potential=self.held_manure.methane_production_potential,

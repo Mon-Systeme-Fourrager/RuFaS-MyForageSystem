@@ -8,8 +8,8 @@ from RUFAS.data_structures.animal_to_manure_connection import ManureStream, Stre
 
 @pytest.fixture
 def manure_stream(mocker: MockerFixture) -> ManureStream:
-    return ManureStream(1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8, 9.9, 10, 0.24, mocker.MagicMock(autospec=PenManureData),
-                        10)
+    return ManureStream(1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 8.8, 7.7, 10, 9.9, 10, 0.24,
+                        mocker.MagicMock(autospec=PenManureData))
 
 
 def test_total_volatile_solids(manure_stream: ManureStream) -> None:
@@ -46,8 +46,8 @@ def manure_stream_1() -> ManureStream:
         phosphorus=5.0,
         potassium=3.0,
         ash=15.0,
-        manure_non_degradable_volatile_solids=25.0,
-        manure_degradable_volatile_solids=35.0,
+        non_degradable_volatile_solids=25.0,
+        degradable_volatile_solids=35.0,
         total_solids=60.0,
         volume=1.0,
         methane_production_potential=0.24,
@@ -68,8 +68,8 @@ def manure_stream_1() -> ManureStream:
                 phosphorus=4.0,
                 potassium=2.5,
                 ash=12.0,
-                manure_non_degradable_volatile_solids=20.0,
-                manure_degradable_volatile_solids=28.0,
+                non_degradable_volatile_solids=20.0,
+                degradable_volatile_solids=28.0,
                 total_solids=48.0,
                 volume=0.8,
                 methane_production_potential=0.17,
@@ -107,8 +107,8 @@ def manure_stream_1() -> ManureStream:
                 phosphorus=2.5,
                 potassium=1.5,
                 ash=8.0,
-                manure_non_degradable_volatile_solids=10.0,
-                manure_degradable_volatile_solids=15.0,
+                non_degradable_volatile_solids=10.0,
+                degradable_volatile_solids=15.0,
                 total_solids=25.0,
                 volume=0.5,
                 methane_production_potential=0.17,
@@ -169,9 +169,9 @@ def test_make_empty_manure_stream() -> None:
 
     assert actual.ammoniacal_nitrogen == 0.0
     assert actual.ash == 0.0
-    assert actual.manure_degradable_volatile_solids == 0.0
+    assert actual.degradable_volatile_solids == 0.0
     assert actual.nitrogen == 0.0
-    assert actual.manure_non_degradable_volatile_solids == 0.0
+    assert actual.non_degradable_volatile_solids == 0.0
     assert actual.pen_manure_data is None
     assert actual.phosphorus == 0.0
     assert actual.potassium == 0.0
@@ -330,8 +330,8 @@ def sample_manure_stream(pen_data_2: PenManureData) -> ManureStream:
         phosphorus=5.0,
         potassium=3.0,
         ash=2.0,
-        manure_non_degradable_volatile_solids=4.0,
-        manure_degradable_volatile_solids=6.0,
+        non_degradable_volatile_solids=4.0,
+        degradable_volatile_solids=6.0,
         total_solids=15.0,
         volume=1.0,
         methane_production_potential=0.24,
@@ -374,8 +374,8 @@ def test_split_stream_without_pen_manure_data() -> None:
         phosphorus=2.5,
         potassium=1.5,
         ash=1.0,
-        manure_non_degradable_volatile_solids=2.0,
-        manure_degradable_volatile_solids=3.0,
+        non_degradable_volatile_solids=2.0,
+        degradable_volatile_solids=3.0,
         total_solids=7.5,
         volume=0.5,
         methane_production_potential=0.24,
