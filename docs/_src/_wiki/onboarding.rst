@@ -7,7 +7,7 @@
    **Welcome to RuFaS**
     `Scientific documentation <https://github.com/RuminantFarmSystems/RuFaS/tree/dev/scientific_documentation>`__
 
-   Introduction to RuFaS for New Team Members
+   Introduction to RuFaS for New Team Members.
 
    2025-06-20
 
