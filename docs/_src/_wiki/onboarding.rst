@@ -7,7 +7,7 @@
    **Welcome to RuFaS**
     `Scientific documentation <https://github.com/RuminantFarmSystems/RuFaS/tree/dev/scientific_documentation>`__
 
-   Introduction to RuFaS for New Team Members.
+   Introduction to RuFaS for New Team Members
 
    2025-06-20
 
@@ -399,12 +399,17 @@ with VS Code so a RuFaS team member can be of maximal assistance troubleshooting
    .. image:: /_static/newterminal.png
       :alt: image
 
-   -  Place your cursor in the terminal and type in the command
+   -  You'll need to have at least the minimum supported versions of each dependency installed to run RuFaS.
+To ensure your dependencies are up to date, you'll just need to run:
 
       ::
 
-                  pip install -r requirements.txt
+                  pip install .
 
+  .. figure:: /_static/config.png
+     :alt: RuFaS Configuration
+     :align: center
+     :name: rufas Configuration
 
 **Great job!** If you’re reading this, you’ve reached the end of this
 section and have downloaded all of the programs you need to get started.
