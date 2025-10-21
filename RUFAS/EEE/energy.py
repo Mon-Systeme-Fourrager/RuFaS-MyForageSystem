@@ -325,7 +325,6 @@ class EnergyEstimator:
             Diesel Consumption for Tractor-Implement (l/ha)
         """
         diesel_consumption_tractor_implement_liter_ha = 0.0
-
         for implement in tractor.implements:
             crop_yield_ton_ha = crop_yield * GeneralConstants.KILOGRAMS_TO_MEGAGRAMS
             if application_mass and application_dm_content:
@@ -343,7 +342,7 @@ class EnergyEstimator:
             tractor_implement_operation_time_hr = implement.calculate_operation_time_hr(
                 field_production_size, crop_yield_ton_ha, application_mass_per_ha
             )
-            diesel_consumption_tractor_implement_liter_ha = (
+            diesel_consumption_tractor_implement_liter_ha += (
                 specific_fuel_consumption_liter_per_kWh
                 * total_power_needed_kW
                 * tractor_implement_operation_time_hr

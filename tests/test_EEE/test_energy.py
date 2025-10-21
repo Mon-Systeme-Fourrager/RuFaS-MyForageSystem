@@ -190,9 +190,9 @@ def test_parse_inputs_for_diesel_consumption_calculation(
 @pytest.mark.parametrize(
     "crop_yield, field_production_size, clay_percent, applications_mass, application_dm_content, expected_result",
     [
-        (100, 50, 20, 500, 0.5, 0.14476319),
-        (150, 75, 30, 750, 0.6, 0.09650879),
-        (200, 100, 40, None, None, 0.07238159),
+        (100, 50, 20, 500, 0.5, 0.14476319 * 2),
+        (150, 75, 30, 750, 0.6, 0.09650879 * 2),
+        (200, 100, 40, None, None, 0.07238159 * 2),
     ]
 )
 def test_calculate_diesel_consumption(
