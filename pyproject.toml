@@ -65,3 +65,6 @@ follow_imports = "silent"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.setuptools.packages.find]
+where = ["RUFAS"]
