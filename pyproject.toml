@@ -43,8 +43,8 @@ Homepage = "https://rufas.org"
 Repository = "https://github.com/RuminantFarmSystems/RuFaS"
 Documentation = "https://ruminantfarmsystems.github.io/RuFaS/"
 
-[tool.setuptools]
-packages = ["RUFAS"]
+[tool.setuptools.packages.find]
+include = ["RUFAS*"]
 
 [tool.black]
 target-version = ["py312"]
