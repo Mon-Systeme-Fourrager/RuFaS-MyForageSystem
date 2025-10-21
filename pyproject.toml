@@ -64,5 +64,4 @@ follow_imports = "silent"
 testpaths = ["tests"]
 
 [tool.setuptools.packages.find]
-where = ["."]
 include = ["RUFAS*"]
