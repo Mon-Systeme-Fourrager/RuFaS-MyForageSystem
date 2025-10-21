@@ -121,8 +121,8 @@ class TaskManager:
             task_id="TASK MANAGER",
             is_end_to_end_testing_run=False,
         )
-        self.check_python_version()
-        self.check_dependencies()
+        # self.check_python_version()
+        # self.check_dependencies()
         rufas_version = self.get_rufas_version()
         self.output_manager.print_credits(rufas_version)
         info_map = {
