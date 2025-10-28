@@ -2040,3 +2040,15 @@ class HerdManager:
                     self.herd_statistics.total_enteric_methane[animal_type] = {
                         k: float(current_totals.get(k, 0) + new_emissions.get(k, 0)) for k in all_keys
                     }
+
+    def update_milk_305_day_yield_predictions(self) -> None:
+        for cow in self.cows:
+            if cow.days_in_milk == 0:
+                cow.milk_yield_305_day = cow.milk_production.calc_305_day_milk_yield(cow.milk_production.wood_l,
+                                                                                     cow.milk_production.wood_m,
+                                                                                     cow.milk_production.wood_n)
+            elif 1 <= cow.days_in_milk < 306:
+                cow.milk_yield_305_day = cow.milk_production.calculate_mature_equivalent_305_day_milk_yield(
+                    cow.calves, cow.days_in_milk)
+            else:
+                cow.milk_yield_305_day = cow.milk_production.current_lactation_305_day_milk_produced

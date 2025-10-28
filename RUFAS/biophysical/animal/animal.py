@@ -201,6 +201,7 @@ class Animal:
         self.nutrition_supply: NutritionSupply = NutritionSupply.make_empty_nutrition_supply()
         self.nutrition_supply.dry_matter = AnimalModuleConstants.DEFAULT_DRY_MATTER_INTAKE
         self.previous_nutrition_supply: NutritionSupply | None = None
+        self.milk_yield_305_day: float = 0.0
 
         self._days_in_milk: int = 0
         self._milk_production_output_days_in_milk: int = 0
