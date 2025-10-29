@@ -827,7 +827,7 @@ class RationOptimizer:
         animal_combination: AnimalCombination,
         previous_ration: dict[RUFAS_ID | str, float | str] | None = None,
         user_defined_ration_dictionary: dict[RUFAS_ID, float] | None = None,
-        user_defined_ration_tolerance: float = None,
+        user_defined_ration_tolerance: float | None = None,
     ) -> tuple[OptimizeResult, RationConfig]:
         """
         Function that sets up the nutrients and requirements lists into structured
