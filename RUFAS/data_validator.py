@@ -1676,20 +1676,15 @@ class CrossValidator:
         apply_when_conditions_satisfied = self._evaluate_condition_clause_array(
             apply_when_rules, eager_termination
         )
-        if not apply_when_conditions_satisfied:
-            return False
-
-        validation_rules = cross_validation_block.get("rules", [])
-        validation_passed = self._evaluate_condition_clause_array(validation_rules, eager_termination)
-        if not validation_passed:
+        if not apply_when_conditions_satisfied and eager_termination:
             return False
 
         is_cross_validation_successful = True
+        validation_rules = cross_validation_block.get("rules", [])
         for rule in validation_rules:
-            is_cross_validation_successful = self._evaluate_expression(rule, eager_termination)
+            is_cross_validation_successful = self._evaluate_condition(rule, eager_termination)
             if not is_cross_validation_successful and eager_termination:
                 break
-
         return is_cross_validation_successful
 
     def _save_to_alias_pool(self, alias_name: str, value: Any) -> None:
@@ -1705,7 +1700,7 @@ class CrossValidator:
         """
         self._alias_pool[alias_name] = value
 
-    def _get_alias_value(self, alias_name: str, eager_termination: bool) -> Any:
+    def _get_alias_value(self, alias_name: str, eager_termination: bool, relationship: str) -> Any:
         """
         Retrieves the value associated with the specified alias name from the alias pool.
 
@@ -1715,6 +1710,8 @@ class CrossValidator:
             The alias of the value to retrieve.
         eager_termination : bool
             Whether to raise an error if the expression is not successfully evaluated.
+        relationship : str
+            The relationship being evaluated.
 
         Returns
         -------
@@ -1728,7 +1725,7 @@ class CrossValidator:
 
         """
         value = self._alias_pool.get(alias_name, None)
-        if value is None:
+        if value is None and relationship != "is_null":
             self._event_logs.append(
                 {
                     "error": "Alias name not found.",
@@ -1847,7 +1844,7 @@ class CrossValidator:
                 return None, False
         ordered_values: list[Any] = []
         for alias_name in ordered_variable_alias:
-            value = self._get_alias_value(alias_name, eager_termination)
+            value = self._get_alias_value(alias_name, eager_termination, expression_block.get("relationship", ""))
             ordered_values.append(value)
 
         if any(isinstance(value, (list, dict)) for value in ordered_values):
@@ -1858,9 +1855,9 @@ class CrossValidator:
             ordered_values = (
                 ordered_values[0] if isinstance(ordered_values[0], list) else list(ordered_values[0].values())
             )
-            result = ordered_values if expression_block["apply_to"] == "individual" else aggregator(ordered_values)
+            result = ordered_values if expression_block["apply_to"] == "individual" else [aggregator(ordered_values)]
         else:
-            result = aggregator(ordered_values)
+            result = [aggregator(ordered_values)] if operation != "no_op" else aggregator(ordered_values)
 
         if "save_as" in expression_block:
             save_as_alise_name: str = expression_block["save_as"]
@@ -2064,7 +2061,7 @@ class CrossValidator:
     def _evaluate_is_type(self, left_hand_value: Any, data_type: Any, eager_termination: bool) -> bool:
         """Evaluates the if_type condition"""
         # TODO: Remove these type checks when cross validation inputs' validation is implemented - issue #2615
-        if not isinstance(data_type, str):
+        if not isinstance(data_type[0], str):
             self._event_logs.append(
                 {
                     "error": "Invalid type validation",
@@ -2078,7 +2075,7 @@ class CrossValidator:
             if eager_termination:
                 raise ValueError("Invalid type comparison in cross validation.")
             return False
-        data_type = data_type.strip().lower()
+        data_type = data_type[0].strip().lower()
         checkers = {
             "string": lambda v: isinstance(v, str),
             "integer": lambda v: isinstance(v, int) and not isinstance(v, bool),
@@ -2103,7 +2100,7 @@ class CrossValidator:
                 raise ValueError(f"Unsupported data type {data_type}. Supported types: {supported}.")
             return False
 
-        return bool(checker(left_hand_value))
+        return all(checker(value) for value in left_hand_value)
 
     def _evaluate_regex(self, left_hand_value: Any, right_hand_value: Any) -> bool:
         """

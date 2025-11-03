@@ -117,7 +117,10 @@ class InputManager:
                 {
                     "error": "Cross Validation Failure",
                     "message": "One or more cross-validation rules failed.",
-                    "info_map": self.data_validator.event_logs["info_map"],
+                    "info_map": {
+                        "class": self.__class__.__name__,
+                        "function": self.start_data_processing.__name__,
+                    },
                 }
             )
             is_input_data_valid = False
