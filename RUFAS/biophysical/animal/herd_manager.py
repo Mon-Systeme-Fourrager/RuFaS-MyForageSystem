@@ -466,7 +466,7 @@ class HerdManager:
                 graduated_animals.append(animal)
                 if animal_daily_routines_output.newborn_calf_config is not None:
                     newborn_calf = self._create_newborn_calf(
-                        animal_daily_routines_output.newborn_calf_config, simulation_day=time.simulation_day
+                        animal_daily_routines_output.newborn_calf_config, time=time
                     )
                     if newborn_calf.stillborn:
                         stillborn_newborn_calves.append(newborn_calf)
@@ -646,7 +646,7 @@ class HerdManager:
 
         AnimalModuleReporter.report_daily_herd_total_ration(herd_total_ration, simulation_day)
 
-    def _create_newborn_calf(self, newborn_calf_config: NewBornCalfValuesTypedDict, simulation_day: int) -> Animal:
+    def _create_newborn_calf(self, newborn_calf_config: NewBornCalfValuesTypedDict, time: RufasTime) -> Animal:
         """
         Creates a new newborn calf instance and records its entry event in the herd if it
         is not sold.
@@ -655,8 +655,8 @@ class HerdManager:
         ----------
         newborn_calf_config : NewBornCalfValuesTypedDict
             Configuration for the newborn calf containing its attributes.
-        simulation_day : int
-            The current day in the simulation.
+        time : RufasTime
+            The current time in the simulation.
 
         Returns
         -------
@@ -665,9 +665,9 @@ class HerdManager:
 
         """
         newborn_calf_config["id"] = AnimalPopulation.next_id()
-        newborn_calf: Animal = Animal(args=newborn_calf_config, simulation_day=simulation_day)
+        newborn_calf: Animal = Animal(args=newborn_calf_config, time=time)
         if not (newborn_calf.sold or newborn_calf.stillborn):
-            newborn_calf.events.add_event(newborn_calf.days_born, simulation_day, animal_constants.ENTER_HERD)
+            newborn_calf.events.add_event(newborn_calf.days_born, time.simulation_day, animal_constants.ENTER_HERD)
         return newborn_calf
 
     def _check_if_heifers_need_to_be_sold(

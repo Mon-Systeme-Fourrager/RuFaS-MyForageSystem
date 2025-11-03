@@ -1,5 +1,6 @@
 import numpy as np
 
+from RUFAS.biophysical.animal.animal_config import AnimalConfig
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 from RUFAS.util import Utility
 
@@ -42,12 +43,19 @@ class Genetics:
             parity: int | None = None,
             initialize_new_born_calf: bool = False,
             dam_tbv_fat: float | None = None,
-            dam_tbv_protein: float | None = None
+            dam_tbv_protein: float | None = None,
+            birth_month: int | None = None,
     ) -> None:
         """Initialize genetic attributes."""
         if initialize_new_born_calf:
-            assert animal_type == AnimalType.CALF and dam_tbv_fat is not None and dam_tbv_protein is not None
-            self.TBV_fat, self.TBV_protein = self._calculate_newborn_calf_tbv_values(dam_tbv_fat, dam_tbv_protein)
+            assert (
+                    animal_type == AnimalType.CALF
+                    and dam_tbv_fat is not None
+                    and dam_tbv_protein is not None
+                    and birth_month is not None
+                    )
+            self.TBV_fat, self.TBV_protein = self._calculate_newborn_calf_tbv_values(
+                dam_tbv_fat, dam_tbv_protein, f"{birth_year}-{birth_month:02d}")
         else:
             self.TBV_fat, self.TBV_protein = self._calculate_tbv_values()
         self.E_permanent_fat, self.E_permanent_protein = self._calculate_ep_values()
@@ -71,11 +79,16 @@ class Genetics:
         )
         return tbv_fat, tbv_protein
 
-    def _calculate_newborn_calf_tbv_values(self, dam_tbv_fat: float, dam_tbv_protein: float) -> tuple[float, float]:
+    def _calculate_newborn_calf_tbv_values(
+            self,
+            dam_tbv_fat: float,
+            dam_tbv_protein: float,
+            birth_year_month: str
+    ) -> tuple[float, float]:
         """Calculate TBV values for a newborn calf."""
-        # TODO: Get these values
-        tbv_fat_top_semen, tbv_protein_top_semen = 0, 0
-        std_tbv_fat_national_average, std_tbv_protein_national_average = 0.01, 0.01
+        tbv_fat_top_semen = AnimalConfig.top_listing_semen["estimated_fat"][birth_year_month]
+        tbv_protein_top_semen = AnimalConfig.top_listing_semen["estimated_protein"][birth_year_month]
+        std_tbv_fat_national_average, std_tbv_protein_national_average = TBV_FAT_STD, TBV_PROTEIN_STD
 
         mean_tbv_fat = (tbv_fat_top_semen + dam_tbv_fat) / 2
         mean_tbv_protein = (tbv_protein_top_semen + dam_tbv_protein) / 2
@@ -105,8 +118,8 @@ class Genetics:
 
     def _calculate_phenotype_values(self, birth_year: int) -> tuple[float, float]:
         """Calculate phenotype values."""
-        # TODO: Get these values
-        mean_fat, mean_protein = 0, 0
+        mean_fat = AnimalConfig.average_phenotype["fat_kg"][birth_year]
+        mean_protein = AnimalConfig.average_phenotype["protein_kg"][birth_year]
         phenotype_fat = mean_fat + self.TBV_fat + self.E_permanent_fat + self.E_temporary_fat
         phenotype_protein = mean_protein + self.TBV_protein + self.E_permanent_protein + self.E_temporary_protein
         return phenotype_fat, phenotype_protein

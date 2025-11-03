@@ -1,4 +1,5 @@
 import sys
+from datetime import timedelta
 from random import random
 from typing import Any, Callable
 
@@ -152,7 +153,7 @@ class Animal:
             | HeiferIIIValuesTypedDict
             | CowValuesTypedDict
         ),
-        simulation_day: int = 0,
+        time: RufasTime | None = None,
     ) -> None:
         """
         Initializes an Animal object.
@@ -212,12 +213,12 @@ class Animal:
         self._daily_distance: float = 0.0
 
         if self.animal_type == AnimalType.CALF and "body_weight" not in args.keys():
-            self._initialize_newborn_calf(args, simulation_day)
+            self._initialize_newborn_calf(args, time.simulation_day)
             dam_tbv_fat, dam_tbv_protein = args.get("dam_tbv_fat"), args.get("dam_tbv_protein")
             if dam_tbv_fat and dam_tbv_protein:
-                # TODO: handle birth_year/birth_date
                 self.genetics = Genetics(
-                    birth_year=2018,
+                    birth_year=time.current_date.year,
+                    birth_month=time.current_date.month,
                     animal_type=AnimalType.CALF,
                     initialize_new_born_calf=True,
                     dam_tbv_fat=dam_tbv_fat,
@@ -226,7 +227,7 @@ class Animal:
             # initializing herd for herd generation
             else:
                 self.genetics = Genetics(
-                    birth_year=2018,
+                    birth_year=time.current_date.year,
                     animal_type=AnimalType.CALF,
                     initialize_new_born_calf=False,
                     parity=self.calves
@@ -235,7 +236,7 @@ class Animal:
             initialize_animal_methods[self.animal_type](args)
             # TODO: handle birth_year/birth_date
             self.genetics = Genetics(
-                birth_year=2018,
+                birth_year=(time.current_date - timedelta(days=self.days_born)).year,
                 animal_type=self.animal_type,
                 initialize_new_born_calf=False,
                 parity=self.calves

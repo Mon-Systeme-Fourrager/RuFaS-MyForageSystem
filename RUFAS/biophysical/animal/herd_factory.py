@@ -317,7 +317,6 @@ class HerdFactory:
             days_born=0,
             initial_phosphorus=cow.nutrients.phosphorus_for_gestation_required_for_calf,
             birth_weight=cow.reproduction.calf_birth_weight,
-            # net_merit=0.0,
             animal_type=AnimalType.CALF.value,
         )
         cow.nutrients.total_phosphorus_in_animal = (
@@ -329,7 +328,7 @@ class HerdFactory:
         cow.nutrients.phosphorus_for_gestation_required_for_calf = 0.0
         cow.reproduction.calf_birth_weight = 0.0
 
-        calf = Animal(args)
+        calf = Animal(args, self.time)
         if not calf.sold:
             self.pre_animal_population.calves.append(calf)
 
@@ -382,7 +381,7 @@ class HerdFactory:
                 birth_weight=birth_weight,
                 animal_type=AnimalType.CALF.value,
             )
-            calf = Animal(args)
+            calf = Animal(args, self.time)
             if not (calf.sold or calf.stillborn):
                 self.pre_animal_population.calves.append(calf)
 
@@ -407,7 +406,7 @@ class HerdFactory:
         animal_data.update(id=self.pre_animal_population.next_id())
         if animal_type == "calf":
             animal_data.update(initial_phosphorus=0)
-        animal = Animal(animal_data)
+        animal = Animal(animal_data, self.time)
         return animal
 
     def _initialize_herd_from_data(self) -> AnimalPopulation:
