@@ -2017,7 +2017,7 @@ def test_get_alias_value_returns(pool: dict[str, Any], alias: str, expected: Any
     """Test the function _get_alias_value()"""
     v = CrossValidator()
     v._alias_pool = dict(pool)
-    assert v._get_alias_value(alias, True) == expected
+    assert v._get_alias_value(alias, True, "sum") == expected
 
 
 @pytest.mark.parametrize("eager_termination", [True, False])
@@ -2028,10 +2028,10 @@ def test_get_alias_value_raises_key_error_when_missing(eager_termination: bool) 
 
     if eager_termination:
         with pytest.raises(ValueError, match=r"Unknown alias name: missing"):
-            v._get_alias_value("missing", eager_termination=True)
+            v._get_alias_value("missing", eager_termination=True, relationship="sum")
         assert len(v._event_logs) == 1
     else:
-        result = v._get_alias_value("missing", eager_termination=False)
+        result = v._get_alias_value("missing", eager_termination=False, relationship="sum")
         assert result is None
         assert len(v._event_logs) == 1
 
@@ -2295,19 +2295,19 @@ def test_evaluate_expression_apply_to_individual(
 @pytest.mark.parametrize(
     "expression_block, selected_variables, expected_result",
     [
-        ({"operation": "sum", "ordered_variables": ["alias_0"], "apply_to": "group"}, [[1, 2, 3]], 6),
-        ({"operation": "difference", "ordered_variables": ["alias_0"], "apply_to": "group"}, [[]], None),
+        ({"operation": "sum", "ordered_variables": ["alias_0"], "apply_to": "group"}, [[1, 2, 3]], [6]),
+        ({"operation": "difference", "ordered_variables": ["alias_0"], "apply_to": "group"}, [[]], [None]),
         (
             {"operation": "product", "ordered_variables": ["alias_0"], "apply_to": "group", "save_as": "abc"},
             [{"a": 1, "b": 2, "c": 3}],
-            6,
+            [6],
         ),
-        ({"operation": "division", "ordered_variables": ["alias_0"], "apply_to": "group"}, [{}], None),
+        ({"operation": "division", "ordered_variables": ["alias_0"], "apply_to": "group"}, [{}], [None]),
         ({"operation": "no_op", "ordered_variables": ["a", "b", "c"], "save_as": "def"}, [2, 5, 8], [2, 5, 8]),
         (
             {"operation": "average", "ordered_variables": ["a", "b", "c", "d", "e", "f", "g", "h"]},
             [8, 7, 6, 5, 4, 3, 2, 1],
-            4.5,
+            [4.5],
         ),
     ],
 )
@@ -2426,18 +2426,18 @@ def test_evaluate_is_null(value: Any, expected: bool) -> None:
 @pytest.mark.parametrize(
     "data_type,left_value,expected",
     [
-        ("string", "abc", True),
-        ("string", 123, False),
-        ("integer", 7, True),
-        ("integer", True, False),
-        ("float", 1.2, True),
-        ("float", 7, False),
-        ("boolean", True, True),
-        ("boolean", 0, False),
-        ("number", 7, True),
-        ("number", 1.2, True),
-        ("number", False, False),
-        ("  StRiNg  ", "ok", True),
+        (["string"], ["abc"], True),
+        (["string"], [123], False),
+        (["integer"], [7], True),
+        (["integer"], [True], False),
+        (["float"], [1.2], True),
+        (["float"], [7], False),
+        (["boolean"], [True], True),
+        (["boolean"], [0], False),
+        (["number"], [7], True),
+        (["number"], [1.2], True),
+        (["number"], [False], False),
+        (["string"], ["ok"], True),
     ],
 )
 @pytest.mark.parametrize("eager_termination", [True, False])
@@ -2457,10 +2457,10 @@ def test_evaluate_is_type_data_type_not_str(eager_termination: bool) -> None:
     cv = CrossValidator()
     if eager_termination:
         with pytest.raises(ValueError, match=r"Invalid type comparison in cross validation\."):
-            cv._evaluate_is_type("x", 123, eager_termination=True)
+            cv._evaluate_is_type(["x"], [123], eager_termination=True)
         assert len(cv._event_logs) == 1
     else:
-        valid = cv._evaluate_is_type("x", 123, eager_termination=False)
+        valid = cv._evaluate_is_type(["x"], [123], eager_termination=False)
         assert not valid
         assert len(cv._event_logs) == 1
 
@@ -2471,10 +2471,10 @@ def test_evaluate_is_type_unsupported_type_string(eager_termination: bool) -> No
     cv = CrossValidator()
     if eager_termination:
         with pytest.raises(ValueError, match=r"Unsupported data type weird\. Supported types:"):
-            cv._evaluate_is_type("x", "weird", eager_termination=True)
+            cv._evaluate_is_type(["x"], ["weird"], eager_termination=True)
         assert len(cv._event_logs) == 1
     else:
-        valid = cv._evaluate_is_type("x", "weird", eager_termination=False)
+        valid = cv._evaluate_is_type(["x"], ["weird"], eager_termination=False)
         assert not valid
         assert len(cv._event_logs) == 1
 
@@ -2520,8 +2520,8 @@ def test_evaluate_condition_returns_false_when_side_not_evaluated(mocker: Mocker
     # Left evaluated False; right True
     mocker.patch.object(cv, "_evaluate_expression", side_effect=[("L", False), ("R", True)])
 
-    valid = cv._evaluate_condition({"relationship": "equal", "left_expression": {},
-                                    "right_expression": {}}, eager_termination)
+    valid = cv._evaluate_condition({"relationship": "equal", "left_hand": {},
+                                    "right_hand": {}}, eager_termination)
 
     assert not valid
 
@@ -2534,8 +2534,8 @@ def test_evaluate_condition_equal_path(mocker: MockerFixture, eager_termination:
     mocker.patch.object(cv, "_evaluate_expression", side_effect=[("A", True), ("B", True)])
     mock_eq = mocker.patch.object(cv, "_evaluate_equal_condition", return_value=True)
 
-    valid = cv._evaluate_condition({"relationship": "equal", "left_expression": {},
-                                    "right_expression": {}}, eager_termination)
+    valid = cv._evaluate_condition({"relationship": "equal", "left_hand": {},
+                                    "right_hand": {}}, eager_termination)
 
     assert valid
     mock_eq.assert_called_once_with("A", "B")
@@ -2551,7 +2551,7 @@ def test_evaluate_condition_greater_or_equals_short_circuit(mocker: MockerFixtur
     mock_eq = mocker.patch.object(cv, "_evaluate_equal_condition", return_value=False)
 
     valid = cv._evaluate_condition(
-        {"relationship": "greater_or_equals_to", "left_expression": {}, "right_expression": {}}, eager_termination)
+        {"relationship": "greater_or_equals_to", "left_hand": {}, "right_hand": {}}, eager_termination)
 
     assert valid
     mock_gt.assert_called_once_with(5, 2)
@@ -2569,7 +2569,7 @@ def test_evaluate_condition_greater_or_equals_falls_back_to_equal(mocker: Mocker
     mock_eq = mocker.patch.object(cv, "_evaluate_equal_condition", return_value=True)
 
     valid = cv._evaluate_condition(
-        {"relationship": "greater_or_equals_to", "left_expression": {}, "right_expression": {}}, eager_termination)
+        {"relationship": "greater_or_equals_to", "left_hand": {}, "right_hand": {}}, eager_termination)
 
     assert valid
     mock_gt.assert_called_once_with(2, 2)
@@ -2584,8 +2584,8 @@ def test_evaluate_condition_not_equal_inverts_equality(mocker: MockerFixture, ea
     mocker.patch.object(cv, "_evaluate_expression", side_effect=[("foo", True), ("bar", True)])
     mock_eq = mocker.patch.object(cv, "_evaluate_equal_condition", return_value=False)
 
-    valid = cv._evaluate_condition({"relationship": "not_equal", "left_expression": {},
-                                    "right_expression": {}}, eager_termination)
+    valid = cv._evaluate_condition({"relationship": "not_equal", "left_hand": {},
+                                    "right_hand": {}}, eager_termination)
 
     assert valid
     mock_eq.assert_called_once_with("foo", "bar")
@@ -2599,8 +2599,8 @@ def test_evaluate_condition_is_of_type_passes_eager(mocker: MockerFixture, eager
     mocker.patch.object(cv, "_evaluate_expression", side_effect=[("text", True), ("string", True)])
     mock_is_type = mocker.patch.object(cv, "_evaluate_is_type", return_value=True)
 
-    valid = cv._evaluate_condition({"relationship": "is_of_type", "left_expression": {},
-                                    "right_expression": {}}, eager_termination)
+    valid = cv._evaluate_condition({"relationship": "is_of_type", "left_hand": {},
+                                    "right_hand": {}}, eager_termination)
 
     assert valid
     mock_is_type.assert_called_once_with("text", "string", eager_termination)
@@ -2615,8 +2615,8 @@ def test_evaluate_condition_is_null_branch(mocker: MockerFixture, eager_terminat
     mocker.patch.object(cv, "_evaluate_expression", side_effect=[(None, True), ("ignored", True)])
     mock_is_null = mocker.patch.object(cv, "_evaluate_is_null", return_value=True)
 
-    valid = cv._evaluate_condition({"relationship": "is_null", "left_expression": {},
-                                    "right_expression": {}}, eager_termination)
+    valid = cv._evaluate_condition({"relationship": "is_null", "left_hand": {},
+                                    "right_hand": {}}, eager_termination)
 
     assert valid
     mock_is_null.assert_called_once_with(None)
@@ -2630,8 +2630,8 @@ def test_evaluate_condition_regex_branch(mocker: MockerFixture, eager_terminatio
     mocker.patch.object(cv, "_evaluate_expression", side_effect=[("abc", True), (r"a.c", True)])
     mock_regex = mocker.patch.object(cv, "_evaluate_regex", return_value=True)
 
-    ok = cv._evaluate_condition({"relationship": "regex", "left_expression": {},
-                                 "right_expression": {}}, eager_termination)
+    ok = cv._evaluate_condition({"relationship": "regex", "left_hand": {},
+                                 "right_hand": {}}, eager_termination)
 
     assert ok is True
     mock_regex.assert_called_once_with("abc", r"a.c")
