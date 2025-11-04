@@ -48,12 +48,10 @@ class Genetics:
     ) -> None:
         """Initialize genetic attributes."""
         if initialize_new_born_calf:
-            assert (
-                    animal_type == AnimalType.CALF
+            assert (animal_type == AnimalType.CALF
                     and dam_tbv_fat is not None
                     and dam_tbv_protein is not None
-                    and birth_month is not None
-                    )
+                    and birth_month is not None)
             self.TBV_fat, self.TBV_protein = self._calculate_newborn_calf_tbv_values(
                 dam_tbv_fat, dam_tbv_protein, f"{birth_year}-{birth_month:02d}")
         else:
