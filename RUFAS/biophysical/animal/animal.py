@@ -2375,4 +2375,4 @@ class Animal:
 
         parity_factor = {1: 1.25, 2: 1.18}.get(self.calves, 1.0)
 
-        self.milk_prediction_305_day = self.milk_prediction_305_day  * parity_factor
+        self.milk_prediction_305_day = self.milk_prediction_305_day * parity_factor
