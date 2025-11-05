@@ -2560,7 +2560,7 @@ def test_evaluate_condition_greater_or_equal_short_circuit(mocker: MockerFixture
 
 @pytest.mark.parametrize("eager_termination", [True, False])
 def test_evaluate_condition_greater_or_equal_falls_back_to_equal(mocker: MockerFixture,
-                                                                  eager_termination: bool) -> None:
+                                                                 eager_termination: bool) -> None:
     """When 'greater_or_equal_to', if greater=False, equality result is used."""
     cv = CrossValidator()
     mocker.patch.object(cv, "_validate_condition_clause", return_value=True)

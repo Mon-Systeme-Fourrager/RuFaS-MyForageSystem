@@ -1971,10 +1971,8 @@ class CrossValidator:
         relationship = condition_clause.get("relationship", "")
         left_hand, left_evaluated = self._evaluate_expression(condition_clause["left_hand"], eager_termination,
                                                               relationship)
-        print(f"Left hand evaluated: {left_hand}, {left_evaluated}")
         right_hand, right_evaluated = self._evaluate_expression(condition_clause["right_hand"], eager_termination,
                                                                 relationship)
-        print(f"Right hand evaluated: {right_hand}, {right_evaluated}")
 
         if not (left_evaluated and right_evaluated):
             return False

@@ -128,7 +128,6 @@ class InputManager:
                 }
             )
             is_input_data_valid = False
-        print("cross validation failing blocks:", failing_cross_validation_blocks)
         self.om.route_logs(self.data_validator.event_logs)
         return is_input_data_valid
 
