@@ -403,75 +403,99 @@ class EmissionsEstimator:
                 "dry_yield": harvest_yield_data_for_day["dry_yield"],
                 "harvest_type": harvest_yield_data_for_day["harvest_type"],
             }
+        total_farmgrown_feed_emission_and_resource_by_feed_id: dict[RUFAS_ID, dict[str, float]] = defaultdict(dict)
+        total_harvest_dry_yield_by_feed_id: dict[RUFAS_ID, float] = defaultdict(float)
         daily_farmgrown_feed_emission_and_resource_by_feed_id: dict[RUFAS_ID, dict[int, dict[str, float]]] = (
             defaultdict(dict)
         )
+        harvest_dates_by_feed_id: dict[RUFAS_ID, list[int]] = {
+            feed_id: sorted(
+                [
+                    harvest_date
+                    for harvest_date in harvest_dates_by_field[field_name]
+                    if harvest_dates_by_field[field_name][harvest_date]["feed_id"] == feed_id
+                ]
+            ) for field_name in harvest_dates_by_field
+            for feed_id in set(
+                harvest_dates_by_field[field_name][harvest_date]["feed_id"]
+                for harvest_date in sorted(list(harvest_dates_by_field[field_name].keys()))
+            )
+        }
         for field_name in harvest_dates_by_field:
             harvest_dates = sorted(list(harvest_dates_by_field[field_name].keys()))
             last_harvest_date = 0
-            harvest_dates_by_feed_id = {
-                feed_id: sorted(
-                    [
-                        harvest_date
-                        for harvest_date in harvest_dates
-                        if harvest_dates_by_field[field_name][harvest_date]["feed_id"] == feed_id
-                    ]
-                ) for feed_id in set(
-                    harvest_dates_by_field[field_name][harvest_date]["feed_id"]
-                    for harvest_date in harvest_dates
-                )
-            }
             for harvest_date in harvest_dates:
                 feed_id = harvest_dates_by_field[field_name][harvest_date]["feed_id"]
                 if feed_id is None:
                     continue
-                n2o_total = sum(
-                    [
-                        emission_data["nitrous_oxide_emissions"][field_name][simulation_day]
-                        for simulation_day in emission_data["nitrous_oxide_emissions"][field_name]
-                        if last_harvest_date < simulation_day <= harvest_date
-                    ],
-                    start=0.0
+                if feed_id not in total_farmgrown_feed_emission_and_resource_by_feed_id:
+                    total_farmgrown_feed_emission_and_resource_by_feed_id[feed_id] = {
+                        "nitrous_oxide_emissions": 0.0,
+                        "ammonia_emissions": 0.0,
+                        "fertilizer_N": 0.0,
+                        "fertilizer_P": 0.0,
+                        "fertilizer_K": 0.0,
+                        "manure_N": 0.0,
+                    }
+                total_farmgrown_feed_emission_and_resource_by_feed_id[feed_id]["nitrous_oxide_emissions"] += (
+                    sum(
+                        [
+                            emission_data["nitrous_oxide_emissions"][field_name][simulation_day]
+                            for simulation_day in emission_data["nitrous_oxide_emissions"][field_name]
+                            if last_harvest_date < simulation_day <= harvest_date
+                        ],
+                        start=0.0
+                    )
                 )
-                ammonia_total = sum(
-                    [
-                        emission_data["ammonia_emissions"][field_name][simulation_day]
-                        for simulation_day in emission_data["ammonia_emissions"][field_name]
-                        if last_harvest_date < simulation_day <= harvest_date
-                    ],
-                    start=0.0
+                total_farmgrown_feed_emission_and_resource_by_feed_id[feed_id]["ammonia_emissions"] += (
+                    sum(
+                        [
+                            emission_data["ammonia_emissions"][field_name][simulation_day]
+                            for simulation_day in emission_data["ammonia_emissions"][field_name]
+                            if last_harvest_date < simulation_day <= harvest_date
+                        ],
+                        start=0.0
+                    )
                 )
-                fertilizer_N_total = sum(
-                    [
-                        resource_data["fertilizer_applications"][field_name][simulation_day]["nitrogen"]
-                        for simulation_day in resource_data["fertilizer_applications"][field_name]
-                        if last_harvest_date < simulation_day <= harvest_date
-                    ],
-                    start=0.0
+                total_farmgrown_feed_emission_and_resource_by_feed_id[feed_id]["fertilizer_N"] += (
+                    sum(
+                        [
+                            resource_data["fertilizer_applications"][field_name][simulation_day]["nitrogen"]
+                            for simulation_day in resource_data["fertilizer_applications"][field_name]
+                            if last_harvest_date < simulation_day <= harvest_date
+                        ],
+                        start=0.0
+                    )
                 )
-                fertilizer_P_total = sum(
-                    [
-                        resource_data["fertilizer_applications"][field_name][simulation_day]["phosphorus"]
-                        for simulation_day in resource_data["fertilizer_applications"][field_name]
-                        if last_harvest_date < simulation_day <= harvest_date
-                    ],
-                    start=0.0
+                total_farmgrown_feed_emission_and_resource_by_feed_id[feed_id]["fertilizer_P"] += (
+                    sum(
+                        [
+                            resource_data["fertilizer_applications"][field_name][simulation_day]["phosphorus"]
+                            for simulation_day in resource_data["fertilizer_applications"][field_name]
+                            if last_harvest_date < simulation_day <= harvest_date
+                        ],
+                        start=0.0
+                    )
                 )
-                fertilizer_K_total = sum(
-                    [
-                        resource_data["fertilizer_applications"][field_name][simulation_day]["potassium"]
-                        for simulation_day in resource_data["fertilizer_applications"][field_name]
-                        if last_harvest_date < simulation_day <= harvest_date
-                    ],
-                    start=0.0
+                total_farmgrown_feed_emission_and_resource_by_feed_id[feed_id]["fertilizer_K"] += (
+                    sum(
+                        [
+                            resource_data["fertilizer_applications"][field_name][simulation_day]["potassium"]
+                            for simulation_day in resource_data["fertilizer_applications"][field_name]
+                            if last_harvest_date < simulation_day <= harvest_date
+                        ],
+                        start=0.0
+                    )
                 )
-                manure_N_total = sum(
-                    [
-                        resource_data["manure_applications"][field_name][simulation_day]["nitrogen"]
-                        for simulation_day in resource_data["manure_applications"][field_name]
-                        if last_harvest_date < simulation_day <= harvest_date
-                    ],
-                    start=0.0
+                total_farmgrown_feed_emission_and_resource_by_feed_id[feed_id]["manure_N"] += (
+                    sum(
+                        [
+                            resource_data["manure_applications"][field_name][simulation_day]["nitrogen"]
+                            for simulation_day in resource_data["manure_applications"][field_name]
+                            if last_harvest_date < simulation_day <= harvest_date
+                        ],
+                        start=0.0
+                    )
                 )
                 next_harvest_date_for_feed_id = (
                     harvest_dates_by_feed_id[feed_id][harvest_dates_by_feed_id[feed_id].index(harvest_date) + 1]
@@ -481,15 +505,31 @@ class EmissionsEstimator:
                     else max(all_simulation_days)
                 )
 
-                dry_yield = harvest_dates_by_field[field_name][harvest_date]["dry_yield"]
+                total_harvest_dry_yield_by_feed_id[feed_id] += (
+                    harvest_dates_by_field[field_name][harvest_date]["dry_yield"]
+                )
+                total_dry_yield = total_harvest_dry_yield_by_feed_id[feed_id]
+                total_emission_and_resource = total_farmgrown_feed_emission_and_resource_by_feed_id[feed_id]
                 for simulation_day in range(harvest_date, next_harvest_date_for_feed_id + 1):
                     daily_farmgrown_feed_emission_and_resource_by_feed_id[feed_id][simulation_day] = {
-                        "nitrous_oxide_emissions": n2o_total / dry_yield,
-                        "ammonia_emissions": ammonia_total / dry_yield,
-                        "fertilizer_N": fertilizer_N_total / dry_yield,
-                        "fertilizer_P": fertilizer_P_total / dry_yield,
-                        "fertilizer_K": fertilizer_K_total / dry_yield,
-                        "manure_N": manure_N_total / dry_yield,
+                        "nitrous_oxide_emissions": (
+                                total_emission_and_resource["nitrous_oxide_emissions"] / total_dry_yield
+                        ),
+                        "ammonia_emissions": (
+                                total_emission_and_resource["ammonia_emissions"] / total_dry_yield
+                        ),
+                        "fertilizer_N": (
+                                total_emission_and_resource["fertilizer_N"] / total_dry_yield
+                        ),
+                        "fertilizer_P": (
+                                total_emission_and_resource["fertilizer_P"] / total_dry_yield
+                        ),
+                        "fertilizer_K": (
+                                total_emission_and_resource["fertilizer_K"] / total_dry_yield
+                        ),
+                        "manure_N": (
+                                total_emission_and_resource["manure_N"] / total_dry_yield
+                        ),
                     }
 
                 last_harvest_date = harvest_date
@@ -556,11 +596,11 @@ class EmissionsEstimator:
             n2o_emissions_outputs = [
                 (
                     {
-                        f"direct_n2o_emissions_for_feed_{feed_id}": data_for_day["nitrous_oxide_emissions"]
+                        f"direct_n2o_nitrogen_emissions_for_feed_{feed_id}": data_for_day["nitrous_oxide_emissions"]
                     },
                     {
                         **info_map,
-                        "units": MeasurementUnits.KILOGRAMS_NITROUS_OXIDE_NITROGEN,
+                        "units": MeasurementUnits.KILOGRAMS,
                         "simulation_day": simulation_day
                     },
                 ) for simulation_day, data_for_day in daily_data_for_feed_id.items()
@@ -570,11 +610,11 @@ class EmissionsEstimator:
             ammonia_emissions_outputs = [
                 (
                     {
-                        f"ammonia_emissions_for_feed_{feed_id}": data_for_day["ammonia_emissions"]
+                        f"ammonia_nitrogen_emissions_for_feed_{feed_id}": data_for_day["ammonia_emissions"]
                     },
                     {
                         **info_map,
-                        "units": MeasurementUnits.KILOGRAMS_AMMONIA_NITROGEN,
+                        "units": MeasurementUnits.KILOGRAMS,
                         "simulation_day": simulation_day
                     },
                 ) for simulation_day, data_for_day in daily_data_for_feed_id.items()
@@ -588,7 +628,7 @@ class EmissionsEstimator:
                     },
                     {
                         **info_map,
-                        "units": MeasurementUnits.KILOGRAMS_NITROGEN,
+                        "units": MeasurementUnits.KILOGRAMS,
                         "simulation_day": simulation_day
                     },
                 ) for simulation_day, data_for_day in daily_data_for_feed_id.items()
@@ -602,7 +642,7 @@ class EmissionsEstimator:
                     },
                     {
                         **info_map,
-                        "units": MeasurementUnits.KILOGRAMS_PHOSPHORUS,
+                        "units": MeasurementUnits.KILOGRAMS,
                         "simulation_day": simulation_day
                     },
                 ) for simulation_day, data_for_day in daily_data_for_feed_id.items()
@@ -616,7 +656,7 @@ class EmissionsEstimator:
                     },
                     {
                         **info_map,
-                        "units": MeasurementUnits.KILOGRAMS_POTASSIUM,
+                        "units": MeasurementUnits.KILOGRAMS,
                         "simulation_day": simulation_day
                     },
                 ) for simulation_day, data_for_day in daily_data_for_feed_id.items()
@@ -630,7 +670,7 @@ class EmissionsEstimator:
                     },
                     {
                         **info_map,
-                        "units": MeasurementUnits.KILOGRAMS_NITROGEN,
+                        "units": MeasurementUnits.KILOGRAMS,
                         "simulation_day": simulation_day
                     },
                 ) for simulation_day, data_for_day in daily_data_for_feed_id.items()
@@ -658,33 +698,32 @@ class EmissionsEstimator:
             if lca_factor is not None:
                 for simulation_day, feed_amount in feed_deductions_for_feed_id_by_simulation_day.items():
                     lca_emissions_by_simulation_day[simulation_day].update({feed_id: feed_amount * lca_factor})
+                lca_outputs = [
+                    (
+                        {
+                            f"aggregate_lca_carbon_emissions_for_feed_{feed_id}": lca_emissions_for_day[feed_id]
+                        },
+                        {
+                            **info_map,
+                            "simulation_day": simulation_day
+                        },
+                    ) for simulation_day, lca_emissions_for_day in lca_emissions_by_simulation_day.items()
+                ]
+                self.om.add_variable_bulk(lca_outputs, first_info_map_only=False)
 
             luc_factor = self.land_use_change_emissions_by_location.get(str(feed_id))
             if luc_factor is not None:
                 for simulation_day, feed_amount in feed_deductions_for_feed_id_by_simulation_day.items():
                     luc_emissions_by_simulation_day[simulation_day].update({feed_id: feed_amount * luc_factor})
-
-        lca_outputs = [
-            (
-                {
-                    "aggregate_lca_carbon_emissions": sum(lca_emissions_for_day.values())
-                },
-                {
-                    **info_map,
-                    "simulation_day": simulation_day
-                },
-            ) for simulation_day, lca_emissions_for_day in lca_emissions_by_simulation_day.items()
-        ]
-        self.om.add_variable_bulk(lca_outputs, first_info_map_only=False)
-        luc_outputs = [
-            (
-                {
-                    "lca_land_use_change_emissions": sum(luc_emissions_for_day.values())
-                },
-                {
-                    **info_map,
-                    "simulation_day": simulation_day
-                },
-            ) for simulation_day, luc_emissions_for_day in luc_emissions_by_simulation_day.items()
-        ]
-        self.om.add_variable_bulk(luc_outputs, first_info_map_only=False)
+                luc_outputs = [
+                    (
+                        {
+                            f"lca_land_use_change_emissions_for_feed_{feed_id}": luc_emissions_for_day[feed_id]
+                        },
+                        {
+                            **info_map,
+                            "simulation_day": simulation_day
+                        },
+                    ) for simulation_day, luc_emissions_for_day in luc_emissions_by_simulation_day.items()
+                ]
+                self.om.add_variable_bulk(luc_outputs, first_info_map_only=False)
