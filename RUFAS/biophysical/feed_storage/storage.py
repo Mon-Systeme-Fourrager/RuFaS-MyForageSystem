@@ -181,6 +181,7 @@ class Storage:
             )
 
         self.stored.append(crop)
+        self._record_received_crop(simulation_day)
         self._record_stored_crops(simulation_day)
 
         initial_degradation_day_offset = 1
@@ -364,6 +365,38 @@ class Storage:
         else:
             dry_matter_percentage = new_dry_matter_mass / new_fresh_mass * GeneralConstants.FRACTION_TO_PERCENTAGE
         return {"fresh_mass": new_fresh_mass, "dry_matter_percentage": dry_matter_percentage}
+
+    def _record_received_crop(self, simulation_day: int) -> None:
+        """
+        Records the details of harvested crops received and updates the specified records
+        within a system for a particular simulation day.
+
+        Parameters
+        ----------
+        simulation_day : int
+            The day on which the crop was received, in the simulation timeline.
+        """
+        info_map = {
+            "class": self.__class__.__name__,
+            "function": self._record_received_crop.__name__,
+            "simulation_day": simulation_day,
+            "prefix": self._prefix,
+            "units": {
+                "field_name": MeasurementUnits.UNITLESS,
+                "crop_name": MeasurementUnits.UNITLESS,
+                "feed_id": MeasurementUnits.UNITLESS,
+            }
+        }
+        values = {
+            "field_name": self.field_name,
+            "crop_name": self.crop_name,
+            "feed_id": self.rufas_feed_id,
+        }
+        self.om.add_variable(
+            "crop_received",
+            values,
+            info_map,
+        ),
 
     def _record_stored_crops(self, simulation_day: int) -> None:
         """
