@@ -4851,3 +4851,8 @@ def filtered_variable_pool() -> list[dict[str, Any]]:
             }
         }
     ]
+
+
+@pytest.fixture(autouse=True)
+def raw_nitrous_oxide_emissions_data() -> dict[str, dict[str, Any]]:
+    return {}
