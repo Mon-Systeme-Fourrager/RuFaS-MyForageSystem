@@ -719,7 +719,7 @@ class HerdManager:
                 lowest_production_cow_index = 0
                 current_lowest_estimation_value = math.inf
                 for index in non_dnb_indices:
-                    estimated_production = self.cows[index].milk_prediction_305_day
+                    estimated_production = self.cows[index].mature_equivalent_milking_prediction_305_day
                     if estimated_production < current_lowest_estimation_value:
                         current_lowest_estimation_value = estimated_production
                         lowest_production_cow_index = index
@@ -2053,4 +2053,4 @@ class HerdManager:
 
     def update_milk_305_day_yield_predictions(self) -> None:
         for cow in self.cows:
-            cow.update_305_days_milk_production()
+            cow.update_mature_equivalent_305_days_milk_production()
