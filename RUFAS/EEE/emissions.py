@@ -206,7 +206,7 @@ class EmissionsEstimator:
         return feed_emissions_dict
 
     def estimate_farmgrown_feed_emissions(self) -> None:
-        """Estimates emissions associated with farmgrown feeds."""
+        """Estimates the emissions and resources used associated with farmgrown feeds production."""
         config_data = self.im.get_data("config")
         simulation_start_date: datetime = datetime.strptime(str(config_data["start_date"]), "%Y:%j")
         simulation_end_date: datetime = datetime.strptime(str(config_data["end_date"]), "%Y:%j")
@@ -309,7 +309,7 @@ class EmissionsEstimator:
         self,
         all_simulation_days: list[int],
     ) -> dict[RUFAS_ID, dict[int, float]]:
-        """Parses farmgrown feed deductions data by feed_id and simulation day from the simulation output manager."""
+        """Parses farmgrown feed deductions data by feed_id and simulation day from the simulation OutputManager."""
         filtered_data = self.om.filter_variables_pool(
             FARMGROWN_FEEDS_EMISSIONS_AND_RESOURCES_FILTERS["farmgrown_feed_deductions"]
         )
@@ -342,6 +342,7 @@ class EmissionsEstimator:
     def _parse_harvest_data(
         self, crop_to_feed_id_mapping: dict[tuple[str, str], RUFAS_ID], simulation_start_date: datetime
     ) -> dict[str, dict[int, dict[str, Any]]]:
+        """Parses harvest data by field name and simulation day from the simulation OutputManager."""
         result: dict[str, dict[int, dict[str, Any]]] = defaultdict(dict)
 
         harvest_filter = FARMGROWN_FEEDS_EMISSIONS_AND_RESOURCES_FILTERS["harvest_yield"]
@@ -375,7 +376,7 @@ class EmissionsEstimator:
         harvest_yield_by_field: dict[str, dict[int, dict[str, Any]]],
         all_simulation_days: list[int],
     ) -> dict[RUFAS_ID, dict[int, dict[str, float]]]:
-        """Calculates daily emissions and resources used for farmgrown feeds."""
+        """Calculates daily emissions and resources used for farmgrown feeds production."""
 
         total_farmgrown_feed_emission_and_resource_by_feed_id: dict[RUFAS_ID, dict[str, float]] = defaultdict(dict)
         total_harvest_dry_yield_by_feed_id: dict[RUFAS_ID, float] = defaultdict(float)
@@ -517,6 +518,7 @@ class EmissionsEstimator:
         feed_deductions_data: dict[RUFAS_ID, dict[int, float]],
         all_simulation_days: list[int],
     ) -> dict[RUFAS_ID, dict[int, dict[str, float]]]:
+        """Calculates daily farmgrown feed emissions and resources used for farmgrown feeds fed to the animals."""
         result: dict[RUFAS_ID, dict[int, dict[str, float]]] = defaultdict(dict)
         for feed_id, feed_deductions in feed_deductions_data.items():
             if feed_id not in daily_farmgrown_feed_emissions_and_resources:
@@ -538,7 +540,7 @@ class EmissionsEstimator:
         self,
         daily_farmgrown_feed_fed_emissions_and_resources: dict[RUFAS_ID, dict[int, dict[str, float]]],
     ) -> None:
-        """Reports daily farmgrown feed fed emissions and resources."""
+        """Reports the emissions and resources for daily farmgrown feeds fed to the animals."""
         info_map = {
             "class": self.__class__.__name__,
             "function": self._report_daily_farmgrown_feed_fed_emissions_and_resources.__name__,
@@ -601,7 +603,7 @@ class EmissionsEstimator:
     def _calculate_and_report_lca_and_luc_emissions(
         self, farm_grown_feeds_fed_to_animals: list[RUFAS_ID], feed_deductions_data: dict[RUFAS_ID, dict[int, float]]
     ) -> None:
-        """Calculates and reports LCA and LUC emissions."""
+        """Calculates and reports LCA and Land-Use-Change emissions."""
         info_map = {
             "class": self.__class__.__name__,
             "function": self._calculate_and_report_lca_and_luc_emissions.__name__,
