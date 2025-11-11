@@ -1676,8 +1676,8 @@ class CrossValidator:
         apply_when_conditions_satisfied = self._evaluate_condition_clause_array(
             apply_when_rules, eager_termination
         )
-        if not apply_when_conditions_satisfied and eager_termination:
-            return False
+        if not apply_when_conditions_satisfied:
+            return True
 
         is_cross_validation_successful = True
         validation_rules = cross_validation_block.get("rules", [])
@@ -2150,7 +2150,7 @@ class CrossValidator:
             if not satisfied:
                 self._event_logs.append(
                     {
-                        "error": "Unsatisfied condition clause in conditional clause array.",
+                        "log": "Unsatisfied condition clause in conditional clause array.",
                         "message": f"Condition not satisfied for condition clause: {clause}",
                         "info_map": {
                             "class": self.__class__.__name__,
@@ -2158,8 +2158,5 @@ class CrossValidator:
                         },
                     }
                 )
-                if not eager_termination:
-                    return False
-                else:
-                    raise ValueError(f"Condition not satisfied for condition clause: {clause}.")
+                return False
         return True

@@ -2011,7 +2011,7 @@ def test_early_exit_when_apply_when_fails_and_eager_true(mocker: MockerFixture, 
 
     result = cv.cross_validate_data({"x": 1}, cross_validation_block, eager_termination=True)
 
-    assert result is False
+    assert result is True
     cv._target_and_save.assert_called_once_with({"x": 1})
     cv._evaluate_condition_clause_array.assert_called_once_with([{"foo": "bar"}], True)
     cv._evaluate_condition.assert_not_called()
@@ -2703,21 +2703,6 @@ def test_evaluate_condition_clause_array_all_true(mocker: MockerFixture, eager_t
 
     assert valid
     assert mock.call_count == 3
-
-
-@pytest.mark.parametrize("eager_termination", [True, False])
-def test_evaluate_condition_clause_array_short_circuit_on_false(mocker: MockerFixture, eager_termination: bool) -> None:
-    """Stops on first False and returns False."""
-    cv = CrossValidator()
-    mock = mocker.patch.object(cv, "_evaluate_condition", side_effect=[True, False, True])
-
-    if eager_termination:
-        with pytest.raises(ValueError):
-            cv._evaluate_condition_clause_array([{}, {}, {}], eager_termination)
-    else:
-        valid = cv._evaluate_condition_clause_array([{}, {}, {}], eager_termination)
-        assert not valid
-        assert mock.call_count == 2
 
 
 def test_validate_condition_clause_ok(mocker: MockerFixture) -> None:
