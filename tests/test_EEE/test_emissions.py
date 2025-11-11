@@ -58,7 +58,7 @@ def em(mocker: MockerFixture) -> EmissionsEstimator:
         "alfalfa_hay": ["100", "103", "106", "107", "108"],
         "wheat": [],
     }
-    em.purchased_feed_emissions_by_location = {"44": 0.8,"50": 1.0, "51": 2.0, "52": 3.0, "100": 26.3, "110": 1.1}
+    em.purchased_feed_emissions_by_location = {"44": 0.8, "50": 1.0, "51": 2.0, "52": 3.0, "100": 26.3, "110": 1.1}
     em.land_use_change_emissions_by_location = {"44": 0.6, "50": 0.1, "51": 0.2, "52": 0.3, "100": 2.63, "110": 0.11}
 
     em._missing_purchased_ids = set()
