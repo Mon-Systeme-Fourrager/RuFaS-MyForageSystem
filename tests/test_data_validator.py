@@ -260,7 +260,7 @@ def test_fix_array_type_fixable_data(
     dummy_variable_properties: Dict[str, Any],
     dummy_element_hierarchy: List[str],
     expected_value: List[Any],
-    expected_result: bool
+    expected_result: bool,
 ) -> None:
     """Unit test for fixable array-type data for _fix_data function in file input_manager.py"""
 
@@ -300,15 +300,15 @@ def test_fix_array_type_fixable_data(
         {
             "warning": "Validation: invalid data found",
             "message": f"Variable: '{element_path}' has value:"
-                       f" {original_invalid_value}. {properties_violation_message}",
+            f" {original_invalid_value}. {properties_violation_message}",
             "info_map": info_map,
         },
         {
             "warning": "Validation: data fixed",
             "message": f"Invalid data fixed: '{element_path}' value changed from"
-                       f" {original_invalid_value} to "
-                       f"{dummy_variable_properties['default']}. Fix enabled by default value specified in "
-                       f"'{dummy_properties_key}'.",
+            f" {original_invalid_value} to "
+            f"{dummy_variable_properties['default']}. Fix enabled by default value specified in "
+            f"'{dummy_properties_key}'.",
             "info_map": info_map,
         },
     ]
@@ -467,7 +467,7 @@ def test_fix_string_type_fixable_data(
     dummy_variable_properties: dict[str, Any],
     dummy_element_hierarchy: list[str],
     expected_value: str,
-    expected_result: bool
+    expected_result: bool,
 ) -> None:
     """Unit test for fixable string-type data for _fix_data function in file input_manager.py"""
     dummy_input_data = mock_input_array_data_for_fix_data()
@@ -506,15 +506,15 @@ def test_fix_string_type_fixable_data(
         {
             "warning": "Validation: invalid data found",
             "message": f"Variable: '{element_path}' has value:"
-                       f" {original_invalid_value}. {properties_violation_message}",
+            f" {original_invalid_value}. {properties_violation_message}",
             "info_map": info_map,
         },
         {
             "warning": "Validation: data fixed",
             "message": f"Invalid data fixed: '{element_path}' value changed from"
-                       f" {original_invalid_value} to "
-                       f"{dummy_variable_properties['default']}. Fix enabled by default value specified in "
-                       f"'{dummy_properties_key}'.",
+            f" {original_invalid_value} to "
+            f"{dummy_variable_properties['default']}. Fix enabled by default value specified in "
+            f"'{dummy_properties_key}'.",
             "info_map": info_map,
         },
     ]
@@ -561,15 +561,15 @@ def test_fix_string_type_csv_data() -> None:
         {
             "warning": "Validation: invalid data found",
             "message": f"Variable: '{element_path}' has value:"
-                       f" {original_invalid_value}. {properties_violation_message}",
+            f" {original_invalid_value}. {properties_violation_message}",
             "info_map": info_map,
         },
         {
             "warning": "Validation: data fixed",
             "message": f"Invalid data fixed: '{element_path}' value changed from"
-                       f" {original_invalid_value} to "
-                       f"{dummy_variable_properties['default']}. Fix enabled by default value specified in "
-                       f"'{dummy_properties_key}'.",
+            f" {original_invalid_value} to "
+            f"{dummy_variable_properties['default']}. Fix enabled by default value specified in "
+            f"'{dummy_properties_key}'.",
             "info_map": info_map,
         },
     ]
@@ -734,7 +734,7 @@ def test_fix_number_type_fixable_data(
     dummy_element_hierarchy: list[str],
     expected_value: str,
     expected_result: bool,
-    expected_warning_call_count: int
+    expected_warning_call_count: int,
 ) -> None:
     """Unit test for fixable number-type data for _fix_data function in file input_manager.py"""
     dummy_input_data = mock_input_array_data_for_fix_data()
@@ -773,15 +773,15 @@ def test_fix_number_type_fixable_data(
         {
             "warning": "Validation: invalid data found",
             "message": f"Variable: '{element_path}' has value:"
-                       f" {original_invalid_value}. {properties_violation_message}",
+            f" {original_invalid_value}. {properties_violation_message}",
             "info_map": info_map,
         },
         {
             "warning": "Validation: data fixed",
             "message": f"Invalid data fixed: '{element_path}' value changed from"
-                       f" {original_invalid_value} to "
-                       f"{dummy_variable_properties['default']}. Fix enabled by default value specified in "
-                       f"'{dummy_properties_key}'.",
+            f" {original_invalid_value} to "
+            f"{dummy_variable_properties['default']}. Fix enabled by default value specified in "
+            f"'{dummy_properties_key}'.",
             "info_map": info_map,
         },
     ]
@@ -836,7 +836,7 @@ def test_fix_number_type_critical_data(
     dummy_variable_properties: dict[str, Any],
     dummy_element_hierarchy: list[str],
     expected_result: bool,
-    expected_warning_call_count: int
+    expected_warning_call_count: int,
 ) -> None:
     """Unit test for critical number-type data for _fix_data function in file input_manager.py"""
     dummy_input_data = mock_input_array_data_for_fix_data()
@@ -1420,14 +1420,12 @@ def test_validate_input_by_type_key_error() -> None:
     [
         (
             True,
-            {"files": {
-                "file1": {"path": "valid/path/to/file1.csv", "type": "csv", "properties": "some properties"}}},
+            {"files": {"file1": {"path": "valid/path/to/file1.csv", "type": "csv", "properties": "some properties"}}},
             False,
         ),
         (
             False,
-            {"files": {
-                "file1": {"path": "valid/path/to/file1.json", "type": "json", "properties": "some properties"}}},
+            {"files": {"file1": {"path": "valid/path/to/file1.json", "type": "json", "properties": "some properties"}}},
             True,
         ),
         (
@@ -2009,7 +2007,9 @@ def test_early_exit_when_apply_when_fails_and_eager_true(mocker: MockerFixture, 
     cross_validation_block = {"apply_when": [{"foo": "bar"}], "rules": [{"r": 1}, {"r": 2}]}
     mock_target_and_save = mocker.patch.object(cv, "_target_and_save")
     mock_evaluate_condition = mocker.patch.object(cv, "_evaluate_condition")
-    mock_evaluate_condition_clause_array = mocker.patch.object(cv, "_evaluate_condition_clause_array", return_value=False)
+    mock_evaluate_condition_clause_array = mocker.patch.object(
+        cv, "_evaluate_condition_clause_array", return_value=False
+    )
 
     result = cv.cross_validate_data({"x": 1}, cross_validation_block, eager_termination=True)
 
@@ -2021,8 +2021,9 @@ def test_early_exit_when_apply_when_fails_and_eager_true(mocker: MockerFixture, 
 
 def test_evaluates_all_rules_when_eager_false_and_returns_last(mocker: MockerFixture, cv: CrossValidator) -> None:
     """Test that cross_validate_data evaluates all rules when eager_termination is False and returns last result."""
-    mock_evaluate_condition_clause_array = mocker.patch.object(cv, "_evaluate_condition_clause_array",
-                                                               return_value=True)
+    mock_evaluate_condition_clause_array = mocker.patch.object(
+        cv, "_evaluate_condition_clause_array", return_value=True
+    )
     mock_evaluate_condition = mocker.patch.object(cv, "_evaluate_condition", side_effect=[True, False, True])
     rules = [{"r": 1}, {"r": 2}, {"r": 3}]
     cross_validation_block = {"apply_when": [], "rules": rules}
@@ -2039,8 +2040,9 @@ def test_evaluates_all_rules_when_eager_false_and_returns_last(mocker: MockerFix
 
 def test_breaks_on_first_failed_rule_when_eager_true(mocker: MockerFixture, cv: CrossValidator) -> None:
     """Test that cross_validate_data breaks on first failed rule when eager_termination is True."""
-    mock_evaluate_condition_clause_array = mocker.patch.object(cv, "_evaluate_condition_clause_array",
-                                                               return_value=True)
+    mock_evaluate_condition_clause_array = mocker.patch.object(
+        cv, "_evaluate_condition_clause_array", return_value=True
+    )
     mock_evaluate_condition = mocker.patch.object(cv, "_evaluate_condition", side_effect=[True, False, True])
     rules = [{"r": 1}, {"r": 2}, {"r": 3}]
     cross_validation_block = {"rules": rules}
@@ -2050,9 +2052,7 @@ def test_breaks_on_first_failed_rule_when_eager_true(mocker: MockerFixture, cv: 
     assert result is False
 
     assert mock_evaluate_condition.call_count == 2
-    mock_evaluate_condition.assert_has_calls(
-        [mocker.call(rules[0], True), mocker.call(rules[1], True)]
-    )
+    mock_evaluate_condition.assert_has_calls([mocker.call(rules[0], True), mocker.call(rules[1], True)])
     mock_evaluate_condition_clause_array.assert_called_once_with([], True)
 
 
@@ -2340,8 +2340,7 @@ def test_evaluate_expression_apply_to_individual(
     and `apply_to` is set to `individual`
     """
     cross_validator = CrossValidator()
-    mock_get_alias_value = mocker.patch.object(cross_validator, "_get_alias_value",
-                                               side_effect=selected_variables)
+    mock_get_alias_value = mocker.patch.object(cross_validator, "_get_alias_value", side_effect=selected_variables)
     mock_save_to_alias_pool = mocker.patch.object(cross_validator, "_save_to_alias_pool")
 
     result, status = cross_validator._evaluate_expression(expression_block, False, relationship="equal")
@@ -2560,8 +2559,9 @@ def test_evaluate_regex_fullmatch(text: str, pattern: str, expected: bool) -> No
 
 
 @pytest.mark.parametrize("eager_termination", [True, False])
-def test_evaluate_condition_short_circuits_when_validation_fails(mocker: MockerFixture,
-                                                                 eager_termination: bool) -> None:
+def test_evaluate_condition_short_circuits_when_validation_fails(
+    mocker: MockerFixture, eager_termination: bool
+) -> None:
     """If _validate_condition_clause returns False, no expressions are evaluated and result is False."""
     cv = CrossValidator()
     mocker.patch.object(cv, "_validate_condition_clause", return_value=False)
@@ -2574,16 +2574,16 @@ def test_evaluate_condition_short_circuits_when_validation_fails(mocker: MockerF
 
 
 @pytest.mark.parametrize("eager_termination", [True, False])
-def test_evaluate_condition_returns_false_when_side_not_evaluated(mocker: MockerFixture,
-                                                                  eager_termination: bool) -> None:
+def test_evaluate_condition_returns_false_when_side_not_evaluated(
+    mocker: MockerFixture, eager_termination: bool
+) -> None:
     """If either side doesn't evaluate, the condition returns False."""
     cv = CrossValidator()
     mocker.patch.object(cv, "_validate_condition_clause", return_value=True)
     # Left evaluated False; right True
     mocker.patch.object(cv, "_evaluate_expression", side_effect=[("L", False), ("R", True)])
 
-    valid = cv._evaluate_condition({"relationship": "equal", "left_hand": {},
-                                    "right_hand": {}}, eager_termination)
+    valid = cv._evaluate_condition({"relationship": "equal", "left_hand": {}, "right_hand": {}}, eager_termination)
 
     assert not valid
 
@@ -2596,8 +2596,7 @@ def test_evaluate_condition_equal_path(mocker: MockerFixture, eager_termination:
     mocker.patch.object(cv, "_evaluate_expression", side_effect=[("A", True), ("B", True)])
     mock_eq = mocker.patch.object(cv, "_evaluate_equal_condition", return_value=True)
 
-    valid = cv._evaluate_condition({"relationship": "equal", "left_hand": {},
-                                    "right_hand": {}}, eager_termination)
+    valid = cv._evaluate_condition({"relationship": "equal", "left_hand": {}, "right_hand": {}}, eager_termination)
 
     assert valid
     mock_eq.assert_called_once_with("A", "B")
@@ -2613,7 +2612,8 @@ def test_evaluate_condition_greater_or_equal_short_circuit(mocker: MockerFixture
     mock_eq = mocker.patch.object(cv, "_evaluate_equal_condition", return_value=False)
 
     valid = cv._evaluate_condition(
-        {"relationship": "greater_or_equal_to", "left_hand": {}, "right_hand": {}}, eager_termination)
+        {"relationship": "greater_or_equal_to", "left_hand": {}, "right_hand": {}}, eager_termination
+    )
 
     assert valid
     mock_gt.assert_called_once_with(5, 2)
@@ -2621,8 +2621,9 @@ def test_evaluate_condition_greater_or_equal_short_circuit(mocker: MockerFixture
 
 
 @pytest.mark.parametrize("eager_termination", [True, False])
-def test_evaluate_condition_greater_or_equal_falls_back_to_equal(mocker: MockerFixture,
-                                                                 eager_termination: bool) -> None:
+def test_evaluate_condition_greater_or_equal_falls_back_to_equal(
+    mocker: MockerFixture, eager_termination: bool
+) -> None:
     """When 'greater_or_equal_to', if greater=False, equality result is used."""
     cv = CrossValidator()
     mocker.patch.object(cv, "_validate_condition_clause", return_value=True)
@@ -2631,7 +2632,8 @@ def test_evaluate_condition_greater_or_equal_falls_back_to_equal(mocker: MockerF
     mock_eq = mocker.patch.object(cv, "_evaluate_equal_condition", return_value=True)
 
     valid = cv._evaluate_condition(
-        {"relationship": "greater_or_equal_to", "left_hand": {}, "right_hand": {}}, eager_termination)
+        {"relationship": "greater_or_equal_to", "left_hand": {}, "right_hand": {}}, eager_termination
+    )
 
     assert valid
     mock_gt.assert_called_once_with(2, 2)
@@ -2646,8 +2648,7 @@ def test_evaluate_condition_not_equal_inverts_equality(mocker: MockerFixture, ea
     mocker.patch.object(cv, "_evaluate_expression", side_effect=[("foo", True), ("bar", True)])
     mock_eq = mocker.patch.object(cv, "_evaluate_equal_condition", return_value=False)
 
-    valid = cv._evaluate_condition({"relationship": "not_equal", "left_hand": {},
-                                    "right_hand": {}}, eager_termination)
+    valid = cv._evaluate_condition({"relationship": "not_equal", "left_hand": {}, "right_hand": {}}, eager_termination)
 
     assert valid
     mock_eq.assert_called_once_with("foo", "bar")
@@ -2661,8 +2662,7 @@ def test_evaluate_condition_is_of_type_passes_eager(mocker: MockerFixture, eager
     mocker.patch.object(cv, "_evaluate_expression", side_effect=[("text", True), ("string", True)])
     mock_is_type = mocker.patch.object(cv, "_evaluate_is_type", return_value=True)
 
-    valid = cv._evaluate_condition({"relationship": "is_of_type", "left_hand": {},
-                                    "right_hand": {}}, eager_termination)
+    valid = cv._evaluate_condition({"relationship": "is_of_type", "left_hand": {}, "right_hand": {}}, eager_termination)
 
     assert valid
     mock_is_type.assert_called_once_with("text", "string", eager_termination)
@@ -2677,8 +2677,7 @@ def test_evaluate_condition_is_null_branch(mocker: MockerFixture, eager_terminat
     mocker.patch.object(cv, "_evaluate_expression", side_effect=[(None, True), ("ignored", True)])
     mock_is_null = mocker.patch.object(cv, "_evaluate_is_null", return_value=True)
 
-    valid = cv._evaluate_condition({"relationship": "is_null", "left_hand": {},
-                                    "right_hand": {}}, eager_termination)
+    valid = cv._evaluate_condition({"relationship": "is_null", "left_hand": {}, "right_hand": {}}, eager_termination)
 
     assert valid
     mock_is_null.assert_called_once_with(None)
@@ -2692,8 +2691,7 @@ def test_evaluate_condition_regex_branch(mocker: MockerFixture, eager_terminatio
     mocker.patch.object(cv, "_evaluate_expression", side_effect=[("abc", True), (r"a.c", True)])
     mock_regex = mocker.patch.object(cv, "_evaluate_regex", return_value=True)
 
-    ok = cv._evaluate_condition({"relationship": "regex", "left_hand": {},
-                                 "right_hand": {}}, eager_termination)
+    ok = cv._evaluate_condition({"relationship": "regex", "left_hand": {}, "right_hand": {}}, eager_termination)
 
     assert ok is True
     mock_regex.assert_called_once_with("abc", r"a.c")

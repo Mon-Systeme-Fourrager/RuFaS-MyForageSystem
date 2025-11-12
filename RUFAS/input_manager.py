@@ -118,8 +118,7 @@ class InputManager:
         if len(failing_cross_validation_blocks) > 0:
             self.om.add_error(
                 "Cross Validation Failure",
-                "One or more cross-validation rules failed: "
-                f"{', '.join(failing_cross_validation_blocks)}",
+                "One or more cross-validation rules failed: " f"{', '.join(failing_cross_validation_blocks)}",
                 {
                     "class": self.__class__.__name__,
                     "function": self.start_data_processing.__name__,

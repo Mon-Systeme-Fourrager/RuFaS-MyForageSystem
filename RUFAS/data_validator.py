@@ -1636,6 +1636,7 @@ class CrossValidator:
         A mapping for all the supported relationship evaluation functions.
 
     """
+
     def __init__(self) -> None:
         self._alias_pool: dict[str, Any] = {}
         self._event_logs: list[dict[str, str | dict[str, str]]] = []
@@ -1643,11 +1644,12 @@ class CrossValidator:
             "equal": lambda left, right, _eager_termination: self._evaluate_equal_condition(left, right),
             "greater": lambda left, right, _eager_termination: self._evaluate_greater_condition(left, right),
             "greater_or_equal_to": lambda left, right, _eager_termination: (
-                self._evaluate_greater_condition(left, right) or self._evaluate_equal_condition(left, right)),
+                self._evaluate_greater_condition(left, right) or self._evaluate_equal_condition(left, right)
+            ),
             "not_equal": lambda left, right, _eager_termination: not self._evaluate_equal_condition(left, right),
             "is_of_type": lambda left, right, eager_termination: self._evaluate_is_type(left, right, eager_termination),
             "is_null": lambda left, _right, _eager_termination: self._evaluate_is_null(left),
-            "regex": lambda left, right, _eager_termination: self._evaluate_regex(left, right)
+            "regex": lambda left, right, _eager_termination: self._evaluate_regex(left, right),
         }
 
     def cross_validate_data(
@@ -1673,9 +1675,7 @@ class CrossValidator:
         self._target_and_save(target_and_save_result)
 
         apply_when_rules = cross_validation_block.get("apply_when", [])
-        apply_when_conditions_satisfied = self._evaluate_condition_clause_array(
-            apply_when_rules, eager_termination
-        )
+        apply_when_conditions_satisfied = self._evaluate_condition_clause_array(apply_when_rules, eager_termination)
         if not apply_when_conditions_satisfied:
             return True
 
@@ -1780,8 +1780,9 @@ class CrossValidator:
                         "target_and_save_block should only have variables and constants blocks."
                     )
 
-    def _evaluate_expression(self, expression_block: dict[str, Any], eager_termination: bool, relationship: str
-                             ) -> tuple[Any, bool]:
+    def _evaluate_expression(
+        self, expression_block: dict[str, Any], eager_termination: bool, relationship: str
+    ) -> tuple[Any, bool]:
         """
         Evaluates an expression based on the provided expression block. This function also
         optionally adds to the alias pool if the `save_as` key is present in the expression block.
@@ -1969,10 +1970,12 @@ class CrossValidator:
         if not self._validate_condition_clause(condition_clause, eager_termination):
             return False
         relationship = condition_clause.get("relationship", "")
-        left_hand, left_evaluated = self._evaluate_expression(condition_clause["left_hand"], eager_termination,
-                                                              relationship)
-        right_hand, right_evaluated = self._evaluate_expression(condition_clause["right_hand"], eager_termination,
-                                                                relationship)
+        left_hand, left_evaluated = self._evaluate_expression(
+            condition_clause["left_hand"], eager_termination, relationship
+        )
+        right_hand, right_evaluated = self._evaluate_expression(
+            condition_clause["right_hand"], eager_termination, relationship
+        )
 
         if not (left_evaluated and right_evaluated):
             return False

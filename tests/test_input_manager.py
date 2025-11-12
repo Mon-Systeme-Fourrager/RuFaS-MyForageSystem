@@ -265,7 +265,8 @@ def test_load_data_from_csv_invalid_data_raises_error(
     ],
 )
 def test_start_data_processing(
-    mock_input_manager, mocker: MockerFixture,
+    mock_input_manager,
+    mocker: MockerFixture,
     cv_scenario: str,
     eager_termination: bool,
     populate_ok: bool,
@@ -342,9 +343,7 @@ def test_start_data_processing(
     route_logs.assert_called_once_with(mock_input_manager.data_validator.event_logs)
 
 
-def test_start_data_processing_invalid_metadata_raises(
-    mock_input_manager, mocker: MockerFixture
-) -> None:
+def test_start_data_processing_invalid_metadata_raises(mock_input_manager, mocker: MockerFixture) -> None:
     """If validate_metadata returns (False, msg), it should raise ValueError with that message."""
     mocker.patch.object(mock_input_manager, "_load_metadata")
     mocker.patch.object(type(mock_input_manager.data_validator), "validate_metadata", return_value=(False, "bad meta"))
@@ -366,8 +365,9 @@ def test_start_data_processing_invalid_properties_routes_logs_and_raises(
     mocker.patch.object(type(mock_input_manager.data_validator), "validate_metadata", return_value=(True, ""))
     mocker.patch.object(mock_input_manager, "_load_properties")
     mock_input_manager.data_validator.event_logs[:] = [{"level": "error", "msg": "prop fail"}]
-    mocker.patch.object(type(mock_input_manager.data_validator), "validate_properties",
-                        return_value=(False, "bad props"))
+    mocker.patch.object(
+        type(mock_input_manager.data_validator), "validate_properties", return_value=(False, "bad props")
+    )
 
     route_logs = mocker.patch.object(mock_input_manager.om, "route_logs")
 
