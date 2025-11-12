@@ -162,13 +162,9 @@ jobs:
           echo "commit_hash=$COMMIT_HASH" >> $GITHUB_OUTPUT
 
       - name: Format code with Black for forked branches
-        if: ${{ env.FILES != '' && github.ref != 'refs/heads/dev' && github.repository == 'RuminantFarmSystems/RuFaS' }}
+        if: ${{ env.FILES != '' && github.ref != 'refs/heads/dev' && github.repository != 'RuminantFarmSystems/RuFaS' }}
         run: |
           echo $(black ${{ env.FILES }})
-          echo $(${{steps.get_current_repo_url.outputs.current_repo_url}})
-          echo $(${{steps.get_current_repo_url.outputs}})
-          echo $(${{steps.get_current_repo_url}})
-          echo $(${{ github.repository }})
 
 
   lint_test_type_check:
