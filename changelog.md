@@ -259,6 +259,7 @@ v0.9.2
 - [2606](https://github.com/RuminantFarmSystems/MASM/pull/2606) - [minor change] Moves Field/Crop/Soil module to `biophysical` and removes `routines` directory.
 - [2599](https://github.com/RuminantFarmSystems/MASM/pull/2599) - [minor change] Implement separate tracking of bedding manure in manure module.
 - [2612](https://github.com/RuminantFarmSystems/MASM/pull/2612) - [minor change] Remove the generation of `dummy_path` when running unit tests.
+- [2613](https://github.com/RuminantFarmSystems/MASM/pull/2613) - [minor change] Added new image and adjust phrasing on a step in rufas onboarding documentation.
 - [2628](https://github.com/RuminantFarmSystems/MASM/pull/2628) - [minor change] [CrossValidation] Implement entry function to CrossValidator.
 - [2618](https://github.com/RuminantFarmSystems/MASM/pull/2618) - [minor change] Removes outdated example regional feed inputs.
 - [2624](https://github.com/RuminantFarmSystems/MASM/pull/2624) - [minor change] [NoInputChange][NoOutputChange] Updates the PR template and changelog to reflect IO changes.
