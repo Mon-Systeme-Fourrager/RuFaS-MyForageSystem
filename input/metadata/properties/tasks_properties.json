@@ -40,7 +40,8 @@
         "properties_file_path": {
           "type": "string",
           "pattern": "^(?:[a-zA-Z]:[\\\\/]|/)?(?:[a-zA-Z0-9._\\-\\s]+[\\\\/])*(?:[a-zA-Z0-9._\\-\\s]+\\.json)$",
-          "description": "The path to the first metadata properties JSON file to load and compare to the other metadata file loaded"
+          "description": "The path to the first metadata properties JSON file to load and compare to the other metadata file loaded",
+          "default": "input/metadata/properties/default.json"
         },
         "comparison_properties_file_path": {
           "type": "string",
