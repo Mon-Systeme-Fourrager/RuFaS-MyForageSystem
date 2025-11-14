@@ -342,7 +342,7 @@ def test_validate_crop_field_mapping_raises_on_duplicate_combo(feed_manager: Fee
     assert "winter_wheat_hay_storage_1" in msg
 
 
-def test_validate_storage_config_names_all_unique(feed_manager: FeedManager):
+def test_validate_storage_config_names_all_unique(feed_manager: FeedManager) -> None:
     """Should NOT raise when all storage config names are unique."""
     configs = [
         {"name": "S1", "other": 1},
@@ -353,7 +353,7 @@ def test_validate_storage_config_names_all_unique(feed_manager: FeedManager):
     feed_manager._validate_storage_config_names(configs)
 
 
-def test_validate_storage_config_names_duplicate_raises(feed_manager: FeedManager):
+def test_validate_storage_config_names_duplicate_raises(feed_manager: FeedManager) -> None:
     """Should raise ValueError if two storage configs share the same name."""
     configs = [
         {"name": "S1"},
