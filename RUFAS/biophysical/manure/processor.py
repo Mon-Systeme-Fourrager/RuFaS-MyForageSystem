@@ -1,7 +1,9 @@
 import math
 from abc import ABC, abstractmethod
 from dataclasses import asdict
+from typing import Optional
 
+import numpy as np
 from numpy import clip
 
 from RUFAS.current_day_conditions import CurrentDayConditions
@@ -44,13 +46,17 @@ class Processor(ABC):
 
     """
 
-    def __init__(self, name: str, is_housing_emissions_calculator: bool) -> None:
+    def __init__(self, name: str, is_housing_emissions_calculator: bool,
+                 sin: list[float] | None = None, cos: list[float] | None = None, means: list[float] | None = None) -> None:
         """Initializes a new Processor."""
         self.name = name
         self.is_housing_emissions_calculator = is_housing_emissions_calculator
         self._om = OutputManager()
         base_class_name = self.__class__.__bases__[0].__name__
         self._prefix = f"Manure.{base_class_name}.{self.__class__.__name__}.{self.name}"
+        self.sin = sin
+        self.cos = cos
+        self.means = means
 
     @abstractmethod
     def receive_manure(self, manure: ManureStream) -> None:
@@ -296,10 +302,13 @@ class Processor(ABC):
         """
         return 1 + 10 ** (0.09018 + 2729.9 / temperature - pH)
 
-    @staticmethod
-    def _determine_outdoor_storage_temperature(current_day_condition: CurrentDayConditions,
+    def _determine_outdoor_storage_temperature(self,
+                                               current_day_condition: CurrentDayConditions,
                                                day_number: int,
-                                               year_end_day: int) -> float:
+                                               year_end_day: int,
+                                               sin: list[float] | None = None,
+                                               cos: list[float] | None = None,
+                                               means: list[float] | None = None) -> float:
         """
         Determines the temperature of the manure in outdoor liquid and slurry storages.
 
@@ -326,10 +335,27 @@ class Processor(ABC):
         liquid manure temperature is assumed to be equal to ambient air temperature.
 
         """
-        amplitude = (current_day_condition.max_mean_temperature - current_day_condition.min_mean_temperature) * 0.6 / 2
+        # Convert to numpy arrays
+        y = np.array(self.means, dtype=float)
+        x1 = np.array(self.cos, dtype=float)
+        x2 = np.array(self.sin, dtype=float)
+
+        # Build design matrix with intercept: [x1, x2, 1]
+        X = np.column_stack((x1, x2, np.ones_like(y)))
+
+        # Least-squares regression (like LINEST with intercept, no stats)
+        beta, *_ = np.linalg.lstsq(X, y, rcond=None)
+
+        cos_coef, sin_coef, mean_temp = beta
+        amplitude = math.sqrt(cos_coef**2 + sin_coef**2)
+        phase_angle = math.atan2(sin_coef, cos_coef)
+        value = (phase_angle / (2 * math.pi) * 365) + 365
+        if value > 365:
+            phase_shift =  (phase_angle / (2 * math.pi) * 365) - 365
+        else:
+            phase_shift =  value
         manure_amplitude = amplitude * 0.5
-        mean_temp = 6.64
-        phase_shift = 203
+
         return mean_temp + manure_amplitude * math.cos(2 * math.pi / 365 * (day_number - phase_shift))
 
     @staticmethod

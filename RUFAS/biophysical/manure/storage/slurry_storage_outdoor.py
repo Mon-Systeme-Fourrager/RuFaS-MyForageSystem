@@ -65,7 +65,10 @@ class SlurryStorageOutdoor(Storage):
         manure_temperature = self._determine_outdoor_storage_temperature(
             current_day_conditions,
             time.current_julian_day,
-            time.year_end_day
+            time.year_end_day,
+            self.sin,
+            self.cos,
+            self.means
         )
 
         storage_methane_burned, total_storage_methane = self._apply_methane_emissions(manure_temperature)

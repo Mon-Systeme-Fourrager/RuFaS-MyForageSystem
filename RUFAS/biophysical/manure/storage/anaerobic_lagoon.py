@@ -75,7 +75,10 @@ class AnaerobicLagoon(Storage):
         manure_temperature = self._determine_outdoor_storage_temperature(
             current_day_conditions,
             time.current_julian_day,
-            time.year_end_day
+            time.year_end_day,
+            self.sin,
+            self.cos,
+            self.means
         )
 
         total_storage_methane, storage_methane_burned = self._apply_methane_emissions(manure_temperature)
