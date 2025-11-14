@@ -226,8 +226,8 @@ def test_calculate_nutrient_supply(
     )
 
     actual_supply = NutritionSupplyCalculator.calculate_nutrient_supply(
-        mock_feeds, ration_formulation, body_weight,
-        enteric_methane=1, urinary_nitrogen=1)
+        mock_feeds, ration_formulation, body_weight, enteric_methane=1, urinary_nitrogen=1
+    )
 
     assert actual_supply.metabolizable_energy == expected_supply.metabolizable_energy
     assert actual_supply.maintenance_energy == expected_supply.maintenance_energy

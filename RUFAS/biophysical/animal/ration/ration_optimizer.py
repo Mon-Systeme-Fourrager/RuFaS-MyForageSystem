@@ -66,8 +66,8 @@ class RationConfig:
         initial_dry_matter_requirement: float,
         initial_protein_requirement: float,
         pen_average_body_weight: float = 0,
-        pen_average_enteric_methane : float | None = None,
-        pen_average_urine_nitrogen : float | None = None
+        pen_average_enteric_methane: float | None = None,
+        pen_average_urine_nitrogen: float | None = None,
     ) -> None:
         """
         Initialize the RationConfig class with the provided feed information. If the input
@@ -175,20 +175,23 @@ class RationOptimizer:
             self.fat_constraint,
             self.DMI_constraint_upper,
             self.DMI_constraint_lower,
-            self.NASEM_net_energy_constraint
+            self.NASEM_net_energy_constraint,
         ]
 
         if ration_config.nutrient_standard is NutrientStandard.NRC:
             self.cow_constraints = [
-                {"type": "ineq", "fun": func, "args": (ration_config,)}
-                for func in self.NRC_constraint_functions]
+                {"type": "ineq", "fun": func, "args": (ration_config,)} for func in self.NRC_constraint_functions
+            ]
 
             self.heifer_constraints = [
-                constraint for constraint in self.cow_constraints
-                if constraint["fun"] not in [self.NE_total_constraint, self.NE_lactation_constraint]]
+                constraint
+                for constraint in self.cow_constraints
+                if constraint["fun"] not in [self.NE_total_constraint, self.NE_lactation_constraint]
+            ]
         elif ration_config.nutrient_standard is NutrientStandard.NASEM:
             self.cow_constraints = [
-                {"type": "ineq", "fun": func, "args": (ration_config,)} for func in self.NASEM_constraint_functions]
+                {"type": "ineq", "fun": func, "args": (ration_config,)} for func in self.NASEM_constraint_functions
+            ]
             self.heifer_constraints = self.cow_constraints
 
     @staticmethod
@@ -369,8 +372,7 @@ class RationOptimizer:
 
     @staticmethod
     def NASEM_net_energy_constraint(
-        decision_vector: npt.NDArray[np.float64],
-        ration_configuration: RationConfig
+        decision_vector: npt.NDArray[np.float64], ration_configuration: RationConfig
     ) -> float:
         """
         Constraint method for net energy for lactation. Applicable to all animal classes,
@@ -392,9 +394,7 @@ class RationOptimizer:
         """
         feeds = RationOptimizer.convert_decision_vec_to_feeds(ration_configuration, decision_vector)
         dry_matter_intake = sum(decision_vector)
-        total_starch = sum(
-            [feed.amount * feed.info.starch * GeneralConstants.PERCENTAGE_TO_FRACTION for feed in feeds]
-        )
+        total_starch = sum([feed.amount * feed.info.starch * GeneralConstants.PERCENTAGE_TO_FRACTION for feed in feeds])
 
         total_metabolizable_energy = NutritionSupplyCalculator.calculate_NASEM_metabolizable_energy(
             feeds=feeds,
@@ -402,10 +402,11 @@ class RationOptimizer:
             body_weight=ration_configuration.pen_average_body_weight,
             total_starch=total_starch,
             enteric_methane=ration_configuration.pen_average_enteric_methane,
-            urinary_nitrogen=ration_configuration.pen_average_urine_nitrogen
+            urinary_nitrogen=ration_configuration.pen_average_urine_nitrogen,
         )
         actual_lactation_net_energy_supply = NutritionSupplyCalculator.calculate_NASEM_net_energy(
-            total_metabolizable_energy=total_metabolizable_energy)
+            total_metabolizable_energy=total_metabolizable_energy
+        )
         actual_lactation_net_energy_requirement = ration_configuration.animal_requirements.total_energy_requirement
 
         return actual_lactation_net_energy_supply - actual_lactation_net_energy_requirement
@@ -881,7 +882,7 @@ class RationOptimizer:
             initial_protein_requirement,
             pen_average_body_weight,
             pen_average_enteric_methane,
-            pen_average_urine_nitrogen
+            pen_average_urine_nitrogen,
         )
 
         initial_decision_vector = np.array(self._build_initial_value(previous_ration, ration_config), dtype=float)
