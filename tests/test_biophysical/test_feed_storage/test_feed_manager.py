@@ -319,8 +319,9 @@ def test_validate_crop_field_mapping_all_unique(feed_manager: FeedManager, mocke
     add_error.assert_not_called()
 
 
-def test_validate_crop_field_mapping_raises_on_duplicate_combo(feed_manager: FeedManager, mocker: MockerFixture
-                                                               ) -> None:
+def test_validate_crop_field_mapping_raises_on_duplicate_combo(
+    feed_manager: FeedManager, mocker: MockerFixture
+) -> None:
     """Raises ValueError when the same (crop_name, field_name) combo is used by multiple storage configs."""
     all_configs = [
         {
