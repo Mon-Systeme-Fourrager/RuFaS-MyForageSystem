@@ -53,10 +53,6 @@ class Weather:
         start_time = time.start_date
         end_time = time.end_date
 
-        max_mean_temperature = max(weather_file["avg"])
-        min_mean_temperature = min(weather_file["avg"])
-        max_index, _ = max(enumerate(weather_file["high"]), key=lambda x: x[1])
-        max_temp_julian_day = weather_file["jday"][max_index]
         self.cos: list[float] = []
         self.sin: list[float] = []
         self.mean: list[float] = []
@@ -77,10 +73,7 @@ class Weather:
                     mean_air_temperature=weather_file["avg"][i],
                     max_air_temperature=weather_file["high"][i],
                     precipitation=weather_file["precip"][i],
-                    irrigation=weather_file["irrigation"][i],
-                    max_mean_temperature=max_mean_temperature,
-                    min_mean_temperature=min_mean_temperature,
-                    max_temp_julian_day=max_temp_julian_day,
+                    irrigation=weather_file["irrigation"][i]
                 )
                 if date_key in self.weather_data.keys():
                     info_map = {
