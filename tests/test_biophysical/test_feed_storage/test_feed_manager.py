@@ -294,7 +294,7 @@ def test_create_all_storages(
     assert add_warning.call_count == expected_warning_calls
 
 
-def test_validate_crop_field_mapping_all_unique(feed_manager: FeedManager) -> None:
+def test_validate_crop_field_mapping_all_unique(feed_manager: FeedManager, mocker: MockerFixture) -> None:
     """No error is raised when all feed storage config (crop_name, field_name) combos are unique."""
     all_configs = [
         {
@@ -313,11 +313,14 @@ def test_validate_crop_field_mapping_all_unique(feed_manager: FeedManager) -> No
             "field_name": "field_1",
         },
     ]
+    add_error = mocker.patch.object(feed_manager._om, "add_error")
 
     feed_manager._validate_crop_field_mapping(all_configs)
+    add_error.assert_not_called()
 
 
-def test_validate_crop_field_mapping_raises_on_duplicate_combo(feed_manager: FeedManager) -> None:
+def test_validate_crop_field_mapping_raises_on_duplicate_combo(feed_manager: FeedManager, mocker: MockerFixture
+                                                               ) -> None:
     """Raises ValueError when the same (crop_name, field_name) combo is used by multiple storage configs."""
     all_configs = [
         {
@@ -331,7 +334,7 @@ def test_validate_crop_field_mapping_raises_on_duplicate_combo(feed_manager: Fee
             "field_name": "field_1",
         },
     ]
-
+    add_error = mocker.patch.object(feed_manager._om, "add_error")
     with pytest.raises(ValueError) as excinfo:
         feed_manager._validate_crop_field_mapping(all_configs)
 
@@ -340,33 +343,37 @@ def test_validate_crop_field_mapping_raises_on_duplicate_combo(feed_manager: Fee
     assert "Combination ('winter_wheat_hay', 'field_1')" in msg
     assert "triticale_hay_storage_1" in msg
     assert "winter_wheat_hay_storage_1" in msg
+    add_error.assert_called_once()
 
 
-def test_validate_storage_config_names_all_unique(feed_manager: FeedManager) -> None:
+def test_validate_storage_config_names_all_unique(feed_manager: FeedManager, mocker: MockerFixture) -> None:
     """Should NOT raise when all storage config names are unique."""
     configs = [
         {"name": "S1", "other": 1},
         {"name": "S2", "other": 2},
         {"name": "S3", "other": 3},
     ]
+    add_error = mocker.patch.object(feed_manager._om, "add_error")
 
     feed_manager._validate_storage_config_names(configs)
+    add_error.assert_not_called()
 
 
-def test_validate_storage_config_names_duplicate_raises(feed_manager: FeedManager) -> None:
+def test_validate_storage_config_names_duplicate_raises(feed_manager: FeedManager, mocker: MockerFixture) -> None:
     """Should raise ValueError if two storage configs share the same name."""
     configs = [
         {"name": "S1"},
         {"name": "S1"},
         {"name": "S2"},
     ]
-
+    add_error = mocker.patch.object(feed_manager._om, "add_error")
     with pytest.raises(ValueError) as excinfo:
         feed_manager._validate_storage_config_names(configs)
 
     msg = str(excinfo.value)
     assert "Duplicate storage config names found" in msg
     assert "['S1']" in msg
+    add_error.assert_called_once()
 
 
 def test_available_feeds(feed_manager: FeedManager, mock_available_feeds: list[Feed]) -> None:

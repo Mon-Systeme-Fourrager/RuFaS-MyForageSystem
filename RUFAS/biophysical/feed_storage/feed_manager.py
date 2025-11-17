@@ -171,6 +171,15 @@ class FeedManager:
         storage_name_counts = Counter(storage_config.get("name") for storage_config in all_configs)
         duplicate_names = [name for name, count in storage_name_counts.items() if count > 1]
         if duplicate_names:
+            self._om.add_error(
+                "Duplicate Storage Config Names",
+                f"Duplicate storage config names found: {duplicate_names}. "
+                "Each storage config must have a unique name.",
+                {
+                    "class": self.__class__.__name__,
+                    "function": self._validate_storage_config_names.__name__,
+                },
+            )
             raise ValueError(
                 f"Duplicate storage config names found: {duplicate_names}. Each storage config must have a unique name."
             )
@@ -197,6 +206,17 @@ class FeedManager:
                 for combo, names in duplicate_details.items()
             ]
             details = "\n".join(detail_lines)
+
+            self._om.add_error(
+                "Duplicate (crop_name, field_name) combinations",
+                f"Duplicate (crop_name, field_name) combinations found:\n"
+                f"{details}\n"
+                "Each combination must be unique across all storage configurations.",
+                {
+                    "class": self.__class__.__name__,
+                    "function": self._validate_crop_field_mapping.__name__,
+                },
+            )
 
             raise ValueError(
                 "Duplicate (crop_name, field_name) combinations found:\n"
