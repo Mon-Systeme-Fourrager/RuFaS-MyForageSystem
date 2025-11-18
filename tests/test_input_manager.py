@@ -3379,9 +3379,7 @@ def test_load_runtime_metadata_eager_termination_stops_processing(
     )
 
 
-def test_load_runtime_metadata_non_eager_processes_all(
-    mock_input_manager: InputManager, mocker: MockerFixture
-) -> None:
+def test_load_runtime_metadata_non_eager_processes_all(mock_input_manager: InputManager, mocker: MockerFixture) -> None:
     mocker.patch.object(mock_input_manager, "_is_metadata_loaded", return_value=True)
     mocker.patch.object(mock_input_manager, "_get_runtime_metadata_map", return_value={})
     runtime_files = {"var_a": {}, "var_b": {}}
