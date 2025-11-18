@@ -342,6 +342,19 @@ class HerdManager:
             else 0.0
         )
 
+    @property
+    def all_animals(self) -> list[Animal]:
+        """
+        Retrieve a combined list of all animals in the herd.
+
+        Returns
+        -------
+        list[Animal]
+            A list of all animals, including calves, heiferIs, heiferIIs, heiferIIIs,
+            and cows.
+        """
+        return [*self.calves, *self.heiferIs, *self.heiferIIs, *self.heiferIIIs, *self.cows]
+
     def collect_daily_feed_request(self) -> RequestedFeed:
         """
         Collects total amount of feeds needed for all animals on the current day.
@@ -474,9 +487,9 @@ class HerdManager:
                         sold_newborn_calves.append(newborn_calf)
                     else:
                         newborn_calves.append(newborn_calf)
-                    # TODO: handle birth_year
+                    birth_year =Utility.back_track_birth_date(animal.days_born, time.current_date).year
                     animal.genetics.recalculate_values_at_lactation_start(
-                        birth_year=2018, animal_type=animal.animal_type, parity=animal.calves
+                        birth_year=birth_year, animal_type=animal.animal_type, parity=animal.calves
                     )
             elif animal_daily_routines_output.animal_status in [AnimalStatus.DEAD, AnimalStatus.SOLD]:
                 sold_animals.append(animal)
@@ -616,6 +629,8 @@ class HerdManager:
             enteric_methane_emission_by_pen[f"{pen.animal_combination.name}_PEN_{pen.id}"] = pen.total_enteric_methane
 
         self.update_herd_statistics()
+        # sum_genetics = sum([animal.genetics for animal in self.all_animals])
+        print(f"avg_genetics: {Genetics.calculate_average_genetic_values([animal.genetics for animal in self.all_animals])}")
 
         AnimalModuleReporter.report_enteric_methane_emission(enteric_methane_emission_by_pen)
         AnimalModuleReporter.report_daily_animal_population(self.herd_statistics, time.simulation_day)

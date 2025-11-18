@@ -4,6 +4,7 @@ import os
 import re
 import shutil
 from copy import deepcopy
+from datetime import timedelta
 from pathlib import Path
 from random import random
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -978,6 +979,26 @@ class Utility:
             return DateFormatter("%d/%m/%Y")
 
         return DateFormatter(date_format)
+
+    @staticmethod
+    def back_track_birth_date(days_born: int, current_date: datetime.datetime) -> datetime.datetime:
+        """
+        Calculates the birth date by subtracting a given number of days from the current date.
+
+        Parameters
+        ----------
+        days_born : int
+            The number of days since the person's birth.
+        current_date : datetime.datetime
+            The current date from which the days will be subtracted.
+
+        Returns
+        -------
+        datetime.datetime
+            The calculated date of birth.
+
+        """
+        return current_date - timedelta(days_born)
 
 
 class Aggregator:

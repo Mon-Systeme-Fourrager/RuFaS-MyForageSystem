@@ -87,8 +87,8 @@ class Animal:
         The mature body weight of the animal, (kg).
     wean_weight: float
         The body weight of the animal at weaning, (kg).
-    net_merit: float
-        The net merit value of the animal, ($USD).
+    genetics: Genetics
+        The genetic attributes of the animal.
     body_condition_score_5: float
         The body condition score on a scale of 1 to 5, (unitless).
     cull_reason: str
@@ -1976,7 +1976,6 @@ class Animal:
             wean_weight=self.wean_weight,
             mature_body_weight=self.mature_body_weight,
             events=str(self.events),
-            # net_merit=self.net_merit,
         )
 
     def _get_heiferI_values(self) -> HeiferIValuesTypedDict:
@@ -1999,7 +1998,6 @@ class Animal:
             wean_weight=self.wean_weight,
             mature_body_weight=self.mature_body_weight,
             events=str(self.events),
-            # net_merit=self.net_merit,
         )
 
     def _get_heiferII_values(self) -> HeiferIIValuesTypedDict:
@@ -2022,7 +2020,6 @@ class Animal:
             wean_weight=self.wean_weight,
             mature_body_weight=self.mature_body_weight,
             events=str(self.events),
-            # net_merit=self.net_merit,
             heifer_reproduction_program=self.heifer_reproduction_program.value,
             heifer_reproduction_sub_protocol=self.heifer_reproduction_sub_program.value,
             estrus_count=self.reproduction.reproduction_statistics.estrus_count,
@@ -2056,7 +2053,6 @@ class Animal:
             wean_weight=self.wean_weight,
             mature_body_weight=self.mature_body_weight,
             events=str(self.events),
-            # net_merit=self.net_merit,
             heifer_reproduction_program=self.heifer_reproduction_program.value,
             heifer_reproduction_sub_protocol=self.heifer_reproduction_sub_program.value,
             estrus_count=self.reproduction.reproduction_statistics.estrus_count,
@@ -2090,7 +2086,6 @@ class Animal:
             wean_weight=self.wean_weight,
             mature_body_weight=self.mature_body_weight,
             events=str(self.events),
-            # net_merit=self.net_merit,
             calf_birth_weight=self.calf_birth_weight,
             heifer_reproduction_program=self.heifer_reproduction_program.value,
             heifer_reproduction_sub_protocol=self.heifer_reproduction_sub_program.value,

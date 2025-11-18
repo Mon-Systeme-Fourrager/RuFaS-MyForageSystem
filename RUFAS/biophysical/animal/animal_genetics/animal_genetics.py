@@ -31,6 +31,26 @@ class Genetics:
     EBV_protein: float
     ranking_index: float
 
+    """
+    id
+    days_in_milk
+    parity
+    animal_type
+    days_in_pregnancy
+    
+    at the beginning of simulation after initializing the herd.
+    we would keep a genetic history of all animals.
+    report the genetic history of sold animals when they're sold.
+    report the genetic history of all animals at the end of the simulation.
+    
+    on a daily basis, 
+    - when reporting milking stats for lactating cows,
+    we would include the genetic values.
+    - herd average genetic values.
+    - average genetic values for each animal type.
+    
+    """
+
     def __init__(
         self,
         birth_year: int,
@@ -139,3 +159,34 @@ class Genetics:
     def _calculate_ranking_index(self) -> float:
         """Calculate ranking index."""
         return 0.318 * self.EBV_fat + 0.13 * self.EBV_protein
+
+    @staticmethod
+    def calculate_average_genetic_values(list_of_genetics: list["Genetics"]) -> dict[str, float]:
+        if (num_animal := len(list_of_genetics)) <=0 :
+            return {
+                "TBV_fat": 0.0,
+                "TBV_protein": 0.0,
+                "E_permanent_fat": 0.0,
+                "E_permanent_protein": 0.0,
+                "E_temporary_fat": 0.0,
+                "E_temporary_protein": 0.0,
+                "phenotype_fat": 0.0,
+                "phenotype_protein": 0.0,
+                "EBV_fat": 0.0,
+                "EBV_protein": 0.0,
+                "ranking_index": 0.0,
+            }
+        else:
+            return {
+                "TBV_fat": sum([genetic.TBV_fat for genetic in list_of_genetics]) / num_animal,
+                "TBV_protein": sum([genetic.TBV_protein for genetic in list_of_genetics]) / num_animal,
+                "E_permanent_fat": sum([genetic.E_permanent_fat for genetic in list_of_genetics]) / num_animal,
+                "E_permanent_protein": sum([genetic.E_permanent_protein for genetic in list_of_genetics]) / num_animal,
+                "E_temporary_fat": sum([genetic.E_temporary_fat for genetic in list_of_genetics]) / num_animal,
+                "E_temporary_protein": sum([genetic.E_temporary_protein for genetic in list_of_genetics]) / num_animal,
+                "phenotype_fat": sum([genetic.phenotype_fat for genetic in list_of_genetics]) / num_animal,
+                "phenotype_protein": sum([genetic.phenotype_protein for genetic in list_of_genetics]) / num_animal,
+                "EBV_fat": sum([genetic.EBV_fat for genetic in list_of_genetics]) / num_animal,
+                "EBV_protein": sum([genetic.EBV_protein for genetic in list_of_genetics]) / num_animal,
+                "ranking_index": sum([genetic.ranking_index for genetic in list_of_genetics]) / num_animal,
+            }

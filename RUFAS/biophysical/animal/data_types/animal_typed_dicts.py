@@ -18,7 +18,6 @@ class CalfValuesTypedDict(TypedDict):
     wean_weight: float
     mature_body_weight: float
     events: str
-    # net_merit: float
     initial_phosphorus: NotRequired[float]
     body_weight_history: NotRequired[list[BodyWeightHistory]]
     pen_history: NotRequired[list[PenHistory]]
@@ -56,7 +55,6 @@ class HeiferIValuesTypedDict(TypedDict):
     wean_weight: float
     mature_body_weight: float
     events: str
-    # net_merit: float
     body_weight_history: NotRequired[list[BodyWeightHistory]]
     pen_history: NotRequired[list[PenHistory]]
     conceptus_weight: NotRequired[float]
@@ -75,7 +73,6 @@ class HeiferIIValuesTypedDict(TypedDict):
     wean_weight: float
     mature_body_weight: float
     events: str
-    # net_merit: float
     body_weight_history: NotRequired[list[BodyWeightHistory]]
     pen_history: NotRequired[list[PenHistory]]
     conceptus_weight: NotRequired[float]
@@ -110,7 +107,6 @@ class HeiferIIIValuesTypedDict(TypedDict):
     wean_weight: float
     mature_body_weight: float
     events: str
-    # net_merit: float
     body_weight_history: NotRequired[list[BodyWeightHistory]]
     pen_history: NotRequired[list[PenHistory]]
     conceptus_weight: NotRequired[float]
@@ -145,7 +141,6 @@ class CowValuesTypedDict(TypedDict):
     wean_weight: float
     mature_body_weight: float
     events: str
-    # net_merit: float
     body_weight_history: NotRequired[list[BodyWeightHistory]]
     pen_history: NotRequired[list[PenHistory]]
     conceptus_weight: NotRequired[float]
