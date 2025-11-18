@@ -1,4 +1,5 @@
 import datetime
+import math
 
 import numpy as np
 
@@ -52,6 +53,10 @@ class Weather:
         start_time = time.start_date
         end_time = time.end_date
 
+        self.cos: list[float] = []
+        self.sin: list[float] = []
+        self.mean: list[float] = []
+
         for i in range(len(weather_file["year"])):
             year = weather_file["year"][i]
             jday = weather_file["jday"][i]
@@ -59,6 +64,9 @@ class Weather:
 
             # Only include dates within the simulation period to save on space
             if start_time <= date_key <= end_time:
+                self.cos.append(math.cos(2 * math.pi / 365 * jday))
+                self.sin.append(math.sin(2 * math.pi / 365 * jday))
+                self.mean.append(weather_file["avg"][i])
                 conditions = CurrentDayConditions(
                     incoming_light=weather_file["Hday"][i],
                     min_air_temperature=weather_file["low"][i],
