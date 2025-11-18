@@ -3356,6 +3356,54 @@ def test_load_runtime_metadata_invalid_metadata(
     )
 
 
+def test_load_runtime_metadata_eager_termination_stops_processing(
+    mock_input_manager: InputManager, mocker: MockerFixture
+) -> None:
+    mocker.patch.object(mock_input_manager, "_is_metadata_loaded", return_value=True)
+    mocker.patch.object(mock_input_manager, "_get_runtime_metadata_map", return_value={})
+    mocker.patch.object(
+        mock_input_manager,
+        "_resolve_runtime_metadata_files",
+        return_value={"var_a": {}, "var_b": {}},
+    )
+    mocker.patch.object(mock_input_manager, "_runtime_data_loader_map", return_value={})
+    process_runtime_file = mocker.patch.object(
+        mock_input_manager,
+        "_process_runtime_file",
+        side_effect=[False, True],
+    )
+
+    assert not mock_input_manager.load_runtime_metadata("EEE_econ", eager_termination=True)
+    process_runtime_file.assert_called_once_with(
+        "var_a", {}, {}, True, {"class": "InputManager", "function": "load_runtime_metadata"}
+    )
+
+
+def test_load_runtime_metadata_non_eager_processes_all(
+    mock_input_manager: InputManager, mocker: MockerFixture
+) -> None:
+    mocker.patch.object(mock_input_manager, "_is_metadata_loaded", return_value=True)
+    mocker.patch.object(mock_input_manager, "_get_runtime_metadata_map", return_value={})
+    runtime_files = {"var_a": {}, "var_b": {}}
+    mocker.patch.object(
+        mock_input_manager,
+        "_resolve_runtime_metadata_files",
+        return_value=runtime_files,
+    )
+    mocker.patch.object(mock_input_manager, "_runtime_data_loader_map", return_value={})
+    process_runtime_file = mocker.patch.object(
+        mock_input_manager,
+        "_process_runtime_file",
+        side_effect=[False, True],
+    )
+
+    assert not mock_input_manager.load_runtime_metadata("EEE_econ", eager_termination=False)
+    assert process_runtime_file.call_args_list == [
+        call("var_a", {}, {}, False, {"class": "InputManager", "function": "load_runtime_metadata"}),
+        call("var_b", {}, {}, False, {"class": "InputManager", "function": "load_runtime_metadata"}),
+    ]
+
+
 @pytest.fixture
 def simple_pool_and_meta() -> tuple[dict[Any, Any], dict[Any, Any]]:
     pool = {"a": 1, "b": 2, "c": {"nested": {"level1": 3, "another": 4}}}

@@ -170,16 +170,18 @@ class InputManager:
 
         data_type_to_loader_map = self._runtime_data_loader_map()
 
-        results = [
-            self._process_runtime_file(
+        results: list[bool] = []
+        for variable_name, file_details in runtime_files.items():
+            result = self._process_runtime_file(
                 variable_name,
                 file_details,
                 data_type_to_loader_map,
                 eager_termination,
                 info_map,
             )
-            for variable_name, file_details in runtime_files.items()
-        ]
+            results.append(result)
+            if eager_termination and not result:
+                break
 
         self.om.route_logs(self.data_validator.event_logs)
         return all(results) if results else True
