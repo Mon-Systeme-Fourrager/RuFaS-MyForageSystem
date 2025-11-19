@@ -93,9 +93,7 @@ def test_calc_below_ground_biomass(frac: float, bmass: float) -> None:
 
 
 # ---- member function tests ----
-def test_allocate_biomass(
-    mock_crop_data: CropData, mocker: MockerFixture
-) -> None:
+def test_allocate_biomass(mock_crop_data: CropData, mocker: MockerFixture) -> None:
     """Integration check to check that biomass gets allocated correctly."""
     biomass_allocation = BiomassAllocation(mock_crop_data)
     mock_photosynthesize = mocker.patch.object(biomass_allocation, "photosynthesize")
@@ -123,16 +121,16 @@ def test_allocate_biomass(
         (824.6, 0.7, 20, 1, 89.0, 300.9418883013958, 6018.837766027917, 89.0, 6018.837766027917, 6107.837766027917),
         # arbitrary
         (
-                2372.55,
-                0.29,
-                15.17,
-                0.663,
-                89.0,
-                496.563479099514,
-                7532.867977939627,
-                89.0,
-                4994.291469373973,
-                5083.291469373973
+            2372.55,
+            0.29,
+            15.17,
+            0.663,
+            89.0,
+            496.563479099514,
+            7532.867977939627,
+            89.0,
+            4994.291469373973,
+            5083.291469373973,
         ),
     ],
 )
@@ -147,7 +145,7 @@ def test_photosynthesize(
     expected_biomass_growth_max: float,
     expected_previous_biomass: float,
     expected_biomass_growth: float,
-    expected_final_biomass: float
+    expected_final_biomass: float,
 ) -> None:
     mock_crop_data.leaf_area_index = 1.87
     mock_crop_data.growth_factor = growth_factor
@@ -171,8 +169,7 @@ def test_photosynthesize(
         (89.0, 0.66, 30.259999999999998, 58.74),
         (89.0, 0.33, 59.629999999999995, 29.37),
         (89.0, 0.205, 70.75500000000001, 18.244999999999997),
-
-    ]
+    ],
 )
 def test_partition_biomass(
     bio_mass: float,
@@ -189,4 +186,3 @@ def test_partition_biomass(
 
     assert biomass_allocation.data.above_ground_biomass == pytest.approx(expected_above_ground_biomass)
     assert biomass_allocation.data.root_biomass == pytest.approx(expected_root_biomass)
-
