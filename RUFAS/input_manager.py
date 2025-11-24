@@ -94,7 +94,7 @@ class InputManager:
         bool
             True if data is valid, otherwise False.
         """
-        full_metadata_path = os.path.join(input_root, metadata_path)
+        full_metadata_path = Path(input_root) / metadata_path
         self._load_metadata(full_metadata_path)
         valid, message = self.data_validator.validate_metadata(
             self.__metadata, VALID_INPUT_TYPES, ADDRESS_TO_INPUTS, input_root
@@ -330,7 +330,7 @@ class InputManager:
         }
         valid_data = True
         for file_blob_key, file_details in self.__metadata["files"].items():
-            file_path = os.path.join(input_root, file_details["path"])
+            file_path = Path(input_root) / file_details["path"]
             if file_details["type"] == "json":
                 self.csv_report_generation_list.append(file_blob_key)
 

@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import re
 from enum import Enum
 from typing import Any, Callable, Union, Sequence
@@ -645,7 +646,7 @@ class DataValidator:
         metadata: dict[str, Any],
         valid_data_types: set[str],
         address_to_data: str,
-        input_root: str,
+        input_root: Path,
     ) -> tuple[bool, str]:
         """Checks that top-level metadata has valid and required keys and values."""
         info_map = {

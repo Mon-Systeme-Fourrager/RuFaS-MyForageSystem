@@ -265,7 +265,7 @@ def test_load_data_from_csv_invalid_data_raises_error(
     ],
 )
 def test_start_data_processing(
-    mock_input_manager,
+    mock_input_manager: InputManager,
     mocker: MockerFixture,
     cv_scenario: str,
     eager_termination: bool,
@@ -343,7 +343,7 @@ def test_start_data_processing(
     route_logs.assert_called_once_with(mock_input_manager.data_validator.event_logs)
 
 
-def test_start_data_processing_invalid_metadata_raises(mock_input_manager, mocker: MockerFixture) -> None:
+def test_start_data_processing_invalid_metadata_raises(mock_input_manager: InputManager, mocker: MockerFixture) -> None:
     """If validate_metadata returns (False, msg), it should raise ValueError with that message."""
     mocker.patch.object(mock_input_manager, "_load_metadata")
     mocker.patch.object(type(mock_input_manager.data_validator), "validate_metadata", return_value=(False, "bad meta"))
@@ -358,7 +358,7 @@ def test_start_data_processing_invalid_metadata_raises(mock_input_manager, mocke
 
 
 def test_start_data_processing_invalid_properties_routes_logs_and_raises(
-    mock_input_manager, mocker: MockerFixture
+    mock_input_manager: InputManager, mocker: MockerFixture
 ) -> None:
     """If validate_properties returns (False, msg), it should route logs and then raise ValueError."""
     mocker.patch.object(mock_input_manager, "_load_metadata")
