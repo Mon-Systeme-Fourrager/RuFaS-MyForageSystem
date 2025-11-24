@@ -317,7 +317,7 @@ def test_start_data_processing(
     cv_call = mocker.patch.object(cv_mock, "cross_validate_data", side_effect=side_effect)
     mock_input_manager.data_validator.event_logs.clear()
 
-    result = mock_input_manager.start_data_processing(Path("mock/metadata/path"), eager_termination)
+    result = mock_input_manager.start_data_processing(Path("mock/metadata/path"), Path(""), eager_termination)
 
     assert result is expected_return
 
@@ -419,7 +419,7 @@ def test_populate_pool_valid(
     mocker.patch.object(OutputManager, "add_warning")
 
     # Act
-    result = input_manager._populate_pool(eager_termination=True)
+    result = input_manager._populate_pool(Path(""), eager_termination=True)
 
     # Assert
     assert result
@@ -452,7 +452,7 @@ def test_populate_pool_invalid(
     mocker.patch.object(input_manager, "elements_counter", elements_counter)
 
     # Act
-    result = input_manager._populate_pool(eager_termination=False)
+    result = input_manager._populate_pool(Path(""), eager_termination=False)
 
     # Assert
     assert not result
@@ -480,7 +480,7 @@ def test_populate_pool_partial_invalid(
     mocker.patch.object(OutputManager, "add_warning")
 
     # Act
-    result = input_manager._populate_pool(eager_termination=False)
+    result = input_manager._populate_pool(Path(""), eager_termination=False)
 
     # Assert
     assert result is False
@@ -515,7 +515,7 @@ def test_populate_pool_eager_termination(
     mocker.patch.object(OutputManager, "add_warning")
 
     # Act
-    result = input_manager._populate_pool(eager_termination=True)
+    result = input_manager._populate_pool(Path(""), eager_termination=True)
 
     # Assert
     assert result is False
@@ -541,7 +541,7 @@ def test_populate_pool_raises_keyerror(
     with patch("RUFAS.output_manager.OutputManager.add_log") as add_log:
         with patch("RUFAS.output_manager.OutputManager.add_warning") as add_warning:
             with pytest.raises(KeyError):
-                mock_input_manager._populate_pool(eager_termination=True)
+                mock_input_manager._populate_pool(Path(""), eager_termination=True)
 
             assert add_log.call_count == 0
             assert add_warning.call_count == 0
