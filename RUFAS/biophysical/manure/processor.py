@@ -336,11 +336,14 @@ class Processor(ABC):
         liquid manure temperature is assumed to be equal to ambient air temperature.
 
         """
-        manure_amplitude = self.amplitude * ManureConstants.MANURE_DAMPING_FACTOR
+        if self.amplitude and self.intercept_mean_temp and self.phase_shift:
+            manure_amplitude = self.amplitude * ManureConstants.MANURE_DAMPING_FACTOR
 
-        return self.intercept_mean_temp + manure_amplitude * math.cos(
-            2 * math.pi / 365 * (simulation_day - self.phase_shift - ManureConstants.MANURE_TEMPERATURE_LAG)
-        )
+            return self.intercept_mean_temp + manure_amplitude * math.cos(
+                2 * math.pi / 365 * (simulation_day - self.phase_shift - ManureConstants.MANURE_TEMPERATURE_LAG)
+            )
+        else:
+            raise ValueError("No data for outdoor storage temperature calculations.")
 
     @staticmethod
     def _determine_barn_temperature(air_temperature: float) -> float:

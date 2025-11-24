@@ -356,6 +356,21 @@ def test_determine_outdoor_storage_temperature(mock_separator: Separator, day: i
     assert actual == expected
 
 
+def test_determine_outdoor_storage_temperature_missing_factors_error(mock_separator: Separator) -> None:
+    """
+    Tests that a ValueError is raised when all required attributes (amplitude,
+    intercept, and phase_shift) are missing from the instance.
+    """
+    mock_separator.amplitude = None
+    mock_separator.intercept_mean_temp = None
+    mock_separator.phase_shift = None
+
+    with pytest.raises(ValueError) as e:
+        mock_separator._determine_outdoor_storage_temperature(1)
+
+    assert str(e.value) == "No data for outdoor storage temperature calculations."
+
+
 @pytest.mark.parametrize("air_temp, expected", [(-5, 5), (15, 15), (45, 30)])
 def test_determine_barn_temperature(air_temp: float, expected: float) -> None:
     """Tests the adjustment of barn temperature."""
