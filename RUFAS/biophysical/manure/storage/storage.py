@@ -143,14 +143,19 @@ class Storage(Processor):
         is_emptying_day = (
             self._storage_time_period is not None and (time.simulation_day + 1) % self._storage_time_period == 0
         )
-        if is_emptying_day:
+        if not is_emptying_day:
+            empty_stream = ManureStream.make_empty_manure_stream()
+            self._report_manure_stream(empty_stream, "emptied", time.simulation_day)
+            manure_to_be_returned = {}
+        else:
+            self._validate_emptying_fraction()
             if 0.0 < self._emptying_fraction < 1.0:
                 emptied_stream = self.stored_manure.split_stream(self._emptying_fraction)
                 retained_stream = self.stored_manure.split_stream(1.0 - self._emptying_fraction)
                 self._report_manure_stream(emptied_stream, "emptied", time.simulation_day)
                 self.stored_manure = retained_stream
-                manure_to_be_returned = {"manure": replace(emptied_stream)}
-            elif self._emptying_fraction <= 0.0:
+                manure_to_be_returned = {"manure": replace(self.stored_manure)}
+            elif self._emptying_fraction == 0.0:
                 empty_stream = ManureStream.make_empty_manure_stream()
                 self._report_manure_stream(empty_stream, "emptied", time.simulation_day)
                 manure_to_be_returned = {}
@@ -158,15 +163,26 @@ class Storage(Processor):
                 self._report_manure_stream(self.stored_manure, "emptied", time.simulation_day)
                 manure_to_be_returned = {"manure": replace(self.stored_manure)}
                 self.stored_manure = ManureStream.make_empty_manure_stream()
-        else:
-            empty_stream = ManureStream.make_empty_manure_stream()
-            self._report_manure_stream(empty_stream, "emptied", time.simulation_day)
-            manure_to_be_returned = {}
 
         if self.is_overflowing is True:
             self.handle_overflowing_manure(time)
 
         return manure_to_be_returned
+
+    def _validate_emptying_fraction(self) -> None:
+        """Validates that the emptying fraction is between 0.0 and 1.0."""
+        if not 0.0 <= self._emptying_fraction <= 1.0:
+            info_map = {
+                "class": self.__class__.__name__,
+                "function": self.process_manure.__name__,
+                "processor_name": self.name,
+            }
+            error_message = (
+                f"Processor '{self.name}' has an invalid emptying fraction of {self._emptying_fraction}. "
+                "The emptying fraction must be between 0.0 and 1.0. Check retention constants if applicable."
+            )
+            self._om.add_error("Invalid Emptying Fraction", error_message, info_map)
+            raise ValueError(error_message)
 
     def handle_overflowing_manure(self, time: RufasTime) -> None:
         """
