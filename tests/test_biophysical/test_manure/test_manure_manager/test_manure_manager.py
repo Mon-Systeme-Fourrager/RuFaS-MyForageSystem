@@ -1028,7 +1028,7 @@ def test_compute_stream_after_removal_with_real_manure_stream(
         volume=0.0,
         methane_production_potential=0.24,
         pen_manure_data=None,
-        bedding_non_degradable_volatile_solids=0.0
+        bedding_non_degradable_volatile_solids=0.0,
     )
 
     non_lim_fields: list[str] = []
@@ -1055,7 +1055,7 @@ def test_compute_stream_after_removal_with_real_manure_stream(
         "non_degradable_volatile_solids",
         "total_solids",
         "volume",
-        "bedding_non_degradable_volatile_solids"
+        "bedding_non_degradable_volatile_solids",
     ]:
         assert getattr(new_stream, field_name) == 0.0
 
@@ -1075,9 +1075,9 @@ def test_compute_stream_after_removal_with_real_manure_stream(
         (1.0, 50.0, 50.0),
     ],
 )
-def test_determine_non_limiting_nutrient_removal_amount(portion: float,
-                                                        non_limiting: float,
-                                                        expected_removed: float) -> None:
+def test_determine_non_limiting_nutrient_removal_amount(
+    portion: float, non_limiting: float, expected_removed: float
+) -> None:
     removed = ManureManager._determine_non_limiting_nutrient_removal_amount(
         limiting_nutrient_proportion_to_be_removed=portion,
         non_limiting_nutrients_amount=non_limiting,
