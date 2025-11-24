@@ -45,7 +45,7 @@ def test_processor_init_error() -> None:
                 volume=1.5,
                 methane_production_potential=0.24,
                 pen_manure_data=None,
-                bedding_non_degradable_volatile_solids=10
+                bedding_non_degradable_volatile_solids=10,
             ),
             True,
         ),
@@ -70,7 +70,7 @@ def test_processor_init_error() -> None:
                 volume=1.5,
                 methane_production_potential=0.24,
                 pen_manure_data=MagicMock(auto_spec=PenManureData),
-                bedding_non_degradable_volatile_solids=10
+                bedding_non_degradable_volatile_solids=10,
             ),
             False,
         ),
@@ -95,7 +95,7 @@ def test_processor_init_error() -> None:
                 volume=1.5,
                 methane_production_potential=0.24,
                 pen_manure_data=None,
-                bedding_non_degradable_volatile_solids=10
+                bedding_non_degradable_volatile_solids=10,
             ),
             False,
         ),
@@ -120,7 +120,7 @@ def test_processor_init_error() -> None:
                 volume=1.5,
                 methane_production_potential=0.24,
                 pen_manure_data=MagicMock(auto_spec=PenManureData),
-                bedding_non_degradable_volatile_solids=10
+                bedding_non_degradable_volatile_solids=10,
             ),
             True,
         ),
@@ -233,7 +233,7 @@ def manure_stream() -> ManureStream:
         volume=1.5,
         methane_production_potential=0.24,
         pen_manure_data=None,
-        bedding_non_degradable_volatile_solids=10
+        bedding_non_degradable_volatile_solids=10,
     )
 
 
@@ -286,7 +286,7 @@ def test_report_manure_stream_valid_dict(mock_separator: Separator, time: RufasT
         "total_volatile_solids": 40.0,
         "methane_production_potential": 0.24,
         "pen_manure_data": None,
-        "bedding_non_degradable_volatile_solids": 23
+        "bedding_non_degradable_volatile_solids": 23,
     }
     mock_om = mocker.patch.object(mock_separator, "_om", autospec=True)
     mock_separator._report_manure_stream(manure_dict, "test_stream", time.simulation_day)
@@ -344,12 +344,31 @@ def test_report_manure_stream_mismatched_keys(
     )
 
 
-@pytest.mark.parametrize("temp, expected", [(-10.0, 0.0), (0.0, 0.0), (15.0, 15.0), (35.0, 35.0), (45.0, 35.0)])
-def test_determine_outdoor_storage_temperature(temp: float, expected: float) -> None:
+@pytest.mark.parametrize("day, expected", [(1, 19.642735977830725), (15, 20.452903438767468), (20, 20.66776260955936)])
+def test_determine_outdoor_storage_temperature(mock_separator: Separator, day: int, expected: float) -> None:
     """Test that the temperature of manure in outdoor storages is calculated correctly."""
-    actual = Processor._determine_outdoor_storage_temperature(temp)
+    mock_separator.intercept_mean_temp = 15
+    mock_separator.phase_shift = 12
+    mock_separator.amplitude = 12.2
+
+    actual = mock_separator._determine_outdoor_storage_temperature(day)
 
     assert actual == expected
+
+
+def test_determine_outdoor_storage_temperature_missing_factors_error(mock_separator: Separator) -> None:
+    """
+    Tests that a ValueError is raised when all required attributes (amplitude,
+    intercept, and phase_shift) are missing from the instance.
+    """
+    mock_separator.amplitude = None
+    mock_separator.intercept_mean_temp = None
+    mock_separator.phase_shift = None
+
+    with pytest.raises(ValueError) as e:
+        mock_separator._determine_outdoor_storage_temperature(1)
+
+    assert str(e.value) == "No data for outdoor storage temperature calculations."
 
 
 @pytest.mark.parametrize("air_temp, expected", [(-5, 5), (15, 15), (45, 30)])
