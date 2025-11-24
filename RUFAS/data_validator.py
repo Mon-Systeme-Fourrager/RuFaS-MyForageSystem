@@ -641,7 +641,11 @@ class DataValidator:
         return True, ""
 
     def validate_metadata(
-        self, metadata: dict[str, Any], valid_data_types: set[str], address_to_data: str, input_root: str,
+        self,
+        metadata: dict[str, Any],
+        valid_data_types: set[str],
+        address_to_data: str,
+        input_root: str,
     ) -> tuple[bool, str]:
         """Checks that top-level metadata has valid and required keys and values."""
         info_map = {

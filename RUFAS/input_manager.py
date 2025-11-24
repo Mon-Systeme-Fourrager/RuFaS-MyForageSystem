@@ -73,8 +73,9 @@ class InputManager:
         """The setter method for __pool"""
         self.__pool = incoming_pool
 
-    def start_data_processing(self, metadata_path: Path, input_root: Path = Path(""), eager_termination: bool = True
-                              ) -> bool:
+    def start_data_processing(
+        self, metadata_path: Path, input_root: Path = Path(""), eager_termination: bool = True
+    ) -> bool:
         """
         Starts the pipeline for organizing metadata and input data processing.
 
@@ -95,8 +96,9 @@ class InputManager:
         """
         full_metadata_path = os.path.join(input_root, metadata_path)
         self._load_metadata(full_metadata_path)
-        valid, message = self.data_validator.validate_metadata(self.__metadata, VALID_INPUT_TYPES, ADDRESS_TO_INPUTS,
-                                                               input_root)
+        valid, message = self.data_validator.validate_metadata(
+            self.__metadata, VALID_INPUT_TYPES, ADDRESS_TO_INPUTS, input_root
+        )
         if not valid:
             raise ValueError(message)
         self._load_properties()
