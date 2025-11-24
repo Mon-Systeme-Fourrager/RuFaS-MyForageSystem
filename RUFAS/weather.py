@@ -70,7 +70,7 @@ class Weather:
             if start_time <= date_key <= end_time:
                 self.cos.append(math.cos(2 * math.pi / 365 * jday))
                 self.sin.append(math.sin(2 * math.pi / 365 * jday))
-                self.mean.append(weather_file["avg"][i])
+                self.means.append(weather_file["avg"][i])
                 conditions = CurrentDayConditions(
                     incoming_light=weather_file["Hday"][i],
                     min_air_temperature=weather_file["low"][i],
