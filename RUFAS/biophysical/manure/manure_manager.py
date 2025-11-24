@@ -59,7 +59,7 @@ class ManureManager:
         A list defining the execution order of processors.
     """
 
-    def __init__(self, sin: list[float], cos: list[float], mean: list[float]) -> None:
+    def __init__(self, intercept_mean_temp: float, phase_shift: float, amplitude: float) -> None:
         self._om = OutputManager()
         self._manure_nutrient_manager = ManureNutrientManager()
 
@@ -77,7 +77,8 @@ class ManureManager:
         processor_connections_by_name = self._validate_and_parse_processor_connections(
             processor_connections_input, processor_configs_by_name
         )
-        self._create_all_processors(processor_connections_by_name, processor_configs_by_name, sin, cos, mean)
+        self._create_all_processors(processor_connections_by_name, processor_configs_by_name,
+                                    intercept_mean_temp, phase_shift, amplitude)
         self._populate_adjacency_matrix(processor_connections_by_name)
 
         self._validate_adjacency_matrix()
@@ -672,9 +673,9 @@ class ManureManager:
         self,
         processor_connections_by_name: dict[str, dict[str, list[dict[str, Any]]]],
         processor_configs_by_name: dict[str, dict[str, Any]],
-        sin: list[float],
-        cos: list[float],
-        mean: list[float],
+        intercept_mean_temp: float,
+        phase_shift: float,
+        amplitude: float
     ) -> None:
         """
         Creates and initializes all processors based on their definitions.
@@ -696,9 +697,9 @@ class ManureManager:
                 del processor_config["processor_type"]
             processor = processor_initializer(**processor_config)
             if isinstance(processor, AnaerobicLagoon) or isinstance(processor, SlurryStorageOutdoor):
-                processor.sin = sin
-                processor.cos = cos
-                processor.means = mean
+                processor.intercept_mean_temp = intercept_mean_temp
+                processor.phase_shift = phase_shift
+                processor.amplitude = amplitude
             self.all_processors[processor_name] = processor
 
             if isinstance(processor, Separator):

@@ -6,6 +6,7 @@ from typing import Optional
 import numpy as np
 from numpy import clip
 
+from RUFAS.biophysical.manure.manure_constants import ManureConstants
 from RUFAS.current_day_conditions import CurrentDayConditions
 from RUFAS.data_structures.animal_to_manure_connection import ManureStream
 from RUFAS.general_constants import GeneralConstants
@@ -60,9 +61,9 @@ class Processor(ABC):
         base_class_name = self.__class__.__bases__[0].__name__
         self._prefix = f"Manure.{base_class_name}.{self.__class__.__name__}.{self.name}"
 
-        self.sin: list[float] | None = None
-        self.cos: list[float] | None = None
-        self.means: list[float] | None = None
+        self.intercept_mean_temp: float | None = None
+        self.phase_shift: float | None = None
+        self.amplitude: float | None = None
 
     @abstractmethod
     def receive_manure(self, manure: ManureStream) -> None:
@@ -309,15 +310,14 @@ class Processor(ABC):
         return 1 + 10 ** (0.09018 + 2729.9 / temperature - pH)
 
     def _determine_outdoor_storage_temperature(
-        self,
-        day: int,
+        self, simulation_day: int,
     ) -> float:
         """
         Determines the temperature of the manure in outdoor liquid and slurry storages.
 
         Parameters
         ----------
-        day : int
+        simulation_day : int
             Current simulation day.
 
         Returns
@@ -338,28 +338,10 @@ class Processor(ABC):
         liquid manure temperature is assumed to be equal to ambient air temperature.
 
         """
-        # Convert to numpy arrays
-        y = np.array(self.means, dtype=float)
-        x1 = np.array(self.cos, dtype=float)
-        x2 = np.array(self.sin, dtype=float)
+        manure_amplitude = self.amplitude * ManureConstants.MANURE_DAMPING_FACTOR
 
-        # Build design matrix with intercept: [x1, x2, 1]
-        X = np.column_stack((x1, x2, np.ones_like(y)))
-
-        # Least-squares regression (like LINEST with intercept, no stats)
-        beta, *_ = np.linalg.lstsq(X, y, rcond=None)
-
-        cos_coef, sin_coef, mean_temp = beta
-        amplitude = math.sqrt(cos_coef**2 + sin_coef**2)
-        phase_angle = math.atan2(sin_coef, cos_coef)
-        value = (phase_angle / (2 * math.pi) * 365) + 365
-        if value > 365:
-            phase_shift = (phase_angle / (2 * math.pi) * 365) - 365
-        else:
-            phase_shift = value
-        manure_amplitude = amplitude * 0.5
-
-        return mean_temp + manure_amplitude * math.cos(2 * math.pi / 365 * (day - phase_shift))
+        return self.intercept_mean_temp + manure_amplitude * math.cos(2 * math.pi / 365 * (
+            simulation_day - self.phase_shift - ManureConstants.MANURE_TEMPERATURE_LAG))
 
     @staticmethod
     def _determine_barn_temperature(air_temperature: float) -> float:
