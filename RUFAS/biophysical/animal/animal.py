@@ -2369,10 +2369,15 @@ class Animal:
                 self.milk_production.wood_m,
                 self.milk_production.wood_n,
                 self.milk_production.milk_production_history,
-                self.days_in_milk)
+                self.days_in_milk,
+            )
         else:
-            self.mature_equivalent_milking_prediction_305_day = self.milk_production.current_lactation_305_day_milk_produced
+            self.mature_equivalent_milking_prediction_305_day = (
+                self.milk_production.current_lactation_305_day_milk_produced
+            )
 
         parity_factor = {1: 1.25, 2: 1.18}.get(self.calves, 1.0)
 
-        self.mature_equivalent_milking_prediction_305_day = self.mature_equivalent_milking_prediction_305_day * parity_factor
+        self.mature_equivalent_milking_prediction_305_day = (
+            self.mature_equivalent_milking_prediction_305_day * parity_factor
+        )

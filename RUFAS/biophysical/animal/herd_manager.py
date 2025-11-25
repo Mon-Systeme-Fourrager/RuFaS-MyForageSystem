@@ -688,10 +688,7 @@ class HerdManager:
         MIN_DIM_FOR_REMOVAL = 60
         animals_removed: list[Animal] = []
 
-        while (
-            self.current_herd_size > self.herd_statistics.herd_num * self.selling_threshold
-            and len(self.cows) > 0
-        ):
+        while self.current_herd_size > self.herd_statistics.herd_num * self.selling_threshold and len(self.cows) > 0:
             # partitioning between dnb and non dnb cows
             dnb_indices: list[int] = []
             non_dnb_indices: list[int] = []
@@ -704,10 +701,7 @@ class HerdManager:
                     non_dnb_indices.append(index)
 
             if not dnb_indices and not non_dnb_indices:
-                self.om.add_error("Unable to adjust herd size",
-                                  "There are no cow that's qualified to be sold.",
-                                  {}
-                                  )
+                self.om.add_error("Unable to adjust herd size", "There are no cow that's qualified to be sold.", {})
                 break
 
             if dnb_indices:  # when there is dnb to remove

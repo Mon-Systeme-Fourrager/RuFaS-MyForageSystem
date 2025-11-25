@@ -260,9 +260,13 @@ class MilkProduction:
         return l_param * np.power(days_in_milk, m_param) * np.exp(-1 * n_param * days_in_milk)
 
     @staticmethod
-    def calculate_305_day_milk_yield(l_param: float, m_param: float, n_param: float,
-                                     milking_history: list[MilkProductionRecord] | None,
-                                     days_in_milk: int = 0) -> float:
+    def calculate_305_day_milk_yield(
+        l_param: float,
+        m_param: float,
+        n_param: float,
+        milking_history: list[MilkProductionRecord] | None,
+        days_in_milk: int = 0,
+    ) -> float:
         """
         Calculates the total milk yield from day 1 to day 305 of the lactation.
 
@@ -294,7 +298,8 @@ class MilkProduction:
             production_history_sum = sum(history["milk_production"] for history in milking_history[:days_in_milk])
 
         result, _ = quad(
-            MilkProduction.calculate_daily_milk_production, days_in_milk + 1, 305, args=(l_param, m_param, n_param))
+            MilkProduction.calculate_daily_milk_production, days_in_milk + 1, 305, args=(l_param, m_param, n_param)
+        )
 
         return result + production_history_sum
 
