@@ -58,10 +58,6 @@ class Processor(ABC):
         base_class_name = self.__class__.__bases__[0].__name__
         self._prefix = f"Manure.{base_class_name}.{self.__class__.__name__}.{self.name}"
 
-        self.intercept_mean_temp: float | None = None
-        self.phase_shift: float | None = None
-        self.amplitude: float | None = None
-
     @abstractmethod
     def receive_manure(self, manure: ManureStream) -> None:
         """

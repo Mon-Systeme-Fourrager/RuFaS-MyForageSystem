@@ -697,7 +697,7 @@ class ManureManager:
             if not (issubclass(processor_initializer, Handler) or issubclass(processor_initializer, Separator)):
                 del processor_config["processor_type"]
             processor = processor_initializer(**processor_config)
-            if isinstance(processor, AnaerobicLagoon) or isinstance(processor, SlurryStorageOutdoor):
+            if isinstance(processor, (AnaerobicLagoon, SlurryStorageOutdoor)):
                 processor.intercept_mean_temp = intercept_mean_temp
                 processor.phase_shift = phase_shift
                 processor.amplitude = amplitude
