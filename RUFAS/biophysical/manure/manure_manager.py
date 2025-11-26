@@ -688,6 +688,12 @@ class ManureManager:
         processor_configs_by_name : dict[str, dict[str, Any]]
             A dictionary that contains processor definitions, where each key is the processor name and
             the value is a dictionary with the processor's parameters and type.
+        intercept_mean_temp : float
+            The intercept mean temperature calculate from linest function.
+        phase_shift : float
+            Temperature phase shift of the weather data.
+        amplitude : float
+            The temperature amplitude of the weather data.
         """
         for processor_name in processor_connections_by_name:
             processor_config = processor_configs_by_name[processor_name]

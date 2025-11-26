@@ -59,6 +59,12 @@ class Storage(Processor):
         Surface area of the manure storage (m^2).
     _manure_to_process : ManureStream
         The manure that is processed during the `process_manure()` method call.
+    intercept_mean_temp : float
+        The intercept mean temperature calculate from linest function.
+    phase_shift : float
+        Temperature phase shift of the weather data.
+    amplitude : float
+        The temperature amplitude of the weather data.
 
     """
 
@@ -124,8 +130,12 @@ class Storage(Processor):
 
         Notes
         -----
-        This function clamps stored manure temperature to betw 0 and 35 °C. Between 0 and 35 °C, outdoor stored
-        liquid manure temperature is assumed to be equal to ambient air temperature.
+        This function determines daily temperature of manure in liquid storage by fitting a sin/cos function. Several
+        parameters of this function are derived and utilized here. The amplitude of simulation-wide average air
+        temperature data, which is derived by least squares fitting cos and sin waves to temperature data, is adjusted
+        by a fixed damping factor to reflect the smaller degree of annual variation in temperature compared to air
+        temperature. The phase shift (time of peak of annual temperature) is also determined from simulation weather
+        data and is adjusted to reflect the time of manure temperature change based on a fixed lag constant.
 
         """
         if self.amplitude and self.intercept_mean_temp and self.phase_shift:

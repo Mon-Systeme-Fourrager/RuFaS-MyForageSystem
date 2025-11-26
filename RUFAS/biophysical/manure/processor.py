@@ -34,12 +34,6 @@ class Processor(ABC):
         Instance of the OutputManager.
     _prefix : str
         Prefix in a standardized format for reporting daily outputs from the Processor.
-    sin: list[float] | None
-        List of sin values calculated from each day's daily temperature in the simulation.
-    cos: list[float] | None
-        List of cos values calculated from each day's daily temperature in the simulation.
-    means: list[float] | None
-        List of daily mean temperature values during the simulation.
 
     Methods
     -------

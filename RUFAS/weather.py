@@ -91,7 +91,7 @@ class Weather:
 
         self.mean_annual_temperature = self._calculate_average_annual_temperature(weather_file["avg"])
 
-        self.set_LINEST_temperature_factors()
+        self.set_linest_temperature_factors()
 
         info_map = {
             "class": self.__class__.__name__,
@@ -104,30 +104,28 @@ class Weather:
             dict(info_map, **{"units": MeasurementUnits.DEGREES_CELSIUS}),
         )
 
-    def set_LINEST_temperature_factors(self) -> None:
+    def set_linest_temperature_factors(self) -> None:
         """Set the factors related to least-squares regression calculations."""
-        # Convert to numpy arrays
-        y = np.array(self.means, dtype=float)
-        x1 = np.array(self.cos, dtype=float)
-        x2 = np.array(self.sin, dtype=float)
+        mean_temperatures = np.array(self.means, dtype=float)
+        cosine_components = np.array(self.cos, dtype=float)
+        sine_components = np.array(self.sin, dtype=float)
 
-        # Build design matrix with intercept: [x1, x2, 1]
-        X = np.column_stack((x1, x2, np.ones_like(y)))
+        design_matrix = np.column_stack((cosine_components, sine_components, np.ones_like(mean_temperatures)))
 
-        beta, *_ = np.linalg.lstsq(X, y, rcond=None)
+        regression_coefficients, *_ = np.linalg.lstsq(design_matrix, mean_temperatures, rcond=None)
 
-        cos_coef, sin_coef, mean_temp = beta
+        cosine_coefficient, sine_coefficient, intercept_mean_temperature = regression_coefficients
 
-        self.intercept_mean_temp = mean_temp
+        self.intercept_mean_temp = intercept_mean_temperature
 
-        self.amplitude = math.sqrt(cos_coef**2 + sin_coef**2)
+        self.amplitude = math.sqrt(cosine_coefficient**2 + sine_coefficient**2)
 
-        phase_angle = math.atan2(sin_coef, cos_coef)
-        phase_shift_unwrapped = (phase_angle / (2 * math.pi) * 365) + 365
-        if phase_shift_unwrapped > 365:
-            self.phase_shift = (phase_angle / (2 * math.pi) * 365) - 365
+        phase_angle_radians = math.atan2(sine_coefficient, cosine_coefficient)
+        phase_shift_days = (phase_angle_radians / (2 * math.pi) * 365) + 365
+        if phase_shift_days > 365:
+            self.phase_shift = (phase_angle_radians / (2 * math.pi) * 365) - 365
         else:
-            self.phase_shift = phase_shift_unwrapped
+            self.phase_shift = phase_shift_days
 
     def get_current_day_conditions(self, time: RufasTime, latitude: float | None = None) -> CurrentDayConditions:
         """
