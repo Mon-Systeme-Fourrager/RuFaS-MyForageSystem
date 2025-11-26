@@ -606,6 +606,21 @@ class HerdManager:
                 simulation_day=time.simulation_day,
             )
 
+
+        # removed_animals += self._check_if_cows_need_to_be_sold(simulation_day=time.simulation_day)
+        # newly_added_animals = self._check_if_replacement_heifers_needed(time=time)
+        # self._update_herd_structure(
+        #     graduated_animals=graduated_animals,
+        #     newborn_calves=newborn_calves,
+        #     newly_added_animals=newly_added_animals,
+        #     removed_animals=removed_animals,
+        #     available_feeds=available_feeds,
+        #     current_day_conditions=weather.get_current_day_conditions(time),
+        #     total_inventory=total_inventory,
+        #     simulation_day=time.simulation_day,
+        # )
+            #print(newly_added_animals)
+
         self.record_pen_history(time.simulation_day)
         enteric_methane_emission_by_pen: dict[str, float] = {}
         animal_manure_excretions_by_pen: dict[str, AnimalManureExcretions] = {}
@@ -616,6 +631,7 @@ class HerdManager:
             enteric_methane_emission_by_pen[f"{pen.animal_combination.name}_PEN_{pen.id}"] = pen.total_enteric_methane
 
         self.update_herd_statistics()
+
 
         AnimalModuleReporter.report_enteric_methane_emission(enteric_methane_emission_by_pen)
         AnimalModuleReporter.report_daily_animal_population(self.herd_statistics, time.simulation_day)
@@ -687,17 +703,15 @@ class HerdManager:
         """
         MIN_DIM_FOR_REMOVAL = 60
         animals_removed: list[Animal] = []
-
         while len(self.cows) > self.herd_statistics.herd_num * self.selling_threshold and len(self.cows) > 0:
+            #print(str(simulation_day) + " sold")
             # partitioning between dnb and non dnb cows
             dnb_indices: list[int] = []
             non_dnb_indices: list[int] = []
             for index, cow in enumerate(self.cows):
-                if cow.days_in_milk < MIN_DIM_FOR_REMOVAL:
-                    continue
                 if cow.reproduction.do_not_breed:
                     dnb_indices.append(index)
-                else:
+                elif cow.days_in_milk > MIN_DIM_FOR_REMOVAL:
                     non_dnb_indices.append(index)
 
             if not dnb_indices and not non_dnb_indices:
@@ -717,7 +731,8 @@ class HerdManager:
                 lowest_production_cow_index = 0
                 current_lowest_estimation_value = math.inf
                 for index in non_dnb_indices:
-                    estimated_production = self.cows[index].mature_equivalent_milking_prediction_305_day
+                    # estimated_production = self.cows[index].mature_equivalent_milking_prediction_305_day
+                    estimated_production = self.cows[index].milk_production.daily_milk_produced
                     if estimated_production < current_lowest_estimation_value:
                         current_lowest_estimation_value = estimated_production
                         lowest_production_cow_index = index
@@ -764,10 +779,11 @@ class HerdManager:
         """
         animals_added: list[Animal] = []
         while (
-            len(self.cows)
+            len(self.cows) + self.herd_statistics.bought_heifer_num
             < self.herd_statistics.herd_num * self.buying_threshold
             and time.simulation_day > 1
         ):
+            print("cow: " + str(len(self.cows)) + "bought: " + str(self.herd_statistics.bought_heifer_num))
             if len(self.replacement_market) == 0:
                 break
             replacement = self.replacement_market.pop(0)
