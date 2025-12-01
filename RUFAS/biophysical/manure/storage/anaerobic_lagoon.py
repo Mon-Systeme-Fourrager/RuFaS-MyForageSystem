@@ -48,6 +48,11 @@ class AnaerobicLagoon(Storage):
             capacity=capacity,
         )
 
+    @property
+    def _emptying_fraction(self) -> float:
+        """The fraction of manure to be emptied from the Anaerobic Lagoon when it is time to empty it."""
+        return 1.0 - ManureConstants.ANAEROBIC_LAGOON_MANURE_RETENTION
+
     def process_manure(self, current_day_conditions: CurrentDayConditions, time: RufasTime) -> dict[str, ManureStream]:
         """Processes manure in Anaerobic Lagoon.
 
