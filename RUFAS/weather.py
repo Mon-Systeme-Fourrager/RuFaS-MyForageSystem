@@ -105,7 +105,24 @@ class Weather:
         )
 
     def set_linest_temperature_factors(self) -> None:
-        """Set the factors related to least-squares regression calculations."""
+        """
+        This function performs least-squares regression using cosine and sine components to model seasonal air
+        temperature. This enables determination of the amplitude and phase shift (peak) of the sinusoidal curve of
+        seasonal air temperature. First, sin and cos coefficients are generated for each Julian day of the simulation.
+        The function then fits the model:
+
+        T(d) = A*cos(d) + B*sin(d) + C
+
+        where:
+            - T(d) is the mean air temperature for day d in the simulation
+            - A and B are coefficients
+            - C is the intercept (mean)
+
+        From the fitted model, the method calculates and stores the fitted intercept term representing average air
+        temperature, amplitude of the modeled cos/sin function, and phase shift (peak temperature). These parameters are
+        simulation-wide, i.e., only weather data utilized in the simulation is used.
+
+        """
         mean_temperatures = np.array(self.means, dtype=float)
         cosine_components = np.array(self.cos, dtype=float)
         sine_components = np.array(self.sin, dtype=float)
