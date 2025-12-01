@@ -62,8 +62,10 @@ def mock_time() -> RufasTime:
     mock_time.simulation_day = 18
     AnimalConfig.top_listing_semen["estimated_fat"] = {f"{dummy_date.year}-{dummy_date.month:02d}": 10.0}
     AnimalConfig.top_listing_semen["estimated_protein"] = {f"{dummy_date.year}-{dummy_date.month:02d}": 10.0}
-    AnimalConfig.average_phenotype["fat_kg"] = {year: 10.0 for year in range(dummy_date.year-10, dummy_date.year+1)}
-    AnimalConfig.average_phenotype["protein_kg"] = {year: 10.0 for year in range(dummy_date.year-10, dummy_date.year+1)}
+    AnimalConfig.average_phenotype["fat_kg"] = {year: 10.0 for year in range(dummy_date.year - 10, dummy_date.year + 1)}
+    AnimalConfig.average_phenotype["protein_kg"] = {
+        year: 10.0 for year in range(dummy_date.year - 10, dummy_date.year + 1)
+    }
     return mock_time
 
 
@@ -316,7 +318,13 @@ def test_init_newborn_calf(args: NewBornCalfValuesTypedDict, mocker: MockerFixtu
     ],
 )
 def test_initialize_newborn_calf(
-    args: NewBornCalfValuesTypedDict, semen_type: str, sex: Sex, culled: bool, sold: bool, mocker: MockerFixture, mock_time: RufasTime
+    args: NewBornCalfValuesTypedDict,
+    semen_type: str,
+    sex: Sex,
+    culled: bool,
+    sold: bool,
+    mocker: MockerFixture,
+    mock_time: RufasTime,
 ) -> None:
     original_semen_type = AnimalConfig.semen_type
     AnimalConfig.semen_type = semen_type
@@ -457,7 +465,9 @@ def test_init_heiferI(args: HeiferIValuesTypedDict, mocker: MockerFixture, mock_
         ),
     ],
 )
-def test_initialize_calf_or_heiferI(args: CalfValuesTypedDict | HeiferIValuesTypedDict, mocker: MockerFixture, mock_time: RufasTime) -> None:
+def test_initialize_calf_or_heiferI(
+    args: CalfValuesTypedDict | HeiferIValuesTypedDict, mocker: MockerFixture, mock_time: RufasTime
+) -> None:
     mock_init_events_from_string = mocker.patch(
         "RUFAS.biophysical.animal.data_types.animal_events.AnimalEvents.init_from_string"
     )
@@ -824,7 +834,9 @@ def test_init_cow(args: CowValuesTypedDict, mocker: MockerFixture, mock_time: Ru
         ),
     ],
 )
-def test_initialize_cow(args: HeiferIIValuesTypedDict | HeiferIIIValuesTypedDict, mocker: MockerFixture, mock_time: RufasTime) -> None:
+def test_initialize_cow(
+    args: HeiferIIValuesTypedDict | HeiferIIIValuesTypedDict, mocker: MockerFixture, mock_time: RufasTime
+) -> None:
     mock_init_events_from_string = mocker.patch(
         "RUFAS.biophysical.animal.data_types.animal_events.AnimalEvents.init_from_string"
     )

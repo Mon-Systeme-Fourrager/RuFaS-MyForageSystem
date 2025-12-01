@@ -175,10 +175,7 @@ class AnimalModuleReporter:
 
     @classmethod
     def report_average_genetics(
-            cls,
-            average_genetics: dict[str, float],
-            variable_name_prefix: str,
-            simulation_day: int
+        cls, average_genetics: dict[str, float], variable_name_prefix: str, simulation_day: int
     ) -> None:
         """
         Reports the average genetics data with associated simulation metadata. The
@@ -966,9 +963,7 @@ class AnimalModuleReporter:
             om.add_variable("days_in_milk", animal["days_in_milk"], dict(info_map, **{"units": MeasurementUnits.DAYS}))
             om.add_variable("parity", animal["parity"], dict(info_map, **{"units": MeasurementUnits.UNITLESS}))
             om.add_variable(
-                "genetic_history",
-                animal["genetic_history"],
-                dict(info_map, **{"units": MeasurementUnits.UNITLESS})
+                "genetic_history", animal["genetic_history"], dict(info_map, **{"units": MeasurementUnits.UNITLESS})
             )
 
     @classmethod
@@ -1135,7 +1130,7 @@ class AnimalModuleReporter:
         time: RufasTime,
         heiferII_events_by_id: dict[str, str],
         cow_events_by_id: dict[str, str],
-        all_animals_genetic_history: dict[int, str]
+        all_animals_genetic_history: dict[int, str],
     ) -> None:
         """
         Calls all reporter methods that should happen at the end of the simulation.
@@ -1361,11 +1356,7 @@ class AnimalModuleReporter:
             "function": AnimalModuleReporter._report_all_animals_genetic_history.__name__,
             "units": MeasurementUnits.UNITLESS,
         }
-        om.add_variable(
-            "animals_genetic_history",
-            all_animals_genetic_history,
-            info_map
-        )
+        om.add_variable("animals_genetic_history", all_animals_genetic_history, info_map)
 
     @classmethod
     def report_animal_population_statistics(cls, prefix: str, herd_summary: AnimalPopulationStatistics) -> None:

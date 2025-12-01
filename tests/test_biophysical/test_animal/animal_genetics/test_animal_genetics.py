@@ -6,9 +6,18 @@ from RUFAS.util import Utility
 from pytest_mock import MockerFixture
 
 from RUFAS.biophysical.animal.animal_config import AnimalConfig
-from RUFAS.biophysical.animal.animal_genetics.animal_genetics import Genetics, TBV_CORRELATION, TBV_FAT_STD, \
-    TBV_PROTEIN_STD, E_PERMANENT_FAT_STD, E_PERMANENT_PROTEIN_STD, E_PERMANENT_CORRELATION, E_TEMPORARY_FAT_STD, \
-    E_TEMPORARY_PROTEIN_STD, E_TEMPORARY_CORRELATION
+from RUFAS.biophysical.animal.animal_genetics.animal_genetics import (
+    Genetics,
+    TBV_CORRELATION,
+    TBV_FAT_STD,
+    TBV_PROTEIN_STD,
+    E_PERMANENT_FAT_STD,
+    E_PERMANENT_PROTEIN_STD,
+    E_PERMANENT_CORRELATION,
+    E_TEMPORARY_FAT_STD,
+    E_TEMPORARY_PROTEIN_STD,
+    E_TEMPORARY_CORRELATION,
+)
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 
 
@@ -16,11 +25,7 @@ from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 def genetics() -> Genetics:
     AnimalConfig.average_phenotype["fat_kg"] = {2020: 10.0}
     AnimalConfig.average_phenotype["protein_kg"] = {2020: 20.0}
-    genetics = Genetics(
-        animal_type=AnimalType.LAC_COW,
-        birth_year=2020,
-        parity=3
-    )
+    genetics = Genetics(animal_type=AnimalType.LAC_COW, birth_year=2020, parity=3)
     return genetics
 
 
@@ -34,17 +39,17 @@ def genetics() -> Genetics:
         (AnimalType.LAC_COW, 2020, None, 1, None, None, None),
         (AnimalType.DRY_COW, 2020, None, 5, None, None, None),
         (AnimalType.CALF, 2020, 1, 1, True, 10.0, 20.0),
-    ]
+    ],
 )
 def test_animal_genetics_init(
-        animal_type: AnimalType,
-        birth_year: int,
-        birth_month: int | None,
-        parity: int | None,
-        initialize_new_born_calf: bool | None,
-        dam_tbv_fat: float | None,
-        dam_tbv_protein: float | None,
-        mocker: MockerFixture
+    animal_type: AnimalType,
+    birth_year: int,
+    birth_month: int | None,
+    parity: int | None,
+    initialize_new_born_calf: bool | None,
+    dam_tbv_fat: float | None,
+    dam_tbv_protein: float | None,
+    mocker: MockerFixture,
 ) -> None:
     """Unit test for __init__()"""
     mock_calculate_newborn_calf_tbv_values = mocker.patch(
@@ -110,24 +115,22 @@ def test_animal_genetics_init(
         (2020, AnimalType.LAC_COW, 3, True),
         (2020, AnimalType.LAC_COW, 4, False),
         (2020, AnimalType.LAC_COW, 5, False),
-    ]
+    ],
 )
 def test_recalculate_values_at_lactation_start(
-        birth_year: int,
-        animal_type: AnimalType,
-        parity: int,
-        ebv_recalculate: bool,
-        genetics: Genetics,
-        mocker: MockerFixture
+    birth_year: int,
+    animal_type: AnimalType,
+    parity: int,
+    ebv_recalculate: bool,
+    genetics: Genetics,
+    mocker: MockerFixture,
 ) -> None:
     """Unit test for recalculate_values_at_lactation_start()"""
     mock_calculate_et_values = mocker.patch.object(genetics, "_calculate_et_values", return_value=(10.0, 20.0))
     mock_calculate_phenotype_values = mocker.patch.object(
         genetics, "_calculate_phenotype_values", return_value=(10.0, 20.0)
     )
-    mock_calculate_ebv_values = mocker.patch.object(
-        genetics, "_calculate_ebv_values", return_value=(10.0, 20.0)
-    )
+    mock_calculate_ebv_values = mocker.patch.object(genetics, "_calculate_ebv_values", return_value=(10.0, 20.0))
     mock_calculate_ranking_index = mocker.patch.object(genetics, "_calculate_ranking_index", return_value=10.0)
 
     genetics.recalculate_values_at_lactation_start(birth_year=birth_year, animal_type=animal_type, parity=parity)
@@ -159,20 +162,20 @@ def test_calculate_tbv_values(genetics: Genetics, mocker: MockerFixture) -> None
         (10.0, 20.0, "2020-01", 13.0, 18.0, 11.5, 19.0, 18.243354954612926, 9.475230867899738),
         (15.0, 25.0, "2021-01", 15.0, 25.0, 15.0, 25.0, 18.243354954612926, 9.475230867899738),
         (20.0, 30.0, "2022-01", 128.0, 64.0, 74.0, 47.0, 18.243354954612926, 9.475230867899738),
-    ]
+    ],
 )
 def test_calculate_newborn_calf_tbv_values(
-        dam_tbv_fat: float,
-        dam_tbv_protein: float,
-        birth_year_month: str,
-        top_listing_semen_fat: float,
-        top_listing_semen_protein: float,
-        expected_mean_tbv_fat: float,
-        expected_mean_tbv_protein: float,
-        expected_std_tbv_fat: float,
-        expected_std_tbv_protein: float,
-        genetics: Genetics,
-        mocker: MockerFixture
+    dam_tbv_fat: float,
+    dam_tbv_protein: float,
+    birth_year_month: str,
+    top_listing_semen_fat: float,
+    top_listing_semen_protein: float,
+    expected_mean_tbv_fat: float,
+    expected_mean_tbv_protein: float,
+    expected_std_tbv_fat: float,
+    expected_std_tbv_protein: float,
+    genetics: Genetics,
+    mocker: MockerFixture,
 ) -> None:
     """Unit test for _calculate_newborn_calf_tbv_values()"""
     AnimalConfig.top_listing_semen["estimated_fat"] = {birth_year_month: top_listing_semen_fat}
@@ -188,7 +191,7 @@ def test_calculate_newborn_calf_tbv_values(
         expected_mean_tbv_protein,
         expected_std_tbv_fat,
         expected_std_tbv_protein,
-        TBV_CORRELATION
+        TBV_CORRELATION,
     )
 
 
@@ -224,18 +227,18 @@ def test_calculate_et_values(genetics: Genetics, mocker: MockerFixture) -> None:
     ],
 )
 def test_calculate_phenotype_values(
-        mean_phenotype_fat: float,
-        mean_phenotype_protein: float,
-        birth_year: int,
-        tbv_fat: float,
-        tbv_protein: float,
-        e_p_fat: float,
-        e_p_protein: float,
-        e_t_fat: float,
-        e_t_protein: float,
-        expected_phenotype_fat: float,
-        expected_phenotype_protein: float,
-        genetics: Genetics
+    mean_phenotype_fat: float,
+    mean_phenotype_protein: float,
+    birth_year: int,
+    tbv_fat: float,
+    tbv_protein: float,
+    e_p_fat: float,
+    e_p_protein: float,
+    e_t_fat: float,
+    e_t_protein: float,
+    expected_phenotype_fat: float,
+    expected_phenotype_protein: float,
+    genetics: Genetics,
 ) -> None:
     """Unit test for _calculate_phenotype_values()"""
     genetics.TBV_fat = tbv_fat
@@ -262,29 +265,36 @@ def test_calculate_phenotype_values(
         (AnimalType.HEIFER_II, None, 10.0, 20.0, 2.519765614099851, 1.8159450019204877, 5.725, 11.35),
         (AnimalType.HEIFER_III, None, 10.0, 20.0, 2.519765614099851, 1.8159450019204877, 5.725, 11.35),
         (AnimalType.LAC_COW, 1, 15.0, 25.0, 2.4380976190464563, 1.75708850090142, 9.7, 16.1),
-        (AnimalType.DRY_COW, 2, 15.0, 25.0, 2.274365570879053, 1.6390900676899975, 10.937499999999998, 18.162499999999998),
+        (
+            AnimalType.DRY_COW,
+            2,
+            15.0,
+            25.0,
+            2.274365570879053,
+            1.6390900676899975,
+            10.937499999999998,
+            18.162499999999998,
+        ),
         (AnimalType.LAC_COW, 3, 15.0, 25.0, 1.992641462983243, 1.4360571019287496, 12.25, 20.35),
         (AnimalType.DRY_COW, 4, 15.0, 25.0, 1.992641462983243, 1.4360571019287496, 12.25, 20.35),
     ],
 )
 def test_calculate_ebv_values(
-        animal_type: AnimalType,
-        parity: int,
-        tbv_fat: float,
-        tbv_protein: float,
-        expected_std_ebv_fat: float,
-        expected_std_ebv_protein: float,
-        expected_ebv_fat: float,
-        expected_ebv_protein: float,
-        genetics: Genetics,
-        mocker: MockerFixture
+    animal_type: AnimalType,
+    parity: int,
+    tbv_fat: float,
+    tbv_protein: float,
+    expected_std_ebv_fat: float,
+    expected_std_ebv_protein: float,
+    expected_ebv_fat: float,
+    expected_ebv_protein: float,
+    genetics: Genetics,
+    mocker: MockerFixture,
 ) -> None:
     """Unit test for _calculate_ebv_values()"""
     genetics.TBV_fat = tbv_fat
     genetics.TBV_protein = tbv_protein
-    mock_np_random_normal = mocker.patch.object(
-        numpy.random, "normal", side_effect=[0.1, 0.1]
-    )
+    mock_np_random_normal = mocker.patch.object(numpy.random, "normal", side_effect=[0.1, 0.1])
     ebv_fat, ebv_protein = genetics._calculate_ebv_values(animal_type=animal_type, parity=parity)
 
     assert mock_np_random_normal.call_args_list == [
@@ -303,10 +313,7 @@ def test_calculate_ebv_values(
     ],
 )
 def test_calculate_ranking_index(
-        ebv_fat: float,
-        ebv_protein: float,
-        expected_ranking_index: float,
-        genetics: Genetics
+    ebv_fat: float, ebv_protein: float, expected_ranking_index: float, genetics: Genetics
 ) -> None:
     """Unit test for _calculate_ranking_index()"""
     genetics.EBV_fat = ebv_fat

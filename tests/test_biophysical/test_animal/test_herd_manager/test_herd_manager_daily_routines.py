@@ -421,7 +421,6 @@ def test_create_newborn_calf(
 
     mock_animal_init = mocker.patch("RUFAS.biophysical.animal.herd_manager.Animal", return_value=animal)
 
-
     mock_time = MagicMock(auto_spec=RufasTime)
     mock_time.simulation_day = 100
     mock_time.current_date = datetime.today()

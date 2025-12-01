@@ -61,6 +61,7 @@ class Genetics:
     ranking_index : float
         Ranking index for animal performance.
     """
+
     TBV_fat: float
     TBV_protein: float
     E_permanent_fat: float
@@ -185,7 +186,7 @@ class Genetics:
 
     @staticmethod
     def calculate_average_genetic_values(list_of_genetics: list["Genetics"]) -> dict[str, float | None]:
-        if (num_animal := len(list_of_genetics)) <=0 :
+        if (num_animal := len(list_of_genetics)) <= 0:
             return {
                 "TBV_fat": None,
                 "TBV_protein": None,

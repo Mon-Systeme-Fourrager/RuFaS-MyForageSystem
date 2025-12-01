@@ -499,7 +499,7 @@ class HerdManager:
                         sold_newborn_calves.append(newborn_calf)
                     else:
                         newborn_calves.append(newborn_calf)
-                    birth_year =Utility.back_track_birth_date(animal.days_born, time.current_date).year
+                    birth_year = Utility.back_track_birth_date(animal.days_born, time.current_date).year
                     animal.genetics.recalculate_values_at_lactation_start(
                         birth_year=birth_year, animal_type=animal.animal_type, parity=animal.calves
                     )
@@ -664,9 +664,7 @@ class HerdManager:
         )
         AnimalModuleReporter.report_average_genetics(herd_average_genetics, "herd", simulation_day)
 
-        calf_average_genetics = Genetics.calculate_average_genetic_values(
-            [animal.genetics for animal in self.calves]
-        )
+        calf_average_genetics = Genetics.calculate_average_genetic_values([animal.genetics for animal in self.calves])
         AnimalModuleReporter.report_average_genetics(calf_average_genetics, "calves", simulation_day)
         heiferI_average_genetics = Genetics.calculate_average_genetic_values(
             [animal.genetics for animal in self.heiferIs]
@@ -680,9 +678,7 @@ class HerdManager:
             [animal.genetics for animal in self.heiferIIIs]
         )
         AnimalModuleReporter.report_average_genetics(heiferIII_average_genetics, "heiferIII", simulation_day)
-        cow_average_genetics = Genetics.calculate_average_genetic_values(
-            [animal.genetics for animal in self.cows]
-        )
+        cow_average_genetics = Genetics.calculate_average_genetic_values([animal.genetics for animal in self.cows])
         AnimalModuleReporter.report_average_genetics(cow_average_genetics, "cow", simulation_day)
 
     def _report_ration(self, simulation_day: int) -> None:
@@ -771,7 +767,7 @@ class HerdManager:
                     cull_reason="NA",
                     days_in_milk="NA",
                     parity="NA",
-                    genetic_history=str(removed_heiferIII.genetic_history)
+                    genetic_history=str(removed_heiferIII.genetic_history),
                 )
             )
             self.herd_statistics.sold_heiferIII_oversupply_num += 1
@@ -1865,7 +1861,7 @@ class HerdManager:
                 cull_reason=cow.cull_reason,
                 days_in_milk=cow.days_in_milk,
                 parity=cow.reproduction.calves,
-                genetic_history=str(cow.genetic_history)
+                genetic_history=str(cow.genetic_history),
             )
             for cow in sold_and_died_cows
         ]
@@ -1884,7 +1880,7 @@ class HerdManager:
                 cull_reason=cow.cull_reason,
                 days_in_milk=cow.days_in_milk,
                 parity=cow.reproduction.calves,
-                genetic_history=str(cow.genetic_history)
+                genetic_history=str(cow.genetic_history),
             )
             for cow in sold_cows
         ]
@@ -1929,7 +1925,7 @@ class HerdManager:
                 cull_reason="NA",
                 days_in_milk="NA",
                 parity="NA",
-                genetic_history=str(heiferII.genetic_history)
+                genetic_history=str(heiferII.genetic_history),
             )
             for heiferII in sold_heiferIIs
         ]
@@ -1961,7 +1957,7 @@ class HerdManager:
                 cull_reason="NA",
                 days_in_milk="NA",
                 parity="NA",
-                genetic_history=str(calf.genetic_history) if calf.genetic_history else "NA"
+                genetic_history=str(calf.genetic_history) if calf.genetic_history else "NA",
             )
             for calf in sold_newborn_calves
         ]
