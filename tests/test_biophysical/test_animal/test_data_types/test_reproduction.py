@@ -45,6 +45,59 @@ def reproduction_inputs() -> ReproductionInputs:
     )
 
 
+def test_repro_stats_initial_values_are_stored_correctly() -> None:
+    """Verify that initialization arguments are preserved in the dataclass."""
+    stats = AnimalReproductionStatistics(
+        ED_days=12,
+        estrus_count=3,
+        GnRH_injections=2,
+        PGF_injections=1,
+        CIDR_injections=1,
+        semen_number=4,
+        AI_times=5,
+        pregnancy_diagnoses=2,
+        calving_to_pregnancy_time=150,
+    )
+
+    assert stats.ED_days == 12
+    assert stats.estrus_count == 3
+    assert stats.GnRH_injections == 2
+    assert stats.PGF_injections == 1
+    assert stats.CIDR_injections == 1
+    assert stats.semen_number == 4
+    assert stats.AI_times == 5
+    assert stats.pregnancy_diagnoses == 2
+    assert stats.calving_to_pregnancy_time == 150
+
+
+def test_repro_stats_reset_daily_statistics_zeroes_expected_fields() -> None:
+    """reset_daily_statistics should reset ONLY the daily counters."""
+    stats = AnimalReproductionStatistics(
+        ED_days=20,
+        estrus_count=7,
+        GnRH_injections=3,
+        PGF_injections=2,
+        CIDR_injections=1,
+        semen_number=5,
+        AI_times=4,
+        pregnancy_diagnoses=1,
+        calving_to_pregnancy_time=200,
+    )
+
+    stats.reset_daily_statistics()
+
+    assert stats.GnRH_injections == 0
+    assert stats.PGF_injections == 0
+    assert stats.CIDR_injections == 0
+    assert stats.semen_number == 0
+    assert stats.AI_times == 0
+    assert stats.pregnancy_diagnoses == 0
+
+    assert stats.ED_days == 20
+    assert stats.estrus_count == 7
+    assert stats.calving_to_pregnancy_time == 200
+
+
 @pytest.fixture
 def reproduction_outputs(
     sample_animal_events: AnimalEvents,

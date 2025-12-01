@@ -1,5 +1,7 @@
 from unittest.mock import MagicMock
-from RUFAS.biophysical.animal.data_types.milk_production import MilkProductionInputs, MilkProductionOutputs, MilkProductionStatistics
+from RUFAS.biophysical.animal.data_types.milk_production import (
+    MilkProductionInputs, MilkProductionOutputs, MilkProductionStatistics
+)
 from RUFAS.units import MeasurementUnits
 import pytest
 
@@ -70,7 +72,7 @@ def test_outputs_is_milking_property(days_in_milk: int, expected: bool) -> None:
     assert outputs.is_milking is expected
 
 
-def test_statistics_initializes_with_given_values():
+def test_statistics_initializes_with_given_values() -> None:
     """MilkProductionStatistics should preserve all initialization arguments."""
     stats = MilkProductionStatistics(
         cow_id=101,
@@ -102,7 +104,7 @@ def test_statistics_initializes_with_given_values():
         (250, True),   # mid/late lactation
     ],
 )
-def test_statistics_milking_status_flag(days_in_milk, expected_flag):
+def test_statistics_milking_status_flag(days_in_milk: int, expected_flag: bool) -> None:
     """is_milking should reflect whether days_in_milk is greater than zero."""
     stats = MilkProductionStatistics(
         cow_id=101,
@@ -118,7 +120,7 @@ def test_statistics_milking_status_flag(days_in_milk, expected_flag):
     assert stats.is_milking is expected_flag
 
 
-def test_statistics_units_mapping_is_consistent():
+def test_statistics_units_mapping_is_consistent() -> None:
     """UNITS dict should contain expected keys and associated measurement units."""
     expected_units = {
         "cow_id": MeasurementUnits.UNITLESS,
