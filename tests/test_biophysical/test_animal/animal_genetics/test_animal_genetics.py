@@ -258,7 +258,8 @@ def test_calculate_phenotype_values(
 
 
 @pytest.mark.parametrize(
-    "animal_type, parity, tbv_fat, tbv_protein, expected_std_ebv_fat, expected_std_ebv_protein, expected_ebv_fat, expected_ebv_protein",
+    "animal_type, parity, tbv_fat, tbv_protein,"
+    "expected_std_ebv_fat, expected_std_ebv_protein, expected_ebv_fat, expected_ebv_protein",
     [
         (AnimalType.CALF, None, 10.0, 20.0, 2.519765614099851, 1.8159450019204877, 5.725, 11.35),
         (AnimalType.HEIFER_I, None, 10.0, 20.0, 2.519765614099851, 1.8159450019204877, 5.725, 11.35),
