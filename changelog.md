@@ -264,6 +264,7 @@ v0.9.2
 - [2618](https://github.com/RuminantFarmSystems/MASM/pull/2618) - [minor change] Removes outdated example regional feed inputs.
 - [2624](https://github.com/RuminantFarmSystems/MASM/pull/2624) - [minor change] [NoInputChange][NoOutputChange] Updates the PR template and changelog to reflect IO changes.
 - [1299](https://github.com/RuminantFarmSystems/MASM/pull/1299) - [minor change] [InputChange][OutputChange] Implements the Energy submodule of the EEE module with diesel consumption calculation.
+- [2622](https://github.com/RuminantFarmSystems/MASM/pull/2622) - [minor change] [InputChange][OutputChange] Implement 305 days milk production logic and utilizing such merit to maintain herd size.
 - [2629](https://github.com/RuminantFarmSystems/MASM/pull/2629) - [minor change] [NoInputChange][NoOutputChange][Units][Reporting] Updates a couple units mappings that were incorrect/misspelled.
 - [2635](https://github.com/RuminantFarmSystems/MASM/pull/2635) - [minor change] [NoInputChange][NoOutputChange] Updates the ReadMe `Getting Started` section to be more straightforward about how to get RUFAS running.
 - [2634](https://github.com/RuminantFarmSystems/MASM/pull/2634) - [minor change] [NoInputChange][NoOutputChange][Animal] Reinstates functionality of report_daily_herd_total_ration method.
@@ -277,6 +278,7 @@ v0.9.2
 - [2636](https://github.com/RuminantFarmSystems/MASM/pull/2636) - [minor change] [Manure] [NoInputChange] [OutputChange] Improve temperature estimation of slurry of liquid manure in storage.
 - [2660](https://github.com/RuminantFarmSystems/MASM/pull/2660) - [minor change] [InputChange][NoOutputChange][Input][Properties] Adds task property to allow running simulations using inputs from external repos.
 - [2653](https://github.com/RuminantFarmSystems/MASM/pull/2653) - [minor change] [NoInputChange][NoOutputChange][Unit Test] Separate Unit Tests for `photosynthesize()` and `partition_biomass()` in `allocate_biomass()`.
+
 
 ### v0.9.2
 
