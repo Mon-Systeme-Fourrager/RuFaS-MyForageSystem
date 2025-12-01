@@ -80,7 +80,7 @@ class HarvestedCrop:
     harvest_time: date
     storage_time: date
     last_time_degraded: date = field(init=False)
-    fresh_mass: float
+    dry_matter_mass: float
     dry_matter_percentage: float
     initial_dry_matter_percentage: float = field(init=False)
     initial_dry_matter_mass: float = field(init=False)
@@ -121,12 +121,12 @@ class HarvestedCrop:
             self.storage_time = self.storage_time.current_date.date()
 
     @property
-    def dry_matter_mass(self) -> float:
+    def fresh_mass(self) -> float:
         """
         Calculates the dry matter mass of this crop in kg.
         """
         dry_matter_fraction = self.dry_matter_percentage * GeneralConstants.PERCENTAGE_TO_FRACTION
-        return dry_matter_fraction * self.fresh_mass
+        return 1- dry_matter_fraction * self.dry_matter_mass
 
     @property
     def is_alfalfa(self) -> bool:
