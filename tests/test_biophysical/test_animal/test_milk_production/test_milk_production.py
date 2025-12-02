@@ -220,12 +220,8 @@ def test_perform_daily_milking_update_without_history_dry_off_day(
     milk_production.lactose_content = 1.0
     milk_production.current_lactation_305_day_milk_produced = 123.0
 
-    calc_daily_milk = mocker.patch.object(
-        milk_production, "calculate_daily_milk_production"
-    )
-    calc_nutrient = mocker.patch.object(
-        milk_production, "_calculate_nutrient_content"
-    )
+    calc_daily_milk = mocker.patch.object(milk_production, "calculate_daily_milk_production")
+    calc_nutrient = mocker.patch.object(milk_production, "_calculate_nutrient_content")
     rand_gen = mocker.patch.object(Utility, "generate_random_number")
 
     inputs = MilkProductionInputs(

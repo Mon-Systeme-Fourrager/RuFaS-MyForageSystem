@@ -1,6 +1,8 @@
 from unittest.mock import MagicMock
 from RUFAS.biophysical.animal.data_types.milk_production import (
-    MilkProductionInputs, MilkProductionOutputs, MilkProductionStatistics
+    MilkProductionInputs,
+    MilkProductionOutputs,
+    MilkProductionStatistics,
 )
 from RUFAS.units import MeasurementUnits
 import pytest
@@ -22,9 +24,9 @@ def test_initialization_inputs_values() -> None:
 @pytest.mark.parametrize(
     "days_in_milk, expected",
     [
-        (0, False),   # boundary: not milking
+        (0, False),  # boundary: not milking
         (-1, False),  # unrealistic but should still return False
-        (1, True),    # first day milking
+        (1, True),  # first day milking
         (100, True),  # typical milking period
     ],
 )
@@ -54,9 +56,9 @@ def test_initialization_outputs_values():
 @pytest.mark.parametrize(
     "days_in_milk, expected",
     [
-        (0, False),   # boundary: not milking
+        (0, False),  # boundary: not milking
         (-1, False),  # still False for negative (even if unrealistic)
-        (1, True),    # first day milking
+        (1, True),  # first day milking
         (250, True),  # well into lactation
     ],
 )
@@ -98,10 +100,10 @@ def test_statistics_initializes_with_given_values() -> None:
 @pytest.mark.parametrize(
     "days_in_milk, expected_flag",
     [
-        (0, False),    # boundary: not milking
-        (-5, False),   # negative days should still be treated as not milking
-        (1, True),     # just started milking
-        (250, True),   # mid/late lactation
+        (0, False),  # boundary: not milking
+        (-5, False),  # negative days should still be treated as not milking
+        (1, True),  # just started milking
+        (250, True),  # mid/late lactation
     ],
 )
 def test_statistics_milking_status_flag(days_in_milk: int, expected_flag: bool) -> None:
