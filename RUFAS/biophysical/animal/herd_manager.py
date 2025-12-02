@@ -28,7 +28,7 @@ from RUFAS.biophysical.animal.milk.milk_production import MilkProduction
 from RUFAS.biophysical.animal.nutrients.nutrition_supply_calculator import NutritionSupplyCalculator
 from RUFAS.biophysical.animal.pen import Pen
 from RUFAS.biophysical.animal.ration.calf_ration_manager import CalfMilkType, CalfRationManager, WHOLE_MILK_ID
-from RUFAS.biophysical.animal.ration.user_defined_ration_manager import RationManager
+from RUFAS.biophysical.animal.ration.ration_manager import RationManager
 from RUFAS.current_day_conditions import CurrentDayConditions
 from RUFAS.biophysical.animal.data_types.animal_manure_excretions import AnimalManureExcretions
 from RUFAS.data_structures.animal_to_manure_connection import ManureStream

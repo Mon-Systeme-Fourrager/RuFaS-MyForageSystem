@@ -26,7 +26,7 @@ from RUFAS.data_structures.feed_storage_to_animal_connection import (
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 from RUFAS.biophysical.animal.nutrients.nutrition_evaluator import NutritionEvaluator
 from RUFAS.biophysical.animal.nutrients.nutrition_supply_calculator import NutritionSupplyCalculator
-from RUFAS.biophysical.animal.ration.user_defined_ration_manager import RationManager
+from RUFAS.biophysical.animal.ration.ration_manager import RationManager
 from RUFAS.data_structures.feed_storage_to_animal_connection import RUFAS_ID, Feed
 from RUFAS.biophysical.animal.data_types.animal_combination import AnimalCombination
 from RUFAS.general_constants import GeneralConstants

@@ -10,7 +10,7 @@ from RUFAS.biophysical.animal.animal import Animal
 from RUFAS.biophysical.animal.herd_manager import HerdManager
 from RUFAS.biophysical.animal.pen import Pen
 from RUFAS.biophysical.animal.ration.calf_ration_manager import WHOLE_MILK_ID, CalfMilkType
-from RUFAS.biophysical.animal.ration.user_defined_ration_manager import RationManager
+from RUFAS.biophysical.animal.ration.ration_manager import RationManager
 from RUFAS.data_structures.feed_storage_to_animal_connection import (
     Feed,
     TotalInventory,

@@ -13,7 +13,7 @@ from RUFAS.data_structures.feed_storage_to_animal_connection import TotalInvento
 from RUFAS.biophysical.animal.data_types.animal_combination import AnimalCombination
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 from RUFAS.rufas_time import RufasTime
-from RUFAS.biophysical.animal.ration.user_defined_ration_manager import RationManager
+from RUFAS.biophysical.animal.ration.ration_manager import RationManager
 from tests.test_biophysical.test_animal.test_herd_manager.pytest_fixtures import (
     config_json,
     animal_json,
