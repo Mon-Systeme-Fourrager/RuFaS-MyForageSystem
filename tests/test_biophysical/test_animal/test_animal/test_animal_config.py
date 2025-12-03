@@ -169,7 +169,6 @@ def test_initialize_animal_config_heifer_subprogram_and_core_fields(
 
     AnimalConfig.initialize_animal_config()
 
-
     assert AnimalConfig.wean_day == 60
     assert AnimalConfig.wean_length == 7
     assert AnimalConfig.semen_type == "conventional"
