@@ -139,10 +139,19 @@ class HarvestedCrop:
         return "alfalfa" in self.config_name.lower()
 
     def remove_dry_matter_mass(self, mass_to_remove: float) -> None:
-        """Removes the specified amount of dry matter mass from the crop."""
+        if mass_to_remove > self.dry_matter_mass + 1e-6:
+            raise ValueError(
+                f"Cannot remove {mass_to_remove:.3f} kg DM - "
+                f"only {self.dry_matter_mass:.3f} kg dry matter available."
+            )
+
+        current_fresh_mass = self.fresh_mass
+
         self.dry_matter_mass -= mass_to_remove
-        new_fresh_mass = self.fresh_mass - mass_to_remove
-        if self.fresh_mass == 0.0:
+
+        new_fresh_mass = current_fresh_mass - mass_to_remove
+
+        if new_fresh_mass <= 0.0:
             self.dry_matter_percentage = 0.0
             return
         self.dry_matter_percentage = (self.dry_matter_mass / new_fresh_mass) * GeneralConstants.FRACTION_TO_PERCENTAGE
