@@ -3,6 +3,7 @@ from random import randint
 from typing import Any
 from unittest.mock import MagicMock, call
 
+from RUFAS.biophysical.animal.animal_module_reporter import AnimalModuleReporter
 import pytest
 from pytest_mock import MockerFixture
 
@@ -357,3 +358,56 @@ def test_reformulate_ration_single_pen(
             mock_total_inventory,
             15,
         )
+
+
+def test_report_ration_reports_per_pen_and_herd_total(mocker: MockerFixture) -> None:
+    """_report_ration should report each pen's totals and the aggregated herd ration."""
+    simulation_day = 7
+
+    herd_manager = mocker.MagicMock(spec=HerdManager)
+
+    pen1 = mocker.MagicMock()
+    pen1.id = 1
+    pen1.animal_combination = mocker.MagicMock()
+    pen1.animal_combination.name = "CALF"
+    pen1.animals_in_pen = ["a1", "a2", "a3"]
+    pen1.total_pen_ration = {
+        "corn_silage": 10.0,
+            "alfalfa_hay": 5.0,
+    }
+
+    pen2 = mocker.MagicMock()
+    pen2.id = 2
+    pen2.animal_combination = mocker.MagicMock()
+    pen2.animal_combination.name = "COW"
+    pen2.animals_in_pen = ["b1", "b2"]
+    pen2.total_pen_ration = {
+        "corn_silage": 20.0,
+        "grass_hay": 3.0,
+    }
+
+    herd_manager.all_pens = [pen1, pen2]
+
+    mock_report_pen_total = mocker.patch.object(AnimalModuleReporter, "report_daily_pen_total")
+    mock_report_ration_per_pen = mocker.patch.object(AnimalModuleReporter, "report_daily_ration_per_pen")
+    mock_report_herd_total = mocker.patch.object(AnimalModuleReporter, "report_daily_herd_total_ration")
+
+    HerdManager._report_ration(herd_manager, simulation_day)
+
+    assert mock_report_pen_total.call_args_list == [
+        mocker.call(str(pen1.id), pen1.animal_combination.name, len(pen1.animals_in_pen), simulation_day),
+        mocker.call(str(pen2.id), pen2.animal_combination.name, len(pen2.animals_in_pen), simulation_day),
+    ]
+
+    assert mock_report_ration_per_pen.call_args_list == [
+        mocker.call(str(pen1.id), pen1.animal_combination.name, pen1.total_pen_ration, simulation_day),
+        mocker.call(str(pen2.id), pen2.animal_combination.name, pen2.total_pen_ration, simulation_day),
+    ]
+
+    expected_herd_total_ration = {
+        "corn_silage": 10.0 + 20.0,
+        "alfalfa_hay": 5.0,
+        "grass_hay": 3.0,
+    }
+
+    mock_report_herd_total.assert_called_once_with(expected_herd_total_ration, simulation_day)

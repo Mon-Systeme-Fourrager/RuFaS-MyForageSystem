@@ -321,6 +321,59 @@ def test_add_animal_to_pen_and_id_map_with_empty_pen(
         assert herd_manager.animal_to_pen_id_map[animal.id] == pen_with_min_stocking_density.id
 
 
+def test_add_animal_to_pen_and_id_map_uses_default_ration_feeds_when_not_user_defined(
+    herd_manager: HerdManager, mocker: MockerFixture, mock_herd: dict[str, list[Animal]]
+) -> None:
+    """When ration is not user-defined, _add_animal_to_pen_and_id_map should use RationManager.ration_feeds."""
+    mock_current_day_conditions = MagicMock(auto_spec=CurrentDayConditions)
+    animal = mock_herd["calves"][0]
+
+    herd_manager.animal_to_pen_id_map = {}
+    herd_manager.is_ration_defined_by_user = False
+    mock_feed = MagicMock(auto_spec=Feed)
+    available_feeds = [mock_feed]
+    total_inventory = TotalInventory({}, datetime.today().date())
+
+    animal_combination = herd_manager.ANIMAL_GROUPING_SCENARIO.find_animal_combination(animal)
+    pen_with_min_stocking_density: Pen = min(
+        herd_manager.pens_by_animal_combination[animal_combination],
+        key=lambda p: p.current_stocking_density,
+    )
+    pen_with_min_stocking_density.clear()
+
+    mocker.patch.object(pen_with_min_stocking_density, "insert_single_animal_into_animals_in_pen_map")
+    mocker.patch.object(pen_with_min_stocking_density, "set_animal_nutritional_requirements")
+    mock_reformulate_ration_single_pen = mocker.patch.object(herd_manager, "_reformulate_ration_single_pen")
+
+    mock_ration_feeds = mocker.MagicMock(name="ration_feeds")
+    mocker.patch.object(RationManager, "ration_feeds", mock_ration_feeds, create=True)
+
+    mock_pen_avail_feeds = mocker.MagicMock()
+    mock_find_pen_available_feeds = mocker.patch.object(
+        herd_manager, "_find_pen_available_feeds", return_value=mock_pen_avail_feeds
+    )
+
+    herd_manager._add_animal_to_pen_and_id_map(
+        animal=animal,
+        available_feeds=available_feeds,
+        current_day_conditions=mock_current_day_conditions,
+        total_inventory=total_inventory,
+        simulation_day=15,
+    )
+
+    mock_find_pen_available_feeds.assert_called_once_with(available_feeds, mock_ration_feeds)
+
+    mock_reformulate_ration_single_pen.assert_called_once_with(
+        pen=pen_with_min_stocking_density,
+        pen_available_feeds=mock_pen_avail_feeds,
+        current_temperature=mock_current_day_conditions.mean_air_temperature,
+        total_inventory=total_inventory,
+        simulation_day=15,
+    )
+
+    assert herd_manager.animal_to_pen_id_map[animal.id] == pen_with_min_stocking_density.id
+
+
 @pytest.mark.parametrize(
     "num_stalls, max_stocking_density, expected, raise_value_error",
     [
