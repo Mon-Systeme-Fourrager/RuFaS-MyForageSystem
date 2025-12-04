@@ -1417,7 +1417,7 @@ def test_execute_cow_ed_protocol(
 def test_execute_cow_ed_protocol_resets_ed_days_when_pregnant(mocker: MockerFixture) -> None:
     """If the cow is pregnant, ED_days should be reset to 0."""
     reproduction = Reproduction()
-    reproduction.reproduction_statistics.ED_days = 5  
+    reproduction.reproduction_statistics.ED_days = 5
     mock_events = MagicMock(spec=AnimalEvents)
     data_stream = mock_reproduction_data_stream(
         animal_type=AnimalType.LAC_COW,
