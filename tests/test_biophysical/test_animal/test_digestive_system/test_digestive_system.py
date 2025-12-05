@@ -61,12 +61,8 @@ def test_process_digestion_valid_animals(
 
     mock_manure_excretion = mocker.MagicMock(spec=AnimalManureExcretions)
 
-    mock_methane = mocker.patch.object(
-        EntericMethaneCalculator, methane_func, return_value=5.0
-    )
-    mock_manure = mocker.patch.object(
-        ManureExcretionCalculator, manure_func, return_value=(0.3, mock_manure_excretion)
-    )
+    mock_methane = mocker.patch.object(EntericMethaneCalculator, methane_func, return_value=5.0)
+    mock_manure = mocker.patch.object(ManureExcretionCalculator, manure_func, return_value=(0.3, mock_manure_excretion))
 
     digestive_system.process_digestion(mock_inputs)
 
