@@ -388,11 +388,9 @@ def test_daily_routines(herd_manager: HerdManager, mock_herd: dict[str, list[Ani
         sold_calves + sold_heiferIs + sold_heiferIIs + sold_heiferIIIs + sold_and_died_cows + sold_oversupply_heiferIIIs
     )
 
-    mock_perform_daily_routines_for_animals_side_effect: list[tuple[list[Animal],
-                                                                    list[Animal],
-                                                                    list[Animal],
-                                                                    list[Animal],
-                                                                    list[Animal]]] = [
+    mock_perform_daily_routines_for_animals_side_effect: list[
+        tuple[list[Animal], list[Animal], list[Animal], list[Animal], list[Animal]]
+    ] = [
         (graduated_calves, sold_calves, [], [], []),
         (graduated_heiferIs, sold_heiferIs, [], [], []),
         (graduated_heiferIIs, sold_heiferIIs, [], [], []),

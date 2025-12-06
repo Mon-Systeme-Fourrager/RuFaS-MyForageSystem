@@ -85,8 +85,9 @@ def test_get_ration_feeds_returns_expected_list() -> None:
 
 def test_set_user_defined_ration_tolerance_updates_class_attribute() -> None:
     """set_user_defined_ration_tolerance should store the tolerance value from the config."""
-    config: dict[str, dict[str, list[dict[str, int | float]] | float]] \
-        = {"user_defined_ration_percentages": {"tolerance": 0.15}}
+    config: dict[str, dict[str, list[dict[str, int | float]] | float]] = {
+        "user_defined_ration_percentages": {"tolerance": 0.15}
+    }
 
     RationManager.set_user_defined_ration_tolerance(config)
 

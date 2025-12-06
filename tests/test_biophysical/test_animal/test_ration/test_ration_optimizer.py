@@ -202,8 +202,9 @@ def test_set_constraints_nrc_builds_expected_cow_and_heifer_constraints(
         assert constraint_dict["args"] == (nrc_ration_config,)
 
 
-def test_NASEM_net_energy_constraint(mocker: MockerFixture, nasem_ration_config: RationConfig,
-                                     full_mock_requirements: NutritionRequirements) -> None:
+def test_NASEM_net_energy_constraint(
+    mocker: MockerFixture, nasem_ration_config: RationConfig, full_mock_requirements: NutritionRequirements
+) -> None:
     """NASEM constraint should return ME_net_supply - energy_requirement."""
     decision_vector = np.array([5.0, 3.0], dtype=float)
 
@@ -447,8 +448,10 @@ def test_constraints_run(
 def test_is_constraint_violated(full_config: RationConfig) -> None:
     """Test if a single violated constraint is detected."""
     vec = np.array([5.0])
-    constraint: dict[str, Callable[[Any, Any], float] | tuple[RationConfig] | str] \
-        = {"type": "ineq", "fun": lambda x, cfg: -1.0}
+    constraint: dict[str, Callable[[Any, Any], float] | tuple[RationConfig] | str] = {
+        "type": "ineq",
+        "fun": lambda x, cfg: -1.0,
+    }
     violated = RationOptimizer.is_constraint_violated(vec, constraint, full_config)
     assert violated is True
 
@@ -458,8 +461,10 @@ def test_is_constraint_violated_eq_not_close() -> None:
     solution_x = np.array([1.0, 2.0])
     config = MagicMock(RationConfig)
 
-    constraint: dict[str, Callable[[Any, Any], float] | tuple[RationConfig] | str] \
-        = {"type": "eq", "fun": lambda x, cfg: 0.5}
+    constraint: dict[str, Callable[[Any, Any], float] | tuple[RationConfig] | str] = {
+        "type": "eq",
+        "fun": lambda x, cfg: 0.5,
+    }
 
     result = RationOptimizer.is_constraint_violated(solution_x, constraint, config)
     assert result is True
@@ -470,8 +475,10 @@ def test_is_constraint_violated_eq_close_to_zero() -> None:
     solution_x = np.array([1.0, 2.0])
     config = MagicMock(RationConfig)
 
-    constraint: dict[str, Callable[[Any, Any], float] | tuple[RationConfig] | str] \
-        = {"type": "eq", "fun": lambda x, cfg: 1e-9}
+    constraint: dict[str, Callable[[Any, Any], float] | tuple[RationConfig] | str] = {
+        "type": "eq",
+        "fun": lambda x, cfg: 1e-9,
+    }
 
     result = RationOptimizer.is_constraint_violated(solution_x, constraint, config)
     assert result is False
