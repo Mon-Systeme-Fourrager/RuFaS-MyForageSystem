@@ -1982,7 +1982,8 @@ def test_handle_synch_ed_hormone_delivery_and_set_estrus_day(
     )
 
     if clear_schedule_during_execution:
-        def _side_effect(repro_stream, sim_day, schedule):
+        def _side_effect(repro_stream: ReproductionDataStream, simulation_day: int,
+                         schedule: dict[int, dict[str, list[str]]]) -> ReproductionDataStream:
             assert reproduction.hormone_schedule
             reproduction.hormone_schedule = {}
             return repro_stream
