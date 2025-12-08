@@ -278,7 +278,7 @@ def test_create_all_storages(
     mock_feed_manager._available_feeds = [MagicMock(rufas_id=i) for i in available_ids]
 
     if raises_error:
-        with pytest.raises(ValueError):
+        with pytest.raises(KeyError):
             mock_feed_manager._create_all_storages(feed_storage_configs, feed_storage_instances)
         assert add_warning.call_count == 0
         return
