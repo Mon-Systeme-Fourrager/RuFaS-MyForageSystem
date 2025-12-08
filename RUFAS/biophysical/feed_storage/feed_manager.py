@@ -134,23 +134,23 @@ class FeedManager:
         feed_storage_instances : dict[str, list[str]]
             A dictionary that contains feed storage instance names.
         """
-        all_configs: list[dict[str, Any]] = [
-            storage_config
+        all_configs_by_name: dict[str, dict[str, Any]] = {
+            storage_config["name"]: storage_config
             for storage_config_list in feed_storage_configs.values()
             for storage_config in storage_config_list
-        ]
-        self._validate_storage_config_names(all_configs)
-        self._validate_crop_field_mapping(all_configs)
-
-        configs_by_name: dict[str, dict[str, Any]] = {
-            config["name"]: config for config in all_configs if "name" in config
+            if "name" in storage_config
         }
 
         instance_names: list[str] = [name for names in feed_storage_instances.values() for name in names]
+        instance_configs_by_name: dict[str, dict[str, Any]] = {
+            name: all_configs_by_name[name] for name in instance_names
+        }
+
+        self._validate_storage_config_names(list(instance_configs_by_name.values()))
+        self._validate_crop_field_mapping(list(instance_configs_by_name.values()))
 
         available_rufas_ids: list[int] = [feed.rufas_id for feed in self.available_feeds]
-        for instance_name in instance_names:
-            storage_config = configs_by_name[instance_name]
+        for instance_name, storage_config in instance_configs_by_name.items():
             storage_type_str = storage_config["storage_type"]
             storage_class = StorageType.get_storage_class(storage_type_str)
             storage = storage_class(storage_config)
@@ -196,7 +196,6 @@ class FeedManager:
             name = config.get("name", "<unnamed_storage>")
             for field_name in field_names:
                 combo_to_names[(crop_name, field_name)].append(name)
-            # combo_to_names[(crop_name, field_names)].append(name)
 
         duplicate_details = {
             combo: names for combo, names in combo_to_names.items() if len(names) > 1 and None not in combo
