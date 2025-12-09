@@ -257,7 +257,6 @@ class FieldManager:
 
         """
         crop_schedules = FieldManager._setup_crop_schedules(crop_rotation_configuration, available_crop_configs)
-        fertilizer
         all_planting_events: list[PlantingEvent] = []
         all_harvest_events: list[HarvestEvent] = []
         for schedule in crop_schedules:
