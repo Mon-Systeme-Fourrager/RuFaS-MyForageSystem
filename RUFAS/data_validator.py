@@ -1286,7 +1286,7 @@ class DataValidator:
 
         variable_parent: dict[str | int, Any] | list[Any] = data
         for key in element_hierarchy[:-1]:
-            variable_parent = variable_parent[str(key)] if type(variable_parent) is dict \
+            variable_parent = variable_parent[key] if isinstance(variable_parent, dict) \
                 else variable_parent[int(key)]
 
         element_path = ".".join([str(element) for element in element_hierarchy])
@@ -1294,9 +1294,8 @@ class DataValidator:
             f"Violates properties defined in metadata properties section '{properties_blob_key}'."
         )
         if "default" not in variable_properties.keys():
-            invalid_value = variable_parent.get(str(element_hierarchy[-1]), "missing required value") if type(
-                variable_parent
-            ) is dict else variable_parent[int(element_hierarchy[-1])]
+            invalid_value = variable_parent.get(element_hierarchy[-1], "missing required value") if \
+                isinstance(variable_parent, dict) else variable_parent[int(element_hierarchy[-1])]
             error_message = (
                 f"Variable: '{element_hierarchy[-1]}' has invalid value: '{invalid_value}'"
                 f", and cannot be changed to a default value. {properties_violation_message}"
