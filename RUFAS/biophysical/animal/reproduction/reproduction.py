@@ -1325,7 +1325,6 @@ class Reproduction:
             )
 
         elif reproduction_data_stream.days_in_milk > AnimalConfig.voluntary_waiting_period:
-            # For cows entering the herd but no estrus day has been set
             if (
                 self.repro_state_manager.is_in(ReproStateEnum.ENTER_HERD_FROM_INIT)
                 and reproduction_data_stream.days_born > self.estrus_day
@@ -1348,7 +1347,6 @@ class Reproduction:
                 )
 
             if reproduction_data_stream.days_born == self.estrus_day:
-                # Used in PGFatPD resynch program
                 if self.repro_state_manager.is_in(ReproStateEnum.WAITING_SHORT_ED_CYCLE):
                     self.repro_state_manager.exit(ReproStateEnum.WAITING_SHORT_ED_CYCLE)
                     reproduction_data_stream = self._handle_estrus_detection(
@@ -1373,7 +1371,6 @@ class Reproduction:
                         on_estrus_not_detected=self._simulate_full_estrus_cycle,
                     )
 
-                # Used in the initial ED portion of the ED-TAI protocol
                 elif self.repro_state_manager.is_in(ReproStateEnum.WAITING_FULL_ED_CYCLE_BEFORE_OVSYNCH):
                     self.repro_state_manager.exit(ReproStateEnum.WAITING_FULL_ED_CYCLE_BEFORE_OVSYNCH)
                     reproduction_data_stream = self._handle_estrus_detection(
@@ -2041,7 +2038,7 @@ class Reproduction:
             self.cow_reproduction_program == CowReproductionProtocol.ED
             or AnimalConfig.cow_resynch_method == CowReSynchSubProtocol.NONE
         ):
-            if reproduction_data_stream.days_born > self.estrus_day:  # No estrus day scheduled yet
+            if reproduction_data_stream.days_born > self.estrus_day:
                 self.repro_state_manager.enter(ReproStateEnum.WAITING_FULL_ED_CYCLE)
                 reproduction_data_stream.events.add_event(
                     reproduction_data_stream.days_born,
@@ -2063,7 +2060,6 @@ class Reproduction:
                 )
             return reproduction_data_stream
 
-        # For both TAI and ED-TAI protocols
         if AnimalConfig.cow_resynch_method == CowReSynchSubProtocol.Resynch_TAIafterPD:
             self.repro_state_manager.enter(ReproStateEnum.IN_OVSYNCH)
             reproduction_data_stream.events.add_event(
