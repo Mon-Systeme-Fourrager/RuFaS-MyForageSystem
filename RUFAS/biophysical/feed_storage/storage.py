@@ -76,7 +76,7 @@ class Storage:
     storage_name : str
         Name of the storage.
     field_names : str
-        Name of the field associated with the storage.
+        Names of the fields associated with the storage.
     crop_name : str
         Name of the crop associated with the storage.
     rufas_feed_id : int
