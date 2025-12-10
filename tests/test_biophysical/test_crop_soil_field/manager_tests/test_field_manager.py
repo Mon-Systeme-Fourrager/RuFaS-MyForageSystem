@@ -1446,6 +1446,7 @@ def test_setup_crop_schedule_schedule_no_data(
     with pytest.raises(ValueError):
         FieldManager._setup_crop_schedules("test_crop_schedule", crop_configs)
 
+
 def test_crop_schedule_setup_error(mocker: MockerFixture, mock_input_manager: InputManager) -> None:
     """Test that crop schedule setup fails correctly when a config is not available."""
     crop_rotations = [
