@@ -191,6 +191,7 @@ class InputManager:
         self.om.route_logs(self.data_validator.event_logs)
         if results == []:
             self.om.add_warning(
+                "No runtime metadata files processed",
                 f"No runtime metadata files were processed for key '{metadata_key}'. "
                 "Check if the configuration is correct or if this key is expected to have no runtime files.",
                 info_map,
