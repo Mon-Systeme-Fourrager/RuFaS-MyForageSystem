@@ -182,6 +182,7 @@ class Separator(Processor):
             methane_production_potential=self.held_manure.methane_production_potential,
             pen_manure_data=None,
             bedding_non_degradable_volatile_solids=self.held_manure.bedding_non_degradable_volatile_solids
+            * (1 - self.volatile_solids_efficiency),
         )
         liquid_stream_name = "SeparatedLiquid"
         self._report_manure_stream(liquid_manure_stream, liquid_stream_name, time.simulation_day)
