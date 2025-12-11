@@ -596,8 +596,9 @@ class HerdManager:
 
         self._update_stillborn_calf_statistics(stillborn_newborn_calves)
         if time.simulation_day > 0 and time.simulation_day % self.adjustment_period == 0:
-            removed_animals += self._check_if_cows_need_to_be_sold(simulation_day=time.simulation_day,
-                                                                    removed_animal=removed_animals)
+            removed_animals += self._check_if_cows_need_to_be_sold(
+                simulation_day=time.simulation_day, removed_animal=removed_animals
+            )
             newly_added_animals = self._check_if_replacement_heifers_needed(time=time)
 
             self._update_herd_structure(
@@ -690,11 +691,7 @@ class HerdManager:
             newborn_calf.events.add_event(newborn_calf.days_born, simulation_day, animal_constants.ENTER_HERD)
         return newborn_calf
 
-    def _check_if_cows_need_to_be_sold(
-        self,
-        simulation_day: int,
-        removed_animal: list[Animal]
-    ) -> list[Animal]:
+    def _check_if_cows_need_to_be_sold(self, simulation_day: int, removed_animal: list[Animal]) -> list[Animal]:
         """
         Checks if surplus cows need to be sold based on herd size.
 
