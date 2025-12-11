@@ -127,8 +127,7 @@ class SlurryStorageUnderfloor(Storage):
             bedding_to_manure_non_degradable_volatile_solids_ratio = 0
         else:
             bedding_to_manure_non_degradable_volatile_solids_ratio = (
-                self._manure_to_process.bedding_non_degradable_volatile_solids
-                / denominator
+                self._manure_to_process.bedding_non_degradable_volatile_solids / denominator
             )
 
         self._manure_to_process.total_solids = max(
