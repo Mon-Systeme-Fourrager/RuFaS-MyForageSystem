@@ -157,7 +157,7 @@ class TaskManager:
         )
         self.pool = multiprocessing.Pool(
             workers, maxtasksperchild=1
-        )  # maxtasksperchild=1 to maintain isolation between tasks and ensure no memory leaks happens in IO Managers
+        ) if workers > 1 else None # maxtasksperchild=1 to maintain isolation between tasks and ensure no memory leaks happens in IO Managers
         parsed_single_run_args, parsed_multi_run_args = self._parse_input_tasks()
         self.output_manager.add_log(
             "Task Manager parsed tasks",
@@ -453,7 +453,12 @@ class TaskManager:
             workers=workers,
             metadata_path=metadata_path,
         )
-        results = self.pool.imap(task_with_args, single_run_args)
+
+        if self.pool is not None:
+            results = self.pool.imap(task_with_args, single_run_args)
+        else:
+            results = (task_with_args(v) for v in single_run_args)
+
         failed = []
         for result in results:
             if result is not None:
@@ -517,7 +522,7 @@ class TaskManager:
             output_manager.run_startup_sequence(
                 verbosity=LogVerbosity(args["log_verbosity"]),
                 exclude_info_maps=args["exclude_info_maps"],
-                output_directory=Path("output/"),
+                output_directory=None,
                 clear_output_directory=False,
                 chunkification=args["chunkification"],
                 max_memory_usage_percent=int(args["maximum_memory_usage_percent"] / workers),
