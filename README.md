@@ -12,7 +12,7 @@
 ---
 
 # Dependency
-For Mon Système Fourrager, the default branch is `dev-main`.
+For Mon Système Fourrager, the default branch is `dev-msf`.
 This branch MUST NOT be deleted, since:
 - it includes minor modifications to the RuFaS source code in order to allow its usage as a dependency
     (e.g. removing useless verifications of the python version and dependencies);
