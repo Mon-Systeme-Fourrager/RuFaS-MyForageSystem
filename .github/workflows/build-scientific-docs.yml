@@ -27,7 +27,8 @@ jobs:
       - name: Compile LaTeX document
         uses: xu-cheng/latex-action@v4
         with:
-          root_file: docs/scientific/main.tex
+          working_directory: docs/scientific
+          root_file: main.tex
 
       - name: Upload PDF artifact
         uses: actions/upload-artifact@v4

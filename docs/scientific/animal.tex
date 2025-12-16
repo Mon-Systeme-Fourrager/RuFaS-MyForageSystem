@@ -304,7 +304,7 @@ When a HeiferIII or Cow reaches full gestation length, they start lactating and 
 
 \section{Herd-level Processes and Management}\label{sec:AnManage}
      
-\subsection{Herd Initialization} \label{herdinit}
+\subsection{Herd Initialization} \label{sec:animalINPUTS}\label{herdinit}
 
 \begin{tcolorbox}[colback=white, colframe=black, title=Important Note]
 \textit{In RuFaS code, the term “herd initialization” is used to refer to both the process of generating an animal population file and of selecting from that population to create a specific herd at the start of a simulation. In this doc, those two processes will be differentiated by calling them “Generation” and “Selection”, respectively. }
@@ -560,7 +560,7 @@ The \_random\_sample\_with\_replacement() method selects animals from each of th
 \endhead
 
 \midrule
-\multicolumn{5}{@{}r@{}}{\textit{Continued on next page}} \\
+\multicolumn{6}{@{}r@{}}{\textit{Continued on next page}} \\
 \endfoot
 
 \bottomrule
@@ -694,7 +694,7 @@ Calculations are included for the following requirement categories:
 Where appropriate, requirement calculations are differentiated by animal age and reproductive status.
 \vspace{0.5cm}
 
-\subsubsecion{Nutrient Requirements of Dairy Cattle (NRC)} \label{sec:NRC}
+\subsubsection{Nutrient Requirements of Dairy Cattle (NRC)} \label{sec:NRC}
 
     \textbf{ Energy Requirements} For details about the variables included in each calculation, please refer to the \hyperref[energykey]{energy requirements key}.
     \vspace{0.2cm}
@@ -1171,7 +1171,7 @@ Phosphorus Equations
             {\raggedleft \textbf{[AN.NRC.40]}\par}
 \vspace{0.25cm}
 
-        {\underline{Heifers}
+        {\underline{Heifers}}
                 \vspace{0.2cm}
 
 Calcium Equation
@@ -1451,7 +1451,7 @@ WOL        & Week of lactation & Units are the integer part of days \(\frac{DIM}
 \vspace{0.25cm}
 
 \begin{center}
-    \(UterW = ((CBW * 0.2288 - 0.204) * exp^{-0.2 * DyLact} + 0.204)} \)
+    \(UterW = ((CBW * 0.2288 - 0.204) * \exp^{-0.2 * DyLact} + 0.204)\)
 \end{center}
 \vspace{0.5cm}
             {\raggedleft\textbf{[AN.NSM.3]} \par}
@@ -2246,10 +2246,10 @@ Valine & Tyrosine \\
     \begin{enumerate}
         \item Lactating Cows
             \vspace{0.25cm}
-        \begin{center}
+    \begin{center}
     \(TotalAArequirements_{\text{i}} = (\frac{NetAAscurf_{\text{i}} + NetAAMFP_{\text{i}} + NetAAGrowth_{\text{i}} + NetAAMilk_{\text{i}}}{TargetEfficiencyAA_{\text{i}}}) + (\frac{NetAAGest_{\text{i}}}{TargetEfficiencyGest}) + NetAAEndUrine_{\text{i}}\)
     \end{center}
-    \vspace{0.4cm
+    \vspace{0.4cm}
 
         \item Late Gestation Cows and Heifers
                     \vspace{0.25cm}
@@ -2333,7 +2333,9 @@ TargetEfficiencyAAi\textsuperscript{1} &  Proposed target efficiencies of essent
     \end{longtable}
 \vspace{-0.5cm}
 
-\multicolumn{3}{l}{\textsuperscript{1} \cite{nrc2021}} 
+\begin{flushleft}
+\textsuperscript{1} \cite{nrc2021}
+\end{flushleft}
 
 
 
@@ -2523,7 +2525,9 @@ TotalTDN\textsuperscript{1} & Dietary TDN content & \\
     \end{longtable}
 \vspace{-0.5cm}
 
-\multicolumn{3}{l}{\textsuperscript{1} \cite{nrc2001}} 
+\begin{flushleft}
+\textsuperscript{1} \cite{nrc2001}
+\end{flushleft}
 
 
 
@@ -2658,7 +2662,7 @@ RUPdiet  &   Dietary digestible RUP, &   g/d\\
     \vspace{0.25cm}
 
     \begin{center}
-        \(Ca_{supply} = \sum_{i}Feed_{i} * Ca_{i} * \frac{dCa_{i}}{100}}\)
+        \(Ca_{supply} = \sum_{i} Feed_{i} * Ca_{i} * \frac{dCa_{i}}{100}\)
     \end{center}
         \vspace{0.5cm}
     
@@ -2817,9 +2821,9 @@ This section is divided into several subsections including Rumen Degraded and Un
     \vspace{0.25cm}
 
     \begin{center}
-    \(Kpi = 2.904 + 1.375 * \frac{DMI}{BW} * 100 - 0.02 * PercentConc,\ if}\ feeding\ concentrate\)
-    \(Kpi = 3.362 + 0.479  * \frac{DMI}{BW} * 100 - 0.017 * NDFi - 0.007 * PercentConc,\ if}\ feeding\ forage\)
-    \(Kpi = 3.054 + 0.614  * \frac{DMI}{BW} * 100 ,\ if}\ feeding\ wet\ forage\)
+    \(Kpi = 2.904 + 1.375 * \frac{DMI}{BW} * 100 - 0.02 * PercentConc\) if feeding concentrate\\
+    \(Kpi = 3.362 + 0.479  * \frac{DMI}{BW} * 100 - 0.017 * NDFi - 0.007 * PercentConc\) if feeding forage\\
+    \(Kpi = 3.054 + 0.614  * \frac{DMI}{BW} * 100\) if feeding wet forage
     \end{center}
     \vspace{0.5cm}
     
@@ -2960,11 +2964,11 @@ ration.phosphorus\_requirement\_buffer & Increase in phosphorus nutrient require
 
 \renewcommand{\arraystretch}{1.4} % More vertical space between rows
 
-\begin{longtable}{@{} L{3.5cm} L{5.5cm} L{4.5cm} C{2cm} C{2cm} C{2cm} @{}}
+\begin{longtable}{@{} L{3.5cm} L{5.5cm} L{4.5cm} C{2cm} C{2cm} @{}}
 \caption{Key inputs found in the feed input file.} \\
 \toprule
 \multicolumn{1}{c}{\textbf{Section}} &
-\multicolumn{1}{c}{\textbf{Variable}} & 
+\multicolumn{1}{c}{\textbf{Variable}} &
 \multicolumn{1}{c}{\textbf{Definition}} &
 \multicolumn{1}{c}{\textbf{Default}} &
 \multicolumn{1}{c}{\textbf{Min}} &
@@ -2974,7 +2978,7 @@ ration.phosphorus\_requirement\_buffer & Increase in phosphorus nutrient require
 
 \toprule
 \multicolumn{1}{c}{\textbf{Section}} &
-\multicolumn{1}{c}{\textbf{Variable}} & 
+\multicolumn{1}{c}{\textbf{Variable}} &
 \multicolumn{1}{c}{\textbf{Definition}} &
 \multicolumn{1}{c}{\textbf{Default}} &
 \multicolumn{1}{c}{\textbf{Min}} &
@@ -2983,7 +2987,7 @@ ration.phosphorus\_requirement\_buffer & Increase in phosphorus nutrient require
 \endhead
 
 \midrule
-\multicolumn{6}{@{}r@{}}{\textit{Continued on next page}} \\
+\multicolumn{5}{@{}r@{}}{\textit{Continued on next page}} \\
 \endfoot
 
 \bottomrule
@@ -3098,7 +3102,7 @@ The generalized equation for sequential quadratic programming is as follows \par
 \endhead
 
 \midrule
-\multicolumn{6}{@{}r@{}}{\textit{Continued on next page}} \\
+\multicolumn{4}{@{}r@{}}{\textit{Continued on next page}} \\
 \endfoot
 
 \bottomrule
@@ -3133,11 +3137,11 @@ The user-defined ration methodology follows the same process as described in the
 
 \renewcommand{\arraystretch}{1.4} % More vertical space between rows
 
-\begin{longtable}{@{} L{3.5cm} L{5.5cm} L{4.5cm} C{2cm} C{2cm} C{2cm} @{}}
+\begin{longtable}{@{} L{3.5cm} L{5.5cm} L{4.5cm} C{2cm} C{2cm} @{}}
 \caption{Key inputs found in the feed input file specific to user defined ration methodology. All are found in the section user\_defined\_ration\_percentages} \\
 \toprule
 
-\multicolumn{1}{c}{\textbf{Variable}} & 
+\multicolumn{1}{c}{\textbf{Variable}} &
 \multicolumn{1}{c}{\textbf{Definition}} &
 \multicolumn{1}{c}{\textbf{Default}} &
 \multicolumn{1}{c}{\textbf{Min}} &
@@ -3147,7 +3151,7 @@ The user-defined ration methodology follows the same process as described in the
 
 \toprule
 
-\multicolumn{1}{c}{\textbf{Variable}} & 
+\multicolumn{1}{c}{\textbf{Variable}} &
 \multicolumn{1}{c}{\textbf{Definition}} &
 \multicolumn{1}{c}{\textbf{Default}} &
 \multicolumn{1}{c}{\textbf{Min}} &
@@ -3156,7 +3160,7 @@ The user-defined ration methodology follows the same process as described in the
 \endhead
 
 \midrule
-\multicolumn{6}{@{}r@{}}{\textit{Continued on next page}} \\
+\multicolumn{5}{@{}r@{}}{\textit{Continued on next page}} \\
 \endfoot
 
 \bottomrule
