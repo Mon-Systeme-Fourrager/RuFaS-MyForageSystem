@@ -997,7 +997,13 @@ class Pen:
             # Lac cow success exit and non lac cow one time run only exit
             if solution.success or (self.animal_combination is not AnimalCombination.LAC_COW):
                 break
-
+            if num_attempts > RationManager.maximum_ration_reformulation_attempts:
+                om.add_log(
+                    "Maximum ration reformulation attempts exceeded.",
+                    f"See output variable failed_constraint_summary_for_pen_{self.id} for more information.",
+                    info_map,
+                )
+                break
             adjusted_dry_matter_lower = initial_dry_matter_requirement_fixed * (
                 1 - AnimalModuleConstants.DMI_CONSTRAINT_FRACTION + RationManager.tolerance
             )
@@ -1019,15 +1025,10 @@ class Pen:
                 )
                 & set(constraints_failed_list)
             )
-            need_dry_matter_decrease = bool(
-                set(["protein_constraint_upper", "DMI_constraint_upper"]) & set(constraints_failed_list)
-            )
 
             if is_ration_defined_by_user and (
                 adjusted_dry_matter_lower < initial_dry_matter_requirement < adjusted_dry_matter_upper
             ):
-                if num_attempts > RationManager.maximum_ration_reformulation_attempts:
-                    break
                 if need_dry_matter_increase:
                     initial_dry_matter_requirement = initial_dry_matter_requirement * 1.1
                     continue
