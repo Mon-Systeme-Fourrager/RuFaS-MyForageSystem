@@ -33,7 +33,7 @@ class RationManager:
     ration_feeds: dict[AnimalCombination, list[RUFAS_ID]] | None
     user_defined_rations: dict[AnimalCombination, dict[RUFAS_ID, float]] | None
     tolerance: float | None = 0.0
-    maximum_ration_reformulation_attempts: int = 250
+    maximum_ration_reformulation_attempts: int
 
     @classmethod
     def set_ration_feeds(cls, ration_config: dict[str, list[int]]) -> None:
