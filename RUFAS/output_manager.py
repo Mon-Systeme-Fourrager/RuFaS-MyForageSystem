@@ -2344,7 +2344,7 @@ class OutputManager(object):
         self,
         verbosity: LogVerbosity,
         exclude_info_maps: bool,
-        output_directory: Path | None,
+        output_directory: Path,
         clear_output_directory: bool,
         chunkification: bool,
         max_memory_usage_percent: int,
@@ -2361,16 +2361,14 @@ class OutputManager(object):
         self.set_exclude_info_maps_flag(exclude_info_maps)
         self.set_log_verbose(verbosity)
         self.set_metadata_prefix(output_prefix)
-        if output_directory is not None:
-            self.create_directory(output_directory)
-            if clear_output_directory:
-                self.clear_output_dir(variables_file_path, output_directory)
+        self.create_directory(output_directory)
+        if clear_output_directory:
+            self.clear_output_dir(variables_file_path, output_directory)
 
-            if chunkification:
-                self.setup_pool_overflow_control(
-                    output_directory, max_memory_usage_percent, max_memory_usage, save_chunk_threshold_call_count
-                )
-
+        if chunkification:
+            self.setup_pool_overflow_control(
+                output_directory, max_memory_usage_percent, max_memory_usage, save_chunk_threshold_call_count
+            )
         self.is_end_to_end_testing_run = is_end_to_end_testing_run
 
     def validate_filter_content(self, filters_dir_path: Path) -> None:

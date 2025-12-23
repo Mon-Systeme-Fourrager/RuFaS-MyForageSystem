@@ -746,7 +746,7 @@ def test_task_invalid_data(mocker: MockerFixture, mock_output_manager: OutputMan
     mock_run_startup_sequence.assert_called_once_with(
         verbosity=LogVerbosity.LOGS,
         exclude_info_maps=args["exclude_info_maps"],
-        output_directory=None,
+        output_directory=Path("output/"),
         clear_output_directory=False,
         chunkification=False,
         max_memory_usage_percent=0,
