@@ -34,7 +34,7 @@ from RUFAS.weather import Weather
 from .sample_crop_data import sample_crop_data, sample_crop_data_no_mass
 
 
-@pytest.fixture  # type: ignore[misc]
+@pytest.fixture
 def harvested_crop() -> HarvestedCrop:
     """
     Pytest fixture to create a HarvestedCrop instance for testing.
@@ -47,28 +47,28 @@ def harvested_crop() -> HarvestedCrop:
     return HarvestedCrop(**sample_crop_data)
 
 
-@pytest.fixture  # type: ignore[misc]
+@pytest.fixture
 def alfalfa_crop() -> HarvestedCrop:
     return HarvestedCrop(**sample_crop_data_no_mass, fresh_mass=50)
 
 
-@pytest.fixture  # type: ignore[misc]
+@pytest.fixture
 def corn_crop() -> HarvestedCrop:
     return HarvestedCrop(**sample_crop_data_no_mass, fresh_mass=150)
 
 
-@pytest.fixture  # type: ignore[misc]
+@pytest.fixture
 def grass_crop() -> HarvestedCrop:
     return HarvestedCrop(**sample_crop_data_no_mass, fresh_mass=100)
 
 
-@pytest.fixture  # type: ignore[misc]
+@pytest.fixture
 def purchased_feed() -> PurchasedFeed:
     """PurchasedFeed fixture for testing."""
     return PurchasedFeed(rufas_id=1, dry_matter_mass=100.0, storage_time=date(year=2025, month=3, day=6))
 
 
-@pytest.fixture  # type: ignore[misc]
+@pytest.fixture
 def mock_available_feeds() -> list[Feed]:
     feed_1, feed_2, feed_3, feed_4, feed_5 = (MagicMock(auto_spec=Feed) for _ in range(5))
     feed_1.rufas_id, feed_2.rufas_id, feed_3.rufas_id, feed_4.rufas_id, feed_5.rufas_id = 1, 2, 3, 4, 5
@@ -76,7 +76,7 @@ def mock_available_feeds() -> list[Feed]:
     return [feed_1, feed_2, feed_3, feed_4, feed_5]
 
 
-@pytest.fixture  # type: ignore[misc]
+@pytest.fixture
 def feed_manager(mocker: MockerFixture, mock_available_feeds: list[Feed]) -> FeedManager:
     """Pytest fixture to create a FeedManager instance for testing."""
     mocker.patch.object(FeedManager, "__init__", return_value=None)
@@ -106,13 +106,13 @@ def feed_manager(mocker: MockerFixture, mock_available_feeds: list[Feed]) -> Fee
     return feed_manager
 
 
-@pytest.fixture  # type: ignore[misc]
+@pytest.fixture
 def time() -> RufasTime:
     """RufasTime fixture for testing."""
     return RufasTime(datetime(2022, 12, 20), datetime(2025, 3, 7), datetime(2025, 3, 6))
 
 
-@pytest.fixture  # type: ignore[misc]
+@pytest.fixture
 def storage() -> Storage:
     """
     Pytest fixture to create a Storage instance for testing.
@@ -168,7 +168,7 @@ def test_feed_manager_init(mocker: MockerFixture, storage: Storage) -> None:
     assert feed_manager.crop_to_rufas_id == {"corn_silage": 1}
 
 
-@pytest.mark.parametrize(  # type: ignore[misc]
+@pytest.mark.parametrize(
     "feed_storage_configs,feed_storage_instances,available_ids,expected_keys,expected_warning_calls,raises_error",
     [
         (
@@ -877,7 +877,7 @@ def test_purchase_feed_error(
         )
 
 
-@pytest.mark.parametrize(  # type: ignore[misc]
+@pytest.mark.parametrize(
     "purchase_type, expected_dry_matter_mass",
     [
         ("test_purchase", 100.0),
@@ -905,7 +905,7 @@ def test_store_purchased_feed(
     assert received_feed.dry_matter_mass == pytest.approx(expected_dry_matter_mass)
 
 
-@pytest.mark.parametrize(  # type: ignore[misc]
+@pytest.mark.parametrize(
     "grown_amount, grown_date, purchased_amount, purchased_date, expected_grown, expected_purchased",
     [
         (50.0, date(2024, 6, 1), 50.0, date(2024, 6, 2), 0.0, 25.0),
@@ -1166,7 +1166,7 @@ def test_gather_available_feeds_by_id_groups_and_sorts() -> None:
 
 @pytest.mark.parametrize(
     "standard, feed_rep", [(NutrientStandard.NASEM, NASEMFeed), (NutrientStandard.NRC, NRCFeed)]
-)  # type: ignore[misc]
+)
 def test_setup_available_feeds(
     feed_manager: FeedManager,
     mocker: MockerFixture,
@@ -1236,7 +1236,7 @@ def test_setup_available_feeds_error(feed_manager: FeedManager, mocker: MockerFi
         feed_manager._setup_available_feeds(feed_config, NutrientStandard.NASEM)
 
 
-@pytest.mark.parametrize(  # type: ignore[misc]
+@pytest.mark.parametrize(
     "standard, expected", [(NutrientStandard.NASEM, "NASEM_Comp"), (NutrientStandard.NRC, "NRC_Comp")]
 )
 def test_process_feed_library(

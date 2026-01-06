@@ -30,7 +30,7 @@ class Dry(Grain):
     Inherits from Grain.
     """
 
-    def __init__(self, config: dict[str, str | float]) -> None:
+    def __init__(self, config: dict[str, str | float | list[str]]) -> None:
         super().__init__(config)
 
 
@@ -41,5 +41,5 @@ class HighMoisture(Grain):
     Inherits from Grain.
     """
 
-    def __init__(self, config: dict[str, str | float]) -> None:
+    def __init__(self, config: dict[str, str | float | list[str]]) -> None:
         super().__init__(config)
