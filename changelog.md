@@ -268,6 +268,7 @@ v0.9.2
 - [2635](https://github.com/RuminantFarmSystems/MASM/pull/2635) - [minor change] [NoInputChange][NoOutputChange] Updates the ReadMe `Getting Started` section to be more straightforward about how to get RUFAS running.
 - [2634](https://github.com/RuminantFarmSystems/MASM/pull/2634) - [minor change] [NoInputChange][NoOutputChange][Animal] Reinstates functionality of report_daily_herd_total_ration method.
 - [2639](https://github.com/RuminantFarmSystems/MASM/pull/2639) - [minor change] [InputChange][NoOutputChange][EEE] Add Economics prices dataset.
+- [2640](https://github.com/RuminantFarmSystems/MASM/pull/2640) - [minor change] [InputChange][NoOutputChange][Input Manager] Add functionality to load data anad metadata lazily.
 - [2643](https://github.com/RuminantFarmSystems/MASM/pull/2643) - [minor change] [NoInputChange][NoOutputChange][Animal] Reinstates functionality of report_daily_herd_total_ration method.
 - [2638](https://github.com/RuminantFarmSystems/MASM/pull/2638) - [minor change] [NoInputChange][OutputChange] Institutes 25% manure retention for anaerobic lagoon.
 - [2641](https://github.com/RuminantFarmSystems/MASM/pull/2641) - [minor change] [NoInputChange][NoOutputChange][ReadMe] Fix Readme badges.
@@ -281,8 +282,12 @@ v0.9.2
 - [2655](https://github.com/RuminantFarmSystems/MASM/pull/2655) - [minor change] [Animal] [InputChange] [NoOutputChange] Updated RationManager class to allow for more flexibility in user inputs in Feed input file.
 - [2670](https://github.com/RuminantFarmSystems/MASM/pull/2670) - [minor change] [Animal] [InputChange] [NoOutputChange] Updated Animal module unit testing to 100% coverage.
 - [2673](https://github.com/RuminantFarmSystems/MASM/pull/2673) - [minor change] [Feed] [InputChange] [NoOutputChange] Adds a default for purchased feed buffer of 0.15.
-- [2677](https://github.com/RuminantFarmSystems/RuFaS/pull/2677) - [minor change] [Animal] [NoInputChange] [NoOutputChange] Removes possibility of infinite loop in ration formulation.
 - [2676](https://github.com/RuminantFarmSystems/MASM/pull/2673) - [minor change] [Manure] [NoInputChange] [NoOutputChange] Corrects a bug in Separators and adds a check to prevent a bug in Slurry Storage Outdoor, Slurry Storage Underfloor, and Anaerobic Lagoon.
+- [2674](https://github.com/RuminantFarmSystems/MASM/pull/2674) - [minor change] [Feed] [NoInputChange] [NoOutputChange] Prevent simulation fails when metadata blobs for fields/manure/harvest does not exist.
+- [2676](https://github.com/RuminantFarmSystems/MASM/pull/2676) - [minor change] [Manure] [NoInputChange] [NoOutputChange] Corrects a bug in Separators and adds a check to prevent a bug in Slurry Storage Outdoor, Slurry Storage Underfloor, and Anaerobic Lagoon.
+- [2688](https://github.com/RuminantFarmSystems/MASM/pull/2688) - [minor change] [InputManager] [NoInputChange] [NoOutputChange] Hot fix to correct the missing part of 2640.
+- [2672](https://github.com/RuminantFarmSystems/MASM/pull/2672) - [minor change] [EEE] [NoInputChange] [NoOutputChange] Allow multiple crop-field combos to map to the same feed storage.
+- [2677](https://github.com/RuminantFarmSystems/RuFaS/pull/2677) - [minor change] [Animal] [NoInputChange] [NoOutputChange] Removes possibility of infinite loop in ration formulation.
 
 ### v0.9.2
 
