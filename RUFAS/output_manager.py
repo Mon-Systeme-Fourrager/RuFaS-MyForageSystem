@@ -2569,6 +2569,7 @@ class OutputManager(object):
             "simplify_units": partial(self.validate_type, expected=bool, type_label="a boolean"),
             "data_significant_digits": partial(self.validate_type, expected=int, type_label="an integer"),
             "direction": self.validate_direction,
+            "use_name": partial(self.validate_type, expected=str, type_label="a string"),
         }
 
         for key, value in filter_content.items():
