@@ -298,7 +298,8 @@ def test_validate_emptying_fraction(
 
 
 @pytest.mark.parametrize(
-    "vol_sols,temp,degradable,expected", [(100.0, 20.0, False, 0.001903822474058042), (100.0, -10.0, True, 0.00430691788)]
+    "vol_sols,temp,degradable,expected",
+    [(100.0, 20.0, False, 0.001903822474058042), (100.0, -10.0, True, 0.00430691788)],
 )
 def test_calculate_methane_emissions(vol_sols: float, temp: float, degradable: bool, expected: float) -> None:
     """Test that methane emissions from a storage are calculated correctly."""
