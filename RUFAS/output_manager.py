@@ -1291,7 +1291,7 @@ class OutputManager(object):
             A filtered variables pool based on either inclusion or exclusion.
         """
         filter_name: str = filter_content.get("name", "NO NAME FOUND")
-        use_filter_name: bool = filter_content.get("use_filter_name", False)
+        use_filter_name: bool = filter_content.get("use_name", False)
         filter_by_exclusion: bool = filter_content.get("filter_by_exclusion", False)
         use_filter_key_name: bool = filter_content.get("use_filter_key_name", False)
         info_map = {
