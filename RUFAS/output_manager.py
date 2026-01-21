@@ -1416,8 +1416,9 @@ class OutputManager(object):
                     if use_filter_key_name:
                         combined_key = filtered_key
                     else:
-                        combined_key = f"{filter_name}_{counter}.{filtered_key}" if use_filter_name \
-                            else f"{key}.{filtered_key}"
+                        combined_key = (
+                            f"{filter_name}_{counter}.{filtered_key}" if use_filter_name else f"{key}.{filtered_key}"
+                        )
                     if combined_key in results.keys():
                         results[combined_key].get("info_maps", []).extend(info_maps)
                         results[combined_key]["values"].extend(filtered_value)

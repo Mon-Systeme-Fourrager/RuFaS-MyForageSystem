@@ -9,7 +9,6 @@ from RUFAS.graph_generator import GraphGenerator
 from RUFAS.units import MeasurementUnits
 from RUFAS.util import Utility, Aggregator
 
-
 AGGREGATION_FUNCTIONS: dict[str, Callable[[list[float]], float] | Callable[[list[float]], float | None]] = {
     "average": Aggregator.average,
     "division": Aggregator.division,
