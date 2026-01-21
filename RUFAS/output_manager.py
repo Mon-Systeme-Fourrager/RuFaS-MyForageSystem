@@ -1291,7 +1291,7 @@ class OutputManager(object):
             A filtered variables pool based on either inclusion or exclusion.
         """
         filter_name: str = filter_content.get("name", "NO NAME FOUND")
-        use_filter_name: str = filter_content.get("use_name", "")
+        use_filter_name: bool = filter_content.get("use_filter_name", False)
         filter_by_exclusion: bool = filter_content.get("filter_by_exclusion", False)
         use_filter_key_name: bool = filter_content.get("use_filter_key_name", False)
         info_map = {
@@ -1354,7 +1354,7 @@ class OutputManager(object):
         filtered_pool: dict[str, OutputManager.pool_element_type],
         selected_variables: list[str] | None,
         filter_name: str,
-        use_filter_name: str,
+        use_filter_name: bool,
         filter_by_exclusion: bool,
         use_filter_key_name: bool,
     ) -> dict[str, OutputManager.pool_element_type]:
@@ -1369,8 +1369,8 @@ class OutputManager(object):
             list of key names to select or exclude from variables containing dictionaries.
         filter_name : str
             Name of the filter used to collect variables for the filtered pool.
-        use_filter_name : str
-            Whether to use the filter name when constructing the key name for data pulled from a dictionary.
+        use_filter_name : bool
+            Whether to use the filter name when constructing the key name for data pulled from the filtered pool.
         filter_by_exclusion : bool
             Whether keys in dictionaries should be filtered by exclusion.
         use_filter_key_name : bool
@@ -2575,7 +2575,8 @@ class OutputManager(object):
             "simplify_units": partial(self.validate_type, expected=bool, type_label="a boolean"),
             "data_significant_digits": partial(self.validate_type, expected=int, type_label="an integer"),
             "direction": self.validate_direction,
-            "use_name": partial(self.validate_type, expected=str, type_label="a string"),
+            "use_name": partial(self.validate_type, expected=bool, type_label="a boolean"),
+            "use_filter_key_name": partial(self.validate_type, expected=bool, type_label="a boolean"),
         }
 
         for key, value in filter_content.items():

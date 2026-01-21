@@ -405,10 +405,10 @@ class ReportGenerator:
             )
             if display_units:
                 aggregate_report = {
-                    f"{next(iter(aggregate_report))}_hor_agg_({aggregated_units})": horizontally_aggregated
+                    f"hor_agg_({aggregated_units})": horizontally_aggregated
                 }
             else:
-                aggregate_report = {f"{next(iter(aggregate_report))}_hor_agg": horizontally_aggregated}
+                aggregate_report = {"hor_agg": horizontally_aggregated}
 
         elif vertical_agg_key:
             vertical_aggregator = AGGREGATION_FUNCTIONS[vertical_agg_key]

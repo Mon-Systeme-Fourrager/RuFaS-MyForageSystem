@@ -2338,17 +2338,17 @@ def test_filter_variables_pool_complex(
     mock_output_manager.variables_pool = mock_variables_pool_complex
 
     # use filter_name
-    filter_content: Dict[str, Any] = {
+    filter_content: dict[str, Any] = {
         "name": "test_case_1",
         "filters": ["^DummyClass1.*"],
         "filter_by_exclusion": False,
         "use_name": True,
         "variables": ["var2", "a"],
     }
-    expected_result: Dict[str, OutputManager.pool_element_type] = {
-        "test_case_1_0": {"values": ["value1", "value2", "value3"]},
-        "test_case_1_1.a": {"values": ["A", "AA"]},
-        "test_case_1_2.a": {"values": ["AAA"]},
+    expected_result: dict[str, OutputManager.pool_element_type] = {
+        "DummyClass1.dummy_fun1.dummy_var1": {"values": ["value1", "value2", "value3"]},
+        "DummyClass1.dummy_fun1.dummy_var2.a": {"values": ["A", "AA"]},
+        "DummyClass1.dummy_fun2.dummy_var3.a": {"values": ["AAA"]},
     }
 
     assert mock_output_manager.filter_variables_pool(filter_content) == expected_result
@@ -2357,10 +2357,13 @@ def test_filter_variables_pool_complex(
     filter_content = {"filters": ["^DummyClass1.*"], "filter_by_exclusion": False, "variables": "a"}
     expected_result = {
         "DummyClass1.dummy_fun1.dummy_var1": {"values": ["value1", "value2", "value3"]},
-        "a": {"values": ["A", "AA", "AAA"]},
+        "DummyClass1.dummy_fun1.dummy_var2.a": {"values": ["A", "AA"]},
+        "DummyClass1.dummy_fun2.dummy_var3.a": {"values": ["AAA"]},
     }
+
     mock_add_error = mocker.patch.object(mock_output_manager, "add_error")
-    actual: Dict[str, OutputManager.pool_element_type] = mock_output_manager.filter_variables_pool(filter_content)
+    actual: dict[str, OutputManager.pool_element_type] = mock_output_manager.filter_variables_pool(filter_content)
+
     mock_add_error.assert_has_calls(
         [
             call(
@@ -2373,7 +2376,7 @@ def test_filter_variables_pool_complex(
                     "function": "_parse_filtered_variables",
                     "filter_name": "NO NAME FOUND",
                     "filter_by_exclusion": False,
-                    "use_filter_name": "",
+                    "use_filter_name": False,
                 },
             ),
             call(
@@ -2386,11 +2389,13 @@ def test_filter_variables_pool_complex(
                     "function": "_parse_filtered_variables",
                     "filter_name": "NO NAME FOUND",
                     "filter_by_exclusion": False,
-                    "use_filter_name": "",
+                    "use_filter_name": False,
                 },
             ),
-        ]
+        ],
+        any_order=False,
     )
+
     assert actual == expected_result
 
     # use_filter_name in dict data
@@ -2403,9 +2408,14 @@ def test_filter_variables_pool_complex(
     }
     expected_result = {
         "DummyClass1.dummy_fun1.dummy_var1": {"values": ["value1", "value2", "value3"]},
-        "a": {"values": ["A", "AA", "AAA"]},
-        "b": {"values": [1.0, 2.0, 3.0]},
-        "c": {"values": [True, True, False]},
+
+        "DummyClass1.dummy_fun1.dummy_var2.a": {"values": ["A", "AA"]},
+        "DummyClass1.dummy_fun1.dummy_var2.b": {"values": [1.0, 2.0]},
+        "DummyClass1.dummy_fun1.dummy_var2.c": {"values": [True, True]},
+
+        "DummyClass1.dummy_fun2.dummy_var3.a": {"values": ["AAA"]},
+        "DummyClass1.dummy_fun2.dummy_var3.b": {"values": [3.0]},
+        "DummyClass1.dummy_fun2.dummy_var3.c": {"values": [False]},
     }
 
     assert mock_output_manager.filter_variables_pool(filter_content) == expected_result
@@ -2474,7 +2484,7 @@ def test_parse_filtered_variables(
     """Tests _parse_filtered_variables in the Output Manager."""
     mock_output_manager._variables_usage_counter = Counter()
 
-    actual = mock_output_manager._parse_filtered_variables(pool, vars, "test", False, exclusion)
+    actual = mock_output_manager._parse_filtered_variables(pool, vars, "test", False, exclusion, True)
 
     assert actual == expected
     assert mock_output_manager._variables_usage_counter == expected_counter
