@@ -2347,15 +2347,12 @@ def test_filter_variables_pool_complex(
     expected_result: dict[str, OutputManager.pool_element_type] = {
         "test_case_1_0": {"values": ["value1", "value2", "value3"]},
         "test_case_1_1.a": {"values": ["A", "AA"]},
-        "test_case_1_2.a": {"values": ["AAA"]}, }
+        "test_case_1_2.a": {"values": ["AAA"]},
+    }
     assert mock_output_manager.filter_variables_pool(filter_content) == expected_result
 
     # unpacking pool error
-    filter_content = {
-        "filters": ["^DummyClass1.*"],
-        "filter_by_exclusion": False,
-        "variables": "a"
-    }
+    filter_content = {"filters": ["^DummyClass1.*"], "filter_by_exclusion": False, "variables": "a"}
     expected_result = {
         "DummyClass1.dummy_fun1.dummy_var1": {"values": ["value1", "value2", "value3"]},
         "DummyClass1.dummy_fun1.dummy_var2.a": {"values": ["A", "AA"]},
