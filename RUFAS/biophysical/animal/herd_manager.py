@@ -92,8 +92,6 @@ class HerdManager:
             True if user-defined rations are used for the herd, otherwise false.
         available_feeds : list[Feed]
             Nutrition information of feeds available to formulate animals rations with.
-        feed_emissions_estimator : PurchasedFeedEmissionsEstimator, default=None
-            Instance of the PurchasedFeedEmissionsEstimator class.
 
         """
         self.im = InputManager()
