@@ -711,10 +711,10 @@ class HerdManager:
 
         # Priority 1: DNB cows by lowest daily milk
         if dnb_indices:
-            return min(dnb_indices, key=lambda i: self.cows[i].milk_production.daily_milk_produced)
+            return min(dnb_indices, key=lambda i: self.cows[i].mature_equivalent_milking_prediction_305_day)
 
         # Priority 2: Non-DNB cows by lowest daily milk (qualified by DIM)
-        return min(non_dnb_indices, key=lambda i: self.cows[i].milk_production.daily_milk_produced)
+        return min(non_dnb_indices, key=lambda i: self.cows[i].mature_equivalent_milking_prediction_305_day)
 
     def _record_sold_cow_stats(self, removed_cow: Animal, simulation_day: int) -> None:
         """Updates herd statistics and metadata for a sold cow."""
@@ -752,8 +752,6 @@ class HerdManager:
             animals_removed.append(removed_cow)
 
         return animals_removed
-
-    # estimated_production = self.cows[index].mature_equivalent_milking_prediction_305_day
 
     def _check_if_replacement_heifers_needed(self, time: RufasTime) -> list[Animal]:
         """
