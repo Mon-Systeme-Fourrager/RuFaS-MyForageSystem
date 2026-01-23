@@ -14,11 +14,7 @@ from RUFAS.biophysical.animal.data_types.body_weight_history import BodyWeightHi
 from RUFAS.biophysical.animal.data_types.daily_routines_output import DailyRoutinesOutput
 from RUFAS.biophysical.animal.data_types.digestive_system import DigestiveSystemInputs
 from RUFAS.biophysical.animal.data_types.growth import GrowthInputs, GrowthOutputs
-from RUFAS.biophysical.animal.data_types.milk_production import (
-    MilkProductionInputs,
-    MilkProductionOutputs,
-    MilkProductionStatistics,
-)
+from RUFAS.biophysical.animal.data_types.milk_production import MilkProductionInputs, MilkProductionOutputs
 from RUFAS.biophysical.animal.data_types.nutrients import NutrientsInputs
 from RUFAS.biophysical.animal.data_types.nutrition_data_structures import NutritionRequirements, NutritionSupply
 from RUFAS.biophysical.animal.data_types.pen_history import PenHistory
@@ -201,8 +197,6 @@ class Animal:
         self.nutrition_supply: NutritionSupply = NutritionSupply.make_empty_nutrition_supply()
         self.nutrition_supply.dry_matter = AnimalModuleConstants.DEFAULT_DRY_MATTER_INTAKE
         self.previous_nutrition_supply: NutritionSupply | None = None
-        self.milk_yield_305_day: float = 0.0
-        self.mature_equivalent_milking_prediction_305_day: float = 0.0
 
         self._days_in_milk: int = 0
         self._milk_production_output_days_in_milk: int = 0
@@ -1079,22 +1073,6 @@ class Animal:
         """
         return True if (self.dead_at_day is not None and self.dead_at_day >= 0) else False
 
-    @property
-    def milk_statistics(self) -> MilkProductionStatistics:
-        """Returns the milk statistics for the animal."""
-        if not self.animal_type.is_cow:
-            raise TypeError()
-        return MilkProductionStatistics(
-            cow_id=self.id,
-            pen_id=self.pen_history[-1]["pen"],
-            days_in_milk=self.days_in_milk,
-            estimated_daily_milk_produced=self.milk_production.daily_milk_produced,
-            milk_protein=self.milk_production.true_protein_content,
-            milk_fat=self.milk_production.fat_content,
-            milk_lactose=self.milk_production.lactose_content,
-            parity=self.calves,
-        )
-
     def _assign_sex_to_newborn_calf(self) -> None:
         """
         Assign a sex to a newborn calf based on the semen type and male calf rate.
@@ -1317,7 +1295,7 @@ class Animal:
         )
         self.nutrients.perform_daily_phosphorus_update(nutrients_inputs)
 
-    def _daily_digestive_system_update(self) -> None:
+    def _daily_digestive_system_update(self) -> dict[AnimalType, dict[str, float]]:
         """
         Performs the daily digestive system updates for the animal.
 
@@ -1342,7 +1320,8 @@ class Animal:
             fat_content=MilkProduction.fat_percent,
             protein_content=self.milk_production.true_protein_content,
         )
-        self.digestive_system.process_digestion(digestive_system_inputs)
+        digestion_output = self.digestive_system.process_digestion(digestive_system_inputs)
+        return digestion_output
 
     def daily_milking_update(self, time: RufasTime) -> None:
         """
@@ -1567,7 +1546,8 @@ class Animal:
 
         self._daily_nutrients_update()
 
-        self._daily_digestive_system_update()
+        digestion_outputs = self._daily_digestive_system_update()
+        daily_routines_output.daily_digestion_output = digestion_outputs
 
         self.daily_milking_update(time)
 
@@ -1575,8 +1555,8 @@ class Animal:
 
         newborn_calf_config, daily_routines_output.herd_reproduction_statistics = self.daily_reproduction_update(time)
 
-        daily_routines_output.animal_status, daily_routines_output.newborn_calf_config = self.animal_life_stage_update(
-            time
+        (daily_routines_output.animal_status, daily_routines_output.newborn_calf_config) = (
+            self.animal_life_stage_update(time)
         )
 
         if self.animal_type.is_cow and newborn_calf_config is not None:
@@ -1750,6 +1730,14 @@ class Animal:
             self.cull_reason = animal_constants.DEATH_CULL
             animal_status = AnimalStatus.DEAD
 
+        if (
+            self.animal_type.is_cow
+            and self.reproduction.do_not_breed
+            and self.milk_production.daily_milk_produced < AnimalConfig.cull_milk_production
+        ):
+            self.cull_reason = animal_constants.LOW_PROD_CULL
+            self.sold_at_day = time.simulation_day
+            animal_status = AnimalStatus.SOLD
         return animal_status, newborn_calf_config
 
     def _evaluate_calf_for_heiferI(self) -> bool:
@@ -2361,23 +2349,3 @@ class Animal:
             )
 
         return requirements
-
-    def update_mature_equivalent_305_days_milk_production(self) -> None:
-        if self.days_in_milk < 305:
-            self.mature_equivalent_milking_prediction_305_day = self.milk_production.calculate_305_day_milk_yield(
-                self.milk_production.wood_l,
-                self.milk_production.wood_m,
-                self.milk_production.wood_n,
-                self.milk_production.milk_production_history,
-                self.days_in_milk,
-            )
-        else:
-            self.mature_equivalent_milking_prediction_305_day = (
-                self.milk_production.current_lactation_305_day_milk_produced
-            )
-
-        parity_factor = {1: 1.25, 2: 1.18}.get(self.calves, 1.0)
-
-        self.mature_equivalent_milking_prediction_305_day = (
-            self.mature_equivalent_milking_prediction_305_day * parity_factor
-        )
