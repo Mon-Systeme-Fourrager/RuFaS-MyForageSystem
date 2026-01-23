@@ -753,8 +753,6 @@ class HerdManager:
 
         return animals_removed
 
-    # estimated_production = self.cows[index].mature_equivalent_milking_prediction_305_day
-
     def _check_if_replacement_heifers_needed(self, time: RufasTime) -> list[Animal]:
         """
         Checks if replacement heifers are needed to maintain the herd size.
