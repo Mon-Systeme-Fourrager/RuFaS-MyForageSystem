@@ -2346,7 +2346,7 @@ Temperature of stored manure is assumed to be equal throughout the entire mass o
 \_determine\_outdoor\_storage\_temperature\\
 \vspace{0.25cm}
 
-Daily temperature of manure in slurry storage outdoors is determined using a sine/cosine least squares fit to user-provided weather data, with a fixed amplitude dampening and lag (phase shift) factor. For more information, see the \textit{Calculate Stored Manure Temperature} in the Anaerobic Lagoon section.
+Daily temperature of manure in slurry storage outdoors is determined using a sine/cosine least squares fit to user-provided weather data, with a fixed amplitude damping and lag (phase shift) factor. For more information, see the \textit{Calculate Stored Manure Temperature} in the Anaerobic Lagoon section.
 \vspace{0.5cm}
 
 
@@ -2446,7 +2446,7 @@ First, we must calculate the value of the Arrhenius exponent (\_calculate\_arrhe
 
     \textbf{When:}
     \begin{itemize}
-        \item Ln(A): The natural log of the Arrhenius parameter (NATURAL\_LOG\_ARRHENIUS\_CONSTANT constant), set at 31.2 based on \cite{Petersen2024}. This is an empirically-derived value determined based on observed manure CH\textsubscript{4} emission values.
+        \item Ln(A): The natural log of the Arrhenius parameter (NATURAL\_LOG\_ARRHENIUS\_CONSTANT constant), set at 30.7 based on \cite{Petersen2024}. This is an empirically-derived value determined based on observed manure CH\textsubscript{4} emission values.
         \item ACTIVATION\_ENERGY: the apparent activation energy of methanogenesis in cattle slurry (J/mol), set at 81,000 J/mol, based on \cite{Elsgaard2016}. 
         \item Gas constant: ideal gas constant, set at 8.314 J K/mol.
         \item Manure temperature (K): temperature of manure in storage. 
@@ -2913,7 +2913,7 @@ First we determine the amplitude of the manure temperature function by applying 
     
     \begin{itemize}
         \item amplitude: modeled amplitude of the seasonal air temperature function, calculated from user-supplied, simulation-wide weather data
-        \item MANURE\_DAMPING\_FACTOR: a fixed damping factor applied to the air temperature amplitude, set to 0.5.
+        \item MANURE\_DAMPING\_FACTOR: a fixed damping factor applied to the air temperature amplitude, set to 0.65.
     \end{itemize}
     \vspace{0.5cm}
 
@@ -3023,7 +3023,7 @@ Detailed descriptions are outlined in the \hyperref[sec:Slurry Storage]{Slurry S
 
     \textbf{When:}
     \begin{itemize}
-        \item Ln(A): The natural log of the Arrhenius parameter (NATURAL\_LOG\_ARRHENIUS\_CONSTANT), set at 31.2 based on \cite{Petersen2024}. This is an empirically-derived value determined based on observed manure CH\textsubscript{4} emission values.
+        \item Ln(A): The natural log of the Arrhenius parameter (NATURAL\_LOG\_ARRHENIUS\_CONSTANT), set at 30.6 based on \cite{Petersen2024}. This is an empirically-derived value determined based on observed manure CH\textsubscript{4} emission values.
         \item ACTIVATION\_ENERGY: the apparent activation energy of methanogenesis in cattle slurry (J/mol), set at 81,000 J/mol, based on \cite{Elsgaard2016}. 
         \item Gas constant: ideal gas constant, set at 8.314 J K/mol.
         \item Manure temperature (K): temperature of manure in storage. 
@@ -5096,7 +5096,7 @@ Instance(s) of ManureStream for each manure stream defined by the user that repr
 
 \endlastfoot
 
-MANURE\_DAMPING\_FACTOR & 0.5 & Fixed damping factor applied to the air temperature amplitude. \\
+MANURE\_DAMPING\_FACTOR & 0.65 & Fixed damping factor applied to the air temperature amplitude. \\
 MANURE\_TEMPERATURE\_LAG & 30 & Lag constant representing delayed thermal response of manure temperature relative to air temperature (days). \\
 ANAEROBIC\_LAGOON\_MANURE\_RETENTION & 0.1 & Fraction of stored manure retained in anaerobic lagoon when storage interval is reached. \\
 ACTIVATION\_ENERGY & 81,000 J/mol & Apparent activation energy of methanogenesis in dairy manure. \\
@@ -5107,7 +5107,7 @@ PRECIPITATION\_CONSTANT & 0.25 & Annual precipitation constant for determining s
 MANURE\_CONVERSION\_CONSTANT & 0.1175 & Factor to estimate manure volume per cow per day (m\textsuperscript{3}). \\
 METHANE\_DESTRUCTION\_EFFICIENCY & 0.81 & Percent methane destroyed with cover and flare system. \\
 VS\_TO\_METHANE\_LOSS\_RATIO & 6.665 kg & Mass ratio of CO\textsubscript{2}+CH\textsubscript{4} to CH\textsubscript{4} from storage \parencite{Petersen2024}. \\
-NATURAL\_LOG\_ARRHENIUS\_CONSTANT & 31.2 g CH\textsubscript{4}/kg VS/h & Log of Arrhenius parameter for methane emissions from stored manure. \\
+NATURAL\_LOG\_ARRHENIUS\_CONSTANT & 30.6 g CH\textsubscript{4}/kg VS/h & Log of Arrhenius parameter for methane emissions from stored manure. \\
 STORAGE\_RESISTANCE & 23.1 & Default resistance to ammonia volatilization (s/m). \\
 SLURRY\_MANURE\_DENSITY & 990 kg/m\textsuperscript{3} & Default density of manure as excreted. \\
 AMMONIA\_EMISSION\_COEFFICIENT\_UNTILLED & 0.25 & Ammonia emission coefficient (no mixing). \\
