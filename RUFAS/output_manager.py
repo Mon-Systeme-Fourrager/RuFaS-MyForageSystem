@@ -1414,6 +1414,8 @@ class OutputManager(object):
                 filtered_data = Utility.filter_dictionary(temp_data, selected_variables, filter_by_exclusion)
                 for filtered_key, filtered_value in filtered_data.items():
                     if use_filter_key_name:
+                        # TODO DEPRECATED behavior, kept for backward compatibility
+                        # should be removed when closing #2718
                         combined_key = filtered_key
                     else:
                         combined_key = (
