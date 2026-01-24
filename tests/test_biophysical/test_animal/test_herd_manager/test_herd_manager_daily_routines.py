@@ -380,14 +380,6 @@ def test_daily_routines(herd_manager: HerdManager, mock_herd: dict[str, list[Ani
     sold_oversupply_heiferIIIs = [mock_animal(AnimalType.HEIFER_III, sold=True) for _ in range(5)]
     bought_replacement_heiferIIIs = [mock_animal(AnimalType.HEIFER_III, sold=False) for _ in range(5)]
 
-    graduated_animals = (
-        graduated_calves + graduated_heiferIs + graduated_heiferIIs + graduated_heiferIIIs + graduated_cows
-    )
-    newborn_calves = heiferIII_newborn_calves + cow_newborn_calves
-    removed_animals = (
-        sold_calves + sold_heiferIs + sold_heiferIIs + sold_heiferIIIs + sold_and_died_cows + sold_oversupply_heiferIIIs
-    )
-
     mock_perform_daily_routines_for_animals_side_effect: list[
         tuple[list[Animal], list[Animal], list[Animal], list[Animal], list[Animal]]
     ] = [
