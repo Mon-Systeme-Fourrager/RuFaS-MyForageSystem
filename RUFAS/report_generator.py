@@ -111,7 +111,8 @@ class ReportGenerator:
             for col, values in report_data.items():
                 column_name = self._ensure_unique_report_name_with_timestamp(
                     (individual_report_name if individual_report_name else col)
-                    if not is_report_aggregated and len(report_data) == 1
+                    if ((not is_report_aggregated and not filter_content.get("use_verbose_report_name"))
+                        and len(report_data) == 1)
                     else (f"{individual_report_name}_{col}" if individual_report_name else col)
                 )
                 report_filter_data[column_name] = {"values": values}
@@ -428,7 +429,7 @@ class ReportGenerator:
                     units = re.search(r"\(.*\)", next(iter(report_data)))
                     column_name = (
                         f"{next(iter(vertically_aggregated))}_ver_agg"
-                        if filter_content.get("use_verbose_ver_agg_name")
+                        if filter_content.get("use_verbose_report_name")
                         else "ver_agg"
                     )
                     if units is not None:
@@ -441,7 +442,7 @@ class ReportGenerator:
                 else:
                     column_name = (
                         f"{next(iter(vertically_aggregated))}_ver_agg"
-                        if filter_content.get("use_verbose_ver_agg_name")
+                        if filter_content.get("use_verbose_report_name")
                         else "ver_agg"
                     )
                     aggregate_report = {column_name: list(vertically_aggregated.values())[0]}
