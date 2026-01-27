@@ -94,11 +94,13 @@ class ReportGenerator:
                 self._check_for_missing_references(filter_content["cross_references"])
                 cross_reference_data = self._get_reports_by_regex(filter_content["cross_references"])
                 cross_reference_data.update(filtered_pool)
-                report_data, aggregation_logs, is_report_aggregated = self._perform_aggregations(cross_reference_data,
-                                                                                                 filter_content)
+                report_data, aggregation_logs, is_report_aggregated = self._perform_aggregations(
+                    cross_reference_data, filter_content
+                )
             else:
-                report_data, aggregation_logs, is_report_aggregated = self._perform_aggregations(filtered_pool,
-                                                                                                 filter_content)
+                report_data, aggregation_logs, is_report_aggregated = self._perform_aggregations(
+                    filtered_pool, filter_content
+                )
             event_logs.extend(aggregation_logs)
             should_graph_report_data = filter_content.get("graph_details")
             enable_graph_and_report = filter_content.get("graph_and_report", False)

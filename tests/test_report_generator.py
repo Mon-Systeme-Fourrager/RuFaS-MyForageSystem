@@ -1099,7 +1099,7 @@ def test_generate_report(
                 {fltr: filtered_pool[fltr] for fltr in filter_content["filters"]}
                 | {ref: reports[ref]["values"] for ref in filter_content.get("cross_references", [])},
                 [],
-                False
+                False,
             ),
         )
 
