@@ -2440,5 +2440,5 @@ class Animal:
                 {
                     "class": Animal.__name__,
                     "function": Animal.update_genetic_history.__name__,
-                }
+                },
             )

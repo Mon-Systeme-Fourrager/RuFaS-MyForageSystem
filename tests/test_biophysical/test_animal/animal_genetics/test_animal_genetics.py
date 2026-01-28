@@ -138,13 +138,15 @@ def test_recalculate_values_at_lactation_start(
         animal_type=animal_type,
         parity=parity,
         group_specific_TBV_fat_mean=1.1,
-        group_specific_TBV_protein_mean=2.2
+        group_specific_TBV_protein_mean=2.2,
     )
 
     mock_calculate_et_values.assert_called_once_with()
     mock_calculate_phenotype_values.assert_called_once_with(birth_year=birth_year)
     if ebv_recalculate:
-        mock_calculate_ebv_values.assert_called_once_with(animal_type=animal_type, parity=parity, group_specific_TBV_fat_mean=1.1, group_specific_TBV_protein_mean=2.2)
+        mock_calculate_ebv_values.assert_called_once_with(
+            animal_type=animal_type, parity=parity, group_specific_TBV_fat_mean=1.1, group_specific_TBV_protein_mean=2.2
+        )
     else:
         mock_calculate_ebv_values.assert_not_called()
     mock_calculate_ranking_index.assert_called_once_with()
@@ -303,10 +305,7 @@ def test_calculate_ebv_values(
     genetics.TBV_protein = tbv_protein
     mock_np_random_normal = mocker.patch.object(numpy.random, "normal", side_effect=[0.1, 0.1])
     ebv_fat, ebv_protein = genetics._calculate_ebv_values(
-        animal_type=animal_type,
-        parity=parity,
-        group_specific_TBV_fat_mean=1.1,
-        group_specific_TBV_protein_mean=2.2
+        animal_type=animal_type, parity=parity, group_specific_TBV_fat_mean=1.1, group_specific_TBV_protein_mean=2.2
     )
 
     assert mock_np_random_normal.call_args_list == [
