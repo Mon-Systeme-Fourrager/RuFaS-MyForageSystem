@@ -17,18 +17,21 @@ FARMGROWN_FEEDS_EMISSIONS_AND_RESOURCES_FILTERS: dict[str, dict[str, Any]] = {
         "filters": ["CropManagement._record_yield.harvest_yield.field='.*'"],
         "variables": ["dry_yield", "crop", "harvest_year", "harvest_day", "field_name", "harvest_type"],
         "date_fields": ("harvest_year", "harvest_day"),
+        "use_filter_key_name": True,
     },
     "nitrous_oxide_emissions": {
         "name": "Nitrous Oxide Emissions",
         "description": "Collects the nitrous oxide emissions of all soil layers across all fields in the simulation.",
         "filters": ["FieldDataReporter.send_soil_layer_daily_variables.nitrous_oxide_emissions"],
         "date_fields": "simulation_day",
+        "use_filter_key_name": True,
     },
     "ammonia_emissions": {
         "name": "Ammonia Emissions",
         "description": "Collects the ammonia emissions of all soil layers across all fields in the simulation.",
         "filters": ["FieldDataReporter.send_soil_layer_daily_variables.ammonia_emissions"],
         "date_fields": "simulation_day",
+        "use_filter_key_name": True,
     },
     "fertilizer_applications": {
         "name": "Fertilizer Applications",
@@ -36,6 +39,7 @@ FARMGROWN_FEEDS_EMISSIONS_AND_RESOURCES_FILTERS: dict[str, dict[str, Any]] = {
         "filters": ["Field._record_fertilizer_application\\.fertilizer_application\\.field='.*'"],
         "variables": ["nitrogen", "phosphorus", "potassium", "field_name", "year", "day"],
         "date_fields": ("year", "day"),
+        "use_filter_key_name": True,
     },
     "manure_applications": {
         "name": "Manure Applications",
@@ -43,6 +47,7 @@ FARMGROWN_FEEDS_EMISSIONS_AND_RESOURCES_FILTERS: dict[str, dict[str, Any]] = {
         "filters": ["Field._record_manure_application\\.manure_application\\.field='.*'"],
         "variables": ["nitrogen", "field_name", "year", "day"],
         "date_fields": ("year", "day"),
+        "use_filter_key_name": True,
     },
     "crop_received": {
         "name": "Crop Received",
@@ -53,12 +58,24 @@ FARMGROWN_FEEDS_EMISSIONS_AND_RESOURCES_FILTERS: dict[str, dict[str, Any]] = {
             "crop_name",
             "feed_id",
         ],
+        "use_filter_key_name": True,
     },
     "farmgrown_feed_deductions": {
         "name": "Farmgrown Feed Deductions",
         "description": "Collects all farmgrown feeds fed to animals in the simulation.",
         "filters": ["FeedManager._log_feed_deductions.farmgrown_feed_.*_fed"],
         "date_fields": "simulation_day",
+        "use_filter_key_name": True,
+    },
+    "farmgrown_feed_inventory": {
+        "name": "Farmgrown Feed Inventory",
+        "description": "Collects the inventory of all farmgrown feeds in the simulation.",
+        "filters": ["FeedManager.report_stored_farmgrown_feeds.stored_feed_.*_dm.daily_storage_levels.*"],
+        "date_fields": "simulation_day",
+        "expand_data": True,
+        "use_fill_value_in_gaps": True,
+        "use_fill_value_at_end": True,
+        "fill_value": 0.0,
     },
 }
 
@@ -393,14 +410,37 @@ class EmissionsEstimator:
         )
 
         harvest_dates_by_feed_id = self._calculate_harvest_dates_by_feed_id(harvest_yield_by_field)
+        farmgrown_feed_inventory_by_feed_id = self._gather_farmgrown_feed_inventory_data()
 
         for field_name in harvest_yield_by_field:
             harvest_dates = sorted(list(harvest_yield_by_field[field_name].keys()))
             last_harvest_date = -1
             for harvest_date in harvest_dates:
                 feed_id = harvest_yield_by_field[field_name][harvest_date]["feed_id"]
+                print(f"Harvest date: {harvest_date} for field: {field_name} for feed_id: {feed_id}")
                 if feed_id is None:
                     last_harvest_date = harvest_date
+                    continue
+                has_remaining_feed_at_harvest = \
+                    farmgrown_feed_inventory_by_feed_id[feed_id].get("harvest_date", 0.0) > 0.0
+                harvest_operation = harvest_yield_by_field[field_name][harvest_date]["harvest_type"]
+                if has_remaining_feed_at_harvest:
+                    print(f"first tier harvest operation: {harvest_operation}")
+                    print(f"Simulation day is {harvest_date}, feed_id is {feed_id}")
+                #     if feed_id in farmgrown_feed_inventory_by_feed_id:
+                #         print(f"harvest operation: {harvest_operation}")
+                if feed_id in farmgrown_feed_inventory_by_feed_id and \
+                    not has_remaining_feed_at_harvest and \
+                        harvest_operation == "harvest-kill":
+                    print(f"Skipping emissions calculation for feed_id {feed_id} on field {field_name} at harvest date {harvest_date}")
+                    total_farmgrown_feed_emission_and_resource_by_feed_id[feed_id] = {
+                        "nitrous_oxide_emissions": 0.0,
+                        "ammonia_emissions": 0.0,
+                        "fertilizer_N": 0.0,
+                        "fertilizer_P": 0.0,
+                        "fertilizer_K": 0.0,
+                        "manure_N": 0.0,
+                    }
                     continue
                 if feed_id not in total_farmgrown_feed_emission_and_resource_by_feed_id:
                     total_farmgrown_feed_emission_and_resource_by_feed_id[feed_id] = {
@@ -510,17 +550,33 @@ class EmissionsEstimator:
             )
         return daily_farmgrown_feed_emission_and_resource_by_feed_id
 
+    def _gather_farmgrown_feed_inventory_data(self) -> dict[RUFAS_ID, dict[int, float]]:
+        """Gathers farmgrown feed inventory data by feed_id and simulation day index."""
+        filtered_fgf_data = self.om.filter_variables_pool(
+            FARMGROWN_FEEDS_EMISSIONS_AND_RESOURCES_FILTERS["farmgrown_feed_inventory"]
+        )
+        farmgrown_feed_inventory_by_feed_id: dict[RUFAS_ID, dict[int, float]] = defaultdict(dict)
+        for fgf_variable, values in filtered_fgf_data.items():
+            match = re.search(r"stored_feed_(\d+)_dm\.daily_storage_levels", fgf_variable)
+            if match:
+                feed_id: RUFAS_ID = int(match.group(1))
+            else:
+                self.om.add_error("Farmgrown Feed Data Parsing Error",
+                                  f"No feed_id match found for {fgf_variable}.",
+                                  {"class": self.__class__.__name__,
+                                   "function": self._gather_farmgrown_feed_inventory_data.__name__})
+                raise ValueError(f"No feed_id match found for {fgf_variable}. "
+                                 "Needed to parse farmgrown feed inventory data. "
+                                 "Check emissions.py filters.")
+            farmgrown_feed_inventory_by_feed_id[feed_id] = {
+                info_map["simulation_day"]: values["values"][i] for i,
+                info_map in enumerate(values["info_maps"])
+            }
+        return farmgrown_feed_inventory_by_feed_id
+
     def _calculate_harvest_dates_by_feed_id(
         self, harvest_yield_by_field: dict[str, dict[int, dict[str, Any]]]
     ) -> dict[RUFAS_ID, list[int]]:
-        """Calculates the harvest dates for each feed ID based on the harvest yield data."""
-        harvest_dates_by_feed_id: dict[RUFAS_ID, list[int]] = defaultdict(list)
-        for field_name in harvest_yield_by_field:
-            harvest_dates = sorted(list(harvest_yield_by_field[field_name].keys()))
-            for harvest_date in harvest_dates:
-                feed_id = harvest_yield_by_field[field_name][harvest_date]["feed_id"]
-                harvest_dates_by_feed_id[feed_id].append(harvest_date)
-        return harvest_dates_by_feed_id
         """
         Generates a mapping of feed IDs to their respective harvest dates based on the
         harvest data of multiple fields.
