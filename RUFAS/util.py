@@ -673,12 +673,10 @@ class Utility:
             A tuple containing two correlated random numbers generated
             from the bivariate normal distribution.
         """
-        # TODO: update this error message.
         if sigma_x <= 0 or sigma_y <= 0:
-            print(sigma_x, sigma_y)
-            raise ValueError("sigma_x and sigma_y must be positive.")
+            raise ValueError("The standard deviations for a bivariate distribution must be positive.")
         if not (-1.0 <= rho <= 1.0):
-            raise ValueError("rho must be between -1 and 1 (inclusive).")
+            raise ValueError("The correlation coefficient for a bivariate distribution must be between -1 and 1.")
         mean = [mu_x, mu_y]
         cov = [[sigma_x**2, rho * sigma_x * sigma_y], [rho * sigma_x * sigma_y, sigma_y**2]]
         return tuple(np.random.multivariate_normal(mean, cov))
@@ -988,7 +986,7 @@ class Utility:
         Parameters
         ----------
         days_born : int
-            The number of days since the person's birth.
+            The number of days since the animal's birth.
         current_date : datetime.datetime
             The current date from which the days will be subtracted.
 

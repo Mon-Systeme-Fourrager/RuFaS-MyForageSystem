@@ -737,6 +737,10 @@ class HerdManager:
         """
         newborn_calf_config["id"] = AnimalPopulation.next_id()
         newborn_calf: Animal = Animal(args=newborn_calf_config, time=time)
+        mean_tbv_fat, mean_tbv_protein = Genetics.calculate_average_tbv([animal.genetics for animal in self.calves])
+        newborn_calf.genetics.calculate_ebv_and_ranking_index(
+            newborn_calf.animal_type, mean_tbv_fat, mean_tbv_protein, newborn_calf.calves
+        )
         if not (newborn_calf.sold or newborn_calf.stillborn):
             newborn_calf.events.add_event(newborn_calf.days_born, time.simulation_day, animal_constants.ENTER_HERD)
         return newborn_calf

@@ -169,14 +169,14 @@ class Genetics:
         return tbv_fat, tbv_protein
 
     def _calculate_ep_values(self) -> tuple[float, float]:
-        """Calculate E_permanent values."""
+        """Calculate Permanent Environment Effect (E_permanent) values."""
         ep_fat, ep_protein = Utility.generate_bivariate_random_numbers(
             0.0, 0.0, E_PERMANENT_FAT_STD, E_PERMANENT_PROTEIN_STD, E_PERMANENT_CORRELATION
         )
         return ep_fat, ep_protein
 
     def _calculate_et_values(self) -> tuple[float, float]:
-        """Calculate E_temporary values."""
+        """Calculate Temporary Environment Effect (E_temporary) values."""
         et_fat, et_protein = Utility.generate_bivariate_random_numbers(
             0.0, 0.0, E_TEMPORARY_FAT_STD, E_TEMPORARY_PROTEIN_STD, E_TEMPORARY_CORRELATION
         )

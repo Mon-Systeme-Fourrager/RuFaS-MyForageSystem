@@ -216,7 +216,8 @@ class Animal:
         self._daily_vertical_distance: float = 0.0
         self._daily_distance: float = 0.0
 
-        if self.animal_type == AnimalType.CALF and "body_weight" not in args.keys():
+        is_newborn_calf = self.animal_type == AnimalType.CALF and "body_weight" not in args.keys()
+        if is_newborn_calf:
             self._initialize_newborn_calf(args, time.simulation_day)
             dam_tbv_fat, dam_tbv_protein = args.get("dam_tbv_fat"), args.get("dam_tbv_protein")
             if dam_tbv_fat and dam_tbv_protein:
@@ -228,7 +229,6 @@ class Animal:
                     dam_tbv_fat=dam_tbv_fat,
                     dam_tbv_protein=dam_tbv_protein,
                 )
-            # initializing herd for herd generation
             else:
                 self.genetics = Genetics(
                     birth_year=time.current_date.year,
@@ -2431,4 +2431,14 @@ class Animal:
                     EBV_protein=self.genetics.EBV_protein,
                     ranking_index=self.genetics.ranking_index,
                 )
+            )
+        else:
+            om = OutputManager()
+            om.add_warning(
+                "Duplicate Genetic History Entry",
+                f"Animal {self.id} already has a genetic history entry on day {simulation_day}.",
+                {
+                    "class": Animal.__name__,
+                    "function": Animal.update_genetic_history.__name__,
+                }
             )

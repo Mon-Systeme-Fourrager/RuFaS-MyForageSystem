@@ -1617,10 +1617,10 @@
     },
     "protein_kg": {
       "type": "array",
-      "description": "The average protein phenotype values of the animal.",
+      "description": "The mean protein phenotype values of the animal.",
       "properties": {
         "type": "number",
-        "description": "The average protein phenotype values of the animal born in the given birth year.",
+        "description": "The mean protein phenotype values of the animal born in the given birth year.",
         "minimum": 0
       }
     }

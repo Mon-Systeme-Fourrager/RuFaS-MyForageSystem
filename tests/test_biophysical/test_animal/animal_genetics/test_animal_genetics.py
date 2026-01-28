@@ -133,12 +133,18 @@ def test_recalculate_values_at_lactation_start(
     mock_calculate_ebv_values = mocker.patch.object(genetics, "_calculate_ebv_values", return_value=(10.0, 20.0))
     mock_calculate_ranking_index = mocker.patch.object(genetics, "_calculate_ranking_index", return_value=10.0)
 
-    genetics.recalculate_values_at_lactation_start(birth_year=birth_year, animal_type=animal_type, parity=parity)
+    genetics.recalculate_values_at_lactation_start(
+        birth_year=birth_year,
+        animal_type=animal_type,
+        parity=parity,
+        group_specific_TBV_fat_mean=1.1,
+        group_specific_TBV_protein_mean=2.2
+    )
 
     mock_calculate_et_values.assert_called_once_with()
     mock_calculate_phenotype_values.assert_called_once_with(birth_year=birth_year)
     if ebv_recalculate:
-        mock_calculate_ebv_values.assert_called_once_with(animal_type=animal_type, parity=parity)
+        mock_calculate_ebv_values.assert_called_once_with(animal_type=animal_type, parity=parity, group_specific_TBV_fat_mean=1.1, group_specific_TBV_protein_mean=2.2)
     else:
         mock_calculate_ebv_values.assert_not_called()
     mock_calculate_ranking_index.assert_called_once_with()
@@ -261,11 +267,11 @@ def test_calculate_phenotype_values(
     "animal_type, parity, tbv_fat, tbv_protein,"
     "expected_std_ebv_fat, expected_std_ebv_protein, expected_ebv_fat, expected_ebv_protein",
     [
-        (AnimalType.CALF, None, 10.0, 20.0, 2.519765614099851, 1.8159450019204877, 5.725, 11.35),
-        (AnimalType.HEIFER_I, None, 10.0, 20.0, 2.519765614099851, 1.8159450019204877, 5.725, 11.35),
-        (AnimalType.HEIFER_II, None, 10.0, 20.0, 2.519765614099851, 1.8159450019204877, 5.725, 11.35),
-        (AnimalType.HEIFER_III, None, 10.0, 20.0, 2.519765614099851, 1.8159450019204877, 5.725, 11.35),
-        (AnimalType.LAC_COW, 1, 15.0, 25.0, 2.4380976190464563, 1.75708850090142, 9.7, 16.1),
+        (AnimalType.CALF, None, 10.0, 20.0, 2.519765614099851, 1.8159450019204877, 6.20625, 12.3125),
+        (AnimalType.HEIFER_I, None, 10.0, 20.0, 2.519765614099851, 1.8159450019204877, 6.20625, 12.3125),
+        (AnimalType.HEIFER_II, None, 10.0, 20.0, 2.519765614099851, 1.8159450019204877, 6.20625, 12.3125),
+        (AnimalType.HEIFER_III, None, 10.0, 20.0, 2.519765614099851, 1.8159450019204877, 6.20625, 12.3125),
+        (AnimalType.LAC_COW, 1, 15.0, 25.0, 2.4380976190464563, 1.75708850090142, 10.096, 16.892),
         (
             AnimalType.DRY_COW,
             2,
@@ -273,11 +279,11 @@ def test_calculate_phenotype_values(
             25.0,
             2.274365570879053,
             1.6390900676899975,
-            10.937499999999998,
-            18.162499999999998,
+            11.24275,
+            18.773,
         ),
-        (AnimalType.LAC_COW, 3, 15.0, 25.0, 1.992641462983243, 1.4360571019287496, 12.25, 20.35),
-        (AnimalType.DRY_COW, 4, 15.0, 25.0, 1.992641462983243, 1.4360571019287496, 12.25, 20.35),
+        (AnimalType.LAC_COW, 3, 15.0, 25.0, 1.992641462983243, 1.4360571019287496, 12.459, 20.768),
+        (AnimalType.DRY_COW, 4, 15.0, 25.0, 1.992641462983243, 1.4360571019287496, 12.459, 20.768),
     ],
 )
 def test_calculate_ebv_values(
@@ -296,7 +302,12 @@ def test_calculate_ebv_values(
     genetics.TBV_fat = tbv_fat
     genetics.TBV_protein = tbv_protein
     mock_np_random_normal = mocker.patch.object(numpy.random, "normal", side_effect=[0.1, 0.1])
-    ebv_fat, ebv_protein = genetics._calculate_ebv_values(animal_type=animal_type, parity=parity)
+    ebv_fat, ebv_protein = genetics._calculate_ebv_values(
+        animal_type=animal_type,
+        parity=parity,
+        group_specific_TBV_fat_mean=1.1,
+        group_specific_TBV_protein_mean=2.2
+    )
 
     assert mock_np_random_normal.call_args_list == [
         call(0.0, pytest.approx(expected_std_ebv_fat)),

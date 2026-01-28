@@ -19,7 +19,7 @@ class GeneticHistory(TypedDict):
     days_born : int
         The number of days since the birth of the animal.
     animal_type : AnimalType
-        The type of animal.
+        The type of animal, (unitless).
     days_in_milk : int
         The number of days the animal has been in milk production, (simulation days).
     days_in_pregnancy : int
