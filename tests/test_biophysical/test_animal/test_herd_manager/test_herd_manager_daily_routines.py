@@ -8,6 +8,7 @@ from pytest_mock import MockerFixture
 
 from RUFAS.biophysical.animal.animal import Animal
 from RUFAS.biophysical.animal.animal_config import AnimalConfig
+from RUFAS.biophysical.animal.animal_genetics.animal_genetics import Genetics
 from RUFAS.biophysical.animal.bedding.bedding import Bedding
 from RUFAS.biophysical.animal.data_types.animal_enums import AnimalStatus, Breed
 from RUFAS.biophysical.animal.data_types.animal_events import AnimalEvents
@@ -237,6 +238,7 @@ def test_perform_daily_routines_counts_deaths_and_handles_stillborn_newborns(
     """
     dead_animal = MagicMock(spec=Animal)
     dead_animal.animal_type = AnimalType.LAC_COW
+    dead_animal.days_born = 888
 
     dead_output = DailyRoutinesOutput(
         animal_status=AnimalStatus.DEAD,
@@ -247,6 +249,9 @@ def test_perform_daily_routines_counts_deaths_and_handles_stillborn_newborns(
 
     calving_animal = MagicMock(spec=Animal)
     calving_animal.animal_type = AnimalType.DRY_COW
+    calving_animal.days_born = 576
+    calving_animal.genetics = MagicMock(spec=Genetics)
+    mocker.patch.object(calving_animal.genetics, "recalculate_values_at_lactation_start")
 
     newborn_config: NewBornCalfValuesTypedDict = {
         "breed": Breed.HO.name,
@@ -255,7 +260,6 @@ def test_perform_daily_routines_counts_deaths_and_handles_stillborn_newborns(
         "days_born": 0,
         "birth_weight": 10.1,
         "initial_phosphorus": 10.0,
-        "net_merit": 18.8,
     }
 
     calving_output = DailyRoutinesOutput(
@@ -279,6 +283,7 @@ def test_perform_daily_routines_counts_deaths_and_handles_stillborn_newborns(
 
     mock_time = MagicMock(spec=RufasTime)
     mock_time.simulation_day = 0
+    mock_time.current_date = datetime(2023, 1, 1)
 
     (
         graduated_animals,
