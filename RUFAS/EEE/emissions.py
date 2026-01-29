@@ -59,7 +59,8 @@ FARMGROWN_FEEDS_EMISSIONS_AND_RESOURCES_FILTERS: dict[str, dict[str, Any]] = {
     "farmgrown_feed_deductions": {
         "name": "Farmgrown Feed Deductions",
         "description": "Collects all farmgrown feeds fed to animals in the simulation.",
-        "filters": ["FeedManager._log_feed_deductions.farmgrown_feed_.*_fed"],
+        "filters": ["FeedManager._log_feed_deductions.farmgrown_feed_.*_fed",
+                    ".*RufasTime.simulation_day.*"],
         "date_fields": "simulation_day",
     },
 }
@@ -250,7 +251,6 @@ class EmissionsEstimator:
         for filter_key in ["nitrous_oxide_emissions", "ammonia_emissions"]:
             filtered_data = self.om.filter_variables_pool(FARMGROWN_FEEDS_EMISSIONS_AND_RESOURCES_FILTERS[filter_key])
             all_fields_by_layer: dict[str, dict[int, dict[int, float]]] = defaultdict(dict)
-            print(filtered_data)
             simulation_days: list[int] = filtered_data["RufasTime.simulation_day"]["values"]
             for variable, values in filtered_data.items():
                 if variable == "RufasTime.simulation_day":
@@ -319,6 +319,7 @@ class EmissionsEstimator:
             FARMGROWN_FEEDS_EMISSIONS_AND_RESOURCES_FILTERS["farmgrown_feed_deductions"]
         )
         feed_deduction_by_feed_id: dict[RUFAS_ID, dict[int, float]] = defaultdict(dict)
+        simulation_days: list[int] = filtered_data["RufasTime.simulation_day"]["values"]
         for variable, values in filtered_data.items():
             match = re.search(r"farmgrown_feed_(\d+)_fed", variable)
             if match:
