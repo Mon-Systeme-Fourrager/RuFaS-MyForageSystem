@@ -752,17 +752,13 @@ class DataValidator:
                 {
                     "error": "Missing required file blobs.",
                     "message": f"Missing required file blobs: {list(missing_blobs)}",
-                    "info_map": info_map
+                    "info_map": info_map,
                 }
             )
             return False
         else:
             self.event_logs.append(
-                {
-                    "log": "Required Metadata File Blob Validation",
-                    "message": "",
-                    "info_map": info_map
-                }
+                {"log": "Required Metadata File Blob Validation", "message": "", "info_map": info_map}
             )
             return True
 
