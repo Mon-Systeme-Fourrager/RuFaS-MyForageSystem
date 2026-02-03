@@ -4585,9 +4585,7 @@ def filtered_variable_pool() -> list[dict[str, Any]]:
 @pytest.fixture
 def raw_nitrous_oxide_emissions_data() -> dict[str, dict[str, list[Any]]]:
     return {
-        "RufasTime.simulation_day": {
-            "values": [0, 1, 2]
-        },
+        "RufasTime.simulation_day": {"values": [0, 1, 2]},
         "FieldDataReporter.send_soil_layer_daily_variables.nitrous_oxide_emissions.field='field_1',layer='0'": {
             "info_maps": [
                 {
@@ -4833,12 +4831,11 @@ def raw_nitrous_oxide_emissions_data() -> dict[str, dict[str, list[Any]]]:
         },
     }
 
+
 @pytest.fixture
 def raw_ammonia_emissions_data() -> dict[str, dict[str, list[Any]]]:
     return {
-        "RufasTime.simulation_day": {
-            "values" : [0, 1, 2]
-        },
+        "RufasTime.simulation_day": {"values": [0, 1, 2]},
         "FieldDataReporter.send_soil_layer_daily_variables.ammonia_emissions.field='field_1',layer='0'": {
             "info_maps": [
                 {

@@ -23,16 +23,20 @@ FARMGROWN_FEEDS_EMISSIONS_AND_RESOURCES_FILTERS: dict[str, dict[str, Any]] = {
     "nitrous_oxide_emissions": {
         "name": "Nitrous Oxide Emissions",
         "description": "Collects the nitrous oxide emissions of all soil layers across all fields in the simulation.",
-        "filters": ["FieldDataReporter.send_soil_layer_daily_variables.nitrous_oxide_emissions",
-                    ".*RufasTime.simulation_day.*"],
+        "filters": [
+            "FieldDataReporter.send_soil_layer_daily_variables.nitrous_oxide_emissions",
+            ".*RufasTime.simulation_day.*",
+        ],
         "date_fields": "simulation_day",
         "use_filter_key_name": True,
     },
     "ammonia_emissions": {
         "name": "Ammonia Emissions",
         "description": "Collects the ammonia emissions of all soil layers across all fields in the simulation.",
-        "filters": ["FieldDataReporter.send_soil_layer_daily_variables.ammonia_emissions",
-                    ".*RufasTime.simulation_day.*"],
+        "filters": [
+            "FieldDataReporter.send_soil_layer_daily_variables.ammonia_emissions",
+            ".*RufasTime.simulation_day.*",
+        ],
         "date_fields": "simulation_day",
         "use_filter_key_name": True,
     },
@@ -338,19 +342,11 @@ class EmissionsEstimator:
                 raise ValueError(f"No feed_id match found for {variable}.")
             values_list: list[tuple] = values.get("values", [])
 
-            matched = {
-                values_list[i][0]: values_list[i][1]
-                for i in range(len(values_list))
-            }
+            matched = {values_list[i][0]: values_list[i][1] for i in range(len(values_list))}
 
-            feed_deduction_by_feed_id[feed_id] = {
-                day: matched.get(day, 0.0)
-                for day in all_simulation_days
-            }
+            feed_deduction_by_feed_id[feed_id] = {day: matched.get(day, 0.0) for day in all_simulation_days}
 
-            feed_deduction_by_feed_id[feed_id] = dict(
-                sorted(feed_deduction_by_feed_id[feed_id].items())
-            )
+            feed_deduction_by_feed_id[feed_id] = dict(sorted(feed_deduction_by_feed_id[feed_id].items()))
 
         return feed_deduction_by_feed_id
 
