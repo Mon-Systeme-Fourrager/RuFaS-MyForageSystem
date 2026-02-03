@@ -68,7 +68,7 @@ FARMGROWN_FEEDS_EMISSIONS_AND_RESOURCES_FILTERS: dict[str, dict[str, Any]] = {
         "description": "Collects all farmgrown feeds fed to animals in the simulation.",
         "filters": ["FeedManager._log_feed_deductions.farmgrown_feed_.*_fed",
                     ".*RufasTime.simulation_day.*"],
-        "date_fields": "simulation_day"
+        "date_fields": "simulation_day",
         "use_filter_key_name": True,
     },
 }
