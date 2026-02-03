@@ -66,8 +66,7 @@ FARMGROWN_FEEDS_EMISSIONS_AND_RESOURCES_FILTERS: dict[str, dict[str, Any]] = {
     "farmgrown_feed_deductions": {
         "name": "Farmgrown Feed Deductions",
         "description": "Collects all farmgrown feeds fed to animals in the simulation.",
-        "filters": ["FeedManager._log_feed_deductions.farmgrown_feed_.*_fed",
-                    ".*RufasTime.simulation_day.*"],
+        "filters": ["FeedManager._log_feed_deductions.farmgrown_feed_.*_fed"],
         "date_fields": "simulation_day",
         "use_filter_key_name": True,
     },
@@ -330,21 +329,18 @@ class EmissionsEstimator:
         filtered_data = self.om.filter_variables_pool(
             FARMGROWN_FEEDS_EMISSIONS_AND_RESOURCES_FILTERS["farmgrown_feed_deductions"]
         )
-        simulation_days: list[int] = filtered_data["RufasTime.simulation_day"]["values"]
         feed_deduction_by_feed_id: dict[RUFAS_ID, dict[int, float]] = defaultdict(dict)
         for variable, values in filtered_data.items():
-            if variable == "RufasTime.simulation_day":
-                continue
             match = re.search(r"farmgrown_feed_(\d+)_fed", variable)
             if match:
                 feed_id = int(match.group(1))
             else:
                 raise ValueError(f"No feed_id match found for {variable}.")
-            values_list: list[float] = values.get("values", [])
+            values_list: list[tuple] = values.get("values", [])
 
             matched = {
-                simulation_days[i]: values_list[i]
-                for i in range(min(len(simulation_days), len(values_list)))
+                values_list[i][0]: values_list[i][1]
+                for i in range(len(values_list))
             }
 
             feed_deduction_by_feed_id[feed_id] = {
