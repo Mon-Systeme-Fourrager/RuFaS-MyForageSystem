@@ -415,19 +415,22 @@ class EmissionsEstimator:
         for field_name in harvest_yield_by_field:
             harvest_dates = sorted(list(harvest_yield_by_field[field_name].keys()))
             last_harvest_date = -1
+            last_harvest_operation = None
             for harvest_date in harvest_dates:
                 feed_id = harvest_yield_by_field[field_name][harvest_date]["feed_id"]
                 if feed_id is None:
                     last_harvest_date = harvest_date
                     continue
+                day_before_harvest = harvest_date - 1
                 has_remaining_feed_at_harvest = (
-                    farmgrown_feed_inventory_by_feed_id[feed_id].get(harvest_date, 0.0) > 0.0
+                    farmgrown_feed_inventory_by_feed_id[feed_id].get(day_before_harvest, 0.0) > 0.0
                 )
-                harvest_operation = harvest_yield_by_field[field_name][harvest_date]["harvest_type"]
+                last_harvest_operation = harvest_yield_by_field[field_name][last_harvest_date]["harvest_type"] if \
+                    last_harvest_date >= 0 else None
                 if (
                     feed_id in farmgrown_feed_inventory_by_feed_id
                     and not has_remaining_feed_at_harvest
-                    and harvest_operation == "harvest_kill"
+                    and last_harvest_operation == "harvest_kill"
                 ) or feed_id not in total_farmgrown_feed_emission_and_resource_by_feed_id:
                     total_farmgrown_feed_emission_and_resource_by_feed_id[feed_id] = {
                         "nitrous_oxide_emissions": 0.0,
