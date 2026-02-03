@@ -844,6 +844,12 @@
         "type": "number",
         "minimum": 0,
         "default": 75
+      },
+      "maximum_ration_reformulation_attempts": {
+        "description": "The maximum number of attempts the ration formulation logic will make before stopping. Meant only to catch edge cases that could cause infinite loops. In normal operation, this value should never be reached.",
+        "type": "number",
+        "minimum": 1,
+        "default": 250
       }
     },
     "pen_information": {
@@ -6373,9 +6379,13 @@
           "type": "string",
           "description": "Name of crop to be stored in the feed storage unit."
         },
-        "field_name": {
-          "type": "string",
-          "description": "Name of the field associated with the crop to be stored in feed storage unit."
+        "field_names": {
+          "type": "array",
+          "description": "Name of the all fields associated with the crop to be stored in feed storage unit.",
+          "properties": {
+            "type": "string",
+            "description": "Name of the field associated with the crop to be stored in feed storage unit."
+          }
         },
         "storage_type": {
           "type": "string",
@@ -6423,9 +6433,13 @@
           "type": "string",
           "description": "Name of crop to be stored in the feed storage unit."
         },
-        "field_name": {
-          "type": "string",
-          "description": "Name of the field associated with the crop to be stored in feed storage unit."
+        "field_names": {
+          "type": "array",
+          "description": "Name of the all fields associated with the crop to be stored in feed storage unit.",
+          "properties": {
+            "type": "string",
+            "description": "Name of the field associated with the crop to be stored in feed storage unit."
+          }
         },
         "storage_type": {
           "type": "string",
@@ -6487,9 +6501,13 @@
           "type": "string",
           "description": "Name of crop to be stored in the feed storage unit."
         },
-        "field_name": {
-          "type": "string",
-          "description": "Name of the field associated with the crop to be stored in feed storage unit."
+        "field_names": {
+          "type": "array",
+          "description": "Name of the all fields associated with the crop to be stored in feed storage unit.",
+          "properties": {
+            "type": "string",
+            "description": "Name of the field associated with the crop to be stored in feed storage unit."
+          }
         },
         "storage_type": {
           "type": "string",
@@ -6544,9 +6562,13 @@
           "type": "string",
           "description": "Name of crop to be stored in the feed storage unit."
         },
-        "field_name": {
-          "type": "string",
-          "description": "Name of the field associated with the crop to be stored in feed storage unit."
+        "field_names": {
+          "type": "array",
+          "description": "Name of the all fields associated with the crop to be stored in feed storage unit.",
+          "properties": {
+            "type": "string",
+            "description": "Name of the field associated with the crop to be stored in feed storage unit."
+          }
         },
         "storage_type": {
           "type": "string",
