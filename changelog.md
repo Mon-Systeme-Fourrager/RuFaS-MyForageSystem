@@ -297,6 +297,7 @@ v0.9.2
 - [2711](https://github.com/RuminantFarmSystems/MASM/pull/2711) - [minor change] [Manure] [NoInputChange] [NoOutputChange] Updates damping factor and Arrhenius constant values
 - [2726](https://github.com/RuminantFarmSystems/MASM/pull/2726) - [minor change] [Feed] [NoInputChange] [NoOutputChange] Report the Farm Grown Feed Emissions on a daily basis.
 - [2608](https://github.com/RuminantFarmSystems/MASM/pull/2608) - [minor change] [InputChange][OutputChange][Animal] Implements the Genetics submodule.
+- [2728](https://github.com/RuminantFarmSystems/MASM/pull/2728) - [minor change] [InputManager] [NoInputChange] [NoOutputChange] Enforces the required file blobs.
 
 ### v0.9.2
 
