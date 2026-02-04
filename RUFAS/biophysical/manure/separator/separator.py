@@ -164,7 +164,9 @@ class Separator(Processor):
         if liquid_manure_water <= 0.0:
             self._om.add_error(
                 f"Liquid manure volume is {liquid_manure_water}",
-                f"Separator '{self.name}' attempted to separate more water into manure solids fraction than was present in manure entering separator. The separated_solids_dry_matter value for separator '{self.name}' may need to be increased.",
+                f"Separator '{self.name}' attempted to separate more water into manure solids fraction than was "
+                "present in manure entering separator. The separated_solids_dry_matter "
+                f"value for separator '{self.name}' may need to be increased.",
                 {**info_map},
             )
         liquid_manure_total_solids = self.held_manure.total_solids * (1 - self.total_solids_efficiency)
