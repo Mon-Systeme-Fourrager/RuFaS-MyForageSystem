@@ -1,5 +1,4 @@
 from RUFAS.output_manager import OutputManager
-from RUFAS.input_manager import InputManager
 
 from .emissions import EmissionsEstimator
 from .energy import EnergyEstimator
