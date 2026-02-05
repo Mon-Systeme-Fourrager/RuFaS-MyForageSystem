@@ -148,6 +148,10 @@ def test_daily_simulation(
     Unit test for function _daily_simulation in file RUFAS/simulation_engine.py
     """
     # Arrange
+    mock_simulate_animals = mocker.patch.object(
+        simulation_engine.im, "get_data",
+        return_value={"config": {"simulate_animals": True}}
+        )
     simulation_engine.time = (mock_time := MagicMock(auto_spec=RufasTime))
     simulation_engine.weather = (mock_weather := MagicMock(auto_spec=Weather))
     mock_weather_get_current_day_conditions = mocker.patch.object(
@@ -155,7 +159,6 @@ def test_daily_simulation(
         "get_current_day_conditions",
         return_value=(mock_current_day_conditions := MagicMock(auto_spec=CurrentDayConditions)),
     )
-
     simulation_engine.time.current_date = datetime.today()
     simulation_engine.time.simulation_day = 15
     simulation_engine.next_max_daily_feed_recalculation = (
@@ -256,6 +259,7 @@ def test_daily_simulation(
     simulation_engine._daily_simulation()
 
     # Assert
+    mock_simulate_animals.assert_called_once()
     mock_generate_daily_manure_applications.assert_called_once_with()
     mock_weather_get_current_day_conditions.assert_called_once_with(mock_time)
     mock_field_daily_update_routine.assert_called_once_with(mock_weather, mock_time, mock_manure_applications)
