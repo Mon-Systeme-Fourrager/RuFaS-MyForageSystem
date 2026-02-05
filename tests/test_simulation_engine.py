@@ -149,9 +149,8 @@ def test_daily_simulation(
     """
     # Arrange
     mock_simulate_animals = mocker.patch.object(
-        simulation_engine.im, "get_data",
-        return_value={"config": {"simulate_animals": True}}
-        )
+        simulation_engine.im, "get_data", return_value={"config": {"simulate_animals": True}}
+    )
     simulation_engine.time = (mock_time := MagicMock(auto_spec=RufasTime))
     simulation_engine.weather = (mock_weather := MagicMock(auto_spec=Weather))
     mock_weather_get_current_day_conditions = mocker.patch.object(

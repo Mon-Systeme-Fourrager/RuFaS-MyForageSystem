@@ -133,7 +133,8 @@ class SimulationEngine:
             self.feed_manager.report_feed_storage_levels(self.time.simulation_day, "daily_storage_levels")
             self.feed_manager.report_cumulative_purchased_feeds(self.time.simulation_day)
             is_ok_to_feed_animals, daily_feeds_fed = self.feed_manager.manage_daily_feed_request(
-                requested_feed, self.time)
+                requested_feed, self.time
+            )
 
             daily_purchased_feeds_fed = daily_feeds_fed.get("purchased", {})
             self.emissions_estimator.calculate_purchased_feed_emissions(daily_purchased_feeds_fed)
@@ -141,7 +142,8 @@ class SimulationEngine:
             if not is_ok_to_feed_animals:
                 info_map = {"class": self.__class__.__name__, "function": self._daily_simulation.__name__}
                 self.om.add_warning(
-                    "Value: not enough feed for the herd", "Reformulating ration for all pens", info_map)
+                    "Value: not enough feed for the herd", "Reformulating ration for all pens", info_map
+                )
                 self._formulate_ration()
 
             total_inventory = self.feed_manager.get_total_projected_inventory(
