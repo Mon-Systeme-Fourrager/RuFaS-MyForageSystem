@@ -155,7 +155,10 @@ def test_daily_simulation(
         "get_current_day_conditions",
         return_value=(mock_current_day_conditions := MagicMock(auto_spec=CurrentDayConditions)),
     )
-
+    mock_simulate_animals = mocker.patch.object(
+        simulation_engine.im, "get_data",
+        return_value={"config": {"simulate_animals": True}}
+    )
     simulation_engine.time.current_date = datetime.today()
     simulation_engine.time.simulation_day = 15
     simulation_engine.next_max_daily_feed_recalculation = (
