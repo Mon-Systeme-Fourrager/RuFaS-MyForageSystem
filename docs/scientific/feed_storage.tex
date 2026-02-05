@@ -160,7 +160,7 @@
 
   \vfill
 
-  {\small v.1; Updated 2025\par}
+  {\small v.1; Updated 2026\par}
   \vspace*{1cm}
 \end{titlepage}
 
@@ -259,6 +259,23 @@ We currently represent the quality assessment for the feeds based on a single di
 
 The feed library that includes both NRC and NASEM feeds does not have feed quality embedded in the feed IDs. Instead, a quality assessment should be made independent of the feed ID number and added as an additional attribute of the stored feed. 
 
+\section{Feed Storage Inputs}
+Farmgrown feeds have storage inputs that are described in depth below and consist of the following:
+\begin{itemize}
+    \item storage classification The class of storage: Grain, Hay, Silage, Baleage.
+    \item name  Each storage has a unique name. Ex. "alfalfa_silage_storage_1"
+    \item crop_name The name of the crop being stored.
+    \item field_name    The name of the field the crop was grown in.
+    \item storage_type  The sub-type of the storage class. Ex. "Dry" for grain storage
+    \item dm_loss_coefficient An input used for grain storages that specifies a loss of DM. Ex. "0.01",
+    \item initial_storage_dry_matter The dry matter content upon receipt by the feed storage module.
+    \item post_wilting_moisture_percentage The DM content of silage or baleage after wilting.
+    \item target_dry_matter The final DM content of hay.
+    \item additional_dry_matter_loss_coefficient An optional input to represent DM loss in excess of normal processes.
+    \item bale_size An input used for baleage to specify the diameter of the bale in meters.
+    \item rufas_id The RuFaS feed ID of the stored crop.
+    \item capacity 1e10 The maximum mass capacity of the storage.
+\end{itemize}
 
 \section{Storage Classifications}
 The agricultural production of harvested animal feed is dependent on season, climate, and farm management. In most cases, this means that feed is produced in large quantities when growing conditions are suitable and must be preserved to meet daily animal feed requirements. Microbial spoilage of wet feed products rapidly degrades their nutritional quality and can harm livestock that consume spoiled feed. Viable, cost-effective methods of preservation depend on the crop type and climate, but practically are limited to drying feed beyond the ability to support microbial growth and fermenting feed in the absence of oxygen to produce acid and reduce pH to inhibit spoilage. Feed Storage functions are primarily based on those in the \href{https://www.ars.usda.gov/northeast-area/up-pa/pswmru/docs/integrated-farm-system-model/}{Integrated Farm Systems Model} but modified to accommodate a daily time-step and remove explicit spatial components.
@@ -717,7 +734,7 @@ WSC & Water Soluble Carbohydrates \\
 
 
 \newpage
-\section{Refernces}
+\section{References}
 \printbibliography[heading=subbibliography,title={Feed Storage Module}]
 \end{refsection}
 
