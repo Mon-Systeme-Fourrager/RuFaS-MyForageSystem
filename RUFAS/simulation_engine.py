@@ -94,61 +94,58 @@ class SimulationEngine:
         """Executes the daily simulation routines."""
         manure_applications = self.generate_daily_manure_applications()
         harvested_crops = self.field_manager.daily_update_routine(self.weather, self.time, manure_applications)
-        if self.im.get_data("config.simulate_animals"):
-            next_harvest_dates: dict[str, date | None] = {}
-            for harvested_crop in harvested_crops:
-                self.feed_manager.receive_crop(harvested_crop, self.time.simulation_day)
-                if harvested_crop.config_name not in next_harvest_dates:
-                    crop_config_name = harvested_crop.config_name
-                    next_harvest_date = self.field_manager.get_next_harvest_dates([crop_config_name])
-                    next_harvest_dates[harvested_crop.config_name] = next_harvest_date.get(crop_config_name)
+        next_harvest_dates: dict[str, date | None] = {}
+        for harvested_crop in harvested_crops:
+            self.feed_manager.receive_crop(harvested_crop, self.time.simulation_day)
+            if harvested_crop.config_name not in next_harvest_dates:
+                crop_config_name = harvested_crop.config_name
+                next_harvest_date = self.field_manager.get_next_harvest_dates([crop_config_name])
+                next_harvest_dates[harvested_crop.config_name] = next_harvest_date.get(crop_config_name)
 
-            is_time_to_recalculate_max_daily_feeds = self.next_max_daily_feed_recalculation == self.time.current_date
-            if is_time_to_recalculate_max_daily_feeds:
-                crops_to_get_next_harvest_dates = [
-                    crop for crop in self.feed_manager.crop_to_rufas_id.keys() if crop not in next_harvest_dates.keys()
-                ]
-                next_harvest_dates = self.field_manager.get_next_harvest_dates(crops_to_get_next_harvest_dates)
-                self.next_max_daily_feed_recalculation: date = self.time.current_date
-                +self.max_daily_feed_recalculation_interval
+        is_time_to_recalculate_max_daily_feeds = self.next_max_daily_feed_recalculation == self.time.current_date
+        if is_time_to_recalculate_max_daily_feeds:
+            crops_to_get_next_harvest_dates = [
+                crop for crop in self.feed_manager.crop_to_rufas_id.keys() if crop not in next_harvest_dates.keys()
+            ]
+            next_harvest_dates = self.field_manager.get_next_harvest_dates(crops_to_get_next_harvest_dates)
+            self.next_max_daily_feed_recalculation: date = self.time.current_date
+            +self.max_daily_feed_recalculation_interval
 
-            if next_harvest_dates != {}:
-                total_projected_inventory = self.feed_manager.get_total_projected_inventory(
-                    self.time.current_date.date(), self.weather, self.time
-                )
-
-                next_harvest_dates_with_rufas_ids = self.feed_manager.translate_crop_config_name_to_rufas_id(
-                    next_harvest_dates
-                )
-                ideal_feeds_to_purchase = self.herd_manager.update_all_max_daily_feeds(
-                    total_projected_inventory, next_harvest_dates_with_rufas_ids, self.time
-                )
-                self.feed_manager.manage_planning_cycle_purchases(ideal_feeds_to_purchase, self.time)
-
-            is_time_to_reformulate_ration = self.time.current_date.date() == self.next_ration_reformulation
-            if is_time_to_reformulate_ration:
-                self._formulate_ration()
-
-            requested_feed = self.herd_manager.collect_daily_feed_request()
-            self.feed_manager.report_feed_storage_levels(self.time.simulation_day, "daily_storage_levels")
-            self.feed_manager.report_cumulative_purchased_feeds(self.time.simulation_day)
-            is_ok_to_feed_animals, daily_feeds_fed = self.feed_manager.manage_daily_feed_request(
-                requested_feed, self.time
-            )
-
-            daily_purchased_feeds_fed = daily_feeds_fed.get("purchased", {})
-            self.emissions_estimator.calculate_purchased_feed_emissions(daily_purchased_feeds_fed)
-
-            if not is_ok_to_feed_animals:
-                info_map = {"class": self.__class__.__name__, "function": self._daily_simulation.__name__}
-                self.om.add_warning(
-                    "Value: not enough feed for the herd", "Reformulating ration for all pens", info_map
-                )
-                self._formulate_ration()
-
-            total_inventory = self.feed_manager.get_total_projected_inventory(
+        if next_harvest_dates != {}:
+            total_projected_inventory = self.feed_manager.get_total_projected_inventory(
                 self.time.current_date.date(), self.weather, self.time
             )
+
+            next_harvest_dates_with_rufas_ids = self.feed_manager.translate_crop_config_name_to_rufas_id(
+                next_harvest_dates
+            )
+            ideal_feeds_to_purchase = self.herd_manager.update_all_max_daily_feeds(
+                total_projected_inventory, next_harvest_dates_with_rufas_ids, self.time
+            )
+            self.feed_manager.manage_planning_cycle_purchases(ideal_feeds_to_purchase, self.time)
+
+        is_time_to_reformulate_ration = self.time.current_date.date() == self.next_ration_reformulation
+        if is_time_to_reformulate_ration:
+            self._formulate_ration()
+
+        requested_feed = self.herd_manager.collect_daily_feed_request()
+        self.feed_manager.report_feed_storage_levels(self.time.simulation_day, "daily_storage_levels")
+        self.feed_manager.report_cumulative_purchased_feeds(self.time.simulation_day)
+        is_ok_to_feed_animals, daily_feeds_fed = self.feed_manager.manage_daily_feed_request(requested_feed, self.time)
+
+        daily_purchased_feeds_fed = daily_feeds_fed.get("purchased", {})
+        self.emissions_estimator.calculate_purchased_feed_emissions(daily_purchased_feeds_fed)
+
+        if not is_ok_to_feed_animals:
+            info_map = {"class": self.__class__.__name__, "function": self._daily_simulation.__name__}
+            self.om.add_warning("Value: not enough feed for the herd", "Reformulating ration for all pens", info_map)
+            self._formulate_ration()
+
+        total_inventory = self.feed_manager.get_total_projected_inventory(
+            self.time.current_date.date(), self.weather, self.time
+        )
+
+        if self.im.get_data("config.simulate_animals"):
 
             all_manure_data = self.herd_manager.daily_routines(
                 self.feed_manager.available_feeds, self.time, self.weather, total_inventory
