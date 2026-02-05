@@ -132,7 +132,8 @@ class SimulationEngine:
             requested_feed = self.herd_manager.collect_daily_feed_request()
             self.feed_manager.report_feed_storage_levels(self.time.simulation_day, "daily_storage_levels")
             self.feed_manager.report_cumulative_purchased_feeds(self.time.simulation_day)
-            is_ok_to_feed_animals, daily_feeds_fed = self.feed_manager.manage_daily_feed_request(requested_feed, self.time)
+            is_ok_to_feed_animals, daily_feeds_fed = self.feed_manager.manage_daily_feed_request(
+                requested_feed, self.time)
 
             daily_purchased_feeds_fed = daily_feeds_fed.get("purchased", {})
             self.emissions_estimator.calculate_purchased_feed_emissions(daily_purchased_feeds_fed)
