@@ -145,13 +145,15 @@ class SimulationEngine:
             self.time.current_date.date(), self.weather, self.time
         )
 
-        all_manure_data = self.herd_manager.daily_routines(
-            self.feed_manager.available_feeds, self.time, self.weather, total_inventory
-        )
+        if self.im.get_data("config.simulate_animals"):
 
-        self.manure_manager.run_daily_update(
-            all_manure_data, self.time, self.weather.get_current_day_conditions(self.time)
-        )
+            all_manure_data = self.herd_manager.daily_routines(
+                self.feed_manager.available_feeds, self.time, self.weather, total_inventory
+            )
+
+            self.manure_manager.run_daily_update(
+                all_manure_data, self.time, self.weather.get_current_day_conditions(self.time)
+            )
 
         self.time.record_time()
         self.weather.record_weather(self.time)
