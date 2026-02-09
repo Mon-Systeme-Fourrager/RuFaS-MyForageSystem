@@ -1,4 +1,4 @@
-from collections import Counter, defaultdict
+from collections import Counter, defaultdict, namedtuple
 from datetime import date
 from typing import Any, DefaultDict, Literal, Sequence
 
@@ -35,6 +35,8 @@ ON_FARM_TO_PURCHASED_PRICE_RATION = 0.01
 
 """A type alias representing the context in which a feed purchase was initiated."""
 PurchaseType = Literal["daily_feed_request", "ration_interval", "planning_cycle"]
+
+FeedDeduction = namedtuple("FeedDeduction", ["simulation_day", "amount"])
 
 
 class FeedManager:
@@ -619,7 +621,9 @@ class FeedManager:
         farmgrown_by_id, purchased_by_id = self._gather_available_feeds_by_id()
 
         total_purchased_deducted: dict[RUFAS_ID, float] = {}
-        total_farmgrown_deducted: dict[RUFAS_ID, float] = {}
+        total_farmgrown_deducted: dict[RUFAS_ID, float] = {
+            farmgrown_id: 0.0 for farmgrown_id in self._gather_valid_farmgrown_feed_ids()
+        }
 
         for feed_id, amount_needed in feeds_to_deduct.items():
             remaining_amount_needed = float(amount_needed)
@@ -682,9 +686,9 @@ class FeedManager:
             "simulation_day": simulation_day,
         }
         for feed_id, amount in total_purchased.items():
-            self._om.add_variable(f"purchased_feed_{feed_id}_fed", amount, info_map)
+            self._om.add_variable(f"purchased_feed_{feed_id}_fed", FeedDeduction(simulation_day, amount), info_map)
         for feed_id, amount in total_farmgrown.items():
-            self._om.add_variable(f"farmgrown_feed_{feed_id}_fed", amount, info_map)
+            self._om.add_variable(f"farmgrown_feed_{feed_id}_fed", FeedDeduction(simulation_day, amount), info_map)
 
     def _deduct_from_storage(
         self,
@@ -792,6 +796,23 @@ class FeedManager:
                 purchased_by_id[feed_id].append(stored_feed)
 
         return dict(farmgrown_by_id), dict(purchased_by_id)
+
+    def _gather_valid_farmgrown_feed_ids(self) -> set[RUFAS_ID]:
+        """
+        Gathers the ids of valid farm-grown feeds.
+
+        Returns
+        -------
+        set[RUFAS_ID]
+            A set of valid farm-grown feed ids.
+        """
+        farmgrown_ids: set[RUFAS_ID] = set()
+        valid_feed_ids = set(feed.rufas_id for feed in self.available_feeds)
+        for storage in self.active_storages.values():
+            feed_id: RUFAS_ID = storage.rufas_feed_id
+            if feed_id in valid_feed_ids:
+                farmgrown_ids.add(feed_id)
+        return farmgrown_ids
 
     def _setup_available_feeds(
         self, feed_config: dict[str, list[Any]], nutrient_standard: NutrientStandard
