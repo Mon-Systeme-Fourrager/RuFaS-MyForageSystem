@@ -487,13 +487,13 @@ class FeedManager:
             tolerance = 1e-6
             is_fulfillable_with_purchase = (
                                                amount_requested - available_amount
-                                           ) <= self.ration_interval_allowance.allowances[feed_id] + tolerance
+                                           ) <= self.advanced_purchase_allowance.allowances.get(feed_id) + tolerance
             if not is_fulfillable_with_purchase:
                 self._om.add_warning(
                     "Ration Interval Purchase Warning",
                     f"Requested feed {feed_id} exceeds ration interval purchases allowance. "
                     f"Requested: {amount_requested}, Available: {available_amount}, "
-                    f"Allowance: ${self.ration_interval_allowance.allowances.get(feed_id, 0.0)}. "
+                    f"Allowance: ${self.advanced_purchase_allowance.allowances.get(feed_id, 0.0)}. "
                     f"Still making full purchase.",
                     {
                         "class": self.__class__.__name__,
@@ -502,7 +502,7 @@ class FeedManager:
                 )
                 print(f"Requested feed {feed_id} exceeds ration interval purchases allowance. "
                       f"Requested: {amount_requested}, Available: {available_amount}, "
-                      f"Allowance: {self.ration_interval_allowance.allowances.get(feed_id, 0.0)}. "
+                      f"Allowance: {self.advanced_purchase_allowance.allowances.get(feed_id, 0.0)}. "
                       f"Still making full purchase.")
             feeds_to_purchase[feed_id] = amount_to_purchase
 
