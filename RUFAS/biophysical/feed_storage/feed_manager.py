@@ -18,7 +18,7 @@ from RUFAS.data_structures.feed_storage_to_animal_connection import (
     RuntimePurchaseAllowance,
     RequestedFeed,
     TotalInventory,
-    IdealFeeds,
+    IdealFeeds, AdvancePurchaseAllowance,
 )
 from RUFAS.input_manager import InputManager
 from RUFAS.rufas_time import RufasTime
@@ -100,6 +100,7 @@ class FeedManager:
         purchase_allowances: list[dict[str, int | float]] = feed_config["allowances"]
         self.planning_cycle_allowance: PlanningCycleAllowance = PlanningCycleAllowance(purchase_allowances)
         self.runtime_purchase_allowance: RuntimePurchaseAllowance = RuntimePurchaseAllowance(purchase_allowances)
+        self.advanced_purchase_allowance: AdvancePurchaseAllowance = AdvancePurchaseAllowance(purchase_allowances)
 
         available_feed_ids = [feed.rufas_id for feed in self.available_feeds]
         self.crop_to_rufas_id: dict[str, RUFAS_ID] = {}
@@ -506,6 +507,7 @@ class FeedManager:
             feeds_to_purchase[feed_id] = amount_to_purchase
 
         self.purchase_feed(feeds_to_purchase, time, purchase_type="ration_interval")
+
     def _query_available_feed_totals(
         self, query_feed_ids: list[RUFAS_ID], stored_crops: dict[RUFAS_ID, float] | None = None
     ) -> dict[RUFAS_ID, float]:
