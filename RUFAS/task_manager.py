@@ -38,12 +38,16 @@ class TaskType(Enum):
 
     HERD_INITIALIZATION = "Initializes simulation to generate a stable herd"
     SIMULATION_SINGLE_RUN = "A single simulation run"
-    SIMULATION_MULTI_RUN = ("Runs multiple simulations to generate statistically significant results. "
-                            "Automatically changes the random seed.")
+    SIMULATION_MULTI_RUN = (
+        "Runs multiple simulations to generate statistically significant results. "
+        "Automatically changes the random seed."
+    )
     SENSITIVITY_ANALYSIS = "Run sensitivity analysis"
     INPUT_DATA_AUDIT = "Validates input data and saves metadata properties as CSV"
-    END_TO_END_TESTING = ("Runs RuFaS's end-to-end testing routine. Ensures all components of RuFaS work together "
-                          "correctly from start to finish.")
+    END_TO_END_TESTING = (
+        "Runs RuFaS's end-to-end testing routine. Ensures all components of RuFaS work together "
+        "correctly from start to finish."
+    )
     POST_PROCESSING = "Bypass simulation engine and directly run Output Manager"
     COMPARE_METADATA_PROPERTIES = "Compares 2 metadata properties files and saves the differences in a .txt file"
     DATA_COLLECTION_APP_UPDATE = "Updates the schema and interface of the Data Collection App"
