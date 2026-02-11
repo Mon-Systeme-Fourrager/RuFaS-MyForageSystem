@@ -575,11 +575,7 @@ def test_gather_farmgrown_feed_inventory_data_raises_and_logs_on_bad_key(
     and then raises ValueError with helpful text.
     """
     bad_key = "stored_feed_X_dm.daily_storage_levels"
-    fake_filtered = {
-        bad_key: {
-            "values": [(0, 1.0)]
-        }
-    }
+    fake_filtered = {bad_key: {"values": [(0, 1.0)]}}
 
     mocker.patch.object(em.om, "filter_variables_pool", return_value=fake_filtered)
     add_error_spy = mocker.patch.object(em.om, "add_error")

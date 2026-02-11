@@ -343,10 +343,12 @@ class FeedManager:
             "suffix": reporting_suffix,
         }
         for rufas_id, mass in feed_report.items():
-            self._om.add_variable(f"stored_feed_{rufas_id}_dm", FeedAmount(simulation_day, mass["dry_matter_mass"]),
-                                  info_map)
-            self._om.add_variable(f"stored_feed_{rufas_id}_wet", FeedAmount(simulation_day, mass["fresh_mass"]),
-                                  info_map)
+            self._om.add_variable(
+                f"stored_feed_{rufas_id}_dm", FeedAmount(simulation_day, mass["dry_matter_mass"]), info_map
+            )
+            self._om.add_variable(
+                f"stored_feed_{rufas_id}_wet", FeedAmount(simulation_day, mass["fresh_mass"]), info_map
+            )
 
     def manage_daily_feed_request(
         self, requested_feed: RequestedFeed, time: RufasTime

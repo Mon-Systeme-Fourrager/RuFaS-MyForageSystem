@@ -544,9 +544,7 @@ class EmissionsEstimator:
             )
         return daily_farmgrown_feed_emission_and_resource_by_feed_id
 
-    def _gather_farmgrown_feed_inventory_data(
-            self, all_simulation_days: list[int]
-    ) -> dict[RUFAS_ID, dict[int, float]]:
+    def _gather_farmgrown_feed_inventory_data(self, all_simulation_days: list[int]) -> dict[RUFAS_ID, dict[int, float]]:
         """Gathers farmgrown feed inventory data by feed_id and simulation day index."""
         filtered_fgf_data = self.om.filter_variables_pool(
             FARMGROWN_FEEDS_EMISSIONS_AND_RESOURCES_FILTERS["farmgrown_feed_inventory"]
