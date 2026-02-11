@@ -174,7 +174,10 @@ class InputManager:
         if not REQUIRED_FILE_BLOBS.issubset(metadata_file_names):
             missing_blobs = REQUIRED_FILE_BLOBS - metadata_file_names
             self.om.add_error(
-                "Missing required file blobs.", f"Missing required file blobs: {list(missing_blobs)}", info_map
+                "Metadata blobs error",
+                f"Missing required file blobs: {list(missing_blobs)}. "
+                f"Please add all missing file blobs to metadata.",
+                info_map
             )
             raise ValueError(f"Missing required file blobs: {list(missing_blobs)}")
         else:
