@@ -542,32 +542,28 @@ def test_gather_farmgrown_feed_inventory_data_success(
     em: EmissionsEstimator,
     mocker: MockerFixture,
 ) -> None:
-    """
-    Tests successful parsing of farmgrown feed inventory data from output manager.
-    """
     fake_filtered = {
-        "stored_feed_12_dm.daily_storage_levels": {
-            "values": [1.25, 2.5, 0.0],
-            "info_maps": [{"simulation_day": 0}, {"simulation_day": 1}, {"simulation_day": 10}],
-        },
-        "stored_feed_7_dm.daily_storage_levels": {
-            "values": [9.0, 8.0],
-            "info_maps": [{"simulation_day": 5}, {"simulation_day": 6}],
-        },
+        "stored_feed_12_dm.daily_storage_levels": {"values": [(0, 1.25), (1, 2.5), (10, 0.0)]},
+        "stored_feed_7_dm.daily_storage_levels": {"values": [(5, 9.0), (6, 8.0)]},
     }
 
     filter_spy = mocker.patch.object(em.om, "filter_variables_pool", return_value=fake_filtered)
     add_error_spy = mocker.patch.object(em.om, "add_error")
 
-    result = em._gather_farmgrown_feed_inventory_data()
+    all_days = list(range(0, 15))
+    result = em._gather_farmgrown_feed_inventory_data(all_simulation_days=all_days)
 
     filter_spy.assert_called_once()
-    assert result == {
-        12: {0: 1.25, 1: 2.5, 10: 0.0},
-        7: {5: 9.0, 6: 8.0},
-    }
-
     add_error_spy.assert_not_called()
+
+    expected = {
+        12: {day: 0.0 for day in all_days},
+        7: {day: 0.0 for day in all_days},
+    }
+    expected[12].update({0: 1.25, 1: 2.5, 10: 0.0})
+    expected[7].update({5: 9.0, 6: 8.0})
+
+    assert result == expected
 
 
 def test_gather_farmgrown_feed_inventory_data_raises_and_logs_on_bad_key(
@@ -581,8 +577,7 @@ def test_gather_farmgrown_feed_inventory_data_raises_and_logs_on_bad_key(
     bad_key = "stored_feed_X_dm.daily_storage_levels"
     fake_filtered = {
         bad_key: {
-            "values": [1.0],
-            "info_maps": [{"simulation_day": 0}],
+            "values": [(0, 1.0)]
         }
     }
 
@@ -590,7 +585,7 @@ def test_gather_farmgrown_feed_inventory_data_raises_and_logs_on_bad_key(
     add_error_spy = mocker.patch.object(em.om, "add_error")
 
     with pytest.raises(ValueError) as excinfo:
-        em._gather_farmgrown_feed_inventory_data()
+        em._gather_farmgrown_feed_inventory_data(all_simulation_days=list(range(0, 15)))
 
     msg = str(excinfo.value)
     assert bad_key in msg

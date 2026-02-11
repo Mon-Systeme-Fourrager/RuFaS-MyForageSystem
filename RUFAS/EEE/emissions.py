@@ -78,10 +78,6 @@ FARMGROWN_FEEDS_EMISSIONS_AND_RESOURCES_FILTERS: dict[str, dict[str, Any]] = {
         "description": "Collects the inventory of all farmgrown feeds in the simulation.",
         "filters": ["FeedManager.report_stored_farmgrown_feeds.stored_feed_.*_dm.daily_storage_levels.*"],
         "date_fields": "simulation_day",
-        "expand_data": True,
-        "use_fill_value_in_gaps": True,
-        "use_fill_value_at_end": True,
-        "fill_value": 0.0,
     },
 }
 
@@ -416,7 +412,7 @@ class EmissionsEstimator:
         )
 
         harvest_dates_by_feed_id = self._calculate_harvest_dates_by_feed_id(harvest_yield_by_field)
-        farmgrown_feed_inventory_by_feed_id = self._gather_farmgrown_feed_inventory_data()
+        farmgrown_feed_inventory_by_feed_id = self._gather_farmgrown_feed_inventory_data(all_simulation_days)
 
         for field_name in harvest_yield_by_field:
             harvest_dates = sorted(list(harvest_yield_by_field[field_name].keys()))
@@ -548,7 +544,9 @@ class EmissionsEstimator:
             )
         return daily_farmgrown_feed_emission_and_resource_by_feed_id
 
-    def _gather_farmgrown_feed_inventory_data(self) -> dict[RUFAS_ID, dict[int, float]]:
+    def _gather_farmgrown_feed_inventory_data(
+            self, all_simulation_days: list[int]
+    ) -> dict[RUFAS_ID, dict[int, float]]:
         """Gathers farmgrown feed inventory data by feed_id and simulation day index."""
         filtered_fgf_data = self.om.filter_variables_pool(
             FARMGROWN_FEEDS_EMISSIONS_AND_RESOURCES_FILTERS["farmgrown_feed_inventory"]
@@ -569,9 +567,14 @@ class EmissionsEstimator:
                     "Needed to parse farmgrown feed inventory data. "
                     "Check emissions.py filters."
                 )
-            farmgrown_feed_inventory_by_feed_id[feed_id] = {
-                info_map["simulation_day"]: values["values"][i] for i, info_map in enumerate(values["info_maps"])
-            }
+
+            values_list = values.get("values", [])
+            matched = {values_list[i][0]: values_list[i][1] for i in range(len(values_list))}
+            farmgrown_feed_inventory_by_feed_id[feed_id] = {day: matched.get(day, 0.0) for day in all_simulation_days}
+            farmgrown_feed_inventory_by_feed_id[feed_id] = dict(
+                sorted(farmgrown_feed_inventory_by_feed_id[feed_id].items())
+            )
+
         return farmgrown_feed_inventory_by_feed_id
 
     def _calculate_harvest_dates_by_feed_id(

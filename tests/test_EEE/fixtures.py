@@ -6,7 +6,7 @@ from pytest_mock import MockerFixture
 
 from RUFAS.EEE.tractor import Tractor
 from RUFAS.EEE.tractor_implement import TractorImplement
-from RUFAS.biophysical.feed_storage.feed_manager import FeedDeduction
+from RUFAS.biophysical.feed_storage.feed_manager import FeedAmount
 from RUFAS.data_structures.feed_storage_to_animal_connection import RUFAS_ID
 from RUFAS.data_structures.tillage_implements import FieldOperationEvent, TractorSize, TillageImplement, OperationType
 from RUFAS.input_manager import InputManager
@@ -9068,7 +9068,7 @@ def raw_farmgrown_feed_deductions_data() -> dict[str, dict[str, list[Any]]]:
     return {
         key: {
             "values": [
-                FeedDeduction(
+                FeedAmount(
                     simulation_day=info["simulation_day"],
                     amount=value,
                 )
