@@ -177,7 +177,7 @@ class InputManager:
                 "Metadata blobs error",
                 f"Missing required file blobs: {list(missing_blobs)}. "
                 f"Please add all missing file blobs to metadata.",
-                info_map
+                info_map,
             )
             raise ValueError(f"Missing required file blobs: {list(missing_blobs)}")
         else:
