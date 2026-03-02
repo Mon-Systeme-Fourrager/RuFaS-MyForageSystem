@@ -15,16 +15,16 @@ class ManureExcretionCalculator:
     Notes
     -----
     This class includes a simple DMI-clip tracker for manure excretion calculations.
-    When predicted DMI falls below literature-reported domain bounds, we log a warning.
-    When predicted DMI falls below a hard minimum floor, we clip to the floor.
+    When predicted DMI falls below the literature-based minimum, we log a warning
+    and clip to that minimum.
 
     The tracker is intentionally lightweight: it logs at most one warning per animal class
     (lactating vs dry), while keeping running counters in-memory.
     """
 
     _dmi_clip_stats = {
-        "lact": {"n_total": 0, "n_below_min": 0, "n_clipped": 0},
-        "dry": {"n_total": 0, "n_below_min": 0, "n_clipped": 0},
+        "lact": {"n_total": 0, "n_clipped": 0},
+        "dry": {"n_total": 0, "n_clipped": 0},
     }
     _dmi_clip_warned = {"lact": False, "dry": False}
 
@@ -53,30 +53,26 @@ class ManureExcretionCalculator:
         else:
             raise ValueError(f"Unexpected DMI clip kind: {kind}")
 
-        below_min = dmi_original < floor
-        clipped = below_min
+        clipped = dmi_original < floor
 
-        if below_min:
-            stats["n_below_min"] += 1
         if clipped:
             stats["n_clipped"] += 1
 
-        # Warn at most once per kind (to avoid log spam) when below the minimum floor.
-        if below_min and not ManureExcretionCalculator._dmi_clip_warned[kind]:
+        # Warn at most once per kind (to avoid log spam) when clipping is applied.
+        if clipped and not ManureExcretionCalculator._dmi_clip_warned[kind]:
             ManureExcretionCalculator._dmi_clip_warned[kind] = True
 
             pct = lambda a, b: (100.0 * a / b) if b else 0.0
             msg = (
-                f"Predicted DMI for manure excretion is below the minimum floor for {kind} cows "
+                f"Predicted DMI for manure excretion is below the literature minimum for {kind} cows "
                 f"(DMI={dmi_original:.3f} kg/d < {floor:.3f} kg/d). "
-                + f"Clipping applied to minimum floor {floor:.3f} kg/d. "
-                + f"Cumulative so far: below-minimum {stats['n_below_min']}/{stats['n_total']} "
-                f"({pct(stats['n_below_min'], stats['n_total']):.1f}%), "
-                f"clipped {stats['n_clipped']}/{stats['n_total']} ({pct(stats['n_clipped'], stats['n_total']):.1f}%)."
+                + f"Clipping applied to {floor:.3f} kg/d. "
+                + f"Cumulative so far: clipped {stats['n_clipped']}/{stats['n_total']} "
+                f"({pct(stats['n_clipped'], stats['n_total']):.1f}%)."
             )
 
             OutputManager().add_warning(
-                "DMI domain warning (manure excretion)",
+                "DMI minimum warning (manure excretion)",
                 msg,
                 context,
             )
