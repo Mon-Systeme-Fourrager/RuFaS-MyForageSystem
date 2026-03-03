@@ -456,6 +456,7 @@ class ManureExcretionCalculator:
 
         """
         dmi_predicted = nutrient_amounts.dry_matter
+        dry_matter_intake = dmi_predicted
         dry_matter_intake = max(dry_matter_intake, AnimalModuleConstants.MINIMUM_DMI_LACT)
         ManureExcretionCalculator._track_and_warn_dmi_clip(
             kind="lact",
@@ -626,6 +627,7 @@ class ManureExcretionCalculator:
         # TODO: Pass in available feeds directly instead of a Feed object - GitHub Issue #1218
         # TODO: Rename abbreviated key names to full names - GitHub Issue #1218
         dmi_predicted = nutrient_amounts.dry_matter
+        dry_matter_intake = dmi_predicted
         dry_matter_intake = max(dry_matter_intake, AnimalModuleConstants.MINIMUM_DMI_DRY)
         ManureExcretionCalculator._track_and_warn_dmi_clip(
             kind="dry",
