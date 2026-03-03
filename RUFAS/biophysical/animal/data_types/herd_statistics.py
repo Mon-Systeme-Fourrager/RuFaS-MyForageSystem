@@ -23,14 +23,16 @@ class HerdStatistics:
         Details about stillborn calves including relevant attributes.
     sold_calves_info : list[SoldAnimalTypedDict]
         Details about sold calves including relevant attributes.
-    sold_heiferIIIs_info : list[SoldAnimalTypedDict]
-        Detailed information on sold animals categorized as "Heifer III".
     sold_heiferIIs_info : list[SoldAnimalTypedDict]
         Detailed information about sold animals categorized as "Heifer II".
+    sold_heiferIIIs_info : list[SoldAnimalTypedDict]
+        Detailed information on sold animals categorized as "Heifer III".
     sold_cows_info : list[SoldAnimalTypedDict]
         Comprehensive details of sold cows including relevant attributes.
     sold_and_died_cows_info : list[SoldAnimalTypedDict]
         Information concerning cows that were either sold or died.
+     total_enteric_methane : dict[AnimalType, dict[str, float]]
+        Total amount of enteric methane, grouped by animal types and methods (g/day).   
     herd_num : int
         Total number of animals in the herd, (unitless).
     calf_num : int
@@ -93,6 +95,8 @@ class HerdStatistics:
         Total number of semen units used for cows, (unitless).
     ed_period_h : int
         Estrus detection (ED) period for heifers, (simulation days).
+    ed_period : int
+        Estrus detection (ED) period for cows, (simulation days).
     open_cow_num : int
         Total number of open (non-pregnant) cows, (unitless).
     preg_cow_num : int
@@ -150,8 +154,8 @@ class HerdStatistics:
         Percentage statistics of culled animals, categorized by culling reasons, (unitless).
     percent_cow_for_parity : dict[str, float]
         Percentage of cows available for each parity class, calculated based on total counts, (unitless).
-    total_enteric_methane : dict[AnimalType, dict[str, float]]
-        Total amount of enteric methane, grouped by animal types and methods (g/day).
+    animals_deaths_by_stage : dict[AnimalType, int]
+        Count of animal deaths categorized by their stages.
 
     """
 
@@ -162,8 +166,8 @@ class HerdStatistics:
 
     stillborn_calf_info: list[SoldAnimalTypedDict]
     sold_calves_info: list[SoldAnimalTypedDict]
-    sold_heiferIIIs_info: list[SoldAnimalTypedDict]
     sold_heiferIIs_info: list[SoldAnimalTypedDict]
+    sold_heiferIIIs_info: list[SoldAnimalTypedDict]
     sold_cows_info: list[SoldAnimalTypedDict]
     sold_and_died_cows_info: list[SoldAnimalTypedDict]
     total_enteric_methane: dict[AnimalType, dict[str, float]]
