@@ -430,7 +430,7 @@ def test_start_data_processing(
         cv_blocks = {
             "cross-validation": [
                 {"description": "cv1", "target_and_save": {"x": 1}, "rules": [{"r": 1}]},
-            {"description": "cv2", "target_and_save": {"x": 2}, "rules": [{"r": 2}]},
+                {"description": "cv2", "target_and_save": {"x": 2}, "rules": [{"r": 2}]},
             ]
         }
         side_effect = [True, True]
