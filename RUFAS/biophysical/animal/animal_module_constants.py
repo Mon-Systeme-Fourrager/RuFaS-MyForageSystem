@@ -97,7 +97,7 @@ class AnimalModuleConstants:
 
     MINIMUM_DMI_LACT: float = 3.94
     """Minimum estimated DMI for lactating cows, kg/day. Note that in the dataset used to generate the equation,
-    the mimimum DMI is 3.94 kg/day (Reed et al. 2015)"""
+    the minimum DMI is 3.94 kg/day (Reed et al. 2015)"""
 
     MINIMUM_DMI_DRY: float = 7.1
     """Minimum estimated DMI for dry cows, kg/day. Note that in the dataset used to generate the equation,
