@@ -17,8 +17,7 @@ class _DMIClipStats(TypedDict):
 
 
 class ManureExcretionCalculator:
-    """Calculates manure excretion values for animals.
-    """
+    """Calculates manure excretion values for animals."""
 
     _DMI_KIND: Final = Literal["lact", "dry"]
 
