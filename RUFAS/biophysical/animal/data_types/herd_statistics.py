@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from RUFAS.biophysical.animal import animal_constants
-from RUFAS.biophysical.animal.data_types.animal_typed_dicts import SoldAnimalTypedDict
+from RUFAS.biophysical.animal.data_types.animal_typed_dicts import SoldAnimalTypedDict, StillbornCalfTypedDict
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 
 
@@ -164,7 +164,7 @@ class HerdStatistics:
 
     num_cow_for_parity: dict[str, int]
 
-    stillborn_calf_info: list[SoldAnimalTypedDict]
+    stillborn_calf_info: list[StillbornCalfTypedDict]
     sold_calves_info: list[SoldAnimalTypedDict]
     sold_heiferIIs_info: list[SoldAnimalTypedDict]
     sold_heiferIIIs_info: list[SoldAnimalTypedDict]
