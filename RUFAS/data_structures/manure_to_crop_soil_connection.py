@@ -118,8 +118,9 @@ class NutrientRequestResults:
             1.0,
             abs_tol=1e-6,
         ):
-            raise ValueError("NutrientRequestResults Error: Sum of organic and inorganic phosphorus fractions must be "
-                             "1.")
+            raise ValueError(
+                "NutrientRequestResults Error: Sum of organic and inorganic phosphorus fractions must be " "1."
+            )
 
     def __add__(self, other: "NutrientRequestResults") -> "NutrientRequestResults":
         """

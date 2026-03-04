@@ -340,8 +340,10 @@ class ReportGenerator:
                 report_data = self._add_var_units(report_data)
             report_data = {key: report_data[key]["values"] for key in report_data}
             if not all(report_data[key] for key in report_data):
-                raise ValueError("Report Generator error: One or more columns in the report data are empty, "
-                                 "cannot perform aggregations.")
+                raise ValueError(
+                    "Report Generator error: One or more columns in the report data are empty, "
+                    "cannot perform aggregations."
+                )
             event_logs = self._add_constants_to_report_data(report_data, filter_content)
         except ValueError:
             raise

@@ -152,8 +152,10 @@ class E2ETestResultsHandler:
             )
             raise KeyError("E2E testing error: The conversion table CSV should have both 'Original' and 'New' columns.")
         if E2ETestResultsHandler._duplicate_mappings_exist(df_conversion_lookup_table):
-            raise ValueError("E2E testing error: Duplicate Mapping Error: The conversion table CSV should not contain "
-                             "duplicate mappings.")
+            raise ValueError(
+                "E2E testing error: Duplicate Mapping Error: The conversion table CSV should not contain "
+                "duplicate mappings."
+            )
         conversion_lookup_table: dict[str, str] = df_conversion_lookup_table.set_index("Original")["New"].to_dict()
         for key, value in expected_results.items():
             if key in list(conversion_lookup_table.keys()):
@@ -424,8 +426,10 @@ class E2ETestResultsHandler:
                 expected_results["expected_results_last_updated"] = Utility.get_timestamp(include_millis=False)
                 E2ETestResultsHandler._write_formatted_json(expected_results_path, expected_results)
             except (IOError, json.JSONDecodeError) as e:
-                error_message = f"Failed to update expected results for {path_set.domain} domain. Error: {str(e)}." \
-                                " Restoring backup."
+                error_message = (
+                    f"Failed to update expected results for {path_set.domain} domain. Error: {str(e)}."
+                    " Restoring backup."
+                )
                 om.add_error(
                     "End-to-end testing expected results update failure.",
                     error_message,

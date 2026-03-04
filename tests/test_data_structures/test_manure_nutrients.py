@@ -153,8 +153,9 @@ def test_manure_nutrients_invalid_init(manure_type: ManureType | str, nutrient_v
                 ManureNutrients(**nutrient_values, manure_type=manure_type)
             break
     if not manure_type:
-        with pytest.raises(ValueError, match="ManureNutrients Error: field manure_type must be an instance of"
-                                             " ManureType."):
+        with pytest.raises(
+            ValueError, match="ManureNutrients Error: field manure_type must be an instance of" " ManureType."
+        ):
             ManureNutrients(**nutrient_values, manure_type=manure_type)
 
 

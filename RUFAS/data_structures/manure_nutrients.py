@@ -165,8 +165,9 @@ class ManureNutrients:
             raise TypeError(f"ManureNutrients Error: Cannot add {type(self)} to {type(other)}.")
 
         if self.manure_type != other.manure_type:
-            raise TypeError(f"ManureNutrients Error: Cannot add {self.manure_type} nutrients to {other.manure_type} "
-                            "nutrients.")
+            raise TypeError(
+                f"ManureNutrients Error: Cannot add {self.manure_type} nutrients to {other.manure_type} " "nutrients."
+            )
 
         summed_attributes = {
             field.name: getattr(self, field.name) + getattr(other, field.name)
@@ -243,8 +244,10 @@ class ManureNutrients:
             raise TypeError(f"ManureNutrients Error: Cannot subtract {type(other)} from {type(self)}.")
 
         if self.manure_type != other.manure_type:
-            raise TypeError(f"ManureNutrients Error: Cannot subtract {other.manure_type} nutrients from"
-                            f" {self.manure_type} nutrients.")
+            raise TypeError(
+                f"ManureNutrients Error: Cannot subtract {other.manure_type} nutrients from"
+                f" {self.manure_type} nutrients."
+            )
 
         subtracted_attributes = {}
         for field in fields(self):
@@ -252,8 +255,10 @@ class ManureNutrients:
                 self_value = getattr(self, field.name)
                 other_value = getattr(other, field.name)
                 if other_value > self_value:
-                    raise ValueError(f"ManureNutrients Error: The amount of {field.name} in other object is greater"
-                                     " than what is available.")
+                    raise ValueError(
+                        f"ManureNutrients Error: The amount of {field.name} in other object is greater"
+                        " than what is available."
+                    )
                 subtracted_attributes[field.name] = self_value - other_value
         subtracted_attributes["manure_type"] = self.manure_type
         subtracted_attributes.update(self.units_dict)

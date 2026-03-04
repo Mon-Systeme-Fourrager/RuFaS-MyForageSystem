@@ -1921,8 +1921,9 @@ class CrossValidator:
                 }
             )
             if eager_termination:
-                raise ValueError("Cross-validation error: "
-                                 "Ordered variables list is empty or missing in cross validation rule.")
+                raise ValueError(
+                    "Cross-validation error: " "Ordered variables list is empty or missing in cross validation rule."
+                )
             else:
                 return None, False
         ordered_values: list[Any] = []
@@ -2015,8 +2016,10 @@ class CrossValidator:
                 }
             )
             if eager_termination:
-                raise ValueError("Cross-validation error: Missing 'apply_to' key in expression block for "
-                                 "selected complex data structure.")
+                raise ValueError(
+                    "Cross-validation error: Missing 'apply_to' key in expression block for "
+                    "selected complex data structure."
+                )
             else:
                 return False
         if apply_to := expression_block["apply_to"] not in ["individual", "group"]:
@@ -2193,8 +2196,9 @@ class CrossValidator:
                 }
             )
             if eager_termination:
-                raise ValueError(f"Cross-validation error: Unsupported data type: {data_type}. "
-                                 f"Supported types: {supported}.")
+                raise ValueError(
+                    f"Cross-validation error: Unsupported data type: {data_type}. " f"Supported types: {supported}."
+                )
             return False
 
         return bool(all(checker(value) for value in left_hand_value))

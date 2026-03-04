@@ -2514,8 +2514,9 @@ def test_validate_relationship_non_string(eager_termination: bool) -> None:
     cv = CrossValidator()
 
     if eager_termination:
-        with pytest.raises(ValueError, match=r"Cross-validation error: Conditional clause relationship "
-                           r"must be a string\."):
+        with pytest.raises(
+            ValueError, match=r"Cross-validation error: Conditional clause relationship " r"must be a string\."
+        ):
             cv._validate_relationship(123, eager_termination=True)
         assert len(cv._event_logs) == 1
     else:
@@ -2532,8 +2533,9 @@ def test_validate_relationship_invalid_value(eager_termination: bool) -> None:
     cv = CrossValidator()
 
     if eager_termination:
-        with pytest.raises(ValueError, match=r"Cross-validation error: Invalid conditional clause relationship "
-                           r"provided\."):
+        with pytest.raises(
+            ValueError, match=r"Cross-validation error: Invalid conditional clause relationship " r"provided\."
+        ):
             cv._validate_relationship("something_else", eager_termination=True)
         assert len(cv._event_logs) == 1
     else:

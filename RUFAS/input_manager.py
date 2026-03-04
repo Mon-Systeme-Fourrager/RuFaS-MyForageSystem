@@ -556,8 +556,9 @@ class InputManager:
             if isinstance(properties_paths, str):
                 properties_paths = [properties_paths]
             if not isinstance(properties_paths, list) or len(properties_paths) == 0:
-                raise ValueError("Input Validation Error: Properties paths must be a non-empty string or list of "
-                                 "strings")
+                raise ValueError(
+                    "Input Validation Error: Properties paths must be a non-empty string or list of " "strings"
+                )
 
             if not all(isinstance(path, str) and path for path in properties_paths):
                 raise ValueError("Input Validation Error: Each properties path must be a non-empty string")
@@ -1556,8 +1557,9 @@ class InputManager:
                 f"the expected type of `dict[str, Any]`.",
                 info_map,
             )
-            raise TypeError("Add Runtime Variable Error: Incorrect variable type. "
-                            "Expected types: `data: dict[str, Any]`.")
+            raise TypeError(
+                "Add Runtime Variable Error: Incorrect variable type. " "Expected types: `data: dict[str, Any]`."
+            )
 
         metadata_properties_exist = self._metadata_properties_exist(
             variable_name=variable_name, properties_blob_key=properties_blob_key
@@ -1637,16 +1639,21 @@ class InputManager:
             df.to_csv(path_to_save, index=False)
             self.om.add_log("Save CSV success.", f"Successfully saved to {path_to_save}.", info_map)
         except FileNotFoundError as fnfe:
-            self.om.add_error("Metadata Properties Save CSV failure.",
-                              f"Unable to save to {path_to_save} because of {fnfe}.", info_map)
+            self.om.add_error(
+                "Metadata Properties Save CSV failure.",
+                f"Unable to save to {path_to_save} because of {fnfe}.",
+                info_map,
+            )
             raise fnfe
         except PermissionError as pe:
-            self.om.add_error("Metadata Properties Save CSV failure.",
-                              f"Unable to save to {path_to_save} because of {pe}.", info_map)
+            self.om.add_error(
+                "Metadata Properties Save CSV failure.", f"Unable to save to {path_to_save} because of {pe}.", info_map
+            )
             raise pe
         except OSError as e:
-            self.om.add_error("Metadata Properties Save CSV failure.",
-                              f"Unable to save to {path_to_save} because of {e}.", info_map)
+            self.om.add_error(
+                "Metadata Properties Save CSV failure.", f"Unable to save to {path_to_save} because of {e}.", info_map
+            )
             raise e
 
     def _parse_metadata_properties(
