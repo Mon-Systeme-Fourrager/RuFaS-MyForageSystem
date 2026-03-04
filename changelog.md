@@ -13,7 +13,7 @@ A **changelog** is a structured record of changes made to the codebase over time
 
 ### Example Entry
 
-- [123](https://github.com/RuminantFarmSystems/MASM/pull/123) - [Major change/ minor change] [Impact Area] Short description of the change or feature.
+- [123](https://github.com/RuminantFarmSystems/RuFaS/pull/123) - [Major change/ minor change] [Impact Area] [No/InputChange] [No/OutputChange] Short description of the change or feature.
 
 ---
 
