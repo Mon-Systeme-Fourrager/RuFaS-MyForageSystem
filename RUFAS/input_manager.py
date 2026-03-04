@@ -587,13 +587,13 @@ class InputManager:
 
         except FileNotFoundError as fnfe:
             self.om.add_error("load_properties_file_not_found", str(fnfe), info_map)
-            raise type(fnfe)(f"Input Validation Error: {fnfe}") from fnfe
+            raise
         except json.JSONDecodeError as jde:
             self.om.add_error("load_properties_json_error", str(jde), info_map)
-            raise type(jde)(f"Input Validation Error: {jde}") from jde
+            raise
         except Exception as e:
             self.om.add_error("load_properties_error", f"Unexpected error: {e}", info_map)
-            raise type(e)(f"Input Validation Error: {e}") from e
+            raise
 
     def _load_data_from_json(self, file_path: Path) -> dict[str, Any]:
         """
@@ -630,7 +630,7 @@ class InputManager:
                 )
                 return data
         except Exception as e:
-            raise type(e)(f"Input Validation Error when trying to load {file_path}: {e}") from e
+            raise
 
     def _load_data_from_csv(self, file_path: Path) -> dict[str, Any]:
         """

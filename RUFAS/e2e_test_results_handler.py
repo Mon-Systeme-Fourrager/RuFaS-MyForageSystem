@@ -432,7 +432,7 @@ class E2ETestResultsHandler:
                     info_map,
                 )
                 shutil.move(backup_path, path_set.expected_results_path)
-                raise type(e)(f"E2E testing error: {error_message}") from e
+                raise
             finally:
                 if backup_path.exists():
                     backup_path.unlink()
