@@ -4,8 +4,10 @@ from typing import Callable, Dict, List
 import numpy as np
 
 from RUFAS.biophysical.animal.animal import Animal
+from RUFAS.biophysical.animal.animal_grouping_scenarios import AnimalGroupingScenario
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
+from RUFAS.biophysical.animal.pen import Pen
 from RUFAS.biophysical.animal.ration.amino_acid import AminoAcidCalculator, EssentialAminoAcidRequirements
 from RUFAS.general_constants import GeneralConstants
 from RUFAS.output_manager import OutputManager
@@ -190,32 +192,39 @@ class AnimalRequirements:
                                 eaa_req, EssentialAminoAcidRequirements)], *stats_args
                         ),
                         isoleucine=calc_method_to_function_map[calc_method](
-                            [eaa_req.isoleucine for eaa_req in arg], *stats_args
+                            [eaa_req.isoleucine for eaa_req in arg if isinstance(
+                                eaa_req, EssentialAminoAcidRequirements)], *stats_args
                         ),
                         leucine=calc_method_to_function_map[calc_method](
-                            [eaa_req.leucine for eaa_req in arg], *stats_args
+                            [eaa_req.leucine for eaa_req in arg if isinstance(
+                                eaa_req, EssentialAminoAcidRequirements)], *stats_args
                         ),
                         lysine=calc_method_to_function_map[calc_method](
-                            [eaa_req.lysine for eaa_req in arg], *stats_args
+                            [eaa_req.lysine for eaa_req in arg if isinstance(
+                                eaa_req, EssentialAminoAcidRequirements)], *stats_args
                         ),
                         methionine=calc_method_to_function_map[calc_method](
-                            [eaa_req.methionine for eaa_req in arg], *stats_args
+                            [eaa_req.methionine for eaa_req in arg if isinstance(
+                                eaa_req, EssentialAminoAcidRequirements)], *stats_args
                         ),
                         phenylalanine=calc_method_to_function_map[calc_method](
-                            [eaa_req.phenylalanine for eaa_req in arg], *stats_args
+                            [eaa_req.phenylalanine for eaa_req in arg if isinstance(
+                                eaa_req, EssentialAminoAcidRequirements)], *stats_args
                         ),
                         threonine=calc_method_to_function_map[calc_method](
-                            [eaa_req.threonine for eaa_req in arg], *stats_args
+                            [eaa_req.threonine for eaa_req in arg if isinstance(
+                                eaa_req, EssentialAminoAcidRequirements)], *stats_args
                         ),
                         thryptophan=calc_method_to_function_map[calc_method](
-                            [eaa_req.thryptophan for eaa_req in arg], *stats_args
+                            [eaa_req.thryptophan for eaa_req in arg if isinstance(
+                                eaa_req, EssentialAminoAcidRequirements)], *stats_args
                         ),
                         valine=calc_method_to_function_map[calc_method](
-                            [eaa_req.valine for eaa_req in arg], *stats_args
+                            [eaa_req.valine for eaa_req in arg if isinstance(
+                                eaa_req, EssentialAminoAcidRequirements)], *stats_args
                         ),
                     ),
                 )
-
             else:
                 setattr(
                     self,
@@ -223,7 +232,7 @@ class AnimalRequirements:
                     calc_method_to_function_map[calc_method](arg, *stats_args),
                 )
 
-    def set_requirements(self, pen, animal_grouping_scenario, recalc: bool) -> None:
+    def set_requirements(self, pen: Pen, animal_grouping_scenario: AnimalGroupingScenario, recalc: bool) -> None:
         """
         Calculates the average requirements utilizing cow_requirements.py and an
         input pen to generate the average requirements across a pen. It then
@@ -240,7 +249,7 @@ class AnimalRequirements:
         recalc : boolean
             True if requirements need to be recalculated since grouping
         """
-        requirements_lists: dict[str, list[float | EssentialAminoAcidRequirements]] = {
+        requirements_lists: dict[str, list[float]] = {
             "NEmaint_requirement": [],
             "NEa_requirement": [],
             "NEg_requirement": [],
@@ -254,13 +263,15 @@ class AnimalRequirements:
             "BW": [],
             "milk": [0],
             "milk_production_reduction": [0],
-            "CP_milk": [0],
-            "essential_amino_acid_requirement": [],
+            "CP_milk": [0]
         }
+        essential_amino_acid_requirement: list[EssentialAminoAcidRequirements] = []
         if recalc:
-            requirements_lists = self.recalculate_requirements(pen, animal_grouping_scenario, requirements_lists)
+            requirements_lists, essential_amino_acid_requirement = self.recalculate_requirements(
+                pen, animal_grouping_scenario, requirements_lists, essential_amino_acid_requirement)
         else:
-            requirements_lists = self.use_existing_requirements(pen, animal_grouping_scenario, requirements_lists)
+            requirements_lists, essential_amino_acid_requirement = self.use_existing_requirements(
+                pen, animal_grouping_scenario, requirements_lists, essential_amino_acid_requirement)
 
         self.calc_pen_requirements(
             requirements_lists["NEmaint_requirement"],
@@ -277,11 +288,11 @@ class AnimalRequirements:
             requirements_lists["milk"],
             requirements_lists["CP_milk"],
             requirements_lists["milk_production_reduction"],
-            requirements_lists["essential_amino_acid_requirement"],
+            essential_amino_acid_requirement,
             "mean",
         )
 
-        avg_nutrient_rqmts: dict[str, float | EssentialAminoAcidRequirements] = {
+        avg_nutrient_rqmts: dict[str, float | EssentialAminoAcidRequirements | None] = {
             "NEmaint_requirement": self.NEmaint_requirement,
             "NEa_requirement": self.NEa_requirement,
             "NEg_requirement": self.NEg_requirement,
@@ -305,8 +316,9 @@ class AnimalRequirements:
         self,
         pen,
         animal_grouping_scenario,
-        requirements_lists: Dict[str, List[float | EssentialAminoAcidRequirements]],
-    ) -> Dict[str, List[float | EssentialAminoAcidRequirements]]:
+        requirements_lists: dict[str, list[float]],
+        essential_amino_acid_requirement: list[EssentialAminoAcidRequirements]
+    ) -> tuple[dict[str, list[float]], list[EssentialAminoAcidRequirements]]:
         """
         Calculates requirements for every animal in a pen and appends each value to a list in a dictionary
          of requirements.
@@ -322,9 +334,12 @@ class AnimalRequirements:
         requirements_lists : Dict[str, List[float]]
             Dictionary of requirements for each animal
 
+        essential_amino_acid_requirement : list[EssentialAminoAcidRequirements]
+            List of essential amino acid requirement.
+
         Returns
         -------
-        requirements_list : Dict[str, List[float]]
+        requirements_list : tuple[Dict[str, List[float]], list[EssentialAminoAcidRequirements]]
             Dictionary of lists of animal requirements for all animals
 
         """
@@ -411,15 +426,16 @@ class AnimalRequirements:
             requirements_lists["P_requirement_process"].append(animal.p_req)
             requirements_lists["DMIest_requirement"].append(req["DMIest_requirement"])
             requirements_lists["BW"].append(animal.body_weight)
-            requirements_lists["essential_amino_acid_requirement"].append(animal.essential_amino_acid_requirement)
-        return requirements_lists
+            essential_amino_acid_requirement.append(animal.essential_amino_acid_requirement)
+        return requirements_lists, essential_amino_acid_requirement
 
     def use_existing_requirements(
         self,
         pen,
         animal_grouping_scenario,
-        requirements_lists: Dict[str, List[float | EssentialAminoAcidRequirements]],
-    ) -> Dict[str, List[float | EssentialAminoAcidRequirements]]:
+        requirements_lists: dict[str, list[float]],
+        essential_amino_acid_requirement: list[EssentialAminoAcidRequirements]
+    ) -> tuple[dict[str, list[float]], list[EssentialAminoAcidRequirements]]:
         """
         Finds previous set of requirements for every animal in a pen and appends each value to a list in a dictionary
          of requirements.
@@ -436,10 +452,13 @@ class AnimalRequirements:
         requirements_lists : Dict[str, List[float]]
             Dictionary of requirements for each animal
 
+        essential_amino_acid_requirement : list[EssentialAminoAcidRequirements]
+            List of essential amino acid requirement.
+
         Returns
         -------
-        requirements_list : Dict[str, List[float]]
-            Dictionary of lists of animal requirements for all animals in pen
+        requirements_list : tuple[Dict[str, List[float]], list[EssentialAminoAcidRequirements]]
+            Dictionary of lists of animal requirements for all animals
 
         """
         for animal_id in pen.animals_in_pen:
@@ -469,8 +488,8 @@ class AnimalRequirements:
             requirements_lists["P_requirement_process"].append(animal.p_req)
             requirements_lists["DMIest_requirement"].append(animal.DMIest_requirement)
             requirements_lists["BW"].append(animal.body_weight)
-            requirements_lists["essential_amino_acid_requirement"].append(animal.essential_amino_acid_requirement)
-        return requirements_lists
+            essential_amino_acid_requirement.append(animal.essential_amino_acid_requirement)
+        return requirements_lists, essential_amino_acid_requirement
 
     def calc_rqmts(
         self,
