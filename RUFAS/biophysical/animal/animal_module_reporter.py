@@ -873,8 +873,8 @@ class AnimalModuleReporter:
             The current simulation day.
         """
         info_map = {
-            "class": (class_name := AnimalModuleReporter.__name__),
-            "function": (function_name := AnimalModuleReporter.report_daily_pen_total.__name__),
+            "class": AnimalModuleReporter.__name__,
+            "function": AnimalModuleReporter.report_daily_pen_total.__name__,
             "units": MeasurementUnits.ANIMALS,
             "simulation_day": simulation_day,
         }
