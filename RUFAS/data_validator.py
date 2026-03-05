@@ -723,9 +723,7 @@ class DataValidator:
             return self._generate_fail_message(f"Invalid keys '{list(invalid_keys)}' in '{key}'", info_map)
         return True, ""
 
-    def _validate_has_path_or_paths(
-        self, key: str, data: dict[str, Any], info_map: dict[str, Any]
-    ) -> tuple[bool, str]:
+    def _validate_has_path_or_paths(self, key: str, data: dict[str, Any], info_map: dict[str, Any]) -> tuple[bool, str]:
         """Helper function to validate that at least one of 'path' or 'paths' is defined."""
         if "path" not in data and "paths" not in data:
             return self._generate_fail_message(

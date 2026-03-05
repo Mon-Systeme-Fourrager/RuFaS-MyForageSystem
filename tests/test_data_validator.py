@@ -1606,12 +1606,19 @@ def test_generate_fail_message() -> None:
         "class": DataValidator.__name__,
         "function": DataValidator.validate_metadata.__name__,
     }
-    status, message = dv._generate_fail_message(message="test error", info_map=info_map,)
+    status, message = dv._generate_fail_message(
+        message="test error",
+        info_map=info_map,
+    )
     assert message == "test error"
     assert not status
-    assert dv.event_logs == [{'error': 'Metadata Validation',
-                              'message': 'test error',
-                              'info_map': {'class': 'DataValidator', 'function': 'validate_metadata'}}]
+    assert dv.event_logs == [
+        {
+            "error": "Metadata Validation",
+            "message": "test error",
+            "info_map": {"class": "DataValidator", "function": "validate_metadata"},
+        }
+    ]
 
 
 @pytest.mark.parametrize(
