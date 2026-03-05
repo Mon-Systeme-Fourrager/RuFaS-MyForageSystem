@@ -13,7 +13,7 @@ A **changelog** is a structured record of changes made to the codebase over time
 
 ### Example Entry
 
-- [123](https://github.com/RuminantFarmSystems/MASM/pull/123) - [Major change/ minor change] [Impact Area] Short description of the change or feature.
+- [123](https://github.com/RuminantFarmSystems/RuFaS/pull/123) - [Major change/ minor change] [Impact Area] [No/InputChange] [No/OutputChange] Short description of the change or feature.
 
 ---
 
@@ -322,6 +322,7 @@ v1.0.0
 - [2728](https://github.com/RuminantFarmSystems/MASM/pull/2728) - [minor change] [InputManager] [NoInputChange] [NoOutputChange] Enforces the required file blobs.
 - [2743](https://github.com/RuminantFarmSystems/RuFaS/pull/2743) - [minor change] [NoInputChange] [NoOutputChange] Fix broken IM unit test.
 - [2744](https://github.com/RuminantFarmSystems/RuFaS/pull/2744) - [minor change] [NoInputChange] [NoOutputChange] Update the OM and RG wiki with new report filter options.
+- [2790](https://github.com/RuminantFarmSystems/RuFaS/pull/2790) - [minor change] [NoInputChange] [NoOutputChange] This PR updates dev to be in sync with test regarding changes in [#2785](https://github.com/RuminantFarmSystems/RuFaS/pull/2785).
 
 ### v0.9.2
 
