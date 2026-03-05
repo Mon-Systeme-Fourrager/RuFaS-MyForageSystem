@@ -1459,13 +1459,16 @@ def test_get_data_keys_by_properties(
 
 def test_flush_pool(mock_input_manager: InputManager) -> None:
     """Tests that the InputManager pool is flushed correctly."""
-
-    mock_input_manager._InputManager__pool = {"Key": "I never metadata I didn't like!"}
+    setattr(
+        mock_input_manager,
+        "_InputManager__pool",
+        {"Key": "I never metadata I didn't like!"},
+    )
 
     with patch("RUFAS.output_manager.OutputManager.add_log") as add_log:
         mock_input_manager.flush_pool()
-
-        assert mock_input_manager._InputManager__pool == {}
+        pool = getattr(mock_input_manager, "_InputManager__pool")
+        assert pool == {}
         assert add_log.call_count == 1
 
 
@@ -1475,7 +1478,11 @@ def test_metadata_properties_exist(
     mock_input_manager: InputManager,
     mock_metadata: Dict[str, Dict[str, Any]],
 ) -> None:
-    mock_input_manager._InputManager__metadata = mock_metadata
+    setattr(
+        mock_input_manager,
+        "_InputManager__metadata",
+        mock_metadata,
+    )
 
     result = mock_input_manager._metadata_properties_exist(
         variable_name="mock_variable", properties_blob_key=properties_blob_key
@@ -1487,7 +1494,11 @@ def test_metadata_properties_exist(
 def test_metadata_properties_exist_no_metadata(
     mock_input_manager: InputManager,
 ) -> None:
-    mock_input_manager._InputManager__metadata = {}
+    setattr(
+        mock_input_manager,
+        "_InputManager__metadata",
+        {},
+    )
 
     with pytest.raises(ValueError):
         mock_input_manager._metadata_properties_exist(
@@ -1506,7 +1517,11 @@ def test_metadata_properties_exists_invalid_properties_blob_key(
     mock_input_manager: InputManager,
     mock_metadata: Dict[str, Dict[str, Any]],
 ) -> None:
-    mock_input_manager._InputManager__metadata = mock_metadata
+    setattr(
+        mock_input_manager,
+        "_InputManager__metadata",
+        mock_metadata,
+    )
 
     with pytest.raises(KeyError):
         mock_input_manager._metadata_properties_exist(
@@ -1969,10 +1984,11 @@ def test_add_runtime_variable_to_pool(
     data: Dict[str, Any],
     properties_blob_key: str,
     mock_input_manager: InputManager,
-    input_manager_original_method_states: Dict[str, Callable],
+    input_manager_original_method_states: Dict[str, Callable[..., Any]],
+    mocker: MockerFixture
 ) -> None:
-    mock_input_manager._metadata_properties_exist = MagicMock(return_value=True)
-    mock_input_manager._add_variable_to_pool = MagicMock(return_value=True)
+    mock_check = mocker.patch.object(mock_input_manager, "_metadata_properties_exist", return_value=True)
+    mock_add = mocker.patch.object(mock_input_manager, "_add_variable_to_pool", return_value=True)
 
     with patch("RUFAS.output_manager.OutputManager.add_error") as mock_om_add_error:
         result = mock_input_manager.add_runtime_variable_to_pool(
@@ -1984,17 +2000,15 @@ def test_add_runtime_variable_to_pool(
 
     assert result is True
     assert mock_om_add_error.call_count == 0
-    mock_input_manager._metadata_properties_exist.assert_called_once_with(
+    mock_check.assert_called_once_with(
         variable_name=variable_name, properties_blob_key=properties_blob_key
     )
-    mock_input_manager._add_variable_to_pool.assert_called_once_with(
+    mock_add.assert_called_once_with(
         variable_name=variable_name,
         input_data=data,
         properties_blob_key=properties_blob_key,
         eager_termination=False,
     )
-
-    mock_input_manager.add_variable_to_pool = input_manager_original_method_states["add_runtime_variable_to_pool"]
     mock_input_manager._metadata_properties_exist = input_manager_original_method_states["_metadata_properties_exist"]
     mock_input_manager._add_variable_to_pool = input_manager_original_method_states["_add_variable_to_pool"]
 
