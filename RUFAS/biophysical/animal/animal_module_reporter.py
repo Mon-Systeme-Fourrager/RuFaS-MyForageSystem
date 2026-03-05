@@ -83,7 +83,7 @@ class AnimalModuleReporter:
                         short_variable_to_add,
                         thing_to_add,
                         info_map=dict(info_map, **{"units": units}),
-                        first_info_map_only=first_info_map_only
+                        first_info_map_only=first_info_map_only,
                     )
 
     @classmethod
@@ -569,7 +569,7 @@ class AnimalModuleReporter:
                     simulation_day,
                     info_map=info_map,
                     first_info_map_only=True,
-                    units=pen_manure_data_units[manure_property]
+                    units=pen_manure_data_units[manure_property],
                 )
                 om.add_variable(
                     f"{base_name}_{str(manure_property)}",
