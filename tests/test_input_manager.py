@@ -244,7 +244,7 @@ def test_load_properties_empty_paths_list_raises_value_error(
 
 
 def test_load_properties_rejects_non_string_paths(mock_input_manager: InputManager, mocker: MockerFixture) -> None:
-    """Tests the_load_properties on invalid non string paths. """
+    """Tests the_load_properties on invalid non string paths."""
     mocker.patch.object(Path, "exists", return_value=True)
     setattr(
         mock_input_manager,
@@ -783,7 +783,7 @@ def test_populate_pool_eager_termination(
 def test_populate_pool_raises_keyerror(
     mock_input_manager: InputManager,
     input_manager_original_method_states: Dict[str, Callable[..., Any]],
-    mocker: MockerFixture
+    mocker: MockerFixture,
 ) -> None:
     """Unit test for invalid data file type for function _populate_pool in file input_manager.py"""
     mock_input_manager.meta_data = {
@@ -1441,7 +1441,7 @@ def test_get_data_keys_by_properties(
     expected_keys: list[str],
     mock_input_manager: InputManager,
     input_manager_original_method_states: Dict[str, Callable[..., Any]],
-    mocker: MockerFixture
+    mocker: MockerFixture,
 ) -> None:
     """Test that Input Manager gets data keys by properties correctly."""
     mocker.patch.object(mock_input_manager, "get_metadata", return_value=data)
@@ -1985,7 +1985,7 @@ def test_add_runtime_variable_to_pool(
     properties_blob_key: str,
     mock_input_manager: InputManager,
     input_manager_original_method_states: Dict[str, Callable[..., Any]],
-    mocker: MockerFixture
+    mocker: MockerFixture,
 ) -> None:
     mock_check = mocker.patch.object(mock_input_manager, "_metadata_properties_exist", return_value=True)
     mock_add = mocker.patch.object(mock_input_manager, "_add_variable_to_pool", return_value=True)
@@ -2000,9 +2000,7 @@ def test_add_runtime_variable_to_pool(
 
     assert result is True
     assert mock_om_add_error.call_count == 0
-    mock_check.assert_called_once_with(
-        variable_name=variable_name, properties_blob_key=properties_blob_key
-    )
+    mock_check.assert_called_once_with(variable_name=variable_name, properties_blob_key=properties_blob_key)
     mock_add.assert_called_once_with(
         variable_name=variable_name,
         input_data=data,
