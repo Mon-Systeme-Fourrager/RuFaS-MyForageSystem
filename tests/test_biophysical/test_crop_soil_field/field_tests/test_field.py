@@ -118,7 +118,7 @@ def test_manage_field(mocker: MockerFixture) -> None:
     manure_application_mock = mocker.MagicMock(spec=ManureEventNutrientRequestResults)
     manure_application_mock.event = manure_event_mock
     manure_application_mock.nutrient_request_results = "MockResults"
-    manure_application_mock.supplement_metjkod = ManureSupplementMethod.NONE
+    manure_application_mock.supplement_method = ManureSupplementMethod.NONE
 
     mock_manure_applications = [manure_application_mock]
 
