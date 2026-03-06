@@ -95,7 +95,7 @@ class AnimalModuleConstants:
     MINIMUM_DAILY_DMI_RATIO: float = 0.01
     """Minimum estimated DMI (kg/day), as a fraction of body_weight in kg"""
 
-    MINIMUM_DMI_LACT: float = 6.06 
+    MINIMUM_DMI_LACT: float = 6.06
     """Minimum pen-level DMI for lactating cows calculated as an average across the literature, kg/day (Appuhamy 2014; Appuhamy 2018; Reed 2015; Nennich 2015). 
     """
 
