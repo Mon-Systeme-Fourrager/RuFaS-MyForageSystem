@@ -35,6 +35,8 @@ v1.0.0
 - [2791](https://github.com/RuminantFarmSystems/MASM/pull/2791) - [minor change] [Animal] [NoInputChange] [NoOutputChange] Updates ration percentage values in example feed files to sum to exactly 100.
 - [2804](https://github.com/RuminantFarmSystems/MASM/pull/2804) - [minor change] [Tests] [NoInputChange] [NoOutputChange] Clears all mypy errors in test_field.py.
 - [2819](https://github.com/RuminantFarmSystems/MASM/pull/2819) - [minor change] [Tests] [NoInputChange] [NoOutputChange] Clears all mypy errors in test_input_manager.py.
+- [2826](https://github.com/RuminantFarmSystems/MASM/pull/2826) - [minor change] [Animal] [NoInputChange] [NoOutputChange] Adds functionality to data_padder, removes unecessary use of method in ration reporting.
+
 ### v1.0.0
 
 - [2081](https://github.com/RuminantFarmSystems/MASM/pull/2081) - [minor change] [Crop & Soil] Break down the `_setup_field()` function in `FieldManager`.
