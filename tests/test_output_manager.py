@@ -2182,7 +2182,7 @@ def test_filter_variables_pool(
     mock_simple_variables_pool: Dict[str, OutputManager.pool_element_type],
     mocker: MockerFixture,
     filter_content: Dict[str, Any],
-    expected: Dict[str, Dict[str, list[str]]],
+    expected: dict[str, dict[str, list[str]]],
     data_padded: bool,
 ) -> None:
     """Tests filter_variables_pool in the OutputManager."""
