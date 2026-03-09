@@ -1,5 +1,6 @@
 # !/usr/bin/env python3
 
+from enum import Enum
 import time as timer
 from datetime import date, timedelta
 
@@ -18,6 +19,22 @@ from RUFAS.biophysical.field.manager.field_manager import FieldManager
 from RUFAS.biophysical.manure.manure_manager import ManureManager
 from RUFAS.rufas_time import RufasTime
 from RUFAS.weather import Weather
+
+
+class SimulationType(Enum):
+    """
+    An enumeration for the different types of simulations that can be run in RuFaS.
+
+    Attributes
+    ----------
+    FULL_SIMULATION
+        A simulation that includes all processes and interactions in RuFaS.
+    FEED_AND_MANURE_ONLY
+        A simulation that focuses on feed management and manure management processes, excluding animal simulations.
+    """
+
+    FULL_SIMULATION = 1
+    FEED_AND_MANURE_ONLY = 2
 
 
 class SimulationEngine:
@@ -189,9 +206,8 @@ class SimulationEngine:
                 manure_request = manure_event_request.nutrient_request
                 manure_request_results = None
                 if manure_request is not None:
-                    simulate_animals: bool = self.simulate_animals
                     manure_request_results = self.manure_manager.request_nutrients(
-                        manure_request, simulate_animals, self.time
+                        manure_request, self.simulate_animals, self.time
                     )
                 manure_applications.append(ManureEventNutrientRequestResults(field_name, event, manure_request_results))
         return manure_applications
