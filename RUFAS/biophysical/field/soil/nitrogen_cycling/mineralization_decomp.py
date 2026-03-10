@@ -174,15 +174,11 @@ class MineralizationDecomposition:
         The values of the constant used to determine the nitrogen and phosphorus terms are 25 and 200, respectively.
 
         """
-        nitrogen_term = (
-            MineralizationDecomposition._calculate_nutrient_term_for_residue_composition_factor(
-                carbon_nitrogen_ratio, 25
-            )
+        nitrogen_term = MineralizationDecomposition._calculate_nutrient_term_for_residue_composition_factor(
+            carbon_nitrogen_ratio, 25
         )
-        phosphorus_term = (
-            MineralizationDecomposition._calculate_nutrient_term_for_residue_composition_factor(
-                carbon_phosphorus_ratio, 200
-            )
+        phosphorus_term = MineralizationDecomposition._calculate_nutrient_term_for_residue_composition_factor(
+            carbon_phosphorus_ratio, 200
         )
         assert nitrogen_term and phosphorus_term
         # temporary fix to replace the process based method for the effect of the soil C, N, and P on the decomposition
