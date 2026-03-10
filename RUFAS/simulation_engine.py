@@ -159,14 +159,7 @@ class SimulationEngine:
         self.emissions_estimator.check_available_purchased_feed_data(feed_manager_available_feed_ids)
 
     def simulate(self) -> None:
-        """
-        Executes the simulation.
-
-        Parameters
-        ----------
-        simulation_type : str
-            The type of simulation to run. Determines which daily simulation function to execute.
-        """
+        """Executes the simulation."""
 
         info_map = {
             "class": self.__class__.__name__,
@@ -249,7 +242,7 @@ class SimulationEngine:
 
         self._execute_ration_planning()
 
-        self._report_daily_records(daily_purchased_feeds_fed={})
+        self._report_daily_records()
 
         self._advance_time()
 
@@ -358,7 +351,7 @@ class SimulationEngine:
         """Checks if it's time to reformulate the ration based on the user-defined interval."""
         return self.time.current_date.date() >= self.next_ration_reformulation
 
-    def _execute_daily_animal_operations(self) -> tuple[dict[str, ManureStream], dict[str, float]]:
+    def _execute_daily_animal_operations(self) -> tuple[dict[str, ManureStream], dict[int, float]]:
         """
         Executes the daily animal routines.
 
@@ -428,16 +421,18 @@ class SimulationEngine:
                 daily_manure_data, self.time, self.weather.get_current_day_conditions(self.time)
             )
 
-    def _report_daily_records(self, daily_purchased_feeds_fed: dict[str, float]) -> None:
+    def _report_daily_records(self, daily_purchased_feeds_fed: dict[int, float] | None = None) -> None:
         """
         Reports the daily records for the simulation to OutputManager.
 
         Parameters
         ----------
-        daily_purchased_feeds_fed : dict[str, float]
+        daily_purchased_feeds_fed : dict[int, float] | None
             A dictionary mapping feed types to the amount of purchased feed fed to the herd on the current day.
+            If no purchased feed was fed, this will be None.
         """
-        self.emissions_estimator.calculate_purchased_feed_emissions(daily_purchased_feeds_fed)
+        if daily_purchased_feeds_fed is not None:
+            self.emissions_estimator.calculate_purchased_feed_emissions(daily_purchased_feeds_fed)
         self.time.record_time()
         self.weather.record_weather(self.time)
 
