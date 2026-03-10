@@ -134,11 +134,12 @@ class SimulationEngine:
             feed_storage_instances,
         )
 
-        ration_interval_length = self.im.get_data("animal.ration.formulation_interval")
+        ration_config = self.im.get_data("animal.ration")
+        ration_interval_length = ration_config["formulation_interval"]
         self.ration_formulation_interval_length = timedelta(days=ration_interval_length)
         self.next_ration_reformulation = self.time.current_date.date()
-        self.is_ration_defined_by_user = self.im.get_data("animal.ration.user_input")
-        max_daily_feed_recalculations_per_year: int = self.im.get_data("feed.max_daily_feed_recalculations_per_year")
+        self.is_ration_defined_by_user = ration_config["user_input"]
+        max_daily_feed_recalculations_per_year: int = feeds_config["max_daily_feed_recalculations_per_year"]
         self.max_daily_feed_recalculation_interval = timedelta(days=round(365 / max_daily_feed_recalculations_per_year))
         self.next_max_daily_feed_recalculation = self.time.current_date + self.max_daily_feed_recalculation_interval
 
@@ -305,7 +306,7 @@ class SimulationEngine:
         """
         harvest_schedule_crops = set(crop.config_name for crop in harvested_crops)
 
-        if self._should_recalculate_feed_planning():
+        if self._should_recalculate_feed_planning:
             crops_to_get_next_harvest_dates = [
                 crop for crop in self.feed_manager.crop_to_rufas_id.keys() if crop not in harvest_schedule_crops
             ]
@@ -316,6 +317,7 @@ class SimulationEngine:
 
         return harvest_schedule
 
+    @property
     def _should_recalculate_feed_planning(self) -> bool:
         """Check if it's time to recalculate maximum daily feed allocations."""
         return self.next_max_daily_feed_recalculation == self.time.current_date
@@ -344,9 +346,10 @@ class SimulationEngine:
 
     def _execute_ration_planning(self) -> None:
         """Checks if it's time to reformulate the ration and executes ration formulation if needed."""
-        if self._is_time_to_reformulate_ration():
+        if self._is_time_to_reformulate_ration:
             self._formulate_ration()
 
+    @property
     def _is_time_to_reformulate_ration(self) -> bool:
         """Checks if it's time to reformulate the ration based on the user-defined interval."""
         return self.time.current_date.date() >= self.next_ration_reformulation
