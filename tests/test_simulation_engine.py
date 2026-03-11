@@ -699,7 +699,12 @@ def test_execute_daily_animal_operations(
     """
     # Arrange
     simulation_engine.time.current_date = datetime(2026, 3, 11)
-    simulation_engine.time.simulation_day = 123
+    mocker.patch.object(
+        type(simulation_engine.time),
+        "simulation_day",
+        new_callable=PropertyMock,
+        return_value=123,
+    )
     simulation_engine.weather = MagicMock()
     simulation_engine.om = MagicMock()
 
@@ -711,7 +716,12 @@ def test_execute_daily_animal_operations(
     total_inventory = {"feed_1": 100.0}
     all_manure_data = {"pen_1": MagicMock(), "pen_2": MagicMock()}
     available_feeds: list[Feed] = [MagicMock(rufas_id=12), MagicMock(rufas_id=7)]
-    simulation_engine.feed_manager.available_feeds = available_feeds
+    mocker.patch.object(
+        type(simulation_engine.feed_manager),
+        "available_feeds",
+        new_callable=PropertyMock,
+        return_value=available_feeds,
+    )
 
     mock_collect_daily_feed_request = mocker.patch.object(
         simulation_engine.herd_manager,
