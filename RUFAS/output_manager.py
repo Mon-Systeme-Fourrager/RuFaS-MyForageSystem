@@ -1331,7 +1331,11 @@ class OutputManager(object):
         selected_variables: list[str] | None = filter_content.get("variables")
 
         results = self._parse_filtered_variables(
-            filtered_pool, selected_variables, filter_name, use_filter_name, filter_by_exclusion,
+            filtered_pool,
+            selected_variables,
+            filter_name,
+            use_filter_name,
+            filter_by_exclusion,
         )
 
         if filter_content.get("expand_data", False):

@@ -377,10 +377,10 @@ class EmissionsEstimator:
                 if (field_name, crop_name) not in crop_to_feed_id_mapping:
                     crop_to_feed_id_mapping[(field_name, crop_name)] = feed_id
                 else:
-                    assert crop_to_feed_id_mapping[(field_name, crop_name)] == feed_id, ("".join(
+                    assert crop_to_feed_id_mapping[(field_name, crop_name)] == feed_id, "".join(
                         f"Crop {crop_name} received in field {field_name} is mapped to different feed IDs: "
                         f"{crop_to_feed_id_mapping[(field_name, crop_name)]} and {feed_id}."
-                    ))
+                    )
 
         return crop_to_feed_id_mapping
 
@@ -411,7 +411,7 @@ class EmissionsEstimator:
             for i in range(len(field_data[year_key])):
                 harvest_year, harvest_day = field_data[year_key][i], field_data[day_key][i]
                 harvest_simulation_day = (
-                        RufasTime.convert_year_jday_to_date(harvest_year, harvest_day) - simulation_start_date
+                    RufasTime.convert_year_jday_to_date(harvest_year, harvest_day) - simulation_start_date
                 ).days
 
                 crop_name = field_data["crop"][i]
