@@ -572,14 +572,6 @@ def test_check_if_cows_need_to_be_sold_comprehensive(herd_manager: HerdManager, 
     assert cow_protected_low_dim in herd_manager.cows
     assert cow_protected_high_preg in herd_manager.cows
 
-    assert herd_manager.herd_statistics.sold_cow_oversupply_num == 6
-    assert herd_manager.herd_statistics.sold_cow_num == 6
-    assert herd_manager.herd_statistics.cow_herd_exit_num == 16
-
-    assert len(herd_manager.herd_statistics.sold_cows_info) == 6
-    assert herd_manager.herd_statistics.sold_cows_info[0]["id"] == cow_dnb_low_milk.id
-    assert herd_manager.herd_statistics.sold_cows_info[0]["sold_at_day"] == SIMULATION_DAY
-
     herd_manager.herd_statistics.herd_num = 1
     herd_manager.selling_threshold = 1.0
 

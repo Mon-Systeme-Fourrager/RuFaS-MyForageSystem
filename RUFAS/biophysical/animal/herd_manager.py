@@ -272,19 +272,6 @@ class HerdManager:
         return phosphorus_concentration_by_animal_class
 
     @property
-    def current_herd_size(self) -> int:
-        """
-        Calculates the current size of the herd based on the number of heiferIIIs and cows.
-
-        Returns
-        -------
-        int
-            The current size of the herd.
-
-        """
-        return len(self.heiferIIIs) + len(self.cows)
-
-    @property
     def heiferII_events_by_id(self) -> dict[str, AnimalEvents]:
         """
         Returns a dictionary that maps unique identifiers for HeiferII objects to their corresponding events.
@@ -603,6 +590,7 @@ class HerdManager:
             removed_animals += self._check_if_cows_need_to_be_sold(
                 simulation_day=time.simulation_day, removed_animal=removed_animals
             )
+            self._update_sold_and_died_cow_statistics(removed_animals)
             newly_added_animals = self._check_if_replacement_heifers_needed(time=time)
 
             self._update_herd_structure(
@@ -711,25 +699,6 @@ class HerdManager:
 
         return min(eligible_indices, key=lambda i: self.cows[i].milk_production.daily_milk_produced)
 
-    def _record_sold_cow_stats(self, removed_cow: Animal, simulation_day: int) -> None:
-        """Updates herd statistics and metadata for a sold cow."""
-        removed_cow.sold_at_day = simulation_day
-        self.herd_statistics.sold_cows_info.append(
-            SoldAnimalTypedDict(
-                id=removed_cow.id,
-                animal_type=removed_cow.animal_type.value,
-                sold_at_day=removed_cow.sold_at_day,
-                body_weight=removed_cow.body_weight,
-                cull_reason="Herd resize",
-                days_in_milk=removed_cow.days_in_milk,
-                parity=removed_cow.calves,
-            )
-        )
-        self.herd_statistics.cow_num -= 1
-        self.herd_statistics.sold_cow_oversupply_num += 1
-        self.herd_statistics.cow_herd_exit_num += 1
-        self.herd_statistics.sold_cow_num += 1
-
     def _check_if_cows_need_to_be_sold(self, simulation_day: int, removed_animal: list[Animal]) -> list[Animal]:
         """Checks if surplus cows need to be sold based on herd size."""
         animals_removed: list[Animal] = []
@@ -742,7 +711,8 @@ class HerdManager:
                 break
 
             removed_cow = self.cows.pop(remove_index)
-            self._record_sold_cow_stats(removed_cow, simulation_day)
+            removed_cow.sold_at_day = simulation_day
+            removed_cow.cull_reason = "culled for herd resize"
             animals_removed.append(removed_cow)
 
         return animals_removed
@@ -1831,6 +1801,7 @@ class HerdManager:
         sum_cow_culling_age = self.herd_statistics.avg_cow_culling_age * self.herd_statistics.cow_herd_exit_num + sum(
             [cow.days_born for cow in sold_and_died_cows]
         )
+        self.herd_statistics.cow_num -= len(sold_and_died_cows)
         self.herd_statistics.cow_herd_exit_num += len(sold_and_died_cows)
         self.herd_statistics.avg_cow_culling_age = (
             (sum_cow_culling_age / self.herd_statistics.cow_herd_exit_num)
@@ -1854,6 +1825,9 @@ class HerdManager:
             self.herd_statistics.cull_reason_stats[cull_reason] += len(
                 [cow for cow in sold_and_died_cows if cow.cull_reason == cull_reason]
             )
+
+        oversupply_cows_num = sum(cow.cull_reason == animal_constants.OVERSUPPLY_CULL for cow in sold_and_died_cows)
+        self.herd_statistics.sold_cow_oversupply_num += oversupply_cows_num
 
         sold_cows: list[Animal] = [cow for cow in sold_and_died_cows if cow.cull_reason != animal_constants.DEATH_CULL]
         self.herd_statistics.sold_cows_info += [
