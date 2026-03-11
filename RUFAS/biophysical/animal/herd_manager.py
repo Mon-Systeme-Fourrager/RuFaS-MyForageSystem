@@ -597,7 +597,9 @@ class HerdManager:
         )
 
         self._update_stillborn_calf_statistics(stillborn_newborn_calves)
-        if time.simulation_day > 0 and time.simulation_day % self.adjustment_period == 0:
+
+        adjust_herd_size: bool = time.simulation_day > 0 and time.simulation_day % self.adjustment_period == 0
+        if adjust_herd_size:
             removed_animals += self._check_if_cows_need_to_be_sold(
                 simulation_day=time.simulation_day, removed_animal=removed_animals
             )
@@ -668,8 +670,7 @@ class HerdManager:
 
     def _create_newborn_calf(self, newborn_calf_config: NewBornCalfValuesTypedDict, simulation_day: int) -> Animal:
         """
-        Creates a new newborn calf instance and records its entry event in the herd if it
-        is not sold.
+        Creates a new newborn calf instance and records its entry event in the herd if it is not sold.
 
         Parameters
         ----------
@@ -691,15 +692,16 @@ class HerdManager:
         return newborn_calf
 
     def _get_cow_removal_index(self, removed_animal: list[Animal]) -> int | None:
-        """Finds the index of the eligible cow with the lowest daily milk production."""
-        MIN_DIM_FOR_REMOVAL = 60
-        MAX_DAYS_IN_PREG_FOR_REMOVAL = 180
+        """Finds the indices of cows with the lowest daily milk production among cows that meet the specified
+         days-in-milk and days-pregnant criteria."""
         eligible_indices = []
 
         for index, cow in enumerate(self.cows):
             if cow in removed_animal:
                 continue
-            if cow.days_in_milk > MIN_DIM_FOR_REMOVAL and cow.days_in_pregnancy < MAX_DAYS_IN_PREG_FOR_REMOVAL:
+            eligible_for_removal = (cow.days_in_milk > animal_constants.MIN_DIM_FOR_REMOVAL
+                and cow.days_in_pregnancy < animal_constants.MAX_DAYS_IN_PREG_FOR_REMOVAL)
+            if eligible_for_removal:
                 eligible_indices.append(index)
 
         if not eligible_indices:
@@ -2062,7 +2064,3 @@ class HerdManager:
                     self.herd_statistics.total_enteric_methane[animal_type] = {
                         k: float(current_totals.get(k, 0) + new_emissions.get(k, 0)) for k in all_keys
                     }
-
-    def update_milk_305_day_yield_predictions(self) -> None:
-        for cow in self.cows:
-            cow.update_mature_equivalent_305_days_milk_production()
