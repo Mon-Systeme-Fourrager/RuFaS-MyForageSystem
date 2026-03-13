@@ -712,8 +712,9 @@ class HerdManager:
                     "function": self._check_if_cows_need_to_be_sold.__name__,
                     "simulation_day": simulation_day,
                 }
-                self.om.add_error("Unable to adjust herd size", "There are no cow that's qualified to be sold.",
-                                  info_map)
+                self.om.add_error(
+                    "Unable to adjust herd size", "There are no cow that's qualified to be sold.", info_map
+                )
                 break
 
             removed_cow = self.cows.pop(remove_index)

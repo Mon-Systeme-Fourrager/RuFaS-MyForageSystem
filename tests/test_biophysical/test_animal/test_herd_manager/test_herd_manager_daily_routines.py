@@ -584,6 +584,7 @@ def test_check_if_cows_need_to_be_sold_comprehensive(herd_manager: HerdManager, 
     assert len(stuck_result) == 0
     mock_om_add_error.assert_called_once()
 
+
 def test_check_if_replacement_heifers_needed(
     mock_get_data_side_effect: list[Any], mocker: MockerFixture, mock_herd: dict[str, list[Animal]]
 ) -> None:
