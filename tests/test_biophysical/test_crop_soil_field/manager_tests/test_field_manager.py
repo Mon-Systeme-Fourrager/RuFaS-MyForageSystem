@@ -2,10 +2,10 @@ from datetime import datetime, timedelta
 from typing import Any, Callable, Dict, List
 from unittest.mock import MagicMock, call, patch
 
-import mock
 import pytest
 from pytest_mock.plugin import MockerFixture
 
+from RUFAS.biophysical.field.manager.field_data_reporter import FieldDataReporter
 from RUFAS.current_day_conditions import CurrentDayConditions
 from RUFAS.data_structures.crop_soil_to_feed_storage_connection import HarvestedCrop
 from RUFAS.data_structures.events import FertilizerEvent, ManureEvent, TillageEvent, PlantingEvent, HarvestEvent
@@ -44,7 +44,7 @@ def mock_input_manager(mocker: MockerFixture) -> InputManager:
 @pytest.fixture
 def input_manager_original_method_states(
     mock_input_manager: InputManager,
-) -> Dict[str, Callable]:
+) -> Dict[str, Callable[..., Any]]:
     """Fixture to store original methods of InputManager"""
     return {
         "get_data": mock_input_manager.get_data,
@@ -120,7 +120,7 @@ def mock_weather(mocker: MockerFixture) -> Weather:
     ],
 )
 def test_daily_update_routine(
-    manure_applications: dict[str, List[ManureEventNutrientRequestResults]],
+    manure_applications: list[ManureEventNutrientRequestResults],
     mock_weather: Weather,
     mocker: MockerFixture,
     fields: list[Field],
@@ -144,58 +144,57 @@ def test_daily_update_routine(
         mock_add_var = mocker.patch.object(fm.om, "add_variable")
 
         fm.fields = fields
-        for field in fields:
-            mocker.patch.object(
-                field,
-                "manage_field",
-                return_value=[
-                    HarvestedCrop(
-                        config_name="test_crop",
-                        field_name="test_field",
-                        harvest_time=mocked_time,
-                        storage_time=mocked_time,
-                        dry_matter_mass=10.0,
-                        dry_matter_percentage=0.85,
-                        dry_matter_digestibility=0.65,
-                        crude_protein_percent=0.12,
-                        non_protein_nitrogen=0.02,
-                        starch=0.30,
-                        adf=0.15,
-                        ndf=0.35,
-                        lignin=0.05,
-                        sugar=0.10,
-                        ash=0.08,
-                        recorded_days=set(),
-                    ),
-                    HarvestedCrop(
-                        config_name="test_crop_2",
-                        field_name="test_field",
-                        harvest_time=mocked_time,
-                        storage_time=mocked_time,
-                        dry_matter_mass=10.0,
-                        dry_matter_percentage=0.85,
-                        dry_matter_digestibility=0.65,
-                        crude_protein_percent=0.12,
-                        non_protein_nitrogen=0.02,
-                        starch=0.30,
-                        adf=0.15,
-                        ndf=0.35,
-                        lignin=0.05,
-                        sugar=0.10,
-                        ash=0.08,
-                        recorded_days=set(),
-                    ),
-                ],
-            )
-        fm.output_gatherer.send_daily_variables = MagicMock()
+        mock_manage = mocker.patch.object(
+            Field,
+            "manage_field",
+            return_value=[
+                HarvestedCrop(
+                    config_name="test_crop",
+                    field_name="test_field",
+                    harvest_time=mocked_time,
+                    storage_time=mocked_time,
+                    dry_matter_mass=10.0,
+                    dry_matter_percentage=0.85,
+                    dry_matter_digestibility=0.65,
+                    crude_protein_percent=0.12,
+                    non_protein_nitrogen=0.02,
+                    starch=0.30,
+                    adf=0.15,
+                    ndf=0.35,
+                    lignin=0.05,
+                    sugar=0.10,
+                    ash=0.08,
+                    recorded_days=set(),
+                ),
+                HarvestedCrop(
+                    config_name="test_crop_2",
+                    field_name="test_field",
+                    harvest_time=mocked_time,
+                    storage_time=mocked_time,
+                    dry_matter_mass=10.0,
+                    dry_matter_percentage=0.85,
+                    dry_matter_digestibility=0.65,
+                    crude_protein_percent=0.12,
+                    non_protein_nitrogen=0.02,
+                    starch=0.30,
+                    adf=0.15,
+                    ndf=0.35,
+                    lignin=0.05,
+                    sugar=0.10,
+                    ash=0.08,
+                    recorded_days=set(),
+                ),
+            ],
+        )
+
+        mock_send = mocker.patch.object(FieldDataReporter, "send_daily_variables")
         actual = fm.daily_update_routine(
             weather=mock_weather, time=mocked_time, manure_applications=manure_applications
         )
 
-        for field in fields:
-            assert field.manage_field.call_count == 1
+        assert mock_manage.call_count == len(fields)
         assert get_conditions.call_count == len(fields)
-        assert fm.output_gatherer.send_daily_variables.call_count == 1
+        mock_send.assert_called_once()
         assert mock_add_var.call_count == len(fields)
         assert len(actual) == expected_harvests_count
 
@@ -384,7 +383,7 @@ def test_setup_fertilizer_schedule(
     input_manager_original_method_states: dict[str, Callable],
 ) -> None:
     """Tests that fertilizer schedules and available fertilizer mixes are correctly setup."""
-    mock_input_manager.get_data = mock.MagicMock(return_value=fertilizer_schedule_data)
+    mock_input_manager.get_data = MagicMock(return_value=fertilizer_schedule_data)
     expected_events = expected_schedule.generate_fertilizer_events()
 
     actual_available_mixes, actual_events = FieldManager._setup_fertilizer_events("test_fert_schedule")
@@ -829,7 +828,7 @@ def test_setup_manure_schedule(
     input_manager_original_method_states: dict[str, Callable],
 ) -> None:
     """Tests that ManureSchedules are correctly initialized with data from the InputManager."""
-    mock_input_manager.get_data = mock.MagicMock(return_value=manure_schedule_data)
+    mock_input_manager.get_data = MagicMock(return_value=manure_schedule_data)
     expected_manure_events = expected_manure_schedule.generate_manure_events()
     actual_manure_events = FieldManager._setup_manure_events("test_manure_schedule")
     assert actual_manure_events == expected_manure_events
@@ -1252,7 +1251,7 @@ def test_setup_tillage_schedule(
     input_manager_original_method_states: dict[str, Callable],
 ) -> None:
     """Tests that TillageSchedules are correctly initialized with data from the InputManager."""
-    mock_input_manager.get_data = mock.MagicMock(return_value=tillage_schedule_data)
+    mock_input_manager.get_data = MagicMock(return_value=tillage_schedule_data)
     expected_tillage_events = expected_tillage_schedule.generate_tillage_events()
 
     actual_tillage_events = FieldManager._setup_tillage_events("test_tillage_schedule")
@@ -1417,7 +1416,7 @@ def test_crop_schedule_setup(
     input_manager_original_method_states: dict[str, Callable],
 ) -> None:
     """Tests that crop schedules are created correctly from the crop schedule configuration passed to it."""
-    mock_input_manager.get_data = mock.MagicMock(return_value=crop_schedule_config)
+    mock_input_manager.get_data = MagicMock(return_value=crop_schedule_config)
     crop_configs = ["alfalfa", "corn", "oats"]
 
     actual = FieldManager._setup_crop_schedules("test_crop_schedule", crop_configs)
@@ -1827,7 +1826,7 @@ def test_setup_soil(
     input_manager_original_method_states: Dict[str, Callable],
 ) -> None:
     """Tests that Soil profiles are setup correctly with data from the InputManager."""
-    mock_input_manager.get_data = mock.MagicMock(return_value=soil_configuration)
+    mock_input_manager.get_data = MagicMock(return_value=soil_configuration)
     actual_soil = FieldManager._setup_soil("test_soil_setup", 1.0)
     assert actual_soil.data.second_moisture_condition_parameter == soil_configuration.get(
         "second_moisture_condition_parameter"
@@ -1884,7 +1883,7 @@ def test_setup_soil_error(
     input_manager_original_method_states: Dict[str, Any],
 ) -> None:
     """Tests that errors are raised correctly when invalid soil configurations are passed."""
-    mock_input_manager.get_data = mock.MagicMock(return_value=soil_configuration)
+    mock_input_manager.get_data = MagicMock(return_value=soil_configuration)
 
     with pytest.raises(ValueError) as e:
         FieldManager._setup_soil("soil_config", 1.3)
@@ -1963,7 +1962,7 @@ def test_setup_field(
     mocked_soil_data = MagicMock(SoilData)
     mocked_soil_profile.data = mocked_soil_data
 
-    mock_input_manager.get_data = mock.MagicMock(return_value=field_config)
+    mock_input_manager.get_data = mocker.MagicMock(return_value=field_config)
 
     mock_setup_soil_data = mocker.patch(
         "RUFAS.biophysical.field.manager.field_manager.FieldManager._setup_soil", return_value=mocked_soil_profile
