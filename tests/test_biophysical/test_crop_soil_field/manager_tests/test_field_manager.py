@@ -220,18 +220,16 @@ def test_annual_update_routine(mocker: MockerFixture, fields: List[Field]) -> No
     """Tests that the annual routines and it's methods were called and updated correctly"""
     mocker.patch.object(CropDataFactory, "setup_crop_configurations", return_value=None)
     mocker.patch.object(CropDataFactory, "get_available_crop_configurations", return_value=["alfalfa", "corn", "oats"])
-    for field in fields:
-        field.perform_annual_reset = MagicMock()
+    mock_reset = mocker.patch.object(Field, "perform_annual_reset")
     with patch("RUFAS.input_manager.InputManager.get_data_keys_by_properties", return_value=[]):
         fm = FieldManager()
         fm.fields = fields
-        fm.output_gatherer.send_annual_variables = MagicMock()
+        mock_send_annual_variables = mocker.patch.object(fm.output_gatherer, "send_annual_variables")
 
         fm.annual_update_routine()
 
-        for field in fields:
-            assert field.perform_annual_reset.call_count == 1
-        assert fm.output_gatherer.send_annual_variables.call_count == 1
+        assert mock_reset.call_count == len(fields)
+        mock_send_annual_variables.assert_called_once()
 
 
 @pytest.mark.parametrize(
@@ -380,18 +378,17 @@ def test_setup_fertilizer_schedule(
     expected_available_mixes: dict[str, dict[str, float]],
     expected_schedule: FertilizerSchedule,
     mock_input_manager: InputManager,
-    input_manager_original_method_states: dict[str, Callable],
+    input_manager_original_method_states: dict[str, Callable[..., Any]],
+    mocker: MockerFixture
 ) -> None:
     """Tests that fertilizer schedules and available fertilizer mixes are correctly setup."""
-    mock_input_manager.get_data = MagicMock(return_value=fertilizer_schedule_data)
+    mock_get_data = mocker.patch.object(mock_input_manager, "get_data", return_value=fertilizer_schedule_data)
     expected_events = expected_schedule.generate_fertilizer_events()
 
     actual_available_mixes, actual_events = FieldManager._setup_fertilizer_events("test_fert_schedule")
     assert actual_available_mixes == expected_available_mixes
     assert actual_events == expected_events
-    mock_input_manager.get_data.assert_called_once_with("test_fert_schedule")
-
-    mock_input_manager.get_data = input_manager_original_method_states["get_data"]
+    mock_get_data.assert_called_once_with("test_fert_schedule")
 
 
 def test_setup_fertilizer_schedule_no_data(mock_input_manager: InputManager, mocker: MockerFixture) -> None:
@@ -825,16 +822,15 @@ def test_setup_manure_schedule(
     manure_schedule_data: dict[str, list[int] | list[ManureType] | list[float] | int],
     expected_manure_schedule: ManureSchedule,
     mock_input_manager: InputManager,
-    input_manager_original_method_states: dict[str, Callable],
+    input_manager_original_method_states: dict[str, Callable[..., Any]],
+    mocker: MockerFixture
 ) -> None:
     """Tests that ManureSchedules are correctly initialized with data from the InputManager."""
-    mock_input_manager.get_data = MagicMock(return_value=manure_schedule_data)
+    mock_get_data = mocker.patch.object(mock_input_manager, "get_data", return_value=manure_schedule_data)
     expected_manure_events = expected_manure_schedule.generate_manure_events()
     actual_manure_events = FieldManager._setup_manure_events("test_manure_schedule")
     assert actual_manure_events == expected_manure_events
-    mock_input_manager.get_data.assert_called_once_with("test_manure_schedule")
-
-    mock_input_manager.get_data = input_manager_original_method_states["get_data"]
+    mock_get_data.assert_called_once_with("test_manure_schedule")
 
 
 def test_setup_manure_schedule_no_data(mock_input_manager: InputManager, mocker: MockerFixture) -> None:
@@ -1248,17 +1244,16 @@ def test_setup_tillage_schedule(
     tillage_schedule_data: dict[str, int | list[int] | list[float] | list[str]],
     expected_tillage_schedule: TillageSchedule,
     mock_input_manager: InputManager,
-    input_manager_original_method_states: dict[str, Callable],
+    input_manager_original_method_states: dict[str, Callable[..., Any]],
+    mocker: MockerFixture
 ) -> None:
     """Tests that TillageSchedules are correctly initialized with data from the InputManager."""
-    mock_input_manager.get_data = MagicMock(return_value=tillage_schedule_data)
+    mock_get_data = mocker.patch.object(mock_input_manager, "get_data", return_value=tillage_schedule_data)
     expected_tillage_events = expected_tillage_schedule.generate_tillage_events()
 
     actual_tillage_events = FieldManager._setup_tillage_events("test_tillage_schedule")
     assert actual_tillage_events == expected_tillage_events
-    mock_input_manager.get_data.assert_called_once_with("test_tillage_schedule")
-
-    mock_input_manager.get_data = input_manager_original_method_states["get_data"]
+    mock_get_data.assert_called_once_with("test_tillage_schedule")
 
 
 def test_setup_tillage_schedule_no_data(mock_input_manager: InputManager, mocker: MockerFixture) -> None:
@@ -1413,10 +1408,11 @@ def test_crop_schedule_setup(
     crop_schedule_config: list[dict[str, Any]],
     expected: List[CropSchedule],
     mock_input_manager: InputManager,
-    input_manager_original_method_states: dict[str, Callable],
+    input_manager_original_method_states: dict[str, Callable[..., Any]],
+    mocker: MockerFixture
 ) -> None:
     """Tests that crop schedules are created correctly from the crop schedule configuration passed to it."""
-    mock_input_manager.get_data = MagicMock(return_value=crop_schedule_config)
+    mock_get_data = mocker.patch.object(mock_input_manager, "get_data", return_value=crop_schedule_config)
     crop_configs = ["alfalfa", "corn", "oats"]
 
     actual = FieldManager._setup_crop_schedules("test_crop_schedule", crop_configs)
@@ -1424,9 +1420,7 @@ def test_crop_schedule_setup(
     for index in range(len(expected)):
         assert actual[index].generate_planting_events() == expected[index].generate_planting_events()
         assert actual[index].generate_harvest_events() == expected[index].generate_harvest_events()
-    mock_input_manager.get_data.assert_called_once_with("test_crop_schedule.crop_schedules")
-
-    mock_input_manager.get_data = input_manager_original_method_states["get_data"]
+    mock_get_data.assert_called_once_with("test_crop_schedule.crop_schedules")
 
 
 def test_setup_crop_schedule_schedule_no_data(mock_input_manager: InputManager, mocker: MockerFixture) -> None:
@@ -1823,10 +1817,11 @@ def test_setup_soil_layer_error(config: dict[str, float | int]) -> None:
 def test_setup_soil(
     soil_configuration: dict[str, float | int | list[dict[str, Any]]],
     mock_input_manager: InputManager,
-    input_manager_original_method_states: Dict[str, Callable],
+    input_manager_original_method_states: Dict[str, Callable[..., Any]],
+    mocker: MockerFixture
 ) -> None:
-    """Tests that Soil profiles are setup correctly with data from the InputManager."""
-    mock_input_manager.get_data = MagicMock(return_value=soil_configuration)
+    """Tests that Soil profiles are set up correctly with data from the InputManager."""
+    mock_get_data =mocker.patch.object(mock_input_manager, "get_data", return_value=soil_configuration)
     actual_soil = FieldManager._setup_soil("test_soil_setup", 1.0)
     assert actual_soil.data.second_moisture_condition_parameter == soil_configuration.get(
         "second_moisture_condition_parameter"
@@ -1838,10 +1833,11 @@ def test_setup_soil(
     assert actual_soil.data.denitrification_threshold_water_content == soil_configuration.get(
         "denitrification_threshold_water_content"
     )
-    assert len(actual_soil.data.soil_layers) == len(soil_configuration.get("soil_layers")) + 1
-    mock_input_manager.get_data.assert_called_once_with("test_soil_setup")
-
-    mock_input_manager.get_data = input_manager_original_method_states["get_data"]
+    assert actual_soil.data.soil_layers
+    soil_layers = soil_configuration.get("soil_layers")
+    assert isinstance(soil_layers, list)
+    assert len(actual_soil.data.soil_layers) == len(soil_layers) + 1
+    mock_get_data.assert_called_once_with("test_soil_setup")
 
 
 @pytest.mark.parametrize(
@@ -1881,15 +1877,14 @@ def test_setup_soil_error(
     error_message: str,
     mock_input_manager: InputManager,
     input_manager_original_method_states: Dict[str, Any],
+    mocker: MockerFixture
 ) -> None:
     """Tests that errors are raised correctly when invalid soil configurations are passed."""
-    mock_input_manager.get_data = MagicMock(return_value=soil_configuration)
+    mocker.patch.object(mock_input_manager, "get_data", return_value=soil_configuration)
 
     with pytest.raises(ValueError) as e:
         FieldManager._setup_soil("soil_config", 1.3)
     assert str(e.value) == error_message
-
-    mock_input_manager.get_data = input_manager_original_method_states["get_data"]
 
 
 @pytest.mark.parametrize(
@@ -1945,7 +1940,7 @@ def test_setup_field(
     field_name: str,
     field_config: dict[str, str | float | bool | int | None] | dict[str, str | float | bool | int],
     mock_input_manager: InputManager,
-    input_manager_original_method_states: Dict[str, Callable],
+    input_manager_original_method_states: Dict[str, Callable[..., Any]],
     mocker: MockerFixture,
 ) -> None:
     """Tests that a Field instance is correctly initialized with a given input configuration."""
@@ -1961,8 +1956,7 @@ def test_setup_field(
     mocked_soil_profile = MagicMock(Soil)
     mocked_soil_data = MagicMock(SoilData)
     mocked_soil_profile.data = mocked_soil_data
-
-    mock_input_manager.get_data = mocker.MagicMock(return_value=field_config)
+    mock_get_data = mocker.patch.object(mock_input_manager, "get_data", return_value=field_config)
 
     mock_setup_soil_data = mocker.patch(
         "RUFAS.biophysical.field.manager.field_manager.FieldManager._setup_soil", return_value=mocked_soil_profile
@@ -2005,7 +1999,7 @@ def test_setup_field(
         "26_4_24": {"N": 0.26, "P": 0.04, "K": 0.24, "ammonium_fraction": 0.0},
     }
 
-    mock_input_manager.get_data.assert_called_once_with(field_name)
+    mock_get_data.assert_called_once_with(field_name)
     mock_setup_fertilizer_events.assert_called_once_with(field_config.get("fertilizer_management_specification"))
     mock_setup_manure_events.assert_called_once_with(field_config.get("manure_management_specification"))
     mock_setup_tillage_events.assert_called_once_with(field_config.get("tillage_management_specification"))
@@ -2013,8 +2007,6 @@ def test_setup_field(
     mock_setup_soil_data.assert_called_once_with(
         soil_configuration=field_config.get("soil_specification"), field_size=field_config.get("field_size")
     )
-
-    mock_input_manager.get_data = input_manager_original_method_states["get_data"]
 
 
 @pytest.mark.parametrize(
