@@ -141,9 +141,11 @@ class Utility:
     @staticmethod
     def expand_data_temporally(
         data_to_expand: dict[str, dict[str, list[Any]]],
+        simulation_length: int,
         fill_value: Any = np.nan,
         use_fill_value_in_gaps: bool = True,
         use_fill_value_at_end: bool = True,
+        expand_data_to_full_simulation: bool = True,
     ) -> dict[str, dict[str, list[Any]]]:
         """
         Pads and expands data based on the simulation day(s) it was recorded on, relative to when other data was
@@ -187,24 +189,16 @@ class Utility:
         if not data_to_expand:
             raise ValueError("Data Expansion error: Cannot fill empty dataset.")
 
-        all_simulation_days = []
-        for key, value in data_to_expand.items():
-            info_maps = value.get("info_maps")
-            if info_maps is None:
-                raise TypeError(f"Data Expansion error: Variable '{key}' has no info maps.")
-            if len(info_maps) != len(value["values"]):
-                raise ValueError(
-                    f"Data Expansion error: Variable '{key}' does not have matching number of values and " "info maps."
-                )
-            if not all("simulation_day" in info_map.keys() for info_map in info_maps):
-                raise ValueError(
-                    f"Data Expansion error: Variable '{key}' does not have simulation day value in every " "info map."
-                )
-            all_simulation_days += [info_map["simulation_day"] for info_map in info_maps]
+        all_simulation_days = Utility._gather_data_sim_days(data_to_expand)
 
         filtered_simulation_days = sorted(set(all_simulation_days))
-        first_day = filtered_simulation_days[0]
-        last_day = filtered_simulation_days[-1]
+        # TODO Add version of first_day and last_day that represent the full simulation length?
+        if expand_data_to_full_simulation:
+            first_day = 1
+            last_day = simulation_length
+        else:
+            first_day = filtered_simulation_days[0]
+            last_day = filtered_simulation_days[-1]
 
         expanded_data: dict[str, dict[str, list[Any]]] = {}
         for key, data in data_to_expand.items():
@@ -233,6 +227,25 @@ class Utility:
             expanded_data[key] = expanded_variable_data
 
         return expanded_data
+
+    @staticmethod
+    def _gather_data_sim_days(data_to_expand: dict[str, dict[str, list[Any]]]) -> list[int]:
+        all_simulation_days = []
+        for key, value in data_to_expand.items():
+            info_maps = value.get("info_maps")
+            if info_maps is None:
+                raise TypeError(f"Data Expansion error: Variable '{key}' has no info maps.")
+            if len(info_maps) != len(value["values"]):
+                raise ValueError(
+                    f"Data Expansion error: Variable '{key}' does not have matching number of values and " "info maps."
+                )
+            if not all("simulation_day" in info_map.keys() for info_map in info_maps):
+                raise ValueError(
+                    f"Data Expansion error: Variable '{key}' does not have simulation day value in every " "info map."
+                )
+            all_simulation_days += [info_map["simulation_day"] for info_map in info_maps]
+
+        return all_simulation_days
 
     @staticmethod
     def deep_merge(target: Dict[Any, Any], updates: Dict[Any, Any]) -> None:

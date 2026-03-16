@@ -1339,12 +1339,18 @@ class OutputManager(object):
             fill_value = filter_content.get("fill_value", np.nan)
             use_fill_value_in_gaps = filter_content.get("use_fill_value_in_gaps", True)
             use_fill_value_at_end = filter_content.get("use_fill_value_at_end", True)
+            expand_data_to_full_simulation = filter_content.get("expand_data_to_full_simulation",
+                                                                True)
+            assert self.time is not None
+            simulation_length = self.time.simulation_length_days
             try:
                 results = Utility.expand_data_temporally(
                     results,
+                    simulation_length=simulation_length,
                     fill_value=fill_value,
                     use_fill_value_in_gaps=use_fill_value_in_gaps,
                     use_fill_value_at_end=use_fill_value_at_end,
+                    expand_data_to_full_simulation=expand_data_to_full_simulation,
                 )
             except (TypeError, ValueError) as e:
                 error_title = f"Error {e} raised when padding data"
