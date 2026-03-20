@@ -23,9 +23,7 @@ class ManureExcretionCalculator:
     def _track_and_warn_dmi_threshold(
         *,
         kind: str,
-        dmi_predicted: float,
         dmi_effective: float,
-        context: dict[str, Any],
     ) -> None:
         """Track DMI threshold outcomes for end-of-simulation reporting.
 
@@ -38,12 +36,8 @@ class ManureExcretionCalculator:
         ----------
         kind : {"lact", "dry"}
             Which DMI floor applies (lactating or dry cows).
-        dmi_predicted : float
-            Predicted DMI before applying the minimum bound (kg/day).
         dmi_effective : float
             Effective DMI after applying the minimum bound (kg/day).
-        context : dict[str, Any]
-            info_map-like context for OutputManager warnings.
         """
         stats = ManureExcretionCalculator._dmi_below_min_stats[kind]
         stats["n_total"] += 1
@@ -462,9 +456,7 @@ class ManureExcretionCalculator:
         dry_matter_intake = max(dry_matter_intake, AnimalModuleConstants.MINIMUM_DMI_LACT)
         ManureExcretionCalculator._track_and_warn_dmi_threshold(
             kind="lact",
-            dmi_predicted=dmi_predicted,
             dmi_effective=dry_matter_intake,
-            context={"class": ManureExcretionCalculator.__name__, "function": "calculate_lactating_cow_manure"},
         )
         ash_diet_content = nutrient_amounts.ash_supply
         dry_matter_concentration = nutrient_amounts.dry_matter_percentage
@@ -633,9 +625,7 @@ class ManureExcretionCalculator:
         dry_matter_intake = max(dry_matter_intake, AnimalModuleConstants.MINIMUM_DMI_DRY)
         ManureExcretionCalculator._track_and_warn_dmi_threshold(
             kind="dry",
-            dmi_predicted=dmi_predicted,
             dmi_effective=dry_matter_intake,
-            context={"class": ManureExcretionCalculator.__name__, "function": "calculate_dry_cow_manure"},
         )
         crude_protein_concentration = nutrient_amounts.crude_protein_percentage
         potassium_concentration = nutrient_amounts.potassium_percentage
