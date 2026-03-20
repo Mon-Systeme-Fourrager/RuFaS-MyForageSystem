@@ -31,23 +31,28 @@ class ManureExcretionCalculator:
         return (100.0 * n / d) if d else 0.0
 
     @staticmethod
-    def _track_and_warn_dmi_clip(
+    def _track_and_warn_dmi_threshold(
         *,
         kind: _DMI_KIND,
         dmi_predicted: float,
         dmi_effective: float,
         context: dict[str, Any],
     ) -> None:
-        """Track DMI below-minimum counts for end-of-simulation summary.
+        """Track DMI threshold outcomes for end-of-simulation reporting.
+
+        This helper records how often the effective DMI falls below the literature
+        minimum used for manure volatile solids calculations. Counters are stored
+        per herd type so a single summary warning can be emitted at the end of
+        the simulation. It does not alter DMI values; it only tracks occurrences.
 
         Parameters
         ----------
         kind : {"lact", "dry"}
-            Which DMI floor is being applied.
+            Which DMI floor applies (lactating or dry cows).
         dmi_predicted : float
-            Predicted DMI before clipping (kg/day).
+            Predicted DMI before applying the minimum bound (kg/day).
         dmi_effective : float
-            Effective DMI after clipping (kg/day).
+            Effective DMI after applying the minimum bound (kg/day).
         context : dict[str, Any]
             info_map-like context for OutputManager warnings.
         """
@@ -464,7 +469,7 @@ class ManureExcretionCalculator:
         dmi_predicted = nutrient_amounts.dry_matter
         dry_matter_intake = dmi_predicted
         dry_matter_intake = max(dry_matter_intake, AnimalModuleConstants.MINIMUM_DMI_LACT)
-        ManureExcretionCalculator._track_and_warn_dmi_clip(
+        ManureExcretionCalculator._track_and_warn_dmi_threshold(
             kind="lact",
             dmi_predicted=dmi_predicted,
             dmi_effective=dry_matter_intake,
@@ -635,7 +640,7 @@ class ManureExcretionCalculator:
         dmi_predicted = nutrient_amounts.dry_matter
         dry_matter_intake = dmi_predicted
         dry_matter_intake = max(dry_matter_intake, AnimalModuleConstants.MINIMUM_DMI_DRY)
-        ManureExcretionCalculator._track_and_warn_dmi_clip(
+        ManureExcretionCalculator._track_and_warn_dmi_threshold(
             kind="dry",
             dmi_predicted=dmi_predicted,
             dmi_effective=dry_matter_intake,
