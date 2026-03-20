@@ -13,7 +13,7 @@ A **changelog** is a structured record of changes made to the codebase over time
 
 ### Example Entry
 
-- [123](https://github.com/RuminantFarmSystems/RuFaS/pull/123) - [Major change/ minor change] [Impact Area] [No/InputChange] [No/OutputChange] Short description of the change or feature.
+- [123](https://github.com/RuminantFarmSystems/MASM/pull/123) - [Major change/ minor change] [Impact Area] Short description of the change or feature.
 
 ---
 
@@ -24,17 +24,32 @@ A **changelog** is a structured record of changes made to the codebase over time
 v1.0.0
 
 ### Next Version Updates
-
-- [2793](https://github.com/RuminantFarmSystems/RuFaS/pull/2793) - [minor change] [Animal] [NoInputChange] [OutputManager] Use manure VS DMI minima for lactating and dry cows; emit an end-of-simulation summary warning with below-minimum frequency counts.
+- [2865](https://github.com/RuminantFarmSystems/RuFaS/pull/2865) - [minor change] [NoInputChange] [NoOutputChange] Update to tables and formatting in scientific documentation.
 - [2727](https://github.com/RuminantFarmSystems/RuFaS/pull/2727) - [minor change] [NoInputChange] [NoOutputChange] Update the TaskType in Wiki, and fix the broken Sphinx action.
 - [2728](https://github.com/RuminantFarmSystems/MASM/pull/2728) - [minor change] [InputManager] [NoInputChange] [NoOutputChange] Enforces the required file blobs.
 - [2743](https://github.com/RuminantFarmSystems/RuFaS/pull/2743) - [minor change] [NoInputChange] [NoOutputChange] Fix broken IM unit test.
 - [2757](https://github.com/RuminantFarmSystems/RuFaS/pull/2757) - [minor change] [NoInputChange] [NoOutputChange] Updates version number in `pyproject.toml`.
+- [2737](https://github.com/RuminantFarmSystems/RuFaS/pull/2737) - [minor change] [NoInputChange] [NoOutputChange] Update CONTRIBUTING.md file to provide forking guidelines for contributors.
 - [2690](https://github.com/RuminantFarmSystems/RuFaS/pull/2690) - [minor change] [TaskManager] [NoInputChange] [NoOutputChange] Remove hard-coded name for output folder, use user-defined name instead.
 - [2720](https://github.com/RuminantFarmSystems/MASM/pull/2720) - [minor change] [Emissions] [NoInputChange] [NoOutputChange] Adds FGF emissions reset when there's a harvest-kill operation and there's none of that feed left in storage.
 - [2791](https://github.com/RuminantFarmSystems/MASM/pull/2791) - [minor change] [Animal] [NoInputChange] [NoOutputChange] Updates ration percentage values in example feed files to sum to exactly 100.
+- [2833](https://github.com/RuminantFarmSystems/MASM/pull/2833) - [minor change] [Animal] [NoInputChange] [NoOutputChange] Remove unused animal_requirements.py file.
+- [2815](https://github.com/RuminantFarmSystems/MASM/pull/2815) - [minor change] [All Non-Biophysical Modules] [NoInputChange] [NoOutputChange] Updates error messages raised to be clearer and more helpful for diagnosis and fixing.
 - [2804](https://github.com/RuminantFarmSystems/MASM/pull/2804) - [minor change] [Tests] [NoInputChange] [NoOutputChange] Clears all mypy errors in test_field.py.
+- [2828](https://github.com/RuminantFarmSystems/MASM/pull/2828) - [minor change] [DataValidator] [NoInputChange] [NoOutputChange] Refactors `validate_metadata()` to be less complex.
 - [2819](https://github.com/RuminantFarmSystems/MASM/pull/2819) - [minor change] [Tests] [NoInputChange] [NoOutputChange] Clears all mypy errors in test_input_manager.py.
+- [2836](https://github.com/RuminantFarmSystems/MASM/pull/2836) - [minor change] [Tests] [NoInputChange] [NoOutputChange] Clears all mypy errors in test_output_manager.py.
+- [2826](https://github.com/RuminantFarmSystems/MASM/pull/2826) - [minor change] [Animal] [NoInputChange] [NoOutputChange] Adds functionality to data_padder, removes unecessary use of method in ration reporting.
+- [2827](https://github.com/RuminantFarmSystems/MASM/pull/2827) - [minor change] [Metadata] [NoInputChange] [NoOutputChange] Updates ration-related metadata descriptions.
+- [2849](https://github.com/RuminantFarmSystems/MASM/pull/2849) - [minor change] [Crop and Soil] [NoInputChange] [NoOutputChange] Update the property definition of dry matter percent.
+- [2848](https://github.com/RuminantFarmSystems/MASM/pull/2848) - [minor change] [NoInputChange] [NoOutputChange] Justify `deepcopy()` usage.
+- [2843](https://github.com/RuminantFarmSystems/MASM/pull/2843) - [minor change] [NoInputChange] [NoOutputChange] Fix Simple `#noqa`s in codebase.
+- [2852](https://github.com/RuminantFarmSystems/MASM/pull/2852) - [minor change] [NoInputChange] [NoOutputChange] Fix AssertionError on `dev`.
+- [2866](https://github.com/RuminantFarmSystems/MASM/pull/2866) - [minor change] [NoInputChange] [NoOutputChange] Clears all mypy errors in test_field_manager.py.
+- [2863](https://github.com/RuminantFarmSystems/MASM/pull/2863) - [minor change] [NoInputChange] [NoOutputChange] Updates TaskManager to avoid using multiprocessing when running single tasks.
+- [2854](https://github.com/RuminantFarmSystems/MASM/pull/2854) - [minor change] [NoInputChange] [NoOutputChange] Update `emissions.py` filtering process and remove `use_filter_key_name` option in the OM filter.
+- [2872](https://github.com/RuminantFarmSystems/RuFaS/pull/2872) - [minor change] [NoInputChange] [NoOutputChange] Adds information and links for onboarding videos.
+
 ### v1.0.0
 
 - [2081](https://github.com/RuminantFarmSystems/MASM/pull/2081) - [minor change] [Crop & Soil] Break down the `_setup_field()` function in `FieldManager`.
@@ -323,8 +338,6 @@ v1.0.0
 - [2728](https://github.com/RuminantFarmSystems/MASM/pull/2728) - [minor change] [InputManager] [NoInputChange] [NoOutputChange] Enforces the required file blobs.
 - [2743](https://github.com/RuminantFarmSystems/RuFaS/pull/2743) - [minor change] [NoInputChange] [NoOutputChange] Fix broken IM unit test.
 - [2744](https://github.com/RuminantFarmSystems/RuFaS/pull/2744) - [minor change] [NoInputChange] [NoOutputChange] Update the OM and RG wiki with new report filter options.
-- [2790](https://github.com/RuminantFarmSystems/RuFaS/pull/2790) - [minor change] [NoInputChange] [NoOutputChange] This PR updates dev to be in sync with test regarding changes in [#2785](https://github.com/RuminantFarmSystems/RuFaS/pull/2785).
-- [2795](https://github.com/RuminantFarmSystems/RuFaS/pull/2795) - [minor change] [InputManager] [InputChange] [NoOutputChange] Extract Cross Validation Rules.
 
 ### v0.9.2
 
