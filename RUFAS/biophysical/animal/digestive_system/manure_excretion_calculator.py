@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Final, Literal, TypedDict, Tuple
+from typing import Any, Tuple
 
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
 from RUFAS.biophysical.animal.data_types.nutrition_data_structures import NutritionSupply
@@ -11,17 +11,10 @@ from RUFAS.user_constants import UserConstants
 from RUFAS.output_manager import OutputManager
 
 
-class _DMIBelowMinStats(TypedDict):
-    n_total: int
-    n_below_min: int
-
-
 class ManureExcretionCalculator:
     """Calculates manure excretion values for animals."""
 
-    _DMI_KIND: Final = Literal["lact", "dry"]
-
-    _dmi_below_min_stats: dict[_DMI_KIND, _DMIBelowMinStats] = {
+    _dmi_below_min_stats: dict[str, dict[str, int]] = {
         "lact": {"n_total": 0, "n_below_min": 0},
         "dry": {"n_total": 0, "n_below_min": 0},
     }
@@ -33,7 +26,7 @@ class ManureExcretionCalculator:
     @staticmethod
     def _track_and_warn_dmi_threshold(
         *,
-        kind: _DMI_KIND,
+        kind: str,
         dmi_predicted: float,
         dmi_effective: float,
         context: dict[str, Any],
