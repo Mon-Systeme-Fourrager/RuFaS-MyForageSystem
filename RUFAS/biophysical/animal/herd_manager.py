@@ -626,6 +626,20 @@ class HerdManager:
 
         self.update_herd_statistics()
 
+        no_milk_cow_num = len([cow for cow in self.cows if cow.milk_production.daily_milk_produced < 0 and
+                               cow.is_milking])
+
+        if no_milk_cow_num > 0:
+            self.om.add_warning(
+                f"Warning: Lactating cows with no production.",
+                f"There are {no_milk_cow_num} lactating cows with no milking production on simulation"
+                f" day {time.simulation_day}.",
+                info_map={
+                    "class": self.__class__.__name__,
+                    "function": self.daily_routines.__name__,
+                    "simulation_day":  time.simulation_day,
+                },
+            )
         AnimalModuleReporter.report_enteric_methane_emission(enteric_methane_emission_by_pen)
         AnimalModuleReporter.report_daily_animal_population(self.herd_statistics, time.simulation_day)
         AnimalModuleReporter.report_herd_statistics_data(self.herd_statistics, time.simulation_day)
