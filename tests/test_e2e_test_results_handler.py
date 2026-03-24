@@ -391,6 +391,7 @@ def test_update_expected_test_results(
     add_warning = mocker.patch("RUFAS.e2e_test_results_handler.OutputManager.add_warning")
     add_error = mocker.patch("RUFAS.e2e_test_results_handler.OutputManager.add_error")
     mock_stdout_write = mocker.patch("sys.stdout.write")
+    mocker.patch.object(E2ETestResultsHandler, "_write_formatted_json")
 
     results_path = mocker.MagicMock()
     results_path.domain = "test_domain"
