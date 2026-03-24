@@ -1662,10 +1662,9 @@ class Animal:
         """
         Updates the life stage of a HeiferIII animal.
 
-        This function evaluates whether a HeiferIII animal should transition to
-        the Cow life stage. If the animal transitions, configuration data for a
-        newborn calf is returned. If the transition does not occur, the animal
-        remains in the HeiferIII life stage, and no newborn calf data is provided.
+        Evaluates whether a HeiferIII animal transitions to the Cow life stage.
+        If a transition occurs, newborn calf configuration data is returned.
+        Otherwise, the animal remains in the HeiferIII stage and no calf data is produced.
 
         Parameters
         ----------
@@ -1675,12 +1674,12 @@ class Animal:
         Returns
         -------
         tuple[AnimalStatus, NewBornCalfValuesTypedDict | None]
-            A tuple containing the animal's status.
+            A tuple containing the animal status and optional newborn calf data.
 
-            - `AnimalStatus.LIFE_STAGE_CHANGED` along with the newborn calf
-            configuration if the life stage transitions to Cow.
-            - `AnimalStatus.REMAIN` and `None` if the animal stays in the HeiferIII stage.
-
+            * `AnimalStatus.LIFE_STAGE_CHANGED` and newborn calf configuration
+            if the animal transitions to Cow.
+            * `AnimalStatus.REMAIN` and `None` if the animal remains in the
+            HeiferIII stage.
         """
         if self.evaluate_heiferIII_for_cow():
             newborn_calf_config = self.transition_heiferIII_to_cow(time)
