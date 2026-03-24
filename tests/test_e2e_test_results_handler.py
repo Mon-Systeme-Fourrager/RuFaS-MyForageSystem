@@ -418,7 +418,6 @@ def test_update_expected_test_results(
         mock_move = mocker.patch("shutil.move")
         mocker.patch("pathlib.Path.exists", return_value=True)
         mocker.patch("pathlib.Path.unlink")
-        mock_write_json = mocker.patch.object(E2ETestResultsHandler, "_write_formatted_json")
 
     # Act
     if raise_exception:
