@@ -51,7 +51,6 @@ v1.0.0
 - [2872](https://github.com/RuminantFarmSystems/RuFaS/pull/2872) - [minor change] [NoInputChange] [NoOutputChange] Adds information and links for onboarding videos.
 - [2880](https://github.com/RuminantFarmSystems/RuFaS/pull/2880) - [minor change] [NoInputChange] [NoOutputChange] Add warning message for e2e filter updates
 
-
 ### v1.0.0
 
 - [2081](https://github.com/RuminantFarmSystems/MASM/pull/2081) - [minor change] [Crop & Soil] Break down the `_setup_field()` function in `FieldManager`.
