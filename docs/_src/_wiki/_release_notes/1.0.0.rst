@@ -93,7 +93,7 @@ Improvements
 -  [emissions] Updates to feed and emissions handling including
    purchased-feed emissions, farmgrown feed LCA/LUC-related handling,
    and interpolated feed-emissions data support.
--  [output] ReportGenerator / GraphGenerator improvements: legend
+-  [output] ReportGenerator/GraphGenerator improvements: legend
    alignment, mapping logs, aggregation logging, and more consistent
    reporting of units.
 -  [input, validation] InputManager and DataValidator consolidation:
