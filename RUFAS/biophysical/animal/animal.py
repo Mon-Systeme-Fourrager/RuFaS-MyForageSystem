@@ -1,7 +1,7 @@
 import sys
 from datetime import timedelta
 from random import random
-from typing import Any, Callable, cast
+from typing import Callable, cast
 
 from scipy.stats import truncnorm
 from numpy import sqrt
