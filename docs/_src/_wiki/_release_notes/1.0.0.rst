@@ -41,7 +41,7 @@ Key Findings:
    production closely matched farm-reported values across the 13
    evaluation farms
 -  **Environmental outcomes within expected ranges:** Enteric methane,
-   manure emissions, and carbon intensity estimates were expected ranges
+   manure emissions, and carbon intensity estimates were within expected ranges
    and behaved consistently with production efficiency and manure system
    configuration.
 -  **Methodological updates performed as intended:** Differences between
