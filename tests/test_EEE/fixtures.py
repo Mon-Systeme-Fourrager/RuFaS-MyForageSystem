@@ -8018,7 +8018,11 @@ def parsed_fertilizer_and_manure_application_data() -> dict[str, dict[str, dict[
                 1586: {"nitrogen": 4.9999999999999994, "phosphorus": 0.0, "potassium": 0.0},
             },
             "field_2": {
-                123: {"nitrogen": 0.3084580509652931, "phosphorus": 0.5140959871651896, "potassium": 1.0281919743303791},
+                123: {
+                    "nitrogen": 0.3084580509652931,
+                    "phosphorus": 0.5140959871651896,
+                    "potassium": 1.0281919743303791,
+                },
                 125: {"nitrogen": 4.9999999999999994, "phosphorus": 0.0, "potassium": 0.0},
                 1586: {"nitrogen": 4.9999999999999994, "phosphorus": 0.0, "potassium": 0.0},
             },
