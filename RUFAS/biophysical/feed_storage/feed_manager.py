@@ -492,6 +492,12 @@ class FeedManager:
 
     def manage_ration_interval_purchases(self, requested_feeds: RequestedFeed, time: RufasTime) -> None:
         """Manages the purchasing of feeds at the beginning of a ration interval."""
+        info_map = {
+            "class": self.__class__.__name__,
+            "function": self.manage_ration_interval_purchases.__name__,
+            "simulation_day": time.simulation_day
+        }
+        allowance_tolerance = 1e-6
         current_feed_totals = self._query_available_feed_totals(list(requested_feeds.requested_feed.keys()))
         feeds_to_purchase = {id: 0.0 for id in requested_feeds.requested_feed.keys()}
         for feed_id, amount_requested in requested_feeds.requested_feed.items():
@@ -499,14 +505,16 @@ class FeedManager:
                 (available_feed for available_feed in self.available_feeds if available_feed.rufas_id == feed_id), None
             )
             if feed_info is None:
+                self._om.add_error("Trying to purchase unavailable feed",
+                                   f"Trying to purchase unavailable feed {feed_id} during ration interval purchases.",
+                                   info_map)
                 raise ValueError(f"Trying to purchase unavailable feed {feed_id} during ration interval purchases.")
             available_amount = current_feed_totals[feed_id]
 
             amount_to_purchase = max(amount_requested - available_amount, 0.0) * (1 + feed_info.buffer)
-            tolerance = 1e-6
             is_fulfillable_with_purchase = (
                 amount_requested - available_amount
-            ) <= self.advanced_purchase_allowance.allowances.get(feed_id, 0.0) + tolerance
+            ) <= self.advanced_purchase_allowance.allowances.get(feed_id, 0.0) + allowance_tolerance
             if not is_fulfillable_with_purchase:
                 self._om.add_warning(
                     "Ration Interval Purchase Warning",
@@ -514,10 +522,7 @@ class FeedManager:
                     f"Requested: {amount_requested}, Available: {available_amount}, "
                     f"Allowance: ${self.advanced_purchase_allowance.allowances.get(feed_id, 0.0)}. "
                     f"Still making full purchase.",
-                    {
-                        "class": self.__class__.__name__,
-                        "function": self.manage_ration_interval_purchases.__name__,
-                    },
+                    info_map,
                 )
             feeds_to_purchase[feed_id] = amount_to_purchase
 
