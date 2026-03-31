@@ -1834,6 +1834,7 @@ class CrossValidator:
                 }
             )
             if eager_termination:
+                print(self._alias_pool)
                 raise ValueError(f"Cross-validation error: Unknown alias name: {alias_name}")
 
         return value
