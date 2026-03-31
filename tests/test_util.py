@@ -726,7 +726,7 @@ def test_expand_data_temporally(
     use_fill_value_in_gaps: bool,
     use_fill_value_at_end: bool,
     expand_data_to_observed_range: bool,
-    expected: dict[str, dict[str, list[Any]]],
+    expected: tuple[dict[str, dict[str, list[Any]]], list[dict[str, str | dict[str, str]]]],
 ) -> None:
     """Tests the util method expand_data_temporally()."""
     actual = Utility.expand_data_temporally(
@@ -764,16 +764,20 @@ def test_expand_data_temporally_observed_range_only() -> None:
         expand_data_to_observed_range=True,
     )
 
-    expected = {
-        "a": {
-            "values": ["x", "x", "y"],
-            "info_maps": [
-                {"simulation_day": 3, "units": "kg"},
-                {"simulation_day": 4, "units": "kg"},
-                {"simulation_day": 5, "units": "kg"},
-            ],
-        }
-    }
+    expected: tuple[dict[str, dict[str, list[Any]]], list[dict[str, str | dict[str, str]]]] = (
+        {
+            "a": {
+                "values": ["x", "x", "y"],
+                "info_maps": [
+                    {"simulation_day": 3, "units": "kg"},
+                    {"simulation_day": 4, "units": "kg"},
+                    {"simulation_day": 5, "units": "kg"},
+                ],
+            }
+        },
+        []
+    )
+
 
     assert actual == expected
 
