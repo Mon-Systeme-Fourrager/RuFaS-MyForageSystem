@@ -1,0 +1,140 @@
+{
+  "cross-validation": [
+    {
+      "description": "field_1 watering amount must be zero when watering interval is zero",
+      "target_and_save": {
+        "variables": {
+          "watering_amount_in_liters": "field_1.watering_amount_in_liters",
+          "watering_interval": "field_1.watering_interval"
+        },
+        "constants": {
+          "zero": 0
+        }
+      },
+      "apply_when": [
+        {
+          "left_hand": {
+            "ordered_variables": ["watering_interval"]
+          },
+          "right_hand": {
+            "ordered_variables": ["zero"]
+          },
+          "relationship": "equal"
+        }
+      ],
+      "rules": [
+        {
+          "left_hand": {
+            "ordered_variables": ["watering_amount_in_liters"]
+          },
+          "right_hand": {
+            "ordered_variables": ["zero"]
+          },
+          "relationship": "equal"
+        }
+      ]
+    },
+    {
+      "description": "field_1 watering interval must be greater than zero when watering amount is positive",
+      "target_and_save": {
+        "variables": {
+          "watering_amount_in_liters": "field_1.watering_amount_in_liters",
+          "watering_interval": "field_1.watering_interval"
+        },
+        "constants": {
+          "zero": 0
+        }
+      },
+      "apply_when": [
+        {
+          "left_hand": {
+            "ordered_variables": ["watering_amount_in_liters"]
+          },
+          "right_hand": {
+            "ordered_variables": ["zero"]
+          },
+          "relationship": "greater"
+        }
+      ],
+      "rules": [
+        {
+          "left_hand": {
+            "ordered_variables": ["watering_interval"]
+          },
+          "right_hand": {
+            "ordered_variables": ["zero"]
+          },
+          "relationship": "greater"
+        }
+      ]
+    },
+    {
+      "description": "field_2 watering amount must be zero when watering interval is zero",
+      "target_and_save": {
+        "variables": {
+          "watering_amount_in_liters": "field_2.watering_amount_in_liters",
+          "watering_interval": "field_2.watering_interval"
+        },
+        "constants": {
+          "zero": 0
+        }
+      },
+      "apply_when": [
+        {
+          "left_hand": {
+            "ordered_variables": ["watering_interval"]
+          },
+          "right_hand": {
+            "ordered_variables": ["zero"]
+          },
+          "relationship": "equal"
+        }
+      ],
+      "rules": [
+        {
+          "left_hand": {
+            "ordered_variables": ["watering_amount_in_liters"]
+          },
+          "right_hand": {
+            "ordered_variables": ["zero"]
+          },
+          "relationship": "equal"
+        }
+      ]
+    },
+    {
+      "description": "field_2 watering interval must be greater than zero when watering amount is positive",
+      "target_and_save": {
+        "variables": {
+          "watering_amount_in_liters": "field_2.watering_amount_in_liters",
+          "watering_interval": "field_2.watering_interval"
+        },
+        "constants": {
+          "zero": 0
+        }
+      },
+      "apply_when": [
+        {
+          "left_hand": {
+            "ordered_variables": ["watering_amount_in_liters"]
+          },
+          "right_hand": {
+            "ordered_variables": ["zero"]
+          },
+          "relationship": "greater"
+        }
+      ],
+      "rules": [
+        {
+          "left_hand": {
+            "ordered_variables": ["watering_interval"]
+          },
+          "right_hand": {
+            "ordered_variables": ["zero"]
+          },
+          "relationship": "greater"
+        }
+      ]
+    }
+  ]
+}
