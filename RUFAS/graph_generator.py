@@ -206,8 +206,7 @@ class GraphGenerator:
             sanitized_data: dict[str, list[int | float]] = {}
             for key, value in prepared_data.items():
                 sanitized_data[key] = [
-                    0.0 if (item is None or not isinstance(item, (int, float))) else
-                    float(item) for item in value
+                    0.0 if (item is None or not isinstance(item, (int, float))) else float(item) for item in value
                 ]
             non_numeric_data_logs = self._log_non_numerical_data(updated_pool, graph_details)
             all_logs = non_numeric_data_logs + var_units_logs
@@ -470,11 +469,7 @@ class GraphGenerator:
         for key, value in filtered_pool.items():
             values = value["values"]
             if isinstance(values, list):
-                bad_items = [
-                    (index, item)
-                    for index, item in enumerate(values)
-                    if not isinstance(item, (int, float))
-                ]
+                bad_items = [(index, item) for index, item in enumerate(values) if not isinstance(item, (int, float))]
                 if bad_items:
                     bad_types = {type(item) for _, item in bad_items}
                     bad_locations = [f"index {index}: {repr(item)}" for index, item in bad_items]
