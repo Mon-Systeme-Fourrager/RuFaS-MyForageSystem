@@ -378,6 +378,7 @@ class OutputManager(object):
         units = self._stringify_units(units)
 
         # add simulation day to input maps (needed for data padding to work)
+        # TODO: add option to manually provide a RufasTime reference to the function call.
         needs_sim_day = overwrite_simulation_day or "simulation_day" not in info_map.keys()
         if self.time is not None and needs_sim_day:
             info_map["simulation_day"] = self.time.simulation_day
