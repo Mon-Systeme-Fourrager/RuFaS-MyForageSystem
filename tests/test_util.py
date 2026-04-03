@@ -497,7 +497,7 @@ def test_find_group_prefixes_multiple_suffix_filtering() -> None:
                             {"simulation_day": 2, "units": "kg"},
                             {"simulation_day": 3, "units": "kg"},
                             {"simulation_day": 4, "units": "kg"},
-                            {"simulation_day": 5, "units": "kg"}
+                            {"simulation_day": 5, "units": "kg"},
                         ],
                     },
                     "b": {
@@ -508,7 +508,7 @@ def test_find_group_prefixes_multiple_suffix_filtering() -> None:
                             {"simulation_day": 2, "units": "g"},
                             {"simulation_day": 3, "units": "g"},
                             {"simulation_day": 4, "units": "g"},
-                            {"simulation_day": 5, "units": "g"}
+                            {"simulation_day": 5, "units": "g"},
                         ],
                     },
                 },
@@ -550,7 +550,7 @@ def test_find_group_prefixes_multiple_suffix_filtering() -> None:
                             {"simulation_day": 2, "units": "kg"},
                             {"simulation_day": 3, "units": "kg"},
                             {"simulation_day": 4, "units": "kg"},
-                            {"simulation_day": 5, "units": "kg"}
+                            {"simulation_day": 5, "units": "kg"},
                         ],
                     },
                     "b": {
@@ -561,7 +561,7 @@ def test_find_group_prefixes_multiple_suffix_filtering() -> None:
                             {"simulation_day": 2, "units": "g"},
                             {"simulation_day": 3, "units": "g"},
                             {"simulation_day": 4, "units": "g"},
-                            {"simulation_day": 5, "units": "g"}
+                            {"simulation_day": 5, "units": "g"},
                         ],
                     },
                 },
