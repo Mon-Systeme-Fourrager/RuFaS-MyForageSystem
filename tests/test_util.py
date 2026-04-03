@@ -810,14 +810,12 @@ def test_expand_data_temporally_logs_warning_for_mismatched_complex_fill_value()
                 {"x": 1},
                 {"x": 1},
                 {"x": 2},
-                {"x": 2},
             ],
             "info_maps": [
                 {"simulation_day": 0, "units": "kg"},
                 {"simulation_day": 1, "units": "kg"},
                 {"simulation_day": 2, "units": "kg"},
                 {"simulation_day": 3, "units": "kg"},
-                {"simulation_day": 4, "units": "kg"},
             ],
         }
     }
