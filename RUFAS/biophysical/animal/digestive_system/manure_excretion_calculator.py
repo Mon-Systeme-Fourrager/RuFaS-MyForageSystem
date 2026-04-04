@@ -22,7 +22,7 @@ class ManureExcretionCalculator:
     @staticmethod
     def _track_and_warn_dmi_threshold(
         *,
-        kind: str,
+        dmi_kind: str,
         dmi_effective: float,
     ) -> None:
         """Track DMI threshold outcomes for end-of-simulation reporting.
