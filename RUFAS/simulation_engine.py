@@ -231,10 +231,10 @@ class SimulationEngine:
         """
         Executes the daily simulation routines for a farm with only the field and storage modules.
 
-        Daily Field and Feed Simulation Process:
+        Daily Field With Storage Simulation Process:
         1. Field operations (manure applications, harvesting)
-        4. Record keeping (time, weather, purchased feeds fed emissions)
-        5. Advance simulation date
+        2. Record keeping (time, weather, purchased feeds fed emissions)
+        3. Advance simulation date
 
         """
         self._execute_daily_field_with_storage_operations()
