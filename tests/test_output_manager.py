@@ -959,20 +959,20 @@ def test_add_variable(
     "info_map, current_simulation_day, overwrite_simulation_day, expected_day_value",
     [
         # No simulation day provided, overwrite_simulation_day = False
-        ({"class": "testClass", "function": "test_function"}, 0, False, 0),
-        ({"class": "testClass", "function": "test_function"}, 135, False, 135),
+        ({"class": "testClass", "function": "test_function", "units": MeasurementUnits.UNITLESS}, 0, False, 0),
+        ({"class": "testClass", "function": "test_function", "units": MeasurementUnits.UNITLESS}, 135, False, 135),
         # No simulation day provided, overwrite_simulation_day = True
-        ({"class": "testClass", "function": "test_function"}, 0, True, 0),
-        ({"class": "testClass", "function": "test_function"}, 135, True, 135),
+        ({"class": "testClass", "function": "test_function", "units": MeasurementUnits.UNITLESS}, 0, True, 0),
+        ({"class": "testClass", "function": "test_function", "units": MeasurementUnits.UNITLESS}, 135, True, 135),
         # Simulation day provided, overwrite_simulation_day = False
-        ({"class": "testClass", "function": "test_function", "simulation_day": 0}, 135, False, 0),
-        ({"class": "testClass", "function": "test_function", "simulation_day": 220}, 135, False, 220),
+        ({"class": "testClass", "function": "test_function", "simulation_day": 0, "units": MeasurementUnits.UNITLESS}, 135, False, 0),
+        ({"class": "testClass", "function": "test_function", "simulation_day": 220, "units": MeasurementUnits.UNITLESS}, 135, False, 220),
         # Simulation_day provided, overwrite_simulation_day = True
-        ({"class": "testClass", "function": "test_function", "simulation_day": 0}, 135, True, 135),
-        ({"class": "testClass", "function": "test_function", "simulation_day": 220}, 135, True, 135),
+        ({"class": "testClass", "function": "test_function", "simulation_day": 0, "units": MeasurementUnits.UNITLESS}, 135, True, 135),
+        ({"class": "testClass", "function": "test_function", "simulation_day": 220, "units": MeasurementUnits.UNITLESS}, 135, True, 135),
         # No RufasTime reference attached to output manager
-        ({"class": "testClass", "function": "test_function", "simulation_day": 220}, None, True, None),
-        ({"class": "testClass", "function": "test_function"}, None, True, None),
+        ({"class": "testClass", "function": "test_function", "simulation_day": 220, "units": MeasurementUnits.UNITLESS}, None, True, None),
+        ({"class": "testClass", "function": "test_function", "units": MeasurementUnits.UNITLESS}, None, True, None),
         # TODO: handle provided time argument...
     ]
 )
@@ -986,9 +986,14 @@ def test_add_variable_infomap_simulation_day(
     """
     # Setup
     om = OutputManager()
-    mocker.patch.object(om, attribute = "variables_pool", new = {}, clear = True) # mock an empty pool
+    mocker.patch.object(om, "variables_pool", {}) # mock an empty pool
     rt = RufasTime(datetime(year = 1992, month = 1, day = 1), datetime(year = 2026, month = 1, day = 1))
-    mocker.patch(target = "rt.simulation_day", return_value = current_simulation_day)
+    mocker.patch.object(
+        RufasTime,
+        "simulation_day",
+        new_callable=PropertyMock,
+        return_value=current_simulation_day,
+    )
 
     if current_simulation_day is not None:
         # with time reference (simulate setup with SimulationEngine)
