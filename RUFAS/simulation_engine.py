@@ -48,6 +48,8 @@ class SimulationType(Enum):
         """Return the set of simulation types that do not simulate animals."""
         return {
             cls.FIELD_AND_FEED,
+            cls.FIELD_ONLY,
+            cls.FIELD_WITH_STORAGE,
         }
 
     @classmethod
