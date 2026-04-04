@@ -332,7 +332,10 @@ class OutputManager(object):
         else:
             pool[key]["values"].append(deepcopy(value))
 
-    def add_variable(self, name: str, value: Any, info_map: dict[str, Any], first_info_map_only: bool = False) -> None:
+    def add_variable(
+            self, name: str, value: Any, info_map: dict[str, Any], first_info_map_only: bool = False,
+            overwrite_simulation_day: bool = False
+    ) -> None:
         """
         Adds a variable to the pool.
 
@@ -373,6 +376,12 @@ class OutputManager(object):
         if isinstance(units, dict) and len(info_map["units"]) != len(value) and value != {}:
             raise KeyError(f"'units' missing in units dict for a variable in {name}.")
         units = self._stringify_units(units)
+
+        # add simulation day to input maps (needed for data padding to work)
+        # TODO: add option to manually provide a RufasTime reference to the function call.
+        needs_sim_day = overwrite_simulation_day or "simulation_day" not in info_map.keys()
+        if self.time is not None and needs_sim_day:
+            info_map["simulation_day"] = self.time.simulation_day
 
         key = self._generate_key(name, info_map)
         self._add_to_pool(self.variables_pool, key, value, {**info_map, "units": units}, first_info_map_only)
