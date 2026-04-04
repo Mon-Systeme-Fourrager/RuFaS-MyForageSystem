@@ -6,7 +6,7 @@
   "tasks": [
     {
       "task_type": "SIMULATION_SINGLE_RUN",
-      "metadata_file_path": "input/metadata/example_field_only_metadata.json",
+      "metadata_file_path": "input/metadata/example_field_with_storage_metadata.json",
       "output_prefix": "field_only",
       "log_verbosity": "errors",
       "random_seed": 42,
