@@ -3433,7 +3433,8 @@ def test_crop_and_soil_cross_validation_includes_crop_schedule_length_rules() ->
     }
 
     actual_paths = {
-        block["target_and_save"]["variables"]["planting_years"].rsplit(".planting_years", 1)[0] for block in schedule_blocks
+        block["target_and_save"]["variables"]["planting_years"].rsplit(".planting_years", 1)[0]
+        for block in schedule_blocks
     }
     assert actual_paths == expected_paths
 
