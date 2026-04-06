@@ -1748,7 +1748,8 @@ class CrossValidator:
             "is_null": lambda left, _right, _eager_termination: self._evaluate_is_null(left),
             "regex": lambda left, right, _eager_termination: self._evaluate_regex(left, right),
             "is_equal_length": lambda left, right, _eager_termination: self._evaluate_equal_data_length(
-                left, right, _eager_termination),
+                left, right, _eager_termination
+            ),
         }
 
     def cross_validate_data(
