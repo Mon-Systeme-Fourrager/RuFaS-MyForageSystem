@@ -407,10 +407,10 @@ class OutputManager(object):
                 self._save_current_variable_pool()
 
     def add_variable_bulk(
-            self,
-            variables: list[tuple[dict[str, Any], dict[str, Any]]],
-            first_info_map_only: bool = False,
-            overwrite_simulation_day: bool = False,
+        self,
+        variables: list[tuple[dict[str, Any], dict[str, Any]]],
+        first_info_map_only: bool = False,
+        overwrite_simulation_day: bool = False,
     ) -> None:
         """
         Iterate through all variables and call add_variable() on each of them.
