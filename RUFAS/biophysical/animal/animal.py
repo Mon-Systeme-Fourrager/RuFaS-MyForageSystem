@@ -223,12 +223,16 @@ class Animal:
             self._initialize_newborn_calf_genetics(newborn_args, time)
         else:
             initialize_animal_methods[self.animal_type](args)
-            self.genetics = Genetics(
-                birth_year=(time.current_date - timedelta(days=self.days_born)).year,
-                animal_type=self.animal_type,
-                initialize_new_born_calf=False,
-                parity=self.calves,
-            ) if AnimalConfig.simulate_genetics else None
+            self.genetics = (
+                Genetics(
+                    birth_year=(time.current_date - timedelta(days=self.days_born)).year,
+                    animal_type=self.animal_type,
+                    initialize_new_born_calf=False,
+                    parity=self.calves,
+                )
+                if AnimalConfig.simulate_genetics
+                else None
+            )
         self.update_genetic_history(simulation_day=time.simulation_day)
 
     def _initialize_newborn_calf_genetics(self, newborn_args: NewBornCalfValuesTypedDict, time: RufasTime) -> None:
@@ -1174,7 +1178,7 @@ class Animal:
                 parity=self.calves,
                 days_born=self.days_born,
                 days_in_pregnancy=self.days_in_pregnancy,
-                animal_type=self.animal_type
+                animal_type=self.animal_type,
             )
 
     def _assign_sex_to_newborn_calf(self) -> None:
@@ -1585,24 +1589,28 @@ class Animal:
 
         newborn_calf_config: NewBornCalfValuesTypedDict | None = None
 
-        reproduction_inputs = ReproductionInputs(
-            animal_type=self.animal_type,
-            body_weight=self.body_weight,
-            breed=self.breed,
-            days_born=self.days_born,
-            days_in_pregnancy=self.days_in_pregnancy,
-            days_in_milk=self.days_in_milk,
-            dam_tbv_fat=self.genetics.TBV_fat,
-            dam_tbv_protein=self.genetics.TBV_protein,
-            phosphorus_for_gestation_required_for_calf=self.nutrients.phosphorus_for_gestation_required_for_calf,
-        ) if AnimalConfig.simulate_genetics else ReproductionInputs(
-            animal_type=self.animal_type,
-            body_weight=self.body_weight,
-            breed=self.breed,
-            days_born=self.days_born,
-            days_in_pregnancy=self.days_in_pregnancy,
-            days_in_milk=self.days_in_milk,
-            phosphorus_for_gestation_required_for_calf=self.nutrients.phosphorus_for_gestation_required_for_calf,
+        reproduction_inputs = (
+            ReproductionInputs(
+                animal_type=self.animal_type,
+                body_weight=self.body_weight,
+                breed=self.breed,
+                days_born=self.days_born,
+                days_in_pregnancy=self.days_in_pregnancy,
+                days_in_milk=self.days_in_milk,
+                dam_tbv_fat=self.genetics.TBV_fat,
+                dam_tbv_protein=self.genetics.TBV_protein,
+                phosphorus_for_gestation_required_for_calf=self.nutrients.phosphorus_for_gestation_required_for_calf,
+            )
+            if AnimalConfig.simulate_genetics
+            else ReproductionInputs(
+                animal_type=self.animal_type,
+                body_weight=self.body_weight,
+                breed=self.breed,
+                days_born=self.days_born,
+                days_in_pregnancy=self.days_in_pregnancy,
+                days_in_milk=self.days_in_milk,
+                phosphorus_for_gestation_required_for_calf=self.nutrients.phosphorus_for_gestation_required_for_calf,
+            )
         )
         reproduction_outputs: ReproductionOutputs = self.reproduction.reproduction_update(reproduction_inputs, time)
 
