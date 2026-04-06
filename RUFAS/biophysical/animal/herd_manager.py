@@ -537,9 +537,7 @@ class HerdManager:
         if not AnimalConfig.simulate_genetics:
             return
         birth_year = Utility.back_track_birth_date(animal.days_born, time.current_date).year
-        mean_tbv_fat, mean_tbv_protein = Genetics.calculate_average_tbv(
-            [animal.genetics for animal in self.cows]
-        )
+        mean_tbv_fat, mean_tbv_protein = Genetics.calculate_average_tbv([animal.genetics for animal in self.cows])
         animal.genetics.recalculate_values_at_lactation_start(
             birth_year=birth_year,
             animal_type=animal.animal_type,
