@@ -91,12 +91,13 @@ def test_get_simulation_type_valid(
 def test_get_simulation_type_invalid() -> None:
     """Unit test for SimulationType.get_simulation_type with an invalid value."""
     invalid_simulation_type = "not_a_real_simulation"
+    valid_simulation_types = ", ".join(simulation_type.value for simulation_type in SimulationType)
 
     with pytest.raises(
         ValueError,
         match=(
-            "Unknown simulation type: not_a_real_simulation. "
-            "Expected one of: full_farm, field_and_feed, field_only, field_with_storage."
+            f"Unknown simulation type: {invalid_simulation_type}. "
+            f"Expected one of: {valid_simulation_types}."
         ),
     ):
         SimulationType.get_simulation_type(invalid_simulation_type)
