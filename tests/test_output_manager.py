@@ -1013,14 +1013,14 @@ def test_add_variable(
         ),
         # No RufasTime reference attached to output manager
         (
-                {
-                    "class": "testClass",
-                    "function": "test_function",
-                    "units": MeasurementUnits.UNITLESS,
-                },
-                None,
-                True,
-                None,
+            {
+                "class": "testClass",
+                "function": "test_function",
+                "units": MeasurementUnits.UNITLESS,
+            },
+            None,
+            True,
+            None,
         ),
         # No RufasTime reference attached to output manager, simulation_day specified
         (
@@ -1085,7 +1085,7 @@ def test_add_variable_infomap_simulation_day(
         assert om.time is None
     else:
         assert "simulation_day" in saved_info_map  # simulation day in every info map
-        assert info_map.get("simulation_day") == expected_day_value # original info map correct(ed)
+        assert info_map.get("simulation_day") == expected_day_value  # original info map correct(ed)
 
     ## universal
     assert observed_day == expected_day_value
@@ -1459,6 +1459,7 @@ def test_add_variable_bulk(
         call(name, value, info_maps[index], first_info_map_only, False)
         for index, (name, value) in enumerate(variables.items())
     ]
+
 
 @pytest.mark.parametrize(
     "units, expected_result",
