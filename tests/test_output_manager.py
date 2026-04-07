@@ -1384,7 +1384,7 @@ def test_add_variable_chunkification_save_chunk_threshold_unspecified_no_call(
 
     # Arrange
     output_manager = OutputManager()
-    ## TODO: Mock these values instead. This test is leaking to other tests.
+    ## TODO: Mock these values instead? This test is leaking to other tests.
     output_manager.chunkification = True
     output_manager.current_pool_size = 1024
     output_manager.average_add_variable_call_addition = 1024
@@ -1771,12 +1771,16 @@ def test_report_variables_usage_counts(mocker: MockerFixture) -> None:
     """
     Unit test for report_variables_usage_counts() method in OutputManager class.
     """
-
     # Arrange
     path = Path("/fake/directory")
     expected_file_name = "variables_usage_counts.csv"
     expected_full_path = Path(path, expected_file_name)
     output_manager = OutputManager()
+
+    ## TODO: prevent previous tests from leaking (parameters from test_bulk_add_variable_infomap_simulation_day
+    ##  and test_add_variable_infomap_simulation_day are present in the calls)
+
+    mocker.patch.object(output_manager, "variables_pool", {}) # didn't work
 
     patch_for_generate_file_name = mocker.patch.object(
         output_manager, "generate_file_name", return_value=expected_file_name
