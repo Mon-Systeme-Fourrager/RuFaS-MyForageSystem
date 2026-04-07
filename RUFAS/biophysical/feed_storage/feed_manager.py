@@ -10,7 +10,6 @@ from RUFAS.data_structures.feed_storage_to_animal_connection import (
     Feed,
     RUFAS_ID,
     FeedFulfillmentResults,
-    NutrientStandard,
     PlanningCycleAllowance,
     RuntimePurchaseAllowance,
     RequestedFeed,
