@@ -8,12 +8,8 @@ from RUFAS.data_structures.crop_soil_to_feed_storage_connection import (
 )
 from RUFAS.data_structures.feed_storage_to_animal_connection import (
     Feed,
-    FeedCategorization,
-    FeedComponentType,
     RUFAS_ID,
     FeedFulfillmentResults,
-    NASEMFeed,
-    NRCFeed,
     NutrientStandard,
     PlanningCycleAllowance,
     RuntimePurchaseAllowance,
@@ -22,18 +18,13 @@ from RUFAS.data_structures.feed_storage_to_animal_connection import (
     IdealFeeds,
     AdvancePurchaseAllowance,
 )
-from RUFAS.input_manager import InputManager
 from RUFAS.rufas_time import RufasTime
 from RUFAS.weather import Weather
-from RUFAS.util import Utility
 from RUFAS.units import MeasurementUnits
 from RUFAS.output_manager import OutputManager
 
 from .storage import Storage
 from .purchased_feed_storage import PurchasedFeed, PurchasedFeedStorage
-
-"""Ratio of the price of an on-farm price to the price of buying that feed from an off farm source."""
-ON_FARM_TO_PURCHASED_PRICE_RATION = 0.01
 
 """A type alias representing the context in which a feed purchase was initiated."""
 PurchaseType = Literal["daily_feed_request", "ration_interval", "planning_cycle"]
@@ -48,8 +39,6 @@ class FeedManager:
     ----------
     feed_config : dict[str, list[Any]]
         Configuration for the feeds available in the simulation.
-    nutrient_standard : NutrientStandard
-        Nutrient standard used in the simulation (NASEM or NRC).
     crop_to_rufas_ids_mapping : dict[str, list[RUFAS_ID]]
         Mapping from crops to their corresponding RUFAS IDs.
     feed_storage_configs : dict[str, Any]
@@ -88,12 +77,12 @@ class FeedManager:
     def __init__(
         self,
         feed_config: dict[str, list[Any]],
-        nutrient_standard: NutrientStandard,
+        available_feeds: list[Feed],
         feed_storage_configs: dict[str, Any],
         feed_storage_instances: dict[str, list[str]],
     ) -> None:
         self._om = OutputManager()
-        self._available_feeds: list[Feed] = self._setup_available_feeds(feed_config, nutrient_standard)
+        self._available_feeds = available_feeds
         self.active_storages: dict[str, Storage] = {}
 
         self._create_all_storages(feed_storage_configs, feed_storage_instances)
@@ -875,77 +864,4 @@ class FeedManager:
                 farmgrown_ids.add(feed_id)
         return farmgrown_ids
 
-    def _setup_available_feeds(
-        self, feed_config: dict[str, list[Any]], nutrient_standard: NutrientStandard
-    ) -> list[Feed]:
-        """
-        Creates list of feeds available for use in the simulation.
-
-        Parameters
-        ----------
-        feed_config : list[dict[str, Any]]
-            Mapping of the feeds available for purchase to the prices of those feeds.
-        nutrient_standard : NutrientStandard
-            Indicates whether the NASEM or NRC nutrient standards is being used.
-
-        Returns
-        -------
-        list[Feed]
-            Nutrition and price information of feeds available in the simulation.
-
-        """
-        feed_library = self._process_feed_library(nutrient_standard)
-
-        feed_representation = NASEMFeed if nutrient_standard is NutrientStandard.NASEM else NRCFeed
-        available_feeds: list[Feed] = []
-        feeds_to_parse = feed_config["purchased_feeds"]
-        for feed in feeds_to_parse:
-            rufas_id = feed["purchased_feed"]
-            price = feed["purchased_feed_cost"]
-            buffer = feed["buffer"]
-            try:
-                nutritive_properties = feed_library[rufas_id]
-            except KeyError:
-                raise KeyError(f"Feed with RUFAS ID '{rufas_id}' not found in the feed library.")
-            new_feed = feed_representation(
-                rufas_id=rufas_id,
-                amount_available=0.0,
-                on_farm_cost=price * ON_FARM_TO_PURCHASED_PRICE_RATION,
-                purchase_cost=price,
-                buffer=buffer,
-                **nutritive_properties,
-            )
-            available_feeds.append(new_feed)
-
-        sorted_available_feeds = sorted(available_feeds, key=lambda feed: feed.rufas_id)
-        return sorted_available_feeds
-
-    def _process_feed_library(self, nutrient_standard: NutrientStandard) -> dict[RUFAS_ID, dict[str, Any]]:
-        """
-        Collects and processes the feed library input so that it can be translated into a simulation-friendly format.
-
-        Parameters
-        ----------
-        nutrient_standard : NutrientStandard
-            Indicates whether the NASEM or NRC nutrient standards is being used.
-
-        Returns
-        -------
-        dict[RUFAS_ID, dict[str, Any]]
-            Mapping of RuFaS feed IDs to the nutritional properties of those feeds.
-
-        """
-        im = InputManager()
-        feed_library = (
-            im.get_data("NASEM_Comp") if nutrient_standard is NutrientStandard.NASEM else im.get_data("NRC_Comp")
-        )
-
-        feed_library = Utility.convert_dict_of_lists_to_list_of_dicts(feed_library)
-
-        feed_library = {feed["rufas_id"]: feed for feed in feed_library}
-        for feed in feed_library.values():
-            del feed["rufas_id"]
-            feed["feed_type"] = FeedComponentType(feed["feed_type"])
-            feed["Fd_Category"] = FeedCategorization(feed["Fd_Category"])
-            feed["units"] = MeasurementUnits(feed["units"])
-        return feed_library
+    

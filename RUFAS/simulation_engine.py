@@ -11,7 +11,7 @@ from RUFAS.biophysical.animal.herd_manager import HerdManager
 from RUFAS.biophysical.feed_storage.feed_manager import FeedManager
 from RUFAS.data_structures.animal_to_manure_connection import ManureStream
 from RUFAS.data_structures.crop_soil_to_feed_storage_connection import HarvestedCrop
-from RUFAS.data_structures.feed_storage_to_animal_connection import FeedFulfillmentResults, NutrientStandard, TotalInventory
+from RUFAS.data_structures.feed_storage_to_animal_connection import AvailableFeedsBuilder, FeedFulfillmentResults, NutrientStandard, TotalInventory
 from RUFAS.data_structures.manure_to_crop_soil_connection import ManureEventNutrientRequestResults
 from RUFAS.input_manager import InputManager
 from RUFAS.output_manager import OutputManager
@@ -166,18 +166,21 @@ class SimulationEngine:
         if self.simulate_fields:
             self.field_manager: FieldManager = FieldManager()
 
-        if self.simulate_feed:
-            nutrient_standard = NutrientStandard(self.im.get_data("config.nutrient_standard"))
+        if self.simulate_animals or self.simulate_feed:
             feeds_config = self.im.get_data("feed")
+            nutrient_standard = NutrientStandard(self.im.get_data("config.nutrient_standard"))
+            available_feeds = AvailableFeedsBuilder.setup_available_feeds(feeds_config, nutrient_standard)
+
+        if self.simulate_feed:
             feed_storage_configs = self.im.get_data("feed_storage_configurations")
             feed_storage_instances = self.im.get_data("feed_storage_instances")
             self.feed_manager: FeedManager = FeedManager(
                 feeds_config,
-                nutrient_standard,
+                available_feeds,
                 feed_storage_configs,
                 feed_storage_instances,
             )
-            feed_manager_available_feed_ids = [feed.rufas_id for feed in self.feed_manager.available_feeds]
+            feed_manager_available_feed_ids = [feed.rufas_id for feed in available_feeds]
             self.emissions_estimator.check_available_purchased_feed_data(feed_manager_available_feed_ids)
             max_daily_feed_recalculations_per_year: int = feeds_config["max_daily_feed_recalculations_per_year"]
             self.max_daily_feed_recalculation_interval = timedelta(
@@ -196,8 +199,7 @@ class SimulationEngine:
                 self.weather,
                 self.time,
                 is_ration_defined_by_user=self.is_ration_defined_by_user,
-                # TODO figure out what to send here if animals simulated but feed module is not
-                available_feeds=self.feed_manager.available_feeds,
+                available_feeds=available_feeds,
                 simulate_animals=self.simulate_animals,
             )
 
