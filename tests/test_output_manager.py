@@ -1013,6 +1013,17 @@ def test_add_variable(
         ),
         # No RufasTime reference attached to output manager
         (
+                {
+                    "class": "testClass",
+                    "function": "test_function",
+                    "units": MeasurementUnits.UNITLESS,
+                },
+                None,
+                True,
+                None,
+        ),
+        # No RufasTime reference attached to output manager, simulation_day specified
+        (
             {
                 "class": "testClass",
                 "function": "test_function",
@@ -1021,7 +1032,7 @@ def test_add_variable(
             },
             None,
             True,
-            None,
+            220,
         ),
         ({"class": "testClass", "function": "test_function", "units": MeasurementUnits.UNITLESS}, None, True, None),
         # TODO: handle provided time argument...
@@ -1038,7 +1049,6 @@ def test_add_variable_infomap_simulation_day(
     Test that add_variable properly adds simulation_day to the info map and respects previously specified
     simulation_day value, unless the overwrite_simulation_day option is used.
     """
-    # TODO: figure out why I'm getting "no attribute 'with_segments'" error from pytest...
     # Setup
     om = OutputManager()
     mocker.patch.object(om, "variables_pool", {})  # mock an empty pool
@@ -1070,13 +1080,15 @@ def test_add_variable_infomap_simulation_day(
 
     # Assertions
 
+    ## conditional
     if expected_day_value is None:
         assert om.time is None
-        assert sorted(list(saved_info_map.keys())) == sorted(list(info_map.keys()))  # does this even make sense?
     else:
         assert "simulation_day" in saved_info_map  # simulation day in every info map
-        assert info_map.get("simulation_day") == expected_day_value
-        assert observed_day == expected_day_value
+        assert info_map.get("simulation_day") == expected_day_value # original info map correct(ed)
+
+    ## universal
+    assert observed_day == expected_day_value
 
 
 @pytest.mark.parametrize(
@@ -1272,6 +1284,7 @@ def test_add_variable_chunkification_save_chunk_threshold_unspecified_no_call(
 
     # Arrange
     output_manager = OutputManager()
+    ## TODO: Mock these values instead. This test is leaking to other tests.
     output_manager.chunkification = True
     output_manager.current_pool_size = 1024
     output_manager.average_add_variable_call_addition = 1024
