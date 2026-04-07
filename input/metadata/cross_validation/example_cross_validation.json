@@ -206,10 +206,12 @@
             "iterate_array_of_dicts": {
               "filter_array": false,
               "variable_name": "alias_name_to_array_of_dicts_variable",
-              "attribute_of_interest": "attribute_name",
-              "comparison_value": "alias_name_of_comparison_value",
+              "attribute_of_interest": "attribute1_name",
+              "target_attribute": "Optional[attribute2_name]",
+              "comparison_value": "Optional[alias_name_of_comparison_value]",
               "relationship": "equal"
-            }
+            },
+            "save_as": "save_as_alias_name"
           },
           "right_hand": {
             "aggregation": {
