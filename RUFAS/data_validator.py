@@ -1931,7 +1931,7 @@ class CrossValidator:
         return result, evaluated
 
     def _evaluate_aggregation_block(
-            self, aggregation_block: dict[str, Any], eager_termination: bool, relationship: str
+        self, aggregation_block: dict[str, Any], eager_termination: bool, relationship: str
     ) -> tuple[Any, bool]:
         """
         Evaluates an aggregation block, resolving ordered variables from the alias pool and
@@ -1970,7 +1970,7 @@ class CrossValidator:
                 {
                     "error": "Unknown Operation",
                     "message": f"Unknown operation {operation} in cross validation rule. Expected one of "
-                               f"{list(AGGREGATION_FUNCTIONS.keys())}.",
+                    f"{list(AGGREGATION_FUNCTIONS.keys())}.",
                     "info_map": {
                         "class": self.__class__.__name__,
                         "function": self._evaluate_aggregation_block.__name__,
@@ -2006,7 +2006,7 @@ class CrossValidator:
 
         if any(isinstance(value, (list, dict)) for value in ordered_values):
             if not self._validate_expression_block_with_complex_variable_values(
-                    aggregation_block, ordered_values, eager_termination
+                aggregation_block, ordered_values, eager_termination
             ):
                 return None, False
             ordered_values = (

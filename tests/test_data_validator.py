@@ -2709,12 +2709,42 @@ def test_check_target_and_save_block_message_contains_all_invalid_keys_eager_ter
 @pytest.mark.parametrize(
     "expression_block, eager_termination",
     [
-        ({"aggregation": {"operation": "add", "ordered_variables": ["alias_0", "alias_1"]}, "save_as": "alias_2"}, True),
-        ({"aggregation": {"operation": "subtract", "ordered_variables": ["alias_0", "alias_1"]}, "save_as": "alias_2"}, True),
-        ({"aggregation": {"operation": "multiply", "ordered_variables": ["alias_0", "alias_1"]}, "save_as": "alias_2"}, True),
-        ({"aggregation": {"operation": "add", "ordered_variables": ["alias_0", "alias_1"]}, "save_as": "alias_2"}, False),
-        ({"aggregation": {"operation": "subtract", "ordered_variables": ["alias_0", "alias_1"]}, "save_as": "alias_2"}, False),
-        ({"aggregation": {"operation": "multiply", "ordered_variables": ["alias_0", "alias_1"]}, "save_as": "alias_2"}, False),
+        (
+            {"aggregation": {"operation": "add", "ordered_variables": ["alias_0", "alias_1"]}, "save_as": "alias_2"},
+            True,
+        ),
+        (
+            {
+                "aggregation": {"operation": "subtract", "ordered_variables": ["alias_0", "alias_1"]},
+                "save_as": "alias_2",
+            },
+            True,
+        ),
+        (
+            {
+                "aggregation": {"operation": "multiply", "ordered_variables": ["alias_0", "alias_1"]},
+                "save_as": "alias_2",
+            },
+            True,
+        ),
+        (
+            {"aggregation": {"operation": "add", "ordered_variables": ["alias_0", "alias_1"]}, "save_as": "alias_2"},
+            False,
+        ),
+        (
+            {
+                "aggregation": {"operation": "subtract", "ordered_variables": ["alias_0", "alias_1"]},
+                "save_as": "alias_2",
+            },
+            False,
+        ),
+        (
+            {
+                "aggregation": {"operation": "multiply", "ordered_variables": ["alias_0", "alias_1"]},
+                "save_as": "alias_2",
+            },
+            False,
+        ),
     ],
 )
 def test_evaluate_expression_unknown_operation(
@@ -2873,16 +2903,26 @@ def test_validate_expression_block_with_complex_variable_values_unknown_apply_to
 @pytest.mark.parametrize(
     "expression_block, selected_variables, expected_result",
     [
-        ({"aggregation": {"operation": "no_op", "ordered_variables": ["alias_0"], "apply_to": "individual"}}, [[1, 2, 3]], [1, 2, 3]),
+        (
+            {"aggregation": {"operation": "no_op", "ordered_variables": ["alias_0"], "apply_to": "individual"}},
+            [[1, 2, 3]],
+            [1, 2, 3],
+        ),
         ({"aggregation": {"operation": "no_op", "ordered_variables": ["alias_0"], "apply_to": "individual"}}, [[]], []),
         (
-            {"aggregation": {"operation": "no_op", "ordered_variables": ["alias_0"], "apply_to": "individual"}, "save_as": "abc"},
+            {
+                "aggregation": {"operation": "no_op", "ordered_variables": ["alias_0"], "apply_to": "individual"},
+                "save_as": "abc",
+            },
             [{"a": 1, "b": 2, "c": 3}],
             [1, 2, 3],
         ),
         ({"aggregation": {"operation": "no_op", "ordered_variables": ["alias_0"], "apply_to": "individual"}}, [{}], []),
         (
-            {"aggregation": {"operation": "no_op", "ordered_variables": ["alias_0"], "apply_to": "individual"}, "save_as": "def"},
+            {
+                "aggregation": {"operation": "no_op", "ordered_variables": ["alias_0"], "apply_to": "individual"},
+                "save_as": "def",
+            },
             [{"a": [], "b": []}],
             [[], []],
         ),
@@ -2917,15 +2957,34 @@ def test_evaluate_expression_apply_to_individual(
 @pytest.mark.parametrize(
     "expression_block, selected_variables, expected_result",
     [
-        ({"aggregation": {"operation": "sum", "ordered_variables": ["alias_0"], "apply_to": "group"}}, [[1, 2, 3]], [6]),
-        ({"aggregation": {"operation": "difference", "ordered_variables": ["alias_0"], "apply_to": "group"}}, [[]], [None]),
         (
-            {"aggregation": {"operation": "product", "ordered_variables": ["alias_0"], "apply_to": "group"}, "save_as": "abc"},
+            {"aggregation": {"operation": "sum", "ordered_variables": ["alias_0"], "apply_to": "group"}},
+            [[1, 2, 3]],
+            [6],
+        ),
+        (
+            {"aggregation": {"operation": "difference", "ordered_variables": ["alias_0"], "apply_to": "group"}},
+            [[]],
+            [None],
+        ),
+        (
+            {
+                "aggregation": {"operation": "product", "ordered_variables": ["alias_0"], "apply_to": "group"},
+                "save_as": "abc",
+            },
             [{"a": 1, "b": 2, "c": 3}],
             [6],
         ),
-        ({"aggregation": {"operation": "division", "ordered_variables": ["alias_0"], "apply_to": "group"}}, [{}], [None]),
-        ({"aggregation": {"operation": "no_op", "ordered_variables": ["a", "b", "c"]}, "save_as": "def"}, [2, 5, 8], [2, 5, 8]),
+        (
+            {"aggregation": {"operation": "division", "ordered_variables": ["alias_0"], "apply_to": "group"}},
+            [{}],
+            [None],
+        ),
+        (
+            {"aggregation": {"operation": "no_op", "ordered_variables": ["a", "b", "c"]}, "save_as": "def"},
+            [2, 5, 8],
+            [2, 5, 8],
+        ),
         (
             {"aggregation": {"operation": "average", "ordered_variables": ["a", "b", "c", "d", "e", "f", "g", "h"]}},
             [8, 7, 6, 5, 4, 3, 2, 1],
@@ -3428,7 +3487,9 @@ def test_evaluate_iterate_array_of_dicts_success(
     cv = CrossValidator()
     mocker.patch.object(cv, "_get_alias_value", side_effect=alias_values)
 
-    result, status = cv._evaluate_iterate_array_of_dicts(iter_block, eager_termination=False, outer_relationship="equal")
+    result, status = cv._evaluate_iterate_array_of_dicts(
+        iter_block, eager_termination=False, outer_relationship="equal"
+    )
     assert status is True
     assert result == expected_result
 
@@ -3443,7 +3504,9 @@ def test_evaluate_iterate_array_of_dicts_unknown_relationship_no_eager() -> None
         "comparison_value": "cmp",
         "relationship": "unknown_rel",
     }
-    result, status = cv._evaluate_iterate_array_of_dicts(iter_block, eager_termination=False, outer_relationship="equal")
+    result, status = cv._evaluate_iterate_array_of_dicts(
+        iter_block, eager_termination=False, outer_relationship="equal"
+    )
     assert result is None
     assert status is False
     assert len(cv._event_logs) == 1
