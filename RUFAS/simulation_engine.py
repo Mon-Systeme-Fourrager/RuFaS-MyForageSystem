@@ -196,7 +196,7 @@ class SimulationEngine:
             )
             self.next_max_daily_feed_recalculation = self.time.current_date + self.max_daily_feed_recalculation_interval
             self.feed_degradations_interval_length = timedelta(days=DEFAULT_FEED_DEGRADATIONS_PROCESSING_INTERVAL)
-            self.next_degredations_processing = self.time.current_date.date()
+            self.next_degradations_processing = self.time.current_date.date()
 
         if self.simulate_animals:
             ration_config = self.im.get_data("animal.ration")
@@ -409,14 +409,14 @@ class SimulationEngine:
         self.feed_manager.report_feed_storage_levels(self.time.simulation_day, "daily_storage_levels")
         self.feed_manager.report_cumulative_purchased_feeds(self.time.simulation_day)
 
-        if self._is_time_to_process_feed_degredations:
-            self.next_degredations_processing = (self.time.current_date + self.feed_degradations_interval_length).date()
+        if self._is_time_to_process_feed_degradations:
+            self.next_degradations_processing = (self.time.current_date + self.feed_degradations_interval_length).date()
             self.feed_manager.process_degradations(self.weather, self.time)
 
     @property
-    def _is_time_to_process_feed_degredations(self) -> bool:
-        """Checks if it's time to process feed degredations"""
-        return self.time.current_date.date() >= self.next_degredations_processing
+    def _is_time_to_process_feed_degradations(self) -> bool:
+        """Checks if it's time to process feed degradations"""
+        return self.time.current_date.date() >= self.next_degradations_processing
 
     def _execute_ration_planning(self) -> None:
         """Checks if it's time to reformulate the ration and executes ration formulation if needed."""
