@@ -1776,6 +1776,7 @@ def test_report_variables_usage_counts(mocker: MockerFixture) -> None:
     expected_file_name = "variables_usage_counts.csv"
     expected_full_path = Path(path, expected_file_name)
     output_manager = OutputManager()
+    output_manager._variables_usage_counter = Counter()
 
     ## TODO: prevent previous tests from leaking (parameters from test_bulk_add_variable_infomap_simulation_day
     ##  and test_add_variable_infomap_simulation_day are present in the calls)
@@ -1797,6 +1798,7 @@ def test_report_variables_usage_counts(mocker: MockerFixture) -> None:
     # Assert
     patch_for_generate_file_name.assert_called_once_with("variables_usage_counts", "csv")
     patch_for_dict_to_file_json.assert_called_once_with(data_dict, expected_full_path)
+    output_manager._variables_usage_counter = Counter()
 
 
 @pytest.mark.parametrize(
