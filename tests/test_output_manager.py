@@ -1080,14 +1080,14 @@ def test_add_variable_infomap_simulation_day(
 
     # Assertions
 
-    ## conditional
+    # conditional
     if expected_day_value is None:
         assert om.time is None
     else:
         assert "simulation_day" in saved_info_map  # simulation day in every info map
         assert info_map.get("simulation_day") == expected_day_value  # original info map correct(ed)
 
-    ## universal
+    # universal
     assert observed_day == expected_day_value
 
 
@@ -1384,7 +1384,6 @@ def test_add_variable_chunkification_save_chunk_threshold_unspecified_no_call(
 
     # Arrange
     output_manager = OutputManager()
-    ## TODO: Mock these values instead? This test is leaking to other tests.
     output_manager.chunkification = True
     output_manager.current_pool_size = 1024
     output_manager.average_add_variable_call_addition = 1024
@@ -1777,9 +1776,6 @@ def test_report_variables_usage_counts(mocker: MockerFixture) -> None:
     expected_full_path = Path(path, expected_file_name)
     output_manager = OutputManager()
     output_manager._variables_usage_counter = Counter()
-
-    ## TODO: prevent previous tests from leaking (parameters from test_bulk_add_variable_infomap_simulation_day
-    ##  and test_add_variable_infomap_simulation_day are present in the calls)
 
     mocker.patch.object(output_manager, "variables_pool", {})  # didn't work
 
