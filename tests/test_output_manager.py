@@ -5,7 +5,7 @@ from collections import Counter
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Sequence, Type, Union, cast, Dict
+from typing import Any, Sequence, Type, Union, cast
 
 import pandas as pd
 import psutil
@@ -18,9 +18,9 @@ from pytest_mock.plugin import MockerFixture
 
 from RUFAS.general_constants import GeneralConstants
 from RUFAS.output_manager import LogVerbosity, OriginLabel, OutputManager
+from RUFAS.rufas_time import RufasTime
 from RUFAS.units import MeasurementUnits
 from RUFAS.util import Utility
-from build.lib.RUFAS.rufas_time import RufasTime
 
 DISCLAIMER_MESSAGE = "Under construction, use the results with caution."
 
