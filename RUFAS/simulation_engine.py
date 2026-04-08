@@ -144,10 +144,6 @@ class SimulationEngine:
         self.om = OutputManager()
         self.im = InputManager()
         self.time = RufasTime()
-        self.herd_manager = None
-        self.field_manager = None
-        self.feed_manager = None
-        self.manure_manager = None
         self.simulation_type = simulation_type
         self.simulate_animals = self.simulation_type.simulate_animals
         self.simulate_fields = self.simulation_type.simulate_fields
@@ -208,7 +204,6 @@ class SimulationEngine:
                 self.time,
                 is_ration_defined_by_user=self.is_ration_defined_by_user,
                 available_feeds=self.available_feeds,
-                simulate_animals=self.simulate_animals,
             )
 
         # if self.simulate_manure:
@@ -448,7 +443,7 @@ class SimulationEngine:
         requested_feed = self.herd_manager.collect_daily_feed_request()
         is_ok_to_feed_animals, daily_feeds_fed = (
             self.feed_manager.manage_daily_feed_request(requested_feed, self.time)
-            if self.feed_manager is not None
+            if self.simulate_feed
             else True
         ), FeedFulfillmentResults.fulfill_feed_request_as_purchased(requested_feed)
 
