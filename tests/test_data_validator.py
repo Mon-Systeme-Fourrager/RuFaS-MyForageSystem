@@ -2951,7 +2951,7 @@ def test_evaluate_expression_apply_to_group(
 
 @pytest.mark.parametrize(
     "relationship",
-    ["equal", "greater", "greater_or_equal_to", "not_equal", "is_of_type", "regex"],
+    ["equal", "greater", "greater_or_equal_to", "not_equal", "is_of_type", "regex", "is_equal_length"],
 )
 @pytest.mark.parametrize("eager_termination", [True, False])
 def test_validate_relationship_valid_values(relationship: str, eager_termination: bool) -> None:
@@ -3121,6 +3121,79 @@ def test_evaluate_regex_fullmatch(text: str, pattern: str, expected: bool) -> No
     """
     cv = CrossValidator()
     assert cv._evaluate_regex(text, pattern) is expected
+
+
+@pytest.mark.parametrize(
+    "left,right,expected",
+    [
+        ([1], [2], True),
+        ([1, 2], [3], False),
+        ([], [], True),
+    ],
+)
+@pytest.mark.parametrize("eager_termination", [True, False])
+def test_evaluate_equal_data_length_with_lists(
+    left: list[Any], right: list[Any], expected: bool, eager_termination: bool
+) -> None:
+    """List lengths are compared directly with no event log on valid inputs."""
+    cv = CrossValidator()
+
+    assert cv._evaluate_equal_data_length(left, right, eager_termination) is expected
+    assert cv._event_logs == []
+
+
+@pytest.mark.parametrize(
+    "left,right",
+    [
+        ("abc", [1, 2, 3]),
+        ([1, 2], {"a": 1}),
+        (1, 2),
+    ],
+)
+@pytest.mark.parametrize("eager_termination", [True, False])
+def test_evaluate_equal_data_length_invalid_types(left: Any, right: Any, eager_termination: bool) -> None:
+    """Non-list inputs should log and optionally raise."""
+    cv = CrossValidator()
+
+    if eager_termination:
+        with pytest.raises(ValueError, match=r"Cross-validation error: Invalid type comparison\."):
+            cv._evaluate_equal_data_length(left, right, eager_termination=True)
+        assert len(cv._event_logs) == 1
+    else:
+        assert cv._evaluate_equal_data_length(left, right, eager_termination=False) is False
+        assert len(cv._event_logs) == 1
+
+
+def test_evaluate_greater_condition_pairwise_lists() -> None:
+    """List comparisons should be elementwise rather than Python's lexicographic list comparison."""
+    cv = CrossValidator()
+
+    assert cv._evaluate_greater_condition([3, 5, 7], [1, 4, 6]) is True
+    assert cv._evaluate_greater_condition([3, 5, 7], [1, 8, 6]) is False
+
+
+def test_evaluate_equal_condition_pairwise_lists() -> None:
+    """Equal list comparisons should require each paired element to match."""
+    cv = CrossValidator()
+
+    assert cv._evaluate_equal_condition([1, 2, 3], [1, 2, 3]) is True
+    assert cv._evaluate_equal_condition([1, 2, 3], [1, 4, 3]) is False
+
+
+@pytest.mark.parametrize("eager_termination", [True, False])
+def test_evaluate_condition_equal_length_branch(mocker: MockerFixture, eager_termination: bool) -> None:
+    """'is_equal_length' should dispatch to _evaluate_equal_data_length with eager flag preserved."""
+    cv = CrossValidator()
+    mocker.patch.object(cv, "_validate_condition_clause", return_value=True)
+    mocker.patch.object(cv, "_evaluate_expression", side_effect=[([1, 2], True), ([3, 4], True)])
+    mock_equal_length = mocker.patch.object(cv, "_evaluate_equal_data_length", return_value=True)
+
+    result = cv._evaluate_condition(
+        {"relationship": "is_equal_length", "left_hand": {}, "right_hand": {}}, eager_termination
+    )
+
+    assert result is True
+    mock_equal_length.assert_called_once_with([1, 2], [3, 4], eager_termination)
 
 
 @pytest.mark.parametrize("eager_termination", [True, False])
