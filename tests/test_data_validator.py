@@ -3237,7 +3237,7 @@ def test_evaluate_condition_equal_path(mocker: MockerFixture, eager_termination:
     valid = cv._evaluate_condition({"relationship": "equal", "left_hand": {}, "right_hand": {}}, eager_termination)
 
     assert valid
-    mock_eq.assert_called_once_with("A", "B")
+    mock_eq.assert_called_once_with("A", "B", eager_termination)
 
 
 @pytest.mark.parametrize("eager_termination", [True, False])
@@ -3254,7 +3254,7 @@ def test_evaluate_condition_greater_or_equal_short_circuit(mocker: MockerFixture
     )
 
     assert valid
-    mock_gt.assert_called_once_with(5, 2)
+    mock_gt.assert_called_once_with(5, 2, eager_termination)
     mock_eq.assert_not_called()
 
 
@@ -3274,8 +3274,8 @@ def test_evaluate_condition_greater_or_equal_falls_back_to_equal(
     )
 
     assert valid
-    mock_gt.assert_called_once_with(2, 2)
-    mock_eq.assert_called_once_with(2, 2)
+    mock_gt.assert_called_once_with(2, 2, eager_termination)
+    mock_eq.assert_called_once_with(2, 2, eager_termination)
 
 
 @pytest.mark.parametrize("eager_termination", [True, False])
@@ -3289,7 +3289,7 @@ def test_evaluate_condition_not_equal_inverts_equality(mocker: MockerFixture, ea
     valid = cv._evaluate_condition({"relationship": "not_equal", "left_hand": {}, "right_hand": {}}, eager_termination)
 
     assert valid
-    mock_eq.assert_called_once_with("foo", "bar")
+    mock_eq.assert_called_once_with("foo", "bar", eager_termination)
 
 
 @pytest.mark.parametrize("eager_termination", [True, False])
