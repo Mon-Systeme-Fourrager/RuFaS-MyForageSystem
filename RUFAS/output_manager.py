@@ -339,7 +339,7 @@ class OutputManager(object):
         info_map: dict[str, Any],
         first_info_map_only: bool = False,
         overwrite_simulation_day: bool = False,
-        simulation_day: int | None = None, # TODO: test argument
+        simulation_day: int | None = None,  # TODO: test argument
     ) -> None:
         """
         Adds a variable to the pool.
@@ -389,8 +389,11 @@ class OutputManager(object):
             raise KeyError(f"'units' missing in units dict for a variable in {name}.")
         units = self._stringify_units(units)
 
-        day_to_use = simulation_day if simulation_day is not None else self.time.simulation_day \
-            if hasattr(self.time, "simulation_day") else None
+        day_to_use = (
+            simulation_day
+            if simulation_day is not None
+            else self.time.simulation_day if hasattr(self.time, "simulation_day") else None
+        )
 
         # add simulation day to input maps (needed for data padding to work)
         should_add_sim_day = overwrite_simulation_day or "simulation_day" not in info_map.keys()

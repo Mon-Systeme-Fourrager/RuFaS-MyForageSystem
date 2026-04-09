@@ -1045,7 +1045,7 @@ def test_add_variable_infomap_simulation_day(
     overwrite_simulation_day: bool,
     expected_day_value: int,
     mocker: MockerFixture,
-    manual_day: int
+    manual_day: int,
 ):
     """
     Test that add_variable properly adds simulation_day to the info map and respects previously specified
@@ -1075,7 +1075,7 @@ def test_add_variable_infomap_simulation_day(
         value="hello, friends",
         info_map=info_map,
         overwrite_simulation_day=overwrite_simulation_day,
-        simulation_day = manual_day
+        simulation_day=manual_day,
     )
 
     saved_info_map = [val for val in om.variables_pool.values()][0].get("info_maps")[0]
