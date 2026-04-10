@@ -144,10 +144,6 @@ class SimulationEngine:
         self.om = OutputManager()
         self.im = InputManager()
         self.time = RufasTime()
-        self.herd_manager = None
-        self.field_manager = None
-        self.feed_manager = None
-        self.manure_manager = None
         self.simulation_type = simulation_type
         self.simulate_animals = self.simulation_type.simulate_animals
         self.simulate_fields = self.simulation_type.simulate_fields
@@ -212,7 +208,7 @@ class SimulationEngine:
             )
 
         # if self.simulate_manure:
-        # TODO need to isolate manure request fulfillment so field operations won't need full Manure module
+        # TODO issue #2765 need to isolate manure request fulfillment so field operations won't need full Manure module
         self.manure_manager: ManureManager = ManureManager(
             self.weather.intercept_mean_temp, self.weather.phase_shift, self.weather.amplitude
         )
@@ -237,7 +233,8 @@ class SimulationEngine:
                 self.herd_manager.cow_events_by_id,
             )
 
-        ManureExcretionCalculator.emit_dmi_below_min_summary(info_map)
+        if self.simulate_manure:
+            ManureExcretionCalculator.emit_dmi_below_min_summary(info_map)
 
         EEEManager.estimate_all()
         t_end_sim = timer.time()
