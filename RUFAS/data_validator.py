@@ -1739,7 +1739,9 @@ class CrossValidator:
         self._alias_pool: dict[str, Any] = {}
         self._event_logs: list[dict[str, str | dict[str, str]]] = []
         self.relation_mapping: dict[str, Callable[[object, object, bool], bool]] = {
-            "equal": lambda left, right, eager_termination: self._evaluate_equal_condition(left, right, eager_termination),
+            "equal": lambda left, right, eager_termination: self._evaluate_equal_condition(
+                left, right, eager_termination
+            ),
             "greater": lambda left, right, eager_termination: self._evaluate_greater_condition(
                 left, right, eager_termination
             ),
