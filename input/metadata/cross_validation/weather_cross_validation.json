@@ -44,12 +44,6 @@
     },
     {
       "description": "weather daily high temperatures are greater than or equal to daily averages",
-      "target_and_save": {
-        "variables": {
-          "weather_high": "weather.high",
-          "weather_avg": "weather.avg"
-        }
-      },
       "rules": [
         {
           "left_hand": {
@@ -70,12 +64,6 @@
     },
     {
       "description": "weather daily average temperatures are greater than or equal to daily lows",
-      "target_and_save": {
-        "variables": {
-          "weather_avg": "weather.avg",
-          "weather_low": "weather.low"
-        }
-      },
       "rules": [
         {
           "left_hand": {
