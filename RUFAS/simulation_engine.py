@@ -444,9 +444,7 @@ class SimulationEngine:
         """
         requested_feed = self.herd_manager.collect_daily_feed_request()
         is_ok_to_feed_animals, daily_feeds_fed = (
-            self.feed_manager.manage_daily_feed_request(requested_feed, self.time)
-            if self.simulate_feed
-            else True
+            self.feed_manager.manage_daily_feed_request(requested_feed, self.time) if self.simulate_feed else True
         ), FeedFulfillmentResults.fulfill_feed_request_as_purchased(requested_feed)
 
         daily_purchased_feeds_fed = daily_feeds_fed.purchased
