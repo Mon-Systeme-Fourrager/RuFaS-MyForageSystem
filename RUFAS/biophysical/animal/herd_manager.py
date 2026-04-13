@@ -76,7 +76,12 @@ class HerdManager:
         cls.ANIMAL_GROUPING_SCENARIO = scenario
 
     def __init__(
-        self, weather: Weather, time: RufasTime, is_ration_defined_by_user: bool, available_feeds: list[Feed]
+        self,
+        weather: Weather,
+        time: RufasTime,
+        is_ration_defined_by_user: bool,
+        available_feeds: list[Feed],
+        simulate_animals: bool,
     ) -> None:
         """
         Initializes the pens and the animal herd in the simulation with data from
@@ -92,9 +97,8 @@ class HerdManager:
             True if user-defined rations are used for the herd, otherwise false.
         available_feeds : list[Feed]
             Nutrition information of feeds available to formulate animals rations with.
-        feed_emissions_estimator : PurchasedFeedEmissionsEstimator, default=None
-            Instance of the PurchasedFeedEmissionsEstimator class.
-
+        simulate_animals : bool
+            True if animals should be simulated, otherwise false.
         """
         self.im = InputManager()
         self.om = OutputManager()
@@ -108,7 +112,7 @@ class HerdManager:
             AnimalConfig.milk_fat_percent, AnimalConfig.true_protein_percent, AnimalModuleConstants.MILK_LACTOSE
         )
 
-        self.simulate_animals = config_data.get("simulate_animals", True)
+        self.simulate_animals = simulate_animals
 
         self.calves: list[Animal] = []
         self.heiferIs: list[Animal] = []
@@ -637,10 +641,7 @@ class HerdManager:
         herd_total_ration: dict[str, float] = {}
         for pen in self.all_pens:
             AnimalModuleReporter.report_daily_pen_total(
-                str(pen.id),
-                pen.animal_combination.name,
-                len(pen.animals_in_pen),
-                simulation_day,
+                str(pen.id), pen.animal_combination.name, len(pen.animals_in_pen), simulation_day
             )
 
             current_pen_ration = pen.total_pen_ration
