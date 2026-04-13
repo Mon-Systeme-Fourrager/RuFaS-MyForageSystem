@@ -6,7 +6,7 @@ import pytest
 from pytest_mock import MockerFixture, MockFixture
 
 from RUFAS.biophysical.manure.digester.digester import Digester
-from RUFAS.biophysical.manure.field_manure_supplier import FieldManureSupplier
+from RUFAS.data_structures.field_manure_supplier import FieldManureSupplier
 from RUFAS.biophysical.manure.manure_manager import STORAGE_CLASS_TO_TYPE, ManureManager
 from RUFAS.biophysical.manure.manure_nutrient_manager import ManureNutrientManager
 from RUFAS.biophysical.manure.processor import Processor

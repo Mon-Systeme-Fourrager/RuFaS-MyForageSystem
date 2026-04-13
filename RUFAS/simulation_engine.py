@@ -18,6 +18,7 @@ from RUFAS.data_structures.feed_storage_to_animal_connection import (
     IdealFeeds,
     NutrientStandard,
 )
+from RUFAS.data_structures.field_manure_supplier import FieldManureSupplier
 from RUFAS.data_structures.manure_to_crop_soil_connection import ManureEventNutrientRequestResults
 from RUFAS.input_manager import InputManager
 from RUFAS.output_manager import OutputManager
@@ -207,11 +208,10 @@ class SimulationEngine:
                 simulate_animals=self.simulate_animals,
             )
 
-        # if self.simulate_manure:
-        # TODO issue #2765 need to isolate manure request fulfillment so field operations won't need full Manure module
-        self.manure_manager: ManureManager = ManureManager(
-            self.weather.intercept_mean_temp, self.weather.phase_shift, self.weather.amplitude
-        )
+        if self.simulate_manure:
+            self.manure_manager: ManureManager = ManureManager(
+                self.weather.intercept_mean_temp, self.weather.phase_shift, self.weather.amplitude
+            )
 
     def simulate(self) -> None:
         """Executes the simulation."""
@@ -268,6 +268,7 @@ class SimulationEngine:
 
         """
         daily_harvested_crops = self._execute_daily_field_operations()
+        self._receive_daily_harvested_crops(daily_harvested_crops)
 
         harvest_schedule = self._build_harvest_schedule(daily_harvested_crops)
         self._execute_feed_planning(harvest_schedule)
@@ -298,6 +299,7 @@ class SimulationEngine:
         daily_harvested_crops = self._execute_daily_field_operations()
 
         harvest_schedule = self._build_harvest_schedule(daily_harvested_crops)
+
         self._execute_feed_planning(harvest_schedule)
 
         self._report_daily_records()
@@ -311,11 +313,20 @@ class SimulationEngine:
             self.weather, self.time, manure_applications
         )
 
-        # TODO move to a feed-related action rather than field?
+        return harvested_crops
+
+    def _receive_daily_harvested_crops(self, harvested_crops: list[HarvestedCrop]) -> None:
+        """Receives and stores the crops harvested."""
         for crop in harvested_crops:
             self.feed_manager.receive_crop(crop, self.time.simulation_day)
 
-        return harvested_crops
+        if self._should_recalculate_feed_planning:
+            harvest_schedule_crops = set(crop.config_name for crop in harvested_crops)
+            crops_to_get_next_harvest_dates = [
+                crop for crop in self.feed_manager.crop_to_rufas_id.keys() if crop not in harvest_schedule_crops
+            ]
+            harvest_schedule_crops = harvest_schedule_crops.union(crops_to_get_next_harvest_dates)
+            self.next_max_daily_feed_recalculation = self.time.current_date + self.max_daily_feed_recalculation_interval
 
     def _generate_daily_manure_applications(self) -> list[ManureEventNutrientRequestResults]:
         """Requests nutrients from the manure manager for each field in the simulation.
@@ -334,10 +345,10 @@ class SimulationEngine:
                 manure_request = manure_event_request.nutrient_request
                 manure_request_results = None
                 if manure_request is not None:
-                    # TODO figure out how to generate manure request with no manure module.
-                    manure_request_results = self.manure_manager.request_nutrients(
-                        manure_request, self.simulate_animals, self.time
-                    )
+                    if self.simulate_manure:
+                        manure_request_results = self.manure_manager.request_nutrients(manure_request, self.time)
+                    else:
+                        manure_request_results = FieldManureSupplier.request_nutrients(manure_request)
                 manure_applications.append(ManureEventNutrientRequestResults(field_name, event, manure_request_results))
         return manure_applications
 
@@ -364,15 +375,6 @@ class SimulationEngine:
         even if they were not harvested today.
         """
         harvest_schedule_crops = set(crop.config_name for crop in harvested_crops)
-
-        if self._should_recalculate_feed_planning:
-            # TODO this needs to be removed from here because it's a feed_manager operation
-            crops_to_get_next_harvest_dates = [
-                crop for crop in self.feed_manager.crop_to_rufas_id.keys() if crop not in harvest_schedule_crops
-            ]
-            harvest_schedule_crops = harvest_schedule_crops.union(crops_to_get_next_harvest_dates)
-            self.next_max_daily_feed_recalculation = self.time.current_date + self.max_daily_feed_recalculation_interval
-
         harvest_schedule = self.field_manager.get_next_harvest_dates(list(harvest_schedule_crops))
 
         return harvest_schedule
