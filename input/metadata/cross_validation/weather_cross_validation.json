@@ -63,7 +63,7 @@
       ]
     },
     {
-      "description": "weather daily average temperatures are greater than or equal to daily lows",
+      "description": "weather daily average temperatures must be greater than or equal to daily lows",
       "rules": [
         {
           "left_hand": {
