@@ -1,7 +1,7 @@
 {
   "cross-validation": [
     {
-      "description": "weather high, low, and average temperature arrays have equal lengths",
+      "description": "weather high, low, and average temperature arrays must have equal lengths",
       "target_and_save": {
         "variables": {
           "weather_high": "weather.high",
