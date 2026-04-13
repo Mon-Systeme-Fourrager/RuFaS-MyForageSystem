@@ -1994,9 +1994,7 @@ class CrossValidator:
                 }
             )
             if eager_termination:
-                raise ValueError(
-                    "Cross-validation error: Operands list is empty or missing in aggregation block."
-                )
+                raise ValueError("Cross-validation error: Operands list is empty or missing in aggregation block.")
             else:
                 return None, False
         ordered_values: list[Any] = []
@@ -2069,9 +2067,7 @@ class CrossValidator:
                 }
             )
             if eager_termination:
-                raise ValueError(
-                    f"Cross-validation error: Unknown operator in for_each block: {operator}"
-                )
+                raise ValueError(f"Cross-validation error: Unknown operator in for_each block: {operator}")
             return None, False
 
         has_compare_value = compare_value_alias is not None
@@ -2109,16 +2105,13 @@ class CrossValidator:
 
         if mode == "filter":
             result = [
-                entry
-                for entry in array_of_dicts
-                if compare_fn([entry.get(field)], get_right(entry), eager_termination)
+                entry for entry in array_of_dicts if compare_fn([entry.get(field)], get_right(entry), eager_termination)
             ]
             print(result)
             return result, True
         else:
             all_satisfy = all(
-                compare_fn([entry.get(field)], get_right(entry), eager_termination)
-                for entry in array_of_dicts
+                compare_fn([entry.get(field)], get_right(entry), eager_termination) for entry in array_of_dicts
             )
             return [all_satisfy], True
 
