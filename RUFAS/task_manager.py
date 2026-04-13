@@ -95,7 +95,7 @@ class TaskManager:
         metadata_path : Path
             Path to the metadata file that contains task management inputs.
         verbosity : LogVerbosity | None
-            Level of verbosity for logging for the simulation and TaskManager.
+            Verbosity level for the simulation and TaskManager.
         exclude_info_maps : bool
             Flag to exclude information maps.
         output_directory : Path

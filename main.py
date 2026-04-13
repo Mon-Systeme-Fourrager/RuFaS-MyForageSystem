@@ -77,7 +77,7 @@ def parse_gnu_args(args: Any | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "-v",
-        "--verbose",
+        "--verbosity",
         choices=["errors", "warnings", "logs", "credits", "none"],
         default=None,
         help="Temporarily override the verbosity setting for this run",
