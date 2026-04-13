@@ -43,7 +43,7 @@
       ]
     },
     {
-      "description": "weather daily high temperatures are greater than or equal to daily averages",
+      "description": "weather daily high temperatures must be greater than or equal to daily averages",
       "rules": [
         {
           "left_hand": {
