@@ -1891,12 +1891,12 @@ class CrossValidator:
             A dictionary containing the expression block to be evaluated. Supports two mutually
             exclusive sub-block forms plus an optional ``save_as`` key:
 
-            Aggregation form (nested):
-            ``{"aggregation": {"operation": "...", "ordered_variables": [...], "apply_to": "..."}, "save_as": "..."}``
+            Aggregation form:
+            ``{"aggregation": {"function": "...", "operands": [...], "mode": "..."}, "save_as": "..."}``
 
             Array-of-dicts form:
-            ``{"iterate_array_of_dicts": {"variable_name": "...", "attribute_of_interest": "...",
-            "comparison_value": "...", "relationship": "...", "filter_array": bool}, "save_as": "..."}``
+            ``{"for_each": {"in": "...", "field": "...", "compare_value": "..." | "compare_field": "...",
+            "operator": "...", "mode": "filter" | "enforce"}, "save_as": "..."}``
         eager_termination : bool
             Whether to raise an error if the expression is not successfully evaluated.
         relationship : str
@@ -1913,9 +1913,9 @@ class CrossValidator:
         ValueError
             Raises the error when the expression block contains unknown operation or missing ordered variables.
         """
-        if "iterate_array_of_dicts" in expression_block:
+        if "for_each" in expression_block:
             result, evaluated = self._evaluate_iterate_array_of_dicts(
-                expression_block["iterate_array_of_dicts"], eager_termination, relationship
+                expression_block["for_each"], eager_termination, relationship
             )
 
         elif "aggregation" in expression_block:
@@ -1942,11 +1942,11 @@ class CrossValidator:
         aggregation_block : dict[str, Any]
             A dictionary containing the aggregation block to be evaluated. Expected keys:
 
-            - ``operation``: aggregation function name (e.g. ``"sum"``, ``"no_op"``). Defaults to
+            - ``function``: aggregation function name (e.g. ``"sum"``, ``"no_op"``). Defaults to
               ``"no_op"`` when absent.
-            - ``ordered_variables``: list of alias names to resolve and aggregate.
-            - ``apply_to``: ``"individual"`` or ``"group"`` — required when any resolved variable
-              is a list or dict. Defaults to ``"group"`` for scalar variables.
+            - ``operands``: list of alias names to resolve and aggregate.
+            - ``mode``: ``"element_wise"`` or ``"aggregate"`` — required when any resolved variable
+              is a list or dict. Defaults to ``"aggregate"`` for scalar variables.
         eager_termination : bool
             Whether to raise an error if evaluation fails.
         relationship : str
@@ -1963,13 +1963,13 @@ class CrossValidator:
             If ``eager_termination`` is ``True`` and the operation is unknown or
             ``ordered_variables`` is empty or missing.
         """
-        operation = aggregation_block.get("operation", "no_op")
+        operation = aggregation_block.get("function", "no_op")
         aggregator = AGGREGATION_FUNCTIONS.get(operation)
         if operation not in AGGREGATION_FUNCTIONS or aggregator is None:
             self._event_logs.append(
                 {
-                    "error": "Unknown Operation",
-                    "message": f"Unknown operation {operation} in cross validation rule. Expected one of "
+                    "error": "Unknown Aggregation Function",
+                    "message": f"Unknown function '{operation}' in aggregation block. Expected one of "
                     f"{list(AGGREGATION_FUNCTIONS.keys())}.",
                     "info_map": {
                         "class": self.__class__.__name__,
@@ -1978,15 +1978,15 @@ class CrossValidator:
                 }
             )
             if eager_termination:
-                raise ValueError(f"Cross-validation error: Unknown operation in expression block: {operation}")
+                raise ValueError(f"Cross-validation error: Unknown function in aggregation block: {operation}")
             else:
                 return None, False
 
-        if not (ordered_variable_alias := aggregation_block.get("ordered_variables", [])):
+        if not (ordered_variable_alias := aggregation_block.get("operands", [])):
             self._event_logs.append(
                 {
-                    "error": "Missing Ordered Variables",
-                    "message": "Ordered variables list is empty or missing in cross validation rule.",
+                    "error": "Missing Operands",
+                    "message": "Operands list is empty or missing in aggregation block.",
                     "info_map": {
                         "class": self.__class__.__name__,
                         "function": self._evaluate_aggregation_block.__name__,
@@ -1995,7 +1995,7 @@ class CrossValidator:
             )
             if eager_termination:
                 raise ValueError(
-                    "Cross-validation error: " "Ordered variables list is empty or missing in cross validation rule."
+                    "Cross-validation error: Operands list is empty or missing in aggregation block."
                 )
             else:
                 return None, False
@@ -2012,8 +2012,8 @@ class CrossValidator:
             ordered_values = (
                 ordered_values[0] if isinstance(ordered_values[0], list) else list(ordered_values[0].values())
             )
-            apply_to = aggregation_block.get("apply_to", "group")
-            result = ordered_values if apply_to == "individual" else [aggregator(ordered_values)]
+            mode = aggregation_block.get("mode", "aggregate")
+            result = ordered_values if mode == "element_wise" else [aggregator(ordered_values)]
         else:
             result = ordered_values if operation == "no_op" else [aggregator(ordered_values)]
         return result, True
@@ -2022,42 +2022,45 @@ class CrossValidator:
         self, iter_block: dict[str, Any], eager_termination: bool, outer_relationship: str
     ) -> tuple[Any, bool]:
         """
-        Evaluates an ``iterate_array_of_dicts`` block against a list of dicts in the alias pool.
+        Evaluates a ``for_each`` block against a list of dicts in the alias pool.
 
         Parameters
         ----------
         iter_block : dict[str, Any]
             The block describing how to iterate the array. Expected keys:
 
-            - ``variable_name``: alias for the ``list[dict]`` value in the alias pool.
-            - ``attribute_of_interest``: key within each dict entry to evaluate.
-            - ``comparison_value``: alias for the scalar value to compare against.
-            - ``relationship``: one of the supported relationship strings (e.g. ``"equal"``).
-            - ``filter_array``: if ``True``, return the filtered subset of entries that satisfy
-              the relationship; if ``False``, return ``[True]`` when all entries satisfy the
-              relationship, otherwise ``[False]``.
+            - ``in``: alias for the ``list[dict]`` value in the alias pool.
+            - ``field``: key within each dict entry to evaluate.
+            - ``compare_value``: alias for the scalar value to compare against each entry's
+              ``field``. Mutually exclusive with ``compare_field``.
+            - ``compare_field``: key within each dict entry whose value is used as the right-hand
+              comparison target. Mutually exclusive with ``compare_value``.
+            - ``operator``: one of the supported operator strings (e.g. ``"equal"``).
+            - ``mode``: ``"filter"`` to return the subset of entries that satisfy the condition;
+              ``"enforce"`` to return ``[True]`` when all entries satisfy, otherwise ``[False]``.
         eager_termination : bool
             Whether to raise on error.
         outer_relationship : str
-            The relationship of the enclosing condition clause, used for alias-pool error handling.
+            The operator of the enclosing condition clause, used for alias-pool error handling.
 
         Returns
         -------
         tuple[Any, bool]
             ``(result, True)`` on success or ``(None, False)`` on error.
         """
-        variable_name: str = iter_block.get("variable_name", "")
-        attribute_of_interest: str = iter_block.get("attribute_of_interest", "")
-        comparison_value_alias: str = iter_block.get("comparison_value", "")
-        relationship: str = iter_block.get("relationship", "")
-        filter_array: bool = iter_block.get("filter_array", False)
+        source_alias: str = iter_block.get("in", "")
+        field: str = iter_block.get("field", "")
+        compare_value_alias: str | None = iter_block.get("compare_value")
+        compare_field: str | None = iter_block.get("compare_field")
+        operator: str = iter_block.get("operator", "")
+        mode: str = iter_block.get("mode", "enforce")
 
-        compare_fn = self.relation_mapping.get(relationship)
+        compare_fn = self.relation_mapping.get(operator)
         if compare_fn is None:
             self._event_logs.append(
                 {
-                    "error": "Invalid Relationship in iterate_array_of_dicts",
-                    "message": f"Unknown relationship '{relationship}' in iterate_array_of_dicts block. "
+                    "error": "Invalid operator in for_each block",
+                    "message": f"Unknown operator '{operator}' in for_each block. "
                     f"Expected one of {list(self.relation_mapping.keys())}.",
                     "info_map": {
                         "class": self.__class__.__name__,
@@ -2067,29 +2070,54 @@ class CrossValidator:
             )
             if eager_termination:
                 raise ValueError(
-                    f"Cross-validation error: Unknown relationship in iterate_array_of_dicts block: {relationship}"
+                    f"Cross-validation error: Unknown operator in for_each block: {operator}"
                 )
             return None, False
 
-        array_of_dicts = self._get_alias_value(variable_name, eager_termination, outer_relationship)
-        comparison_value = self._get_alias_value(comparison_value_alias, eager_termination, outer_relationship)
-
-        if array_of_dicts is None or comparison_value is None:
+        has_compare_value = compare_value_alias is not None
+        has_compare_field = compare_field is not None
+        if has_compare_value == has_compare_field:
+            self._event_logs.append(
+                {
+                    "error": "Invalid for_each block configuration",
+                    "message": "Exactly one of 'compare_value' or 'compare_field' must be specified in a for_each block.",
+                    "info_map": {
+                        "class": self.__class__.__name__,
+                        "function": self._evaluate_iterate_array_of_dicts.__name__,
+                    },
+                }
+            )
+            if eager_termination:
+                raise ValueError(
+                    "Cross-validation error: Exactly one of 'compare_value' or 'compare_field' must be specified in a for_each block."
+                )
             return None, False
 
-        if not isinstance(comparison_value, list):
-            comparison_value = [comparison_value]
+        array_of_dicts = self._get_alias_value(source_alias, eager_termination, outer_relationship)
+        if array_of_dicts is None:
+            return None, False
 
-        if filter_array:
+        if has_compare_value:
+            comparison_value = self._get_alias_value(compare_value_alias, eager_termination, outer_relationship)
+            if comparison_value is None:
+                return None, False
+            if not isinstance(comparison_value, list):
+                comparison_value = [comparison_value]
+            get_right = lambda _entry: comparison_value
+        else:
+            get_right = lambda entry: [entry.get(compare_field)]
+
+        if mode == "filter":
             result = [
                 entry
                 for entry in array_of_dicts
-                if compare_fn([entry.get(attribute_of_interest)], comparison_value, eager_termination)
+                if compare_fn([entry.get(field)], get_right(entry), eager_termination)
             ]
+            print(result)
             return result, True
         else:
             all_satisfy = all(
-                compare_fn([entry.get(attribute_of_interest)], comparison_value, eager_termination)
+                compare_fn([entry.get(field)], get_right(entry), eager_termination)
                 for entry in array_of_dicts
             )
             return [all_satisfy], True
@@ -2119,8 +2147,8 @@ class CrossValidator:
         ------
         ValueError
             -If multiple complex variables are selected for cross-validation in a single expression block.
-            -If the 'apply_to' key is missing in the expression block when a complex variable is selected.
-            -If the 'apply_to' value is not one of the expected options ('individual' or 'group').
+            -If the 'mode' key is missing in the expression block when a complex variable is selected.
+            -If the 'mode' value is not one of the expected options ('element_wise' or 'aggregate').
 
         Returns
         -------
@@ -2148,11 +2176,11 @@ class CrossValidator:
             else:
                 return False
 
-        if "apply_to" not in expression_block:
+        if "mode" not in expression_block:
             self._event_logs.append(
                 {
-                    "error": "Missing `apply_to` key",
-                    "message": "The 'apply_to' key is required in expression block "
+                    "error": "Missing `mode` key",
+                    "message": "The 'mode' key is required in aggregation block "
                     "when a complex data structure is selected.",
                     "info_map": {
                         "class": self.__class__.__name__,
@@ -2162,16 +2190,16 @@ class CrossValidator:
             )
             if eager_termination:
                 raise ValueError(
-                    "Cross-validation error: Missing 'apply_to' key in expression block for "
+                    "Cross-validation error: Missing 'mode' key in aggregation block for "
                     "selected complex data structure."
                 )
             else:
                 return False
-        if apply_to := expression_block["apply_to"] not in ["individual", "group"]:
+        if mode := expression_block["mode"] not in ["element_wise", "aggregate"]:
             self._event_logs.append(
                 {
-                    "error": "Unknown apply_to value",
-                    "message": f"Unknown apply_to value {apply_to} in expression block.",
+                    "error": "Unknown mode value",
+                    "message": f"Unknown mode value '{mode}' in aggregation block.",
                     "info_map": {
                         "class": self.__class__.__name__,
                         "function": self._validate_expression_block_with_complex_variable_values.__name__,
@@ -2179,7 +2207,7 @@ class CrossValidator:
                 }
             )
             if eager_termination:
-                raise ValueError(f"Cross-validation error: Unknown apply_to value in expression block: {apply_to}")
+                raise ValueError(f"Cross-validation error: Unknown mode value in aggregation block: {mode}")
             else:
                 return False
         return True
@@ -2204,7 +2232,7 @@ class CrossValidator:
         """
         if not self._validate_condition_clause(condition_clause, eager_termination):
             return False
-        relationship = condition_clause.get("relationship", "")
+        relationship = condition_clause.get("operator", "")
         left_hand, left_evaluated = self._evaluate_expression(
             condition_clause["left_hand"], eager_termination, relationship
         )
@@ -2215,18 +2243,18 @@ class CrossValidator:
         if not (left_evaluated and right_evaluated):
             return False
 
-        evaluation_function = self.relation_mapping[condition_clause["relationship"]]
+        evaluation_function = self.relation_mapping[condition_clause["operator"]]
         return evaluation_function(left_hand, right_hand, eager_termination)
 
     def _validate_condition_clause(self, condition_clause: dict[str, Any], eager_termination: bool) -> bool:
         """Validate the whole condition block."""
         left_expression = condition_clause.get("left_hand", False)
         right_expression = condition_clause.get("right_hand", False)
-        relationship = condition_clause.get("relationship", False)
+        relationship = condition_clause.get("operator", False)
         fields = {
             "left hand": left_expression,
             "right hand": right_expression,
-            "relationship": relationship,
+            "operator": relationship,
         }
         valid = True
         if self._validate_relationship(relationship, eager_termination):
