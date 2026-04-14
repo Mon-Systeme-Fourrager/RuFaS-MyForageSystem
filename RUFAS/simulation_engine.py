@@ -13,6 +13,7 @@ from RUFAS.biophysical.feed_storage.feed_manager import FeedManager
 from RUFAS.data_structures.animal_to_manure_connection import ManureStream
 from RUFAS.data_structures.crop_soil_to_feed_storage_connection import HarvestedCrop
 from RUFAS.data_structures.feed_storage_to_animal_connection import NutrientStandard
+from RUFAS.data_structures.field_manure_supplier import FieldManureSupplier
 from RUFAS.data_structures.manure_to_crop_soil_connection import ManureEventNutrientRequestResults
 from RUFAS.input_manager import InputManager
 from RUFAS.output_manager import OutputManager
@@ -324,9 +325,7 @@ class SimulationEngine:
                 manure_request = manure_event_request.nutrient_request
                 manure_request_results = None
                 if manure_request is not None:
-                    manure_request_results = self.manure_manager.request_nutrients(
-                        manure_request, self.simulate_animals, self.time
-                    )
+                    manure_request_results = FieldManureSupplier.request_nutrients(manure_request)
                 manure_applications.append(ManureEventNutrientRequestResults(field_name, event, manure_request_results))
         return manure_applications
 
