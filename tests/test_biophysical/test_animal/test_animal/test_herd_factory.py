@@ -8,6 +8,7 @@ from freezegun import freeze_time
 from pytest_mock import MockerFixture
 
 from RUFAS.biophysical.animal.animal_config import AnimalConfig
+from RUFAS.biophysical.animal.animal_genetics.animal_genetics import Genetics
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
 from RUFAS.biophysical.animal.animal_module_reporter import AnimalModuleReporter
 from RUFAS.biophysical.animal.data_types.animal_enums import AnimalStatus, Breed
@@ -1481,3 +1482,42 @@ def test_initialize_herd_init_herd_false(
     assert mock_report_animal_population_statistics.call_count == 2
 
     mock_om_dict_to_file_json.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# _update_genetic_values
+# ---------------------------------------------------------------------------
+
+
+def test_update_genetic_values_disabled(mock_herd_factory: HerdFactory, mocker: MockerFixture) -> None:
+    """simulate_genetics=False → early return, no EBV calculations."""
+    AnimalConfig.simulate_genetics = False
+    animals = [mock_animal(AnimalType.LAC_COW, i, mocker) for i in range(3)]
+    for a in animals:
+        a.genetics = MagicMock(spec=Genetics)
+
+    mock_calculate_average_tbv = mocker.patch.object(Genetics, "calculate_average_tbv")
+
+    mock_herd_factory._update_genetic_values(animals)
+
+    mock_calculate_average_tbv.assert_not_called()
+    for a in animals:
+        a.genetics.calculate_ebv_and_ranking_index.assert_not_called()
+
+
+def test_update_genetic_values_enabled(mock_herd_factory: HerdFactory, mocker: MockerFixture) -> None:
+    """simulate_genetics=True → group TBV computed, EBV updated for every animal."""
+    AnimalConfig.simulate_genetics = True
+    animals = [mock_animal(AnimalType.LAC_COW, i, mocker) for i in range(3)]
+    for a in animals:
+        a.genetics = MagicMock(spec=Genetics)
+        a.calves = 2
+
+    mocker.patch.object(Genetics, "calculate_average_tbv", return_value=(10.0, 20.0))
+
+    mock_herd_factory._update_genetic_values(animals)
+
+    for a in animals:
+        a.genetics.calculate_ebv_and_ranking_index.assert_called_once_with(
+            a.animal_type, 10.0, 20.0, a.calves
+        )

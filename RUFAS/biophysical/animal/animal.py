@@ -2492,7 +2492,7 @@ class Animal:
         """
         if not AnimalConfig.simulate_genetics:
             return
-        if len(self.genetic_history) == 0 or self.genetic_history[-1] != self.genetics.to_dict():
+        if len(self.genetic_history) == 0 or self.genetic_history[-1]["genetics"] != self.genetics.to_dict():
             self.genetic_history.append(
                 GeneticHistory(
                     start_day=simulation_day,
