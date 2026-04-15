@@ -486,8 +486,11 @@ class HerdFactory:
         """Function to update EBV and ranking index values of a specific group of animals."""
         if not AnimalConfig.simulate_genetics:
             return
-        mean_tbv_fat, mean_tbv_protein = Genetics.calculate_average_tbv([animal.genetics for animal in animals])
+        mean_tbv_fat, mean_tbv_protein = Genetics.calculate_average_tbv(
+            [animal.genetics for animal in animals if animal.genetics is not None]
+        )
         for animal in animals:
+            assert animal.genetics is not None
             animal.genetics.calculate_ebv_and_ranking_index(
                 animal.animal_type, mean_tbv_fat, mean_tbv_protein, animal.calves
             )

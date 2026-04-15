@@ -1153,7 +1153,18 @@ class AnimalModuleReporter:
         all_animals_genetic_history : dict[int, str]
             The dict of genetic histories for all animals in the herd by their IDs.
         """
-        empty_sold_animals: list[SoldAnimalTypedDict] = [{"sold_at_day": 0, "body_weight": 0}]
+        empty_sold_animals: list[SoldAnimalTypedDict] = [
+            {
+                "id": 0,
+                "animal_type": "",
+                "sold_at_day": 0,
+                "body_weight": 0.0,
+                "cull_reason": None,
+                "days_in_milk": 0,
+                "parity": 0,
+                "genetic_history": ""
+            }
+        ]
         AnimalModuleReporter.report_sold_animal_information(herd_statistics)
         if herd_statistics.sold_calves_info:
             AnimalModuleReporter.report_sold_animal_information_sort_by_sell_day(

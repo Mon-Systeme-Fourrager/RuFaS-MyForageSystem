@@ -472,7 +472,11 @@ class HerdManager:
         """Updates the statistic regarding the stillborn calves."""
         self.herd_statistics.stillborn_calf_num += len(stillborn_calves)
         self.herd_statistics.stillborn_calf_info += [
-            StillbornCalfTypedDict(id=calf.id, stillborn_day=calf.stillborn_day, birth_weight=calf.birth_weight)
+            StillbornCalfTypedDict(
+                id=calf.id,
+                stillborn_day=calf.stillborn_day if calf.stillborn_day is not None else 0,
+                birth_weight=calf.birth_weight,
+            )
             for calf in stillborn_calves
         ]
 
@@ -537,7 +541,10 @@ class HerdManager:
         if not AnimalConfig.simulate_genetics:
             return
         birth_year = Utility.back_track_birth_date(animal.days_born, time.current_date).year
-        mean_tbv_fat, mean_tbv_protein = Genetics.calculate_average_tbv([animal.genetics for animal in self.cows])
+        mean_tbv_fat, mean_tbv_protein = Genetics.calculate_average_tbv(
+            [cow.genetics for cow in self.cows if cow.genetics is not None]
+        )
+        assert animal.genetics is not None
         animal.genetics.recalculate_values_at_lactation_start(
             birth_year=birth_year,
             animal_type=animal.animal_type,
@@ -700,25 +707,29 @@ class HerdManager:
         if not AnimalConfig.simulate_genetics:
             return
         herd_average_genetics = Genetics.calculate_average_genetic_values(
-            [animal.genetics for animal in self.all_animals]
+            [animal.genetics for animal in self.all_animals if animal.genetics is not None]
         )
         AnimalModuleReporter.report_average_genetics(herd_average_genetics, "herd", simulation_day)
 
-        calf_average_genetics = Genetics.calculate_average_genetic_values([animal.genetics for animal in self.calves])
+        calf_average_genetics = Genetics.calculate_average_genetic_values(
+            [animal.genetics for animal in self.calves if animal.genetics is not None]
+        )
         AnimalModuleReporter.report_average_genetics(calf_average_genetics, "calves", simulation_day)
         heiferI_average_genetics = Genetics.calculate_average_genetic_values(
-            [animal.genetics for animal in self.heiferIs]
+            [animal.genetics for animal in self.heiferIs if animal.genetics is not None]
         )
         AnimalModuleReporter.report_average_genetics(heiferI_average_genetics, "heiferI", simulation_day)
         heiferII_average_genetics = Genetics.calculate_average_genetic_values(
-            [animal.genetics for animal in self.heiferIIs]
+            [animal.genetics for animal in self.heiferIIs if animal.genetics is not None]
         )
         AnimalModuleReporter.report_average_genetics(heiferII_average_genetics, "heiferII", simulation_day)
         heiferIII_average_genetics = Genetics.calculate_average_genetic_values(
-            [animal.genetics for animal in self.heiferIIIs]
+            [animal.genetics for animal in self.heiferIIIs if animal.genetics is not None]
         )
         AnimalModuleReporter.report_average_genetics(heiferIII_average_genetics, "heiferIII", simulation_day)
-        cow_average_genetics = Genetics.calculate_average_genetic_values([animal.genetics for animal in self.cows])
+        cow_average_genetics = Genetics.calculate_average_genetic_values(
+            [animal.genetics for animal in self.cows if animal.genetics is not None]
+        )
         AnimalModuleReporter.report_average_genetics(cow_average_genetics, "cow", simulation_day)
 
     def _report_ration(self, simulation_day: int) -> None:
@@ -761,7 +772,10 @@ class HerdManager:
         newborn_calf_config["id"] = AnimalPopulation.next_id()
         newborn_calf: Animal = Animal(args=newborn_calf_config, time=time)
         if AnimalConfig.simulate_genetics:
-            mean_tbv_fat, mean_tbv_protein = Genetics.calculate_average_tbv([animal.genetics for animal in self.calves])
+            mean_tbv_fat, mean_tbv_protein = Genetics.calculate_average_tbv(
+                [animal.genetics for animal in self.calves if animal.genetics is not None]
+            )
+            assert newborn_calf.genetics is not None
             newborn_calf.genetics.calculate_ebv_and_ranking_index(
                 newborn_calf.animal_type, mean_tbv_fat, mean_tbv_protein, newborn_calf.calves
             )
@@ -859,7 +873,9 @@ class HerdManager:
         """
         Updates the genetic values of a replacement animal.
         """
-        mean_tbv_fat, mean_tbv_protein = Genetics.calculate_average_tbv([animal.genetics for animal in self.heiferIIIs])
+        mean_tbv_fat, mean_tbv_protein = Genetics.calculate_average_tbv(
+            [animal.genetics for animal in self.heiferIIIs if animal.genetics is not None]
+        )
         replacement_birth_date = time.current_date.date() - timedelta(days=replacement.days_born)
         replacement.genetics = Genetics(
             birth_year=replacement_birth_date.year, animal_type=replacement.animal_type, parity=replacement.calves

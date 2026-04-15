@@ -1,4 +1,5 @@
 import math
+import sys
 from datetime import datetime
 from typing import Optional, Any
 from unittest.mock import MagicMock, call
@@ -1174,14 +1175,14 @@ def test_set_cow_reproduction_program(
 @pytest.mark.parametrize(
     "avg_estrus_cycle, max_cycle_length, estrus_cycle_value, expected_estrus_day",
     [
-        (21, math.inf, 1, 501),
+        (21, sys.maxsize, 1, 501),
         (21, 25, 24, 524),
         (21, 23, 24, 522),
     ],
 )
 def test_simulate_first_estrus(
     avg_estrus_cycle: int,
-    max_cycle_length: float,
+    max_cycle_length: int,
     estrus_cycle_value: int,
     expected_estrus_day: int,
     mocker: MockerFixture,
@@ -3770,10 +3771,9 @@ def test_increment_cow_ai_counts_increments_program_specific_counters(
 
 def test_increment_successful_cow_conceptions() -> None:
     reproduction = Reproduction()
-    reproduction.herd_reproduction_statistics = HerdReproductionStatistics()
     reproduction_data_stream = mock_reproduction_data_stream(animal_type=AnimalType.LAC_COW)
 
-    initial_conception_count = reproduction.herd_reproduction_statistics.cow_num_successful_conceptions
+    initial_conception_count = reproduction_data_stream.herd_reproduction_statistics.cow_num_successful_conceptions
     result = reproduction._increment_successful_cow_conceptions(reproduction_data_stream)
 
     assert result.herd_reproduction_statistics.cow_num_successful_conceptions == initial_conception_count + 1

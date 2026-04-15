@@ -58,6 +58,7 @@ from RUFAS.biophysical.animal.milk.lactation_curve import LactationCurve
 from RUFAS.biophysical.animal.milk.milk_production import MilkProduction
 from RUFAS.biophysical.animal.ration.amino_acid import EssentialAminoAcidRequirements
 from RUFAS.biophysical.animal.ration.calf_ration_manager import CalfRationManager
+from RUFAS.data_structures.feed_storage_to_animal_connection import NASEMFeed, NRCFeed
 from RUFAS.biophysical.animal.reproduction.reproduction import Reproduction
 from RUFAS.data_structures.feed_storage_to_animal_connection import NutrientStandard, Feed
 from RUFAS.output_manager import OutputManager
@@ -181,7 +182,7 @@ class Animal:
             AnimalType.LAC_COW: self._initialize_cow,
             AnimalType.DRY_COW: self._initialize_cow,
         }
-        self.id = int(args.get("id"))
+        self.id = args.get("id", 0)
         self.breed: Breed = Breed(Breed[args.get("breed")])
         self.animal_type = AnimalType(args.get("animal_type"))
         self.days_born = int(args.get("days_born"))
@@ -424,7 +425,7 @@ class Animal:
         """
         if not self.animal_type.is_cow:
             return sys.maxsize
-        return self._future_cull_date
+        return self._future_cull_date if self._future_cull_date is not None else sys.maxsize
 
     @future_cull_date.setter
     def future_cull_date(self, future_cull_date: int) -> None:
@@ -462,7 +463,7 @@ class Animal:
         """
         if not self.animal_type.is_cow:
             return sys.maxsize
-        return self._future_death_date
+        return self._future_death_date if self._future_death_date is not None else sys.maxsize
 
     @future_death_date.setter
     def future_death_date(self, future_death_date: int) -> None:
@@ -1142,6 +1143,7 @@ class Animal:
         if not self.animal_type.is_cow:
             raise TypeError()
         if AnimalConfig.simulate_genetics:
+            assert self.genetics is not None
             return MilkProductionStatistics(
                 cow_id=self.id,
                 pen_id=self.pen_history[-1]["pen"],
@@ -1284,9 +1286,10 @@ class Animal:
 
         """
         heifer_reproduction_program_string = args.get("heifer_reproduction_program")
-        heifer_reproduction_program, heifer_reproduction_sub_program = None, None
+        # heifer_reproduction_program: HeiferReproductionProtocol | None = None
+        heifer_reproduction_sub_program: HeiferTAISubProtocol | HeiferSynchEDSubProtocol | None = None
 
-        heifer_reproduction_program = (
+        heifer_reproduction_program: HeiferReproductionProtocol | None = (
             None
             if heifer_reproduction_program_string == "N/A"
             else HeiferReproductionProtocol(heifer_reproduction_program_string)
@@ -1349,7 +1352,7 @@ class Animal:
         None
 
         """
-        self._initialize_heiferII_or_heiferIII(args)
+        self._initialize_heiferII_or_heiferIII(cast(HeiferIIValuesTypedDict, args))
         self.days_in_milk = args.get("days_in_milk", 0)
         self.calves = args.get("parity", 0)
         self.cow_reproduction_program = CowReproductionProtocol(args.get("cow_reproduction_program"))
@@ -1589,8 +1592,9 @@ class Animal:
 
         newborn_calf_config: NewBornCalfValuesTypedDict | None = None
 
-        reproduction_inputs = (
-            ReproductionInputs(
+        if AnimalConfig.simulate_genetics:
+            assert self.genetics is not None
+            reproduction_inputs = ReproductionInputs(
                 animal_type=self.animal_type,
                 body_weight=self.body_weight,
                 breed=self.breed,
@@ -1601,8 +1605,8 @@ class Animal:
                 dam_tbv_protein=self.genetics.TBV_protein,
                 phosphorus_for_gestation_required_for_calf=self.nutrients.phosphorus_for_gestation_required_for_calf,
             )
-            if AnimalConfig.simulate_genetics
-            else ReproductionInputs(
+        else:
+            reproduction_inputs = ReproductionInputs(
                 animal_type=self.animal_type,
                 body_weight=self.body_weight,
                 breed=self.breed,
@@ -1611,7 +1615,6 @@ class Animal:
                 days_in_milk=self.days_in_milk,
                 phosphorus_for_gestation_required_for_calf=self.nutrients.phosphorus_for_gestation_required_for_calf,
             )
-        )
         reproduction_outputs: ReproductionOutputs = self.reproduction.reproduction_update(reproduction_inputs, time)
 
         self.body_weight = reproduction_outputs.body_weight
@@ -2384,7 +2387,7 @@ class Animal:
                 self.body_weight,
                 AnimalConfig.wean_day,
                 AnimalConfig.wean_length,
-                available_feeds,
+                cast(list[NASEMFeed | NRCFeed], available_feeds),
                 self.nutrient_standard,
             )
             calf_requirements = CalfRationManager.calc_requirements(
@@ -2492,6 +2495,7 @@ class Animal:
         """
         if not AnimalConfig.simulate_genetics:
             return
+        assert self.genetics is not None
         if len(self.genetic_history) == 0 or self.genetic_history[-1]["genetics"] != self.genetics.to_dict():
             self.genetic_history.append(
                 GeneticHistory(

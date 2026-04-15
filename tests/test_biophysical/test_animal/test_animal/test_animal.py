@@ -2206,7 +2206,6 @@ def test_daily_reproduction_update(mock_lactating_cow: Animal, mocker: MockerFix
                 days_born=5,
                 birth_weight=15.3,
                 initial_phosphorus=18.4,
-                net_merit=75.1,
             ),
         ),
     )
@@ -2236,7 +2235,6 @@ def test_daily_reproduction_update(mock_lactating_cow: Animal, mocker: MockerFix
         days_born=5,
         birth_weight=15.3,
         initial_phosphorus=18.4,
-        net_merit=75.1,
     )
 
 
@@ -2261,7 +2259,6 @@ def test_daily_routines(mock_lactating_cow: Animal, mocker: MockerFixture) -> No
                 days_born=5,
                 birth_weight=15.3,
                 initial_phosphorus=18.4,
-                net_merit=75.1,
             ),
             HerdReproductionStatistics(),
         ),
@@ -2278,7 +2275,6 @@ def test_daily_routines(mock_lactating_cow: Animal, mocker: MockerFixture) -> No
                 days_born=5,
                 birth_weight=15.3,
                 initial_phosphorus=18.4,
-                net_merit=75.1,
             ),
         ),
     )
@@ -2301,7 +2297,6 @@ def test_daily_routines(mock_lactating_cow: Animal, mocker: MockerFixture) -> No
             days_born=5,
             birth_weight=15.3,
             initial_phosphorus=18.4,
-            net_merit=75.1,
         ),
         herd_reproduction_statistics=HerdReproductionStatistics(),
     )
@@ -2327,7 +2322,6 @@ def test_daily_routines_cow_give_birth(mock_lactating_cow: Animal, mocker: Mocke
                 days_born=5,
                 birth_weight=15.3,
                 initial_phosphorus=18.4,
-                net_merit=75.1,
             ),
             HerdReproductionStatistics(),
         ),
@@ -2449,7 +2443,6 @@ def test_heiferIII_life_stage_update(
             days_born=5,
             birth_weight=15.3,
             initial_phosphorus=18.4,
-            net_merit=75.1,
         ),
     )
 
@@ -2466,7 +2459,6 @@ def test_heiferIII_life_stage_update(
             days_born=5,
             birth_weight=15.3,
             initial_phosphorus=18.4,
-            net_merit=75.1,
         )
     else:
         mock_transition.assert_not_called()
@@ -2528,7 +2520,6 @@ def test_animal_life_stage_update_not_cow(
                 days_born=5,
                 birth_weight=15.3,
                 initial_phosphorus=18.4,
-                net_merit=75.1,
             ),
         ),
     )
@@ -2550,7 +2541,6 @@ def test_animal_life_stage_update_not_cow(
         days_born=5,
         birth_weight=15.3,
         initial_phosphorus=18.4,
-        net_merit=75.1,
     )
 
 
@@ -2581,7 +2571,6 @@ def test_animal_life_stage_update_low_production(
                 days_born=5,
                 birth_weight=15.3,
                 initial_phosphorus=18.4,
-                net_merit=75.1,
             ),
         ),
     )
@@ -2600,7 +2589,6 @@ def test_animal_life_stage_update_low_production(
         days_born=5,
         birth_weight=15.3,
         initial_phosphorus=18.4,
-        net_merit=75.1,
     )
 
 
@@ -2697,7 +2685,6 @@ def test_transition_heiferIII_to_cow(mock_lactating_cow: Animal, mocker: MockerF
                 days_born=5,
                 birth_weight=15.3,
                 initial_phosphorus=18.4,
-                net_merit=75.1,
             ),
             HerdReproductionStatistics(),
         ),
@@ -2720,7 +2707,6 @@ def test_transition_heiferIII_to_cow(mock_lactating_cow: Animal, mocker: MockerF
         days_born=5,
         birth_weight=15.3,
         initial_phosphorus=18.4,
-        net_merit=75.1,
     )
 
 
@@ -3207,7 +3193,6 @@ def test_determine_heifer_reproduction_programs_NA(mock_lactating_cow: Animal) -
             heifer_reproduction_sub_protocol="5dCG2P",
             id=1,
             mature_body_weight=10.0,
-            net_merit=10.0,
             phosphorus_for_gestation_required_for_calf=1,
             wean_weight=10.0,
         )
@@ -3237,7 +3222,6 @@ def test_determine_heifer_reproduction_programs_TAI(mock_lactating_cow: Animal) 
             heifer_reproduction_sub_protocol="5dCG2P",
             id=1,
             mature_body_weight=10.0,
-            net_merit=10.0,
             phosphorus_for_gestation_required_for_calf=1,
             wean_weight=10.0,
         )
@@ -3266,7 +3250,6 @@ def test_determine_heifer_reproduction_programs_SynchED(mock_lactating_cow: Anim
             heifer_reproduction_sub_protocol="CP",
             id=1,
             mature_body_weight=10.0,
-            net_merit=10.0,
             phosphorus_for_gestation_required_for_calf=1,
             wean_weight=10.0,
         )

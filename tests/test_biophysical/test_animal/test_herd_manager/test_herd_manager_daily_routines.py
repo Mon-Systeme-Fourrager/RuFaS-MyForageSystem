@@ -150,7 +150,6 @@ def test_perform_daily_routines_for_animals(
                         days_born=0,
                         birth_weight=10.1,
                         initial_phosphorus=10.0,
-                        net_merit=18.8,
                     ),
                     herd_reproduction_statistics=HerdReproductionStatistics(),
                 ),

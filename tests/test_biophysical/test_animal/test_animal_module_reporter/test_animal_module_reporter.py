@@ -9,6 +9,7 @@ from RUFAS.biophysical.animal.animal_module_reporter import AnimalModuleReporter
 from RUFAS.biophysical.animal.data_types.animal_combination import AnimalCombination
 from RUFAS.biophysical.animal.data_types.animal_manure_excretions import AnimalManureExcretions
 from RUFAS.biophysical.animal.data_types.animal_population import AnimalPopulationStatistics
+from RUFAS.biophysical.animal.data_types.animal_events import AnimalEvents
 from RUFAS.biophysical.animal.data_types.animal_typed_dicts import SoldAnimalTypedDict, StillbornCalfTypedDict
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 from RUFAS.biophysical.animal.data_types.herd_statistics import HerdStatistics
@@ -1039,10 +1040,24 @@ def test_report_sold_animal_information_sort_by_sell_day(mocker: MockerFixture) 
     total_days = 188
     sold_animals = [
         SoldAnimalTypedDict(
-            id=1, animal_type="Calf", sold_at_day=0, body_weight=23.3, cull_reason="NA", days_in_milk="NA", parity="NA"
+            id=1,
+            animal_type="Calf",
+            sold_at_day=0,
+            body_weight=23.3,
+            cull_reason="NA",
+            days_in_milk="NA",
+            parity="NA",
+            genetic_history="",
         ),
         SoldAnimalTypedDict(
-            id=2, animal_type="Calf", sold_at_day=0, body_weight=23.3, cull_reason="NA", days_in_milk="NA", parity="NA"
+            id=2,
+            animal_type="Calf",
+            sold_at_day=0,
+            body_weight=23.3,
+            cull_reason="NA",
+            days_in_milk="NA",
+            parity="NA",
+            genetic_history="",
         ),
         SoldAnimalTypedDict(
             id=3,
@@ -1052,6 +1067,7 @@ def test_report_sold_animal_information_sort_by_sell_day(mocker: MockerFixture) 
             cull_reason="NA",
             days_in_milk="NA",
             parity="NA",
+            genetic_history="",
         ),
         SoldAnimalTypedDict(
             id=4,
@@ -1061,6 +1077,7 @@ def test_report_sold_animal_information_sort_by_sell_day(mocker: MockerFixture) 
             cull_reason="NA",
             days_in_milk="NA",
             parity="NA",
+            genetic_history="",
         ),
         SoldAnimalTypedDict(
             id=5,
@@ -1070,6 +1087,7 @@ def test_report_sold_animal_information_sort_by_sell_day(mocker: MockerFixture) 
             cull_reason="NA",
             days_in_milk="NA",
             parity="NA",
+            genetic_history="",
         ),
         SoldAnimalTypedDict(
             id=6,
@@ -1079,6 +1097,7 @@ def test_report_sold_animal_information_sort_by_sell_day(mocker: MockerFixture) 
             cull_reason="NA",
             days_in_milk="NA",
             parity="NA",
+            genetic_history="",
         ),
         SoldAnimalTypedDict(
             id=7,
@@ -1088,6 +1107,7 @@ def test_report_sold_animal_information_sort_by_sell_day(mocker: MockerFixture) 
             cull_reason="NA",
             days_in_milk="NA",
             parity="NA",
+            genetic_history="",
         ),
         SoldAnimalTypedDict(
             id=8,
@@ -1097,12 +1117,27 @@ def test_report_sold_animal_information_sort_by_sell_day(mocker: MockerFixture) 
             cull_reason="NA",
             days_in_milk="NA",
             parity="NA",
+            genetic_history="",
         ),
         SoldAnimalTypedDict(
-            id=9, animal_type="LacCow", sold_at_day=23, body_weight=23.3, cull_reason="NA", days_in_milk=10, parity=2
+            id=9,
+            animal_type="LacCow",
+            sold_at_day=23,
+            body_weight=23.3,
+            cull_reason="NA",
+            days_in_milk=10,
+            parity=2,
+            genetic_history="",
         ),
         SoldAnimalTypedDict(
-            id=10, animal_type="DryCow", sold_at_day=23, body_weight=23.3, cull_reason="NA", days_in_milk=0, parity=1
+            id=10,
+            animal_type="DryCow",
+            sold_at_day=23,
+            body_weight=23.3,
+            cull_reason="NA",
+            days_in_milk=0,
+            parity=1,
+            genetic_history="",
         ),
     ]
     AnimalModuleReporter.report_sold_animal_information_sort_by_sell_day(sold_animals, "dummy", total_days)
@@ -1175,7 +1210,18 @@ def test_report_end_of_simulation_empty_sold_animal_info(mocker: MockerFixture) 
     )
 
     mock_report_sold_animal_information.assert_called_once_with(herd_statistics)
-    empty_sold_animals = [{"sold_at_day": 0, "body_weight": 0}]
+    empty_sold_animals = [
+        {
+            "id": 0,
+            "animal_type": "",
+            "sold_at_day": 0,
+            "body_weight": 0.0,
+            "cull_reason": None,
+            "days_in_milk": 0,
+            "parity": 0,
+            "genetic_history": "",
+        }
+    ]
     assert mock_report_sold_animal_information_sort_by_sell_day.call_args_list == [
         call(empty_sold_animals, report_name, mock_time.simulation_day)
         for report_name in ["sold_calves", "heiferII", "heiferIII", "sold_and_died_cows", "sold_cows"]
@@ -1209,7 +1255,14 @@ def test_report_end_of_simulation(mocker: MockerFixture) -> None:
     herd_statistics = HerdStatistics()
     herd_statistics.sold_calves_info = [
         SoldAnimalTypedDict(
-            id=1, animal_type="Calf", sold_at_day=0, body_weight=23.3, cull_reason="NA", days_in_milk="NA", parity="NA"
+            id=1,
+            animal_type="Calf",
+            sold_at_day=0,
+            body_weight=23.3,
+            cull_reason="NA",
+            days_in_milk="NA",
+            parity="NA",
+            genetic_history="",
         )
     ]
     herd_statistics.sold_heiferIIs_info = [
@@ -1221,6 +1274,7 @@ def test_report_end_of_simulation(mocker: MockerFixture) -> None:
             cull_reason="NA",
             days_in_milk="NA",
             parity="NA",
+            genetic_history="",
         )
     ]
     herd_statistics.sold_heiferIIIs_info = [
@@ -1232,6 +1286,7 @@ def test_report_end_of_simulation(mocker: MockerFixture) -> None:
             cull_reason="NA",
             days_in_milk="NA",
             parity="NA",
+            genetic_history="",
         )
     ]
     herd_statistics.sold_cows_info = [
@@ -1243,6 +1298,7 @@ def test_report_end_of_simulation(mocker: MockerFixture) -> None:
             cull_reason="NA",
             days_in_milk="NA",
             parity="NA",
+            genetic_history="",
         )
     ]
     herd_statistics.sold_and_died_cows_info = [
@@ -1254,6 +1310,7 @@ def test_report_end_of_simulation(mocker: MockerFixture) -> None:
             cull_reason="NA",
             days_in_milk="NA",
             parity="NA",
+            genetic_history="",
         )
     ]
     herd_statistics.stillborn_calf_info = [StillbornCalfTypedDict(id=1, stillborn_day=0, birth_weight=68.8)]
@@ -1293,13 +1350,14 @@ def test__record_animal_events(mocker: MockerFixture) -> None:
     """Unit test for _record_animal_events()"""
     om = OutputManager()
     mock_om_add_variable = mocker.patch.object(om, "add_variable")
+    dummy_event = AnimalEvents()
     animal_events_by_id = {
-        "CALF_1": "dummy_event",
-        "HEIFER_I_2": "dummy_event",
-        "HEIFER_II_3": "dummy_event",
-        "HEIFER_III_4": "dummy_event",
-        "LAC_COW_5": "dummy_event",
-        "DRY_COW_6": "dummy_event",
+        "CALF_1": dummy_event,
+        "HEIFER_I_2": dummy_event,
+        "HEIFER_II_3": dummy_event,
+        "HEIFER_III_4": dummy_event,
+        "LAC_COW_5": dummy_event,
+        "DRY_COW_6": dummy_event,
     }
 
     AnimalModuleReporter._record_animal_events(animal_events_by_id, 123)

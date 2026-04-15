@@ -32,12 +32,12 @@ def genetics() -> Genetics:
 @pytest.mark.parametrize(
     "animal_type, birth_year, birth_month, parity, initialize_new_born_calf, dam_tbv_fat, dam_tbv_protein",
     [
-        (AnimalType.CALF, 2020, None, False, None, None, None),
-        (AnimalType.HEIFER_I, 2020, None, None, None, None, None),
-        (AnimalType.HEIFER_II, 2020, None, None, None, None, None),
-        (AnimalType.HEIFER_III, 2020, None, 0, None, None, None),
-        (AnimalType.LAC_COW, 2020, None, 1, None, None, None),
-        (AnimalType.DRY_COW, 2020, None, 5, None, None, None),
+        (AnimalType.CALF, 2020, None, False, False, None, None),
+        (AnimalType.HEIFER_I, 2020, None, None, False, None, None),
+        (AnimalType.HEIFER_II, 2020, None, None, False, None, None),
+        (AnimalType.HEIFER_III, 2020, None, 0, False, None, None),
+        (AnimalType.LAC_COW, 2020, None, 1, False, None, None),
+        (AnimalType.DRY_COW, 2020, None, 5, False, None, None),
         (AnimalType.CALF, 2020, 1, 1, True, 10.0, 20.0),
     ],
 )
@@ -46,7 +46,7 @@ def test_animal_genetics_init(
     birth_year: int,
     birth_month: int | None,
     parity: int | None,
-    initialize_new_born_calf: bool | None,
+    initialize_new_born_calf: bool,
     dam_tbv_fat: float | None,
     dam_tbv_protein: float | None,
     mocker: MockerFixture,

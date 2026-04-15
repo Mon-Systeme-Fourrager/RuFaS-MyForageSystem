@@ -180,8 +180,10 @@ class Reproduction:
             days_in_pregnancy=reproduction_inputs.days_in_pregnancy,
             days_in_milk=reproduction_inputs.days_in_milk,
             events=AnimalEvents(),
-            dam_tbv_fat=reproduction_inputs.dam_tbv_fat,
-            dam_tbv_protein=reproduction_inputs.dam_tbv_protein,
+            dam_tbv_fat=reproduction_inputs.dam_tbv_fat if reproduction_inputs.dam_tbv_fat is not None else None,
+            dam_tbv_protein=(
+                reproduction_inputs.dam_tbv_protein if reproduction_inputs.dam_tbv_protein is not None else None
+            ),
             phosphorus_for_gestation_required_for_calf=reproduction_inputs.phosphorus_for_gestation_required_for_calf,
             herd_reproduction_statistics=HerdReproductionStatistics(),
             newborn_calf_config=None,
@@ -592,9 +594,11 @@ class Reproduction:
         ReproductionDataStream
             Updated reproduction datastream after estrus simulation.
         """
-        estrus_cycle = truncnorm.rvs(-animal_constants.STDI, animal_constants.STDI, avg_estrus_cycle, std_estrus_cycle)
+        estrus_cycle: float = float(
+            truncnorm.rvs(-animal_constants.STDI, animal_constants.STDI, avg_estrus_cycle, std_estrus_cycle)
+        )
         if abs(estrus_cycle) >= max_cycle_length:
-            estrus_cycle = max_cycle_length - 1
+            estrus_cycle = float(max_cycle_length - 1)
         self.estrus_day = int(start_day + abs(estrus_cycle))
         reproduction_data_stream.events.add_event(
             reproduction_data_stream.days_born, simulation_day, f"{estrus_note} on day {self.estrus_day}"
