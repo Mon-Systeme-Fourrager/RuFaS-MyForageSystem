@@ -1162,7 +1162,7 @@ class AnimalModuleReporter:
                 "cull_reason": None,
                 "days_in_milk": 0,
                 "parity": 0,
-                "genetic_history": ""
+                "genetic_history": "",
             }
         ]
         AnimalModuleReporter.report_sold_animal_information(herd_statistics)
