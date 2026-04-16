@@ -884,9 +884,7 @@ class HerdManager:
             [animal.genetics for animal in self.heiferIIIs if animal.genetics is not None]
         )
         replacement_birth_date = time.current_date.date() - timedelta(days=replacement.days_born)
-        replacement.genetics = Genetics(
-            birth_year=replacement_birth_date.year, animal_type=replacement.animal_type
-        )
+        replacement.genetics = Genetics(birth_year=replacement_birth_date.year, animal_type=replacement.animal_type)
         replacement.genetics.calculate_ebv_and_ranking_index(
             replacement.animal_type, mean_tbv_fat, mean_tbv_protein, replacement.calves
         )
