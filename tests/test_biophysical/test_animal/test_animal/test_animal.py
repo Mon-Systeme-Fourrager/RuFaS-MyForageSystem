@@ -3348,7 +3348,6 @@ def test_initialize_newborn_calf_genetics_without_dam_tbv(mocker: MockerFixture)
         birth_year=2020,
         animal_type=AnimalType.CALF,
         initialize_new_born_calf=False,
-        parity=animal.calves,
     )
     assert animal.genetics == mock_genetics_cls.return_value
 
@@ -3399,7 +3398,7 @@ def test_update_genetic_history_empty_list_appends_entry(mocker: MockerFixture) 
     animal.genetic_history = []
     animal.id = 123
     animal.animal_type = AnimalType.CALF
-    mocker.patch.object(animal.genetics, "to_dict", return_value={"TBV_fat": 10.0, "TBV_protein": 20.0})
+    animal.genetics.dict_representation = {"TBV_fat": 10.0, "TBV_protein": 20.0}
 
     Animal.update_genetic_history(animal, simulation_day=5)
 
@@ -3424,7 +3423,7 @@ def test_update_genetic_history_changed_genetics_appends_new_entry(mocker: Mocke
         GeneticHistory(start_day=1, end_day=3, id=animal.id, animal_type=animal.animal_type, genetics=old_genetics)
     ]
     animal.genetics = MagicMock(spec=Genetics)
-    mocker.patch.object(animal.genetics, "to_dict", return_value={"TBV_fat": 99.0, "TBV_protein": 88.0})
+    animal.genetics.dict_representation = {"TBV_fat": 99.0, "TBV_protein": 88.0}
 
     Animal.update_genetic_history(animal, simulation_day=4)
 
@@ -3433,7 +3432,7 @@ def test_update_genetic_history_changed_genetics_appends_new_entry(mocker: Mocke
     assert animal.genetic_history[1]["genetics"]["TBV_fat"] == 99.0
 
 
-def test_update_genetic_history_same_genetics_extends_end_day() -> None:
+def test_update_genetic_history_same_genetics_extends_end_day(mocker: MockerFixture) -> None:
     """Genetics unchanged → end_day of last entry extended, no new entry added."""
     AnimalConfig.simulate_genetics = True
     animal = MagicMock(spec=Animal)
@@ -3445,7 +3444,7 @@ def test_update_genetic_history_same_genetics_extends_end_day() -> None:
         GeneticHistory(start_day=1, end_day=3, id=animal.id, animal_type=animal.animal_type, genetics=same_genetics)
     ]
     animal.genetics = MagicMock(spec=Genetics)
-    animal.genetics.to_dict.return_value = same_genetics
+    animal.genetics.dict_representation = same_genetics
 
     Animal.update_genetic_history(animal, simulation_day=4)
 
@@ -3456,19 +3455,19 @@ def test_update_genetic_history_same_genetics_extends_end_day() -> None:
 def test_update_genetic_history_duplicate_same_day_warns(mocker: MockerFixture) -> None:
     """Same genetics + same simulation_day → warning issued, end_day unchanged."""
     AnimalConfig.simulate_genetics = True
-    mock_om = mocker.patch("RUFAS.biophysical.animal.animal.OutputManager")
     animal = MagicMock(spec=Animal)
     animal.id = 123
-    animal.genetic_history = []
     animal.animal_type = AnimalType.CALF
     same_genetics = {"TBV_fat": 5.0, "TBV_protein": 6.0}
     animal.genetic_history = [
         GeneticHistory(start_day=3, end_day=3, id=animal.id, animal_type=animal.animal_type, genetics=same_genetics)
     ]
     animal.genetics = MagicMock(spec=Genetics)
-    animal.genetics.to_dict.return_value = same_genetics
+    animal.genetics.dict_representation = same_genetics
+    animal.om = MagicMock()
+    mock_add_warning = animal.om.add_warning
 
     Animal.update_genetic_history(animal, simulation_day=3)
 
-    mock_om.return_value.add_warning.assert_called_once()
+    mock_add_warning.assert_called_once()
     assert animal.genetic_history[0]["end_day"] == 3

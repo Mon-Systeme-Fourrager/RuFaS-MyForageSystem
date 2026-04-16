@@ -62,6 +62,14 @@ class Genetics:
         Estimated Breeding Value for protein, (kg).
     ranking_index : float
         Ranking index for animal performance.
+    top_semen_too_early_warning: bool
+        A flag indicating if a warning for animals born before the earliest available top semen data was raised.
+    top_semen_too_recent_warning: bool
+        A flag indicating if a warning for animals born after the latest available top semen data was raised.
+    phenotype_too_early_warning: bool
+        A flag indicating if a warning for animals born before the earliest available phenotype data was raised.
+    phenotype_too_recent_warning: bool
+        A flag indicating if a warning for animals born before the latest available phenotype data was raised.
     """
 
     TBV_fat: float
@@ -87,13 +95,13 @@ class Genetics:
         birth_year: int,
         animal_type: AnimalType,
         *,
-        parity: int | None = None,
         initialize_new_born_calf: bool = False,
         dam_tbv_fat: float | None = None,
         dam_tbv_protein: float | None = None,
         birth_month: int | None = None,
     ) -> None:
         """Initialize genetic attributes."""
+        self.om = OutputManager()
         if initialize_new_born_calf:
             assert (
                 animal_type == AnimalType.CALF
@@ -173,8 +181,7 @@ class Genetics:
                 tbv_fat_top_semen = AnimalConfig.top_listing_semen["estimated_fat"][earliest_top_semen_date]
                 tbv_protein_top_semen = AnimalConfig.top_listing_semen["estimated_protein"][earliest_top_semen_date]
                 if not Genetics.top_semen_too_early_warning:
-                    om = OutputManager()
-                    om.add_warning(
+                    self.om.add_warning(
                         "Animal born before the earliest available Top Listing Semen data",
                         f"All animals born before {earliest_top_semen_date} will have use values "
                         f"{tbv_fat_top_semen=} and {tbv_protein_top_semen=} "
@@ -186,8 +193,7 @@ class Genetics:
                 tbv_fat_top_semen = AnimalConfig.top_listing_semen["estimated_fat"][latest_top_semen_date]
                 tbv_protein_top_semen = AnimalConfig.top_listing_semen["estimated_protein"][latest_top_semen_date]
                 if not Genetics.top_semen_too_recent_warning:
-                    om = OutputManager()
-                    om.add_warning(
+                    self.om.add_warning(
                         "Animal born after the latest available Top Listing Semen data",
                         f"All animals born after {latest_top_semen_date} will have use values "
                         f"{tbv_fat_top_semen=} and {tbv_protein_top_semen=} "
@@ -242,8 +248,7 @@ class Genetics:
                 mean_fat = AnimalConfig.average_phenotype["fat_kg"][earliest_phenotype_date]
                 mean_protein = AnimalConfig.average_phenotype["protein_kg"][earliest_phenotype_date]
                 if not Genetics.phenotype_too_early_warning:
-                    om = OutputManager()
-                    om.add_warning(
+                    self.om.add_warning(
                         "Animal born before the earliest available Average Phenotype data",
                         f"All animals born before {earliest_phenotype_date} will have use values {mean_fat=} and "
                         f"{mean_protein=} from the earliest available year of {earliest_phenotype_date}.",
@@ -254,8 +259,7 @@ class Genetics:
                 mean_fat = AnimalConfig.average_phenotype["fat_kg"][latest_phenotype_date]
                 mean_protein = AnimalConfig.average_phenotype["protein_kg"][latest_phenotype_date]
                 if not Genetics.phenotype_too_recent_warning:
-                    om = OutputManager()
-                    om.add_warning(
+                    self.om.add_warning(
                         "Animal born after the latest available Average Phenotype data",
                         f"All animals born after {latest_phenotype_date} will have use values "
                         f"{mean_fat=} and {mean_protein=} "
@@ -277,7 +281,32 @@ class Genetics:
         group_specific_TBV_protein_mean: float,
         parity: int | None,
     ) -> tuple[float, float]:
-        """Calculate EBV values."""
+        """
+        Calculates estimated breeding values (EBV) for fat and protein.
+
+        Mean EBV for each trait is derived from the group mean TBV and the animal's
+        own TBV, weighted by the squared accuracy for the given parity. Gaussian
+        noise scaled by the EBV standard deviation is added to reflect estimation
+        uncertainty.
+
+        Parameters
+        ----------
+        animal_type : AnimalType
+            Type of the animal, used to determine whether parity-based accuracy
+            lookup applies.
+        group_specific_TBV_fat_mean : float
+            Mean true breeding value for fat across the animal's group.
+        group_specific_TBV_protein_mean : float
+            Mean true breeding value for protein across the animal's group.
+        parity : int or None
+            Parity of the animal. Used to select accuracy values for cows.
+            Ignored for non-cow animal types.
+
+        Returns
+        -------
+        tuple[float, float]
+            EBV for fat and EBV for protein, respectively.
+        """
         parity_index = min(parity, 3) if animal_type.is_cow and parity is not None else 0
         fat_accuracy, protein_accuracy = FAT_ACCURACY_BY_PARITY[parity_index], PROTEIN_ACCURACY_BY_PARITY[parity_index]
 
@@ -341,7 +370,8 @@ class Genetics:
             sum([genetic.TBV_protein for genetic in list_of_genetics]) / num_animals if num_animals > 0 else 0.0,
         )
 
-    def to_dict(self) -> dict[str, float]:
+    @property
+    def dict_representation(self) -> dict[str, float]:
         """Return dictionary representation of the genetics properties of the animal."""
         return {
             "TBV_fat": self.TBV_fat,

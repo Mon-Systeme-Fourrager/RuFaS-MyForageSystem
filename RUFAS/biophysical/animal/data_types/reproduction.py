@@ -295,9 +295,9 @@ class ReproductionDataStream:
     events : AnimalEvents
         Associated events relevant to the animal’s lifecycle and reproduction.
     dam_tbv_fat : float or None
-        The True Breeding Value for fat of the animal, (kg).
+        The True Breeding Value for fat of the animal, (kg). Defaults to None.
     dam_tbv_protein : float or None
-        The True Breeding Value for protein of the animal, (kg).
+        The True Breeding Value for protein of the animal, (kg). Defaults to None.
     phosphorus_for_gestation_required_for_calf : float
         The phosphorus needed for gestation, specifically for the growth of the calf, (kg).
         individual animal.

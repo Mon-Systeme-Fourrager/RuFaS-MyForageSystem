@@ -25,7 +25,7 @@ from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 def genetics() -> Genetics:
     AnimalConfig.average_phenotype["fat_kg"] = {2020: 10.0}
     AnimalConfig.average_phenotype["protein_kg"] = {2020: 20.0}
-    genetics = Genetics(animal_type=AnimalType.LAC_COW, birth_year=2020, parity=3)
+    genetics = Genetics(animal_type=AnimalType.LAC_COW, birth_year=2020)
     return genetics
 
 
@@ -85,7 +85,6 @@ def test_animal_genetics_init(
         animal_type=animal_type,
         birth_year=birth_year,
         birth_month=birth_month,
-        parity=parity,
         initialize_new_born_calf=initialize_new_born_calf,
         dam_tbv_fat=dam_tbv_fat,
         dam_tbv_protein=dam_tbv_protein,
@@ -357,8 +356,8 @@ def test_calculate_ebv_and_ranking_index(genetics: Genetics, mocker: MockerFixtu
     assert genetics.ranking_index == 2.89
 
 
-def test_to_dict(genetics: Genetics) -> None:
-    """Unit test for to_dict()"""
+def test_dict_representation(genetics: Genetics) -> None:
+    """Unit test for dict_representation property"""
     genetics.TBV_fat = 1.1
     genetics.TBV_protein = 2.2
     genetics.E_permanent_fat = 3.3
@@ -371,7 +370,7 @@ def test_to_dict(genetics: Genetics) -> None:
     genetics.EBV_protein = 10.0
     genetics.ranking_index = 11.11
 
-    result = genetics.to_dict()
+    result = genetics.dict_representation
 
     assert result == {
         "TBV_fat": 1.1,
@@ -464,13 +463,12 @@ def test_calculate_newborn_calf_tbv_values_too_early(genetics: Genetics, mocker:
     """Out-of-range early birth date falls back to earliest semen date with warning."""
     AnimalConfig.top_listing_semen["estimated_fat"] = {"2010-01": 50.0, "2020-01": 80.0}
     AnimalConfig.top_listing_semen["estimated_protein"] = {"2010-01": 25.0, "2020-01": 40.0}
-    mock_om = mocker.patch("RUFAS.biophysical.animal.animal_genetics.animal_genetics.OutputManager")
+    mock_add_warning = mocker.patch.object(genetics.om, "add_warning")
     mock_generate = mocker.patch.object(Utility, "generate_bivariate_random_numbers", return_value=(1.0, 2.0))
     Genetics.set_top_semen_too_early_warning_raised(False)
 
     genetics._calculate_newborn_calf_tbv_values(10.0, 20.0, "2005-06")
 
-    # Fallback to earliest date "2010-01"
     expected_mean_fat = (50.0 + 10.0) / 2
     expected_mean_protein = (25.0 + 20.0) / 2
     mock_generate.assert_called_once_with(
@@ -480,20 +478,19 @@ def test_calculate_newborn_calf_tbv_values_too_early(genetics: Genetics, mocker:
         pytest.approx(9.475230867899738),
         TBV_CORRELATION,
     )
-    mock_om.return_value.add_warning.assert_called_once()
+    mock_add_warning.assert_called_once()
 
 
 def test_calculate_newborn_calf_tbv_values_too_late(genetics: Genetics, mocker: MockerFixture) -> None:
     """Out-of-range late birth date falls back to latest semen date with warning."""
     AnimalConfig.top_listing_semen["estimated_fat"] = {"2010-01": 50.0, "2020-01": 80.0}
     AnimalConfig.top_listing_semen["estimated_protein"] = {"2010-01": 25.0, "2020-01": 40.0}
-    mock_om = mocker.patch("RUFAS.biophysical.animal.animal_genetics.animal_genetics.OutputManager")
+    mock_add_warning = mocker.patch.object(genetics.om, "add_warning")
     mock_generate = mocker.patch.object(Utility, "generate_bivariate_random_numbers", return_value=(1.0, 2.0))
     Genetics.set_birthdate_too_recent_warning_raised(False)
 
     genetics._calculate_newborn_calf_tbv_values(10.0, 20.0, "2025-03")
 
-    # Fallback to latest date "2020-01"
     expected_mean_fat = (80.0 + 10.0) / 2
     expected_mean_protein = (40.0 + 20.0) / 2
     mock_generate.assert_called_once_with(
@@ -503,14 +500,14 @@ def test_calculate_newborn_calf_tbv_values_too_late(genetics: Genetics, mocker: 
         pytest.approx(9.475230867899738),
         TBV_CORRELATION,
     )
-    mock_om.return_value.add_warning.assert_called_once()
+    mock_add_warning.assert_called_once()
 
 
 def test_calculate_phenotype_values_too_early(genetics: Genetics, mocker: MockerFixture) -> None:
     """Birth year before phenotype data range falls back to earliest year with warning."""
     AnimalConfig.average_phenotype["fat_kg"] = {2010: 300.0, 2020: 500.0}
     AnimalConfig.average_phenotype["protein_kg"] = {2010: 200.0, 2020: 400.0}
-    mock_om = mocker.patch("RUFAS.biophysical.animal.animal_genetics.animal_genetics.OutputManager")
+    mock_add_warning = mocker.patch.object(genetics.om, "add_warning")
     genetics.TBV_fat = 0.0
     genetics.TBV_protein = 0.0
     genetics.E_permanent_fat = 0.0
@@ -523,14 +520,14 @@ def test_calculate_phenotype_values_too_early(genetics: Genetics, mocker: Mocker
 
     assert fat == pytest.approx(300.0)
     assert protein == pytest.approx(200.0)
-    mock_om.return_value.add_warning.assert_called_once()
+    mock_add_warning.assert_called_once()
 
 
 def test_calculate_phenotype_values_too_late(genetics: Genetics, mocker: MockerFixture) -> None:
     """Birth year after phenotype data range falls back to latest year with warning."""
     AnimalConfig.average_phenotype["fat_kg"] = {2010: 300.0, 2020: 500.0}
     AnimalConfig.average_phenotype["protein_kg"] = {2010: 200.0, 2020: 400.0}
-    mock_om = mocker.patch("RUFAS.biophysical.animal.animal_genetics.animal_genetics.OutputManager")
+    mock_add_warning = mocker.patch.object(genetics.om, "add_warning")
     genetics.TBV_fat = 0.0
     genetics.TBV_protein = 0.0
     genetics.E_permanent_fat = 0.0
@@ -543,4 +540,4 @@ def test_calculate_phenotype_values_too_late(genetics: Genetics, mocker: MockerF
 
     assert fat == pytest.approx(500.0)
     assert protein == pytest.approx(400.0)
-    mock_om.return_value.add_warning.assert_called_once()
+    mock_add_warning.assert_called_once()

@@ -123,8 +123,6 @@ class Animal:
         The supplied nutrition in the current ration interval for the animal.
     previous_nutrition_supply: NutritionSupply
         The previously supplied nutrition from the las ration interval for the animal.
-    animal_statistics: AnimalStatistics
-        The AnimalStatistics object that tracks all major statistics of the animal.
     _days_in_milk: int
         The number of days that the animal has been in milk production, (days).
     _days_in_pregnancy: int
@@ -174,6 +172,7 @@ class Animal:
             The dictionary that contains the configuration to initialize an Animal object.
 
         """
+        self.om = OutputManager()
         initialize_animal_methods: dict[AnimalType, Callable[..., None]] = {
             AnimalType.CALF: self._initialize_calf_or_heiferI,
             AnimalType.HEIFER_I: self._initialize_calf_or_heiferI,
@@ -229,7 +228,6 @@ class Animal:
                     birth_year=(time.current_date - timedelta(days=self.days_born)).year,
                     animal_type=self.animal_type,
                     initialize_new_born_calf=False,
-                    parity=self.calves,
                 )
                 if AnimalConfig.simulate_genetics
                 else None
@@ -271,7 +269,6 @@ class Animal:
                     birth_year=time.current_date.year,
                     animal_type=AnimalType.CALF,
                     initialize_new_born_calf=False,
-                    parity=self.calves,
                 )
         else:
             self.genetics = None
@@ -1142,8 +1139,7 @@ class Animal:
         """Returns the milk statistics for the animal."""
         if not self.animal_type.is_cow:
             raise TypeError()
-        if AnimalConfig.simulate_genetics:
-            assert self.genetics is not None
+        if AnimalConfig.simulate_genetics and self.genetics is not None:
             return MilkProductionStatistics(
                 cow_id=self.id,
                 pen_id=self.pen_history[-1]["pen"],
@@ -1202,8 +1198,7 @@ class Animal:
         elif AnimalConfig.semen_type == "sexed":
             male_calf_rate = AnimalConfig.male_calf_rate_sexed_semen
         else:
-            om = OutputManager()
-            om.add_error(
+            self.om.add_error(
                 "Unexpected semen type",
                 f"Unexpected semen type: {AnimalConfig.semen_type}",
                 {"class": self.__class__.__name__, "function": self._assign_sex_to_newborn_calf.__name__},
@@ -1591,8 +1586,7 @@ class Animal:
 
         newborn_calf_config: NewBornCalfValuesTypedDict | None = None
 
-        if AnimalConfig.simulate_genetics:
-            assert self.genetics is not None
+        if AnimalConfig.simulate_genetics and self.genetics is not None:
             reproduction_inputs = ReproductionInputs(
                 animal_type=self.animal_type,
                 body_weight=self.body_weight,
@@ -2484,28 +2478,30 @@ class Animal:
         simulation_day : int
             The current simulation day used to timestamp the genetic history entry.
         """
-        if not AnimalConfig.simulate_genetics:
-            return
-        assert self.genetics is not None
-        if len(self.genetic_history) == 0 or self.genetic_history[-1]["genetics"] != self.genetics.to_dict():
-            self.genetic_history.append(
-                GeneticHistory(
-                    start_day=simulation_day,
-                    end_day=simulation_day,
-                    id=self.id,
-                    animal_type=self.animal_type,
-                    genetics=self.genetics.to_dict(),
+        if AnimalConfig.simulate_genetics and self.genetics is not None:
+            if (
+                len(self.genetic_history) == 0
+                or self.genetic_history[-1]["genetics"] != self.genetics.dict_representation
+            ):
+                self.genetic_history.append(
+                    GeneticHistory(
+                        start_day=simulation_day,
+                        end_day=simulation_day,
+                        id=self.id,
+                        animal_type=self.animal_type,
+                        genetics=self.genetics.dict_representation,
+                    )
                 )
-            )
+            else:
+                if simulation_day == self.genetic_history[-1]["end_day"]:
+                    self.om.add_warning(
+                        "Duplicate Genetic History Entry",
+                        f"Animal {self.id} already has a genetic history entry on day {simulation_day}.",
+                        {
+                            "class": Animal.__name__,
+                            "function": Animal.update_genetic_history.__name__,
+                        },
+                    )
+                self.genetic_history[-1]["end_day"] = simulation_day
         else:
-            if simulation_day == self.genetic_history[-1]["end_day"]:
-                om = OutputManager()
-                om.add_warning(
-                    "Duplicate Genetic History Entry",
-                    f"Animal {self.id} already has a genetic history entry on day {simulation_day}.",
-                    {
-                        "class": Animal.__name__,
-                        "function": Animal.update_genetic_history.__name__,
-                    },
-                )
-            self.genetic_history[-1]["end_day"] = simulation_day
+            return

@@ -83,28 +83,28 @@ class MilkProductionStatistics:
         The number of days since the animal has been pregnant, (days).
     animal_type : AnimalType
         The type of animal, (unitless).
-    TBV_fat : float
-        The True Breed Value for fat of the animal, (kg).
-    TBV_protein : float
-        The True Breed Value for protein of the animal, (kg).
-    E_permanent_fat : float
-        The Permanent Environment Effect for fat of the animal, (kg).
-    E_permanent_protein : float
-        The Permanent Environment Effect for protein of the animal, (kg).
-    E_temporary_fat : float
-        The Temporary Environment Effect for fat of the animal, (kg).
-    E_temporary_protein : float
-        The Temporary Environment Effect for protein of the animal, (kg).
-    phenotype_fat : float
-        The fat phenotype of the animal, (kg).
-    phenotype_protein : float
-        The protein phenotype of the animal, (kg).
-    EBV_fat : float
-        The Estimated Breeding Value for fat of the animal, (kg).
-    EBV_protein : float
-        The Estimated Breeding Value for protein of the animal, (kg).
-    ranking_index : float
-        The ranking index of the animal, (unitless).
+    TBV_fat : float or None
+        The True Breed Value for fat of the animal, (kg). Defaults to None.
+    TBV_protein : float or None
+        The True Breed Value for protein of the animal, (kg). Defaults to None.
+    E_permanent_fat : float or None
+        The Permanent Environment Effect for fat of the animal, (kg). Defaults to None.
+    E_permanent_protein : float or None
+        The Permanent Environment Effect for protein of the animal, (kg). Defaults to None.
+    E_temporary_fat : float or None
+        The Temporary Environment Effect for fat of the animal, (kg). Defaults to None.
+    E_temporary_protein : float or None
+        The Temporary Environment Effect for protein of the animal, (kg). Defaults to None.
+    phenotype_fat : float or None
+        The fat phenotype of the animal, (kg). Defaults to None.
+    phenotype_protein : float or None
+        The protein phenotype of the animal, (kg). Defaults to None.
+    EBV_fat : float or None
+        The Estimated Breeding Value for fat of the animal, (kg). Defaults to None.
+    EBV_protein : float or None
+        The Estimated Breeding Value for protein of the animal, (kg). Defaults to None.
+    ranking_index : float or None
+        The ranking index of the animal, (unitless). Defaults to None.
     """
 
     cow_id: int

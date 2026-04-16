@@ -962,7 +962,6 @@ def test_update_replacement_animal_genetics(herd_manager: HerdManager, mocker: M
     mock_genetics_cls = mocker.patch(
         "RUFAS.biophysical.animal.herd_manager.Genetics", return_value=mock_genetics_instance
     )
-    # calculate_average_tbv is a static method on the patched class
     mock_genetics_cls.calculate_average_tbv.return_value = (5.0, 10.0)
 
     mock_time = MagicMock(auto_spec=RufasTime)
@@ -973,7 +972,6 @@ def test_update_replacement_animal_genetics(herd_manager: HerdManager, mocker: M
     mock_genetics_cls.assert_called_once_with(
         birth_year=2020,
         animal_type=replacement.animal_type,
-        parity=replacement.calves,
     )
     assert replacement.genetics == mock_genetics_instance
     mock_genetics_instance.calculate_ebv_and_ranking_index.assert_called_once_with(
