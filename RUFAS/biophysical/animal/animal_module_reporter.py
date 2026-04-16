@@ -162,7 +162,11 @@ class AnimalModuleReporter:
             "class": AnimalModuleReporter.__name__,
             "function": AnimalModuleReporter.report_milk.__name__,
             "data_origin": [("MilkProduction", "perform_daily_milking_update")],
-            "units": (MilkProductionStatistics.UNITS | MilkProductionStatistics.GENETIC_UNITS) if AnimalConfig.simulate_genetics else MilkProductionStatistics.UNITS,
+            "units": (
+                (MilkProductionStatistics.UNITS | MilkProductionStatistics.GENETIC_UNITS)
+                if AnimalConfig.simulate_genetics
+                else MilkProductionStatistics.UNITS
+            ),
         }
 
         for milk_stats in milk_reports:
@@ -176,7 +180,7 @@ class AnimalModuleReporter:
                 "milk_fat": milk_stats.milk_fat,
                 "milk_lactose": milk_stats.milk_lactose,
                 "parity": milk_stats.parity,
-                "simulation_day": simulation_day
+                "simulation_day": simulation_day,
             }
             if AnimalConfig.simulate_genetics:
                 updated_milk_data["days_born"] = milk_stats.days_born
