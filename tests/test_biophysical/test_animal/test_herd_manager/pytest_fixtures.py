@@ -44,8 +44,8 @@ def animal_json() -> dict[str, Any]:
     return {
         "herd_information": {
             "herd_size_adjustment_period": 30,
-            "herd_selling_threshold": 1.03,
-            "herd_buying_threshold": 1.01,
+            "herd_size_sell_threshold": 103,
+            "herd_size_buy_threshold": 101,
             "calf_num": 8,
             "heiferI_num": 44,
             "heiferII_num": 38,
@@ -464,6 +464,7 @@ def mock_herd_manager(
     mock_weather = MagicMock(auto_spec=Weather)
     mock_time = MagicMock(auto_spec=RufasTime)
     mock_available_feeds: list[Feed] = [mock_feed] * 8
+    mock_simulate_animals = True
 
     im = InputManager()
     mock_get_data: MagicMock = mocker.patch.object(im, "get_data", side_effect=mock_get_data_side_effect)
@@ -492,7 +493,7 @@ def mock_herd_manager(
         )
     )
 
-    herd_manager: HerdManager = HerdManager(mock_weather, mock_time, True, mock_available_feeds)
+    herd_manager: HerdManager = HerdManager(mock_weather, mock_time, True, mock_available_feeds, mock_simulate_animals)
 
     return herd_manager, {
         "mock_get_data": mock_get_data,

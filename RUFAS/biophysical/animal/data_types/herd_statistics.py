@@ -256,7 +256,7 @@ class HerdStatistics:
         }
         self.cull_reason_stats = {
             animal_constants.DEATH_CULL: 0,
-            animal_constants.LOW_PROD_CULL: 0,
+            animal_constants.OVERSUPPLY_CULL: 0,
             animal_constants.LAMENESS_CULL: 0,
             animal_constants.INJURY_CULL: 0,
             animal_constants.MASTITIS_CULL: 0,
@@ -270,7 +270,7 @@ class HerdStatistics:
         self.avg_age_for_parity = {"1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "greater_than_5": 0}
         self.cull_reason_stats_percent = {
             animal_constants.DEATH_CULL: 0.0,
-            animal_constants.LOW_PROD_CULL: 0.0,
+            animal_constants.OVERSUPPLY_CULL: 0.0,
             animal_constants.LAMENESS_CULL: 0.0,
             animal_constants.INJURY_CULL: 0.0,
             animal_constants.MASTITIS_CULL: 0.0,

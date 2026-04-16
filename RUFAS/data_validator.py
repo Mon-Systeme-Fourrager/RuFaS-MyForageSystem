@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 import re
 from enum import Enum
-from typing import Any, Callable, Union, Sequence
+from typing import Any, Callable, Sequence
 
 from RUFAS.util import Aggregator
 
@@ -81,7 +81,7 @@ class ElementsCounter:
         elif state == ElementState.FIXED:
             self.fixed_elements += value
         else:
-            raise ValueError(f"Invalid state: {state}")
+            raise ValueError(f"Input element has an invalid state: {state}")
 
     def increment(self, state: ElementState) -> None:
         """
@@ -578,7 +578,7 @@ class DataValidator:
             "function": DataValidator._metadata_array_validator.__name__,
         }
         required_array_property_keys = {"type", "properties"}
-        optional_array_property_keys = {"description", "minimum_length", "maximum_length", "nullable"}
+        optional_array_property_keys = {"description", "minimum_length", "maximum_length", "nullable", "default"}
         valid, message = self._validate_metadata_properties_keys(
             required_array_property_keys, optional_array_property_keys, value, key_path
         )
@@ -648,76 +648,161 @@ class DataValidator:
         address_to_data: str,
         input_root: Path,
     ) -> tuple[bool, str]:
-        """Checks that top-level metadata has valid and required keys and values."""
+        """
+        Checks that top-level metadata has valid and required keys and values.
+
+        Parameters
+        ----------
+        metadata : dict[str, Any]
+            The metadata to be validated.
+        valid_data_types : set[str]
+            The set of valid data types.
+        address_to_data : str
+            The key in the metadata dictionary that points to the data to be validated.
+        input_root : Path
+            The root directory for input files.
+        """
         info_map = {
             "class": DataValidator.__name__,
             "function": DataValidator.validate_metadata.__name__,
         }
+
         metadata_files = metadata[address_to_data]
-        required_keys = {"path", "type", "properties"}
-        optional_keys = {"title", "description"}
+
+        required_keys = {"type", "properties"}
+        optional_keys = {"title", "description", "path", "paths"}
         valid_keys = required_keys | optional_keys
+
         for key, data in metadata_files.items():
-            if missing_keys := (required_keys - data.keys()):
-                self.event_logs.append(
-                    {
-                        "error": "Metadata Validation",
-                        "message": f"Missing required keys '{list(missing_keys)}' in '{key}'",
-                        "info_map": info_map,
-                    }
-                )
-                return False, f"Missing required keys '{list(missing_keys)}' in '{key}'"
-            if invalid_keys := (data.keys() - valid_keys):
-                self.event_logs.append(
-                    {
-                        "error": "Metadata Validation",
-                        "message": f"Invalid keys '{list(invalid_keys)}' in '{key}'",
-                        "info_map": info_map,
-                    }
-                )
-                return False, f"Invalid keys '{list(invalid_keys)}' in '{key}'"
+            are_keys_valid, msg = self._validate_metadata_keys(key, data, required_keys, valid_keys, info_map)
+            if not are_keys_valid:
+                return False, msg
 
-            if data["type"] not in valid_data_types:
-                self.event_logs.append(
-                    {
-                        "error": "Metadata Validation",
-                        "message": f"Invalid type '{data['type']}' in '{key}'. Expected"
-                        f" one option from {valid_data_types}",
-                        "info_map": info_map,
-                    }
-                )
-                return False, f"Invalid type '{data['type']}' in '{key}'. Expected one option from {valid_data_types}"
-            full_path = os.path.join(input_root, data["path"])
-            if not os.path.isfile(full_path):
-                self.event_logs.append(
-                    {
-                        "error": "Metadata Validation",
-                        "message": f"Invalid path '{data['path']}' in '{key}'",
-                        "info_map": info_map,
-                    }
-                )
-                return False, f"Invalid path '{data['path']}' in '{key}'"
+            has_path_or_paths, msg = self._validate_has_path_or_paths(key, data, info_map)
+            if not has_path_or_paths:
+                return False, msg
 
-            if data["properties"] is None or data["properties"] == "":
-                self.event_logs.append(
-                    {
-                        "error": "Metadata Validation",
-                        "message": f"Properties section empty or None in '{key}'",
-                        "info_map": info_map,
-                    }
-                )
-                return False, f"Properties section empty or None in '{key}'"
+            is_type_valid, msg = self._validate_metadata_type(key, data, valid_data_types, info_map)
+            if not is_type_valid:
+                return False, msg
+
+            paths, msg = self._get_paths_to_check(key, data, info_map)
+            if paths is None:
+                return False, msg
+
+            are_paths_valid, msg = self._validate_paths_exist(key, paths, input_root, info_map)
+            if not are_paths_valid:
+                return False, msg
+
+            are_properties_valid, msg = self._validate_metadata_properties(key, data, info_map)
+            if not are_properties_valid:
+                return False, msg
 
         self.event_logs.append(
             {"log": "Metadata Validation", "message": "Top level metadata is valid.", "info_map": info_map}
         )
         return True, ""
 
+    def _generate_fail_message(self, message: str, info_map: dict[str, Any]) -> tuple[bool, str]:
+        """Helper function to log failure messages and return a consistent response."""
+        self.event_logs.append({"error": "Metadata Validation", "message": message, "info_map": info_map})
+        return False, message
+
+    def _validate_metadata_keys(
+        self,
+        key: str,
+        data: dict[str, Any],
+        required_keys: set[str],
+        valid_keys: set[str],
+        info_map: dict[str, Any],
+    ) -> tuple[bool, str]:
+        """Helper function to validate metadata keys."""
+        if missing_keys := (required_keys - data.keys()):
+            return self._generate_fail_message(f"Missing required keys '{list(missing_keys)}' in '{key}'", info_map)
+        if invalid_keys := (data.keys() - valid_keys):
+            return self._generate_fail_message(f"Invalid keys '{list(invalid_keys)}' in '{key}'", info_map)
+        return True, ""
+
+    def _validate_has_path_or_paths(self, key: str, data: dict[str, Any], info_map: dict[str, Any]) -> tuple[bool, str]:
+        """Helper function to validate that at least one of 'path' or 'paths' is defined."""
+        if "path" not in data and "paths" not in data:
+            return self._generate_fail_message(
+                f"'{key}' must define at least one of the keys 'path' or 'paths', but neither was found.",
+                info_map,
+            )
+        return True, ""
+
+    def _validate_metadata_type(
+        self,
+        key: str,
+        data: dict[str, Any],
+        valid_data_types: set[str],
+        info_map: dict[str, Any],
+    ) -> tuple[bool, str]:
+        """Helper function to validate the 'type' value in metadata."""
+        if data["type"] not in valid_data_types:
+            return self._generate_fail_message(
+                f"Invalid type '{data['type']}' in '{key}'. Expected one option from {valid_data_types}",
+                info_map,
+            )
+        return True, ""
+
+    def _get_paths_to_check(
+        self, key: str, data: dict[str, Any], info_map: dict[str, Any]
+    ) -> tuple[list[str] | None, str]:
+        """Helper function to get the paths to check in metadata."""
+        paths: list[str] = []
+
+        if "path" in data:
+            path_value = data.get("path")
+            if not isinstance(path_value, str) or not path_value:
+                _, msg = self._generate_fail_message(f"Invalid path value '{path_value}' in '{key}'", info_map)
+                return None, msg
+            paths.append(path_value)
+
+        if "paths" in data:
+            paths_value = data.get("paths")
+
+            if not isinstance(paths_value, list) or not paths_value:
+                _, msg = self._generate_fail_message(f"Invalid paths value '{paths_value}' in '{key}'", info_map)
+                return None, msg
+
+            invalid_entries = [p for p in paths_value if not isinstance(p, str) or not p]
+            if invalid_entries:
+                _, msg = self._generate_fail_message(f"Invalid paths value '{paths_value}' in '{key}'", info_map)
+                return None, msg
+
+            paths.extend(paths_value)
+
+        return paths, ""
+
+    def _validate_paths_exist(
+        self,
+        key: str,
+        paths_to_check: list[str],
+        input_root: Path,
+        info_map: dict[str, Any],
+    ) -> tuple[bool, str]:
+        """Helper function to validate that the specified paths exist."""
+        for rel_path in paths_to_check:
+            full_path = os.path.join(input_root, rel_path)
+            if not os.path.isfile(full_path):
+                return self._generate_fail_message(f"Invalid path '{rel_path}' in '{key}'", info_map)
+        return True, ""
+
+    def _validate_metadata_properties(
+        self, key: str, data: dict[str, Any], info_map: dict[str, Any]
+    ) -> tuple[bool, str]:
+        """Helper function to validate the 'properties' section in metadata."""
+        if data["properties"] is None or data["properties"] == "":
+            return self._generate_fail_message(f"Properties section empty or None in '{key}'", info_map)
+        return True, ""
+
     def validate_data_by_type(
         self,
         variable_properties: dict[str, Any],
         variable_path: list[str | int],
-        data: dict[str, Any],
+        data: dict[str | int, Any] | list[Any],
         eager_termination: bool,
         properties_blob_key: str,
         elements_counter: "ElementsCounter",
@@ -729,11 +814,11 @@ class DataValidator:
 
         Parameters
         ----------
-        variable_properties : Dict[str, Any]
+        variable_properties : dict[str, Any]
             A dictionary containing properties relevant to the validation.
-        variable_path : List[str | int]
+        variable_path : list[str | int]
             The path to the variable being validated.
-        data : Dict[str, Any]
+        data : dict[str | int, Any] | list[Any]
             The data to be validated.
         eager_termination : bool
             If True, the process will be terminated as soon as finding invalid data and failing to fix it.
@@ -755,6 +840,8 @@ class DataValidator:
         ------
         KeyError
             If the variable's properties does not specify a "type".
+        ValueError
+            If the variable's properties specifies a "type" that is not supported.
 
         Notes
         -----
@@ -766,14 +853,24 @@ class DataValidator:
             "function": DataValidator.validate_data_by_type.__name__,
         }
         if "type" not in variable_properties:
-            raise KeyError(f"Missing 'type' key in {variable_properties}")
+            raise KeyError(f"Input property missing 'type' key in {variable_properties}")
 
         data_type = variable_properties["type"]
 
         type_to_validator_map: dict[
             str,
             Callable[
-                [list[int | str], dict[str, Any], dict[str, Any], bool, str, ElementsCounter, bool, set[str]], bool
+                [
+                    list[int | str],
+                    dict[str, Any],
+                    dict[str | int, Any] | list[Any],
+                    bool,
+                    str,
+                    ElementsCounter,
+                    bool,
+                    set[str],
+                ],
+                bool,
             ],
         ] = {
             "array": self._array_type_validator,
@@ -804,12 +901,12 @@ class DataValidator:
         if data_type not in fixable_data_types:
             if not is_valid:
                 error_message = (
-                    f"Variable: '{path}' has invalid or missing values and its data type is not fixable."
+                    f"Variable: '{path}' data type '{data_type}' is not fixable by Input Manager."
                     f" Please check the inputs."
                 )
                 self.event_logs.append(
                     {
-                        "error": "Validation: invalid input data not able to be fixed",
+                        "error": "Validation: data type is not fixable by Input Manager",
                         "message": error_message,
                         "info_map": info_map,
                     }
@@ -826,16 +923,6 @@ class DataValidator:
             elements_counter.increment(ElementState.FIXED)
             return True
         else:
-            error_message = (
-                f"Variable: '{path}' has invalid or missing values and failed to fix. Please check the inputs."
-            )
-            self.event_logs.append(
-                {
-                    "error": "Validation: invalid input data not able to be fixed",
-                    "message": error_message,
-                    "info_map": info_map,
-                }
-            )
             elements_counter.increment(ElementState.INVALID)
             return False
 
@@ -920,7 +1007,7 @@ class DataValidator:
         self,
         variable_path: list[str | int],
         variable_properties: dict[str, Any],
-        data: dict[str, Any],
+        data: dict[str | int, Any] | list[Any],
         eager_termination: bool,
         properties_blob_key: str,
         elements_counter: "ElementsCounter",
@@ -932,11 +1019,11 @@ class DataValidator:
 
         Parameters
         ----------
-        variable_path : List[str | int]
+        variable_path : list[str | int]
             The path to the variable being validated.
-        variable_properties : Dict[str, Any]
+        variable_properties : dict[str, Any]
             The metadata properties for the variable being validated.
-        data : Dict[str, Any]
+        data : data: dict[str | Any] | list[Any]
             The data to be validated.
         eager_termination : bool
             If True, the process will be terminated upon finding invalid data.
@@ -988,7 +1075,7 @@ class DataValidator:
         self,
         variable_path: list[str | int],
         variable_properties: dict[str, Any],
-        data: dict[str, Any],
+        data: dict[str | int, Any] | list[Any],
         eager_termination: bool,
         properties_blob_key: str,
         elements_counter: ElementsCounter,
@@ -1000,11 +1087,11 @@ class DataValidator:
 
         Parameters
         ----------
-        variable_path : List[str | int]
+        variable_path : list[str | int]
             The path to the variable being validated.
-        variable_properties : Dict[str, Any]
+        variable_properties : dict[str, Any]
             The metadata properties for the variable being validated.
-        data : Dict[str, Any]
+        data : dict[str | int, Any] | list[Any]
             The data to be validated.
         eager_termination : bool
             If True, the process will be terminated upon finding invalid data.
@@ -1088,7 +1175,7 @@ class DataValidator:
         self,
         variable_path: list[str | int],
         variable_properties: dict[str, Any],
-        data: dict[str, Any],
+        data: dict[str | int, Any] | list[Any],
         eager_termination: bool,
         properties_blob_key: str,
         elements_counter: "ElementsCounter",
@@ -1150,7 +1237,7 @@ class DataValidator:
         self,
         variable_path: list[str | int],
         variable_properties: dict[str, Any],
-        data: dict[str, Any],
+        data: dict[str | int, Any] | list[Any],
         eager_termination: bool,
         properties_blob_key: str,
         elements_counter: "ElementsCounter",
@@ -1224,7 +1311,7 @@ class DataValidator:
         self,
         variable_path: list[str | int],
         variable_properties: dict[str, Any],
-        data: dict[str, Any],
+        data: dict[str | int, Any] | list[Any],
         eager_termination: bool,
         properties_blob_key: str,
         elements_counter: "ElementsCounter",
@@ -1264,8 +1351,8 @@ class DataValidator:
     def _fix_data(
         self,
         variable_properties: dict[str, Any],
-        element_hierarchy: list[Union[str, int]],
-        data: dict[str, Any],
+        element_hierarchy: list[str | int],
+        data: dict[str | int, Any] | list[Any],
         properties_blob_key: str,
     ) -> bool:
         """
@@ -1276,10 +1363,10 @@ class DataValidator:
         variable_properties : dict[str, Any]
             The properties for the variable of interest.
 
-        element_hierarchy: list
+        element_hierarchy: list[str | int]
             A list indicating the path to reach the variable of interest in self.__metadata and self.__pool.
 
-        data: dict[str, Any]
+        data: dict[str | int, Any] | list[Any]
             A buffer dictionary that holds the data for validation and fixing.
 
         properties_blob_key : str
@@ -1295,17 +1382,22 @@ class DataValidator:
             "function": DataValidator._fix_data.__name__,
         }
 
-        variable_parent = data
+        variable_parent: dict[str | int, Any] | list[Any] = data
         for key in element_hierarchy[:-1]:
-            variable_parent = variable_parent[key]
+            variable_parent = variable_parent[key] if isinstance(variable_parent, dict) else variable_parent[int(key)]
 
         element_path = ".".join([str(element) for element in element_hierarchy])
         properties_violation_message = (
             f"Violates properties defined in metadata properties section '{properties_blob_key}'."
         )
         if "default" not in variable_properties.keys():
+            invalid_value = (
+                variable_parent.get(element_hierarchy[-1], "missing required value")
+                if isinstance(variable_parent, dict)
+                else variable_parent[int(element_hierarchy[-1])]
+            )
             error_message = (
-                f"Variable: '{element_path}' has invalid value: {variable_parent[element_hierarchy[-1]]}"
+                f"Variable: '{element_hierarchy[-1]}' has invalid value: '{invalid_value}'"
                 f", and cannot be changed to a default value. {properties_violation_message}"
             )
             self.event_logs.append(
@@ -1318,9 +1410,10 @@ class DataValidator:
             return False
 
         if type(variable_parent) is list:
-            original_invalid_value = variable_parent[element_hierarchy[-1]]
+            original_invalid_value = variable_parent[int(element_hierarchy[-1])]
         else:
-            original_invalid_value = variable_parent.get(element_hierarchy[-1])
+            assert type(variable_parent) is dict
+            original_invalid_value = variable_parent.get(str(element_hierarchy[-1]))
 
         warning_message = (
             f"Variable: '{element_path}' has value: {original_invalid_value}. {properties_violation_message}"
@@ -1328,8 +1421,11 @@ class DataValidator:
         self.event_logs.append(
             {"warning": "Validation: invalid data found", "message": warning_message, "info_map": info_map}
         )
-
-        variable_parent[element_hierarchy[-1]] = variable_properties["default"]
+        if type(variable_parent) is list:
+            variable_parent[int(element_hierarchy[-1])] = variable_properties["default"]
+        else:
+            assert type(variable_parent) is dict
+            variable_parent[str(element_hierarchy[-1])] = variable_properties["default"]
 
         warning_message = (
             f"Invalid data fixed: '{element_path}' value changed from {original_invalid_value} to "
@@ -1341,7 +1437,7 @@ class DataValidator:
 
     def _extract_data_by_key_list(
         self,
-        data: list[Any] | dict[str, Any],
+        data: dict[str | int, Any] | list[Any],
         variable_path: Sequence[str | int],
         variable_properties: dict[str, Any],
         called_during_initialization: bool,
@@ -1431,12 +1527,12 @@ class DataValidator:
                 }
             )
             raise KeyError(
-                f"Key {var_name} not found in data. Data value is required for this "
+                f"Key {var_name} not found in input data. Data value is required for this "
                 "variable upon program initialization."
             )
         self.event_logs.append(
             {
-                "warning": "Validation: key not found in data -- data not required upon initialization",
+                "warning": "Validation: key not found in input data -- data not required upon initialization",
                 "message": f"Key {var_name} not found in data. Data value is not required for "
                 f"this "
                 "variable upon program initialization, setting the variable value "
@@ -1482,14 +1578,14 @@ class DataValidator:
         -----
         This function looks for a 'modifiability' key within `variable_properties`. If present and its value is not
         empty, the function attempts to map this value to an enum member in Modifiability. If the value does not
-        correspond to any enum members, a KeyError is raised after logging the error. If 'modifiability' is absent or
-        its value is empty, the function defaults to Modifiability.NOT_REQUIRED_AND_UNLOCKED.
+        correspond to any enum members, a KeyError is raised after logging the error downstream. If 'modifiability'
+        is absent or its value is empty, the function defaults to Modifiability.NOT_REQUIRED_AND_UNLOCKED.
 
         Parameters
         ----------
         variable_name : str
             The name of the variable for which the modifiability status is being determined. Used for error logging.
-        variable_properties : Dict[str, Any]
+        variable_properties : dict[str, Any]
             A dictionary containing the properties of the variable, containing the desired 'modifiability' property.
 
         Returns
@@ -1497,11 +1593,6 @@ class DataValidator:
         Modifiability
             An enum member representing the variable's modifiability status.
 
-        Raises
-        ------
-        KeyError
-            If 'modifiability' in `variable_properties` does not match any enum member in Modifiability. The error
-            message includes the invalid modifiability value and suggests valid values.
         """
         info_map = {
             "class": DataValidator.__name__,
@@ -1561,7 +1652,9 @@ class DataValidator:
                 formatted_path_elems.append(f"{raw_path_elem}")
         return ".".join(formatted_path_elems)
 
-    def extract_value_by_key_list(self, data: list[Any] | dict[str, Any], variable_path: Sequence[str | int]) -> Any:
+    def extract_value_by_key_list(
+        self, data: list[Any] | dict[str | int, Any], variable_path: Sequence[str | int]
+    ) -> Any:
         """
         Extracts a value from a nested list or dictionary using a list of keys (int or str).
 
@@ -1623,7 +1716,7 @@ class DataValidator:
             elif isinstance(data, dict) and isinstance(key, str) and key in data:
                 data = data[key]
             else:
-                raise KeyError(f"There is an error at key {key} in the path {variable_path}")
+                raise KeyError(f"There is an error at key {key} in the path {variable_path}. Data cannot be extracted.")
         return data
 
 
@@ -1646,15 +1739,24 @@ class CrossValidator:
         self._alias_pool: dict[str, Any] = {}
         self._event_logs: list[dict[str, str | dict[str, str]]] = []
         self.relation_mapping: dict[str, Callable[[object, object, bool], bool]] = {
-            "equal": lambda left, right, _eager_termination: self._evaluate_equal_condition(left, right),
-            "greater": lambda left, right, _eager_termination: self._evaluate_greater_condition(left, right),
-            "greater_or_equal_to": lambda left, right, _eager_termination: (
-                self._evaluate_greater_condition(left, right) or self._evaluate_equal_condition(left, right)
+            "equal": lambda left, right, eager_termination: self._evaluate_equal_condition(
+                left, right, eager_termination
             ),
-            "not_equal": lambda left, right, _eager_termination: not self._evaluate_equal_condition(left, right),
+            "greater": lambda left, right, eager_termination: self._evaluate_greater_condition(
+                left, right, eager_termination
+            ),
+            "greater_or_equal_to": lambda left, right, eager_termination: self._evaluate_greater_or_equal_condition(
+                left, right, eager_termination
+            ),
+            "not_equal": lambda left, right, eager_termination: not self._evaluate_equal_condition(
+                left, right, eager_termination
+            ),
             "is_of_type": lambda left, right, eager_termination: self._evaluate_is_type(left, right, eager_termination),
-            "is_null": lambda left, _right, _eager_termination: self._evaluate_is_null(left),
-            "regex": lambda left, right, _eager_termination: self._evaluate_regex(left, right),
+            "is_null": lambda left, _right, eager_termination: self._evaluate_is_null(left),
+            "regex": lambda left, right, eager_termination: self._evaluate_regex(left, right),
+            "is_equal_length": lambda left, right, eager_termination: self._evaluate_equal_data_length(
+                left, right, eager_termination
+            ),
         }
 
     def cross_validate_data(
@@ -1742,7 +1844,7 @@ class CrossValidator:
                 }
             )
             if eager_termination:
-                raise ValueError(f"Unknown alias name: {alias_name}")
+                raise ValueError(f"Cross-validation error: Unknown alias name: {alias_name}")
 
         return value
 
@@ -1781,7 +1883,7 @@ class CrossValidator:
                 )
                 if eager_termination:
                     raise ValueError(
-                        f"Unknown block: {section}. "
+                        f"Cross-validation error: Unknown target and save block: {section}. "
                         "target_and_save_block should only have variables and constants blocks."
                     )
 
@@ -1806,6 +1908,11 @@ class CrossValidator:
         tuple[Any, bool]
             The result of the expression evaluation and a boolean indicating whether the expression was
             successfully evaluated.
+
+        Raises
+        ------
+        ValueError
+            Raises the error when the expression block contains unknown operation or missing ordered variables.
 
         Notes
         -----
@@ -1832,7 +1939,7 @@ class CrossValidator:
                 }
             )
             if eager_termination:
-                raise ValueError(f"Unknown operation: {operation}")
+                raise ValueError(f"Cross-validation error: Unknown operation in expression block: {operation}")
             else:
                 return None, False
 
@@ -1848,7 +1955,9 @@ class CrossValidator:
                 }
             )
             if eager_termination:
-                raise ValueError("Ordered variables list is empty or missing in cross validation rule.")
+                raise ValueError(
+                    "Cross-validation error: " "Ordered variables list is empty or missing in cross validation rule."
+                )
             else:
                 return None, False
         ordered_values: list[Any] = []
@@ -1895,6 +2004,13 @@ class CrossValidator:
             Specifies whether to immediately terminate the process when a validation error is
             encountered.
 
+        Raises
+        ------
+        ValueError
+            -If multiple complex variables are selected for cross-validation in a single expression block.
+            -If the 'apply_to' key is missing in the expression block when a complex variable is selected.
+            -If the 'apply_to' value is not one of the expected options ('individual' or 'group').
+
         Returns
         -------
         bool
@@ -1915,7 +2031,7 @@ class CrossValidator:
             )
             if eager_termination:
                 raise ValueError(
-                    "Only one list or dict variable can be selected for cross validation in "
+                    "Cross-validation error: Only one list or dict variable can be selected for cross validation in "
                     "a single expression block."
                 )
             else:
@@ -1934,7 +2050,10 @@ class CrossValidator:
                 }
             )
             if eager_termination:
-                raise ValueError("Missing 'apply_to' key in expression block for selected complex data structure.")
+                raise ValueError(
+                    "Cross-validation error: Missing 'apply_to' key in expression block for "
+                    "selected complex data structure."
+                )
             else:
                 return False
         if apply_to := expression_block["apply_to"] not in ["individual", "group"]:
@@ -1949,7 +2068,7 @@ class CrossValidator:
                 }
             )
             if eager_termination:
-                raise ValueError(f"Unknown apply_to value: {apply_to}")
+                raise ValueError(f"Cross-validation error: Unknown apply_to value in expression block: {apply_to}")
             else:
                 return False
         return True
@@ -2004,7 +2123,7 @@ class CrossValidator:
             for name in missing:
                 self._log_missing_condition_clause_field(name)
             if missing and eager_termination:
-                raise KeyError("Missing required field in conditional clause.")
+                raise KeyError("Cross-validation error: Missing required field in conditional clause.")
             elif missing:
                 valid = False
 
@@ -2041,7 +2160,7 @@ class CrossValidator:
                 }
             )
             if eager_termination:
-                raise ValueError("Relationship must be a string.")
+                raise ValueError("Cross-validation error: Conditional clause relationship must be a string.")
             return False
         elif relationship not in available_relationship:
             self._event_logs.append(
@@ -2055,18 +2174,104 @@ class CrossValidator:
                 }
             )
             if eager_termination:
-                raise ValueError("Invalid relationship provided.")
+                raise ValueError("Cross-validation error: Invalid conditional clause relationship provided.")
             return False
         else:
             return True
 
-    def _evaluate_equal_condition(self, left_hand_value: Any, right_hand_value: Any) -> bool:
-        """Evaluates equal condition."""
-        return bool(left_hand_value == right_hand_value)
+    def _evaluate_pairwise_condition(
+        self,
+        left_hand_value: Any,
+        right_hand_value: Any,
+        comparison_function: Callable[[Any, Any], bool],
+        eager_termination: bool,
+    ) -> bool:
+        """Evaluate a comparison for two values.
 
-    def _evaluate_greater_condition(self, left_hand_value: Any, right_hand_value: Any) -> bool:
+        When both inputs are lists, compare their values pairwise and require every comparison to pass. Otherwise,
+        compare the two input values directly.
+
+        Parameters
+        ----------
+        left_hand_value : Any
+            Value on the left side of the comparison.
+        right_hand_value : Any
+            Value on the right side of the comparison.
+        comparison_function : Callable[[Any, Any], bool]
+            Function that evaluates the relationship between two values.
+        eager_termination : bool
+            Whether to raise an error immediately when pairwise list lengths differ.
+
+        Returns
+        -------
+        bool
+            True when the direct comparison passes, or when all pairwise comparisons pass.
+        """
+        if isinstance(left_hand_value, list) and isinstance(right_hand_value, list):
+            if len(left_hand_value) != len(right_hand_value):
+                self._event_logs.append(
+                    {
+                        "error": "Unequal list lengths for pairwise comparison",
+                        "message": "Both lists must have equal length for pairwise comparison.",
+                        "info_map": {
+                            "class": self.__class__.__name__,
+                            "function": self._evaluate_pairwise_condition.__name__,
+                        },
+                    }
+                )
+                if eager_termination:
+                    raise ValueError("Cross-validation error: Lists must have equal length for pairwise comparison.")
+                return False
+            return all(comparison_function(left, right) for left, right in zip(left_hand_value, right_hand_value))
+        return comparison_function(left_hand_value, right_hand_value)
+
+    def _evaluate_equal_data_length(self, left_hand_value: Any, right_hand_value: Any, eager_termination: bool) -> bool:
+        """Evaluates if two lists have the same length."""
+        if not (isinstance(left_hand_value, list) and isinstance(right_hand_value, list)):
+            self._event_logs.append(
+                {
+                    "error": "Invalid data length validation",
+                    "message": "Both data have to be list type to validate their length.",
+                    "info_map": {
+                        "class": self.__class__.__name__,
+                        "function": self._evaluate_equal_data_length.__name__,
+                    },
+                }
+            )
+            if eager_termination:
+                raise ValueError("Cross-validation error: Invalid type comparison.")
+            return False
+        return len(left_hand_value) == len(right_hand_value)
+
+    def _evaluate_equal_condition(
+        self, left_hand_value: Any, right_hand_value: Any, eager_termination: bool = False
+    ) -> bool:
+        """Evaluates equal condition."""
+        return bool(
+            self._evaluate_pairwise_condition(
+                left_hand_value, right_hand_value, lambda left, right: left == right, eager_termination
+            )
+        )
+
+    def _evaluate_greater_condition(
+        self, left_hand_value: Any, right_hand_value: Any, eager_termination: bool = False
+    ) -> bool:
         """Evaluates greater than condition"""
-        return bool(left_hand_value > right_hand_value)
+        return bool(
+            self._evaluate_pairwise_condition(
+                left_hand_value, right_hand_value, lambda left, right: left > right, eager_termination
+            )
+        )
+
+    def _evaluate_greater_or_equal_condition(
+        self, left_hand_value: Any, right_hand_value: Any, eager_termination: bool = False
+    ) -> bool:
+        """Evaluates greater than or equal to condition."""
+        return bool(
+            self._evaluate_pairwise_condition(
+                left_hand_value, right_hand_value, lambda left, right: left >= right, eager_termination
+            )
+        )
 
     def _evaluate_is_null(self, left_hand_value: Any) -> bool:
         """Evaluates is null condition."""
@@ -2087,7 +2292,7 @@ class CrossValidator:
                 }
             )
             if eager_termination:
-                raise ValueError("Invalid type comparison in cross validation.")
+                raise ValueError("Cross-validation error: Invalid type comparison.")
             return False
         data_type = data_type[0].strip().lower()
         checkers: dict[str, Callable[[Any], bool]] = {
@@ -2111,7 +2316,9 @@ class CrossValidator:
                 }
             )
             if eager_termination:
-                raise ValueError(f"Unsupported data type {data_type}. Supported types: {supported}.")
+                raise ValueError(
+                    f"Cross-validation error: Unsupported data type: {data_type}. " f"Supported types: {supported}."
+                )
             return False
 
         return bool(all(checker(value) for value in left_hand_value))

@@ -201,8 +201,6 @@ class Animal:
         self.nutrition_supply: NutritionSupply = NutritionSupply.make_empty_nutrition_supply()
         self.nutrition_supply.dry_matter = AnimalModuleConstants.DEFAULT_DRY_MATTER_INTAKE
         self.previous_nutrition_supply: NutritionSupply | None = None
-        self.milk_yield_305_day: float = 0.0
-        self.mature_equivalent_milking_prediction_305_day: float = 0.0
 
         self._days_in_milk: int = 0
         self._milk_production_output_days_in_milk: int = 0
@@ -1224,7 +1222,7 @@ class Animal:
             details and nutrient requirements.
 
         Returns
-        ------
+        -------
         None
 
         """
@@ -1259,7 +1257,7 @@ class Animal:
             A dictionary containing values used for initializing the cow's attributes.
 
         Returns
-        ------
+        -------
         None
 
         """
@@ -1450,23 +1448,23 @@ class Animal:
         -----
         This method determines the `days_in_milk` value based on the following conditions:
 
-            1. **If the animal is not lactating at the start of the day (`self.days_in_milk == 0`)**:
-               - The method uses the `days_in_milk` value from the reproduction update.
-               - This is because a dry cow (not lactating) always has `days_in_milk = 0` in the milk production update.
-               - However, if the animal gives birth that day, the reproduction update will set `days_in_milk = 1`.
+        1. **If the animal is not lactating at the start of the day (`self.days_in_milk == 0`)**:
+            - The method uses the `days_in_milk` value from the reproduction update.
+            - This is because a dry cow (not lactating) always has `days_in_milk = 0` in the milk production update.
+            - However, if the animal gives birth that day, the reproduction update will set `days_in_milk = 1`.
 
-            2. **If the animal is lactating at the start of the day (`self.days_in_milk > 0`)**:
-               - In most cases, the method uses the `days_in_milk` value from the milk production update.
-               - This is because the reproduction update does not change the `days_in_milk` for lactating cows.
-               - The milk production update may either:
-                 - Increment `days_in_milk` by 1 (normal lactation progression).
-                 - Set `days_in_milk` to 0 if the animal is scheduled to dry off.
+        2. **If the animal is lactating at the start of the day (`self.days_in_milk > 0`)**:
+            - In most cases, the method uses the `days_in_milk` value from the milk production update.
+            - This is because the reproduction update does not change the `days_in_milk` for lactating cows.
+            - The milk production update may either:
+                - Increment `days_in_milk` by 1 (normal lactation progression).
+                - Set `days_in_milk` to 0 if the animal is scheduled to dry off.
 
-            3. **Edge case: If the animal dries off and gives birth on the same day**:
-               - The lactation cycle restarts, and `days_in_milk` is set to 1.
-               - This occurs when:
-                 - The milk production update sets `days_in_milk = 0` (indicating drying off).
-                 - The reproduction update sets `days_in_milk = 1` (due to giving birth).
+        3. **Edge case: If the animal dries off and gives birth on the same day**:
+            - The lactation cycle restarts, and `days_in_milk` is set to 1.
+            - This occurs when:
+                - The milk production update sets `days_in_milk = 0` (indicating drying off).
+                - The reproduction update sets `days_in_milk = 1` (due to giving birth).
 
         """
         if self.days_in_milk == 0:
@@ -1664,10 +1662,9 @@ class Animal:
         """
         Updates the life stage of a HeiferIII animal.
 
-        This function evaluates whether a HeiferIII animal should transition to
-        the Cow life stage. If the animal transitions, configuration data for a
-        newborn calf is returned. If the transition does not occur, the animal
-        remains in the HeiferIII life stage, and no newborn calf data is provided.
+        Evaluates whether a HeiferIII animal transitions to the Cow life stage.
+        If a transition occurs, newborn calf configuration data is returned.
+        Otherwise, the animal remains in the HeiferIII stage and no calf data is produced.
 
         Parameters
         ----------
@@ -1677,11 +1674,12 @@ class Animal:
         Returns
         -------
         tuple[AnimalStatus, NewBornCalfValuesTypedDict | None]
-            A tuple containing the animal's status:
-            - AnimalStatus.LIFE_STAGE_CHANGED along with the newborn calf
-              configuration if the life stage transitions to Cow.
-            - AnimalStatus.REMAIN and None if the animal stays in the HeiferIII stage.
+            A tuple containing the animal status and optional newborn calf data.
 
+            * `AnimalStatus.LIFE_STAGE_CHANGED` and newborn calf configuration
+            if the animal transitions to Cow.
+            * `AnimalStatus.REMAIN` and `None` if the animal remains in the
+            HeiferIII stage.
         """
         if self.evaluate_heiferIII_for_cow():
             newborn_calf_config = self.transition_heiferIII_to_cow(time)
@@ -2361,23 +2359,3 @@ class Animal:
             )
 
         return requirements
-
-    def update_mature_equivalent_305_days_milk_production(self) -> None:
-        if self.days_in_milk < 305:
-            self.mature_equivalent_milking_prediction_305_day = self.milk_production.calculate_305_day_milk_yield(
-                self.milk_production.wood_l,
-                self.milk_production.wood_m,
-                self.milk_production.wood_n,
-                self.milk_production.milk_production_history,
-                self.days_in_milk,
-            )
-        else:
-            self.mature_equivalent_milking_prediction_305_day = (
-                self.milk_production.current_lactation_305_day_milk_produced
-            )
-
-        parity_factor = {1: 1.25, 2: 1.18}.get(self.calves, 1.0)
-
-        self.mature_equivalent_milking_prediction_305_day = (
-            self.mature_equivalent_milking_prediction_305_day * parity_factor
-        )
