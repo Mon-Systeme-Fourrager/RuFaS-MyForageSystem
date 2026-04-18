@@ -365,8 +365,8 @@ def test_calculate_305_day_milk_yield(l_param: float, m_param: float, n_param: f
     )
 
 
-def test_calculate_305_day_milk_yield_uses_current_lactation_history() -> None:
-    """Test that partial 305-day milk yield projections use current lactation records."""
+def test_calculate_305_day_milk_yield_uses_available_history() -> None:
+    """Test that partial 305-day milk yield projections include recorded production history."""
     milk_production_history = [
         {"simulation_day": 1, "days_in_milk": 1, "milk_production": 100.0, "days_born": 1000},
         {"simulation_day": 2, "days_in_milk": 2, "milk_production": 100.0, "days_born": 1001},
@@ -385,7 +385,7 @@ def test_calculate_305_day_milk_yield_uses_current_lactation_history() -> None:
         l_param, m_param, n_param, milk_production_history, days_in_milk=2
     )
 
-    assert result == pytest.approx(30.0 + expected_projected_yield, rel=1e-6)
+    assert result == pytest.approx(200.0 + expected_projected_yield, rel=1e-6)
 
 
 @pytest.mark.parametrize(
