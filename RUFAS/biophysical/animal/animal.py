@@ -2485,7 +2485,7 @@ class Animal:
         self.mature_equivalent_milking_prediction_305_day = (
             self.mature_equivalent_milking_prediction_305_day * parity_factor
         )
-       
+
     def update_genetic_history(self, simulation_day: int) -> None:
         """
         Updates the genetic history record for the animal on the given simulation day.
