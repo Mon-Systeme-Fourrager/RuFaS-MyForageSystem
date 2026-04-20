@@ -955,145 +955,105 @@ def test_add_variable(
             for k in value.keys():
                 assert output_manager._variables_usage_counter[f"key_with_prefix.{k}"] == 0
 
-
 @pytest.mark.parametrize(
-    "info_map, current_simulation_day, overwrite_simulation_day, expected_day_value",
+    "manual_day, map_day, time_day, overwrite, expected",
     [
-        # No simulation day provided, overwrite_simulation_day = False
-        ({"class": "testClass", "function": "test_function", "units": MeasurementUnits.UNITLESS}, 0, False, 0),
-        ({"class": "testClass", "function": "test_function", "units": MeasurementUnits.UNITLESS}, 135, False, 135),
-        # No simulation day provided, overwrite_simulation_day = True
-        ({"class": "testClass", "function": "test_function", "units": MeasurementUnits.UNITLESS}, 0, True, 0),
-        ({"class": "testClass", "function": "test_function", "units": MeasurementUnits.UNITLESS}, 135, True, 135),
-        # Simulation day provided, overwrite_simulation_day = False
-        (
-            {
-                "class": "testClass",
-                "function": "test_function",
-                "simulation_day": 0,
-                "units": MeasurementUnits.UNITLESS,
-            },
-            135,
-            False,
-            0,
-        ),
-        (
-            {
-                "class": "testClass",
-                "function": "test_function",
-                "simulation_day": 220,
-                "units": MeasurementUnits.UNITLESS,
-            },
-            135,
-            False,
-            220,
-        ),
-        # Simulation_day provided, overwrite_simulation_day = True
-        (
-            {
-                "class": "testClass",
-                "function": "test_function",
-                "simulation_day": 0,
-                "units": MeasurementUnits.UNITLESS,
-            },
-            135,
-            True,
-            135,
-        ),
-        (
-            {
-                "class": "testClass",
-                "function": "test_function",
-                "simulation_day": 220,
-                "units": MeasurementUnits.UNITLESS,
-            },
-            135,
-            True,
-            135,
-        ),
-        # No RufasTime reference attached to output manager
-        (
-            {
-                "class": "testClass",
-                "function": "test_function",
-                "units": MeasurementUnits.UNITLESS,
-            },
-            None,
-            True,
-            None,
-        ),
-        # No RufasTime reference attached to output manager, simulation_day specified
-        (
-            {
-                "class": "testClass",
-                "function": "test_function",
-                "simulation_day": 220,
-                "units": MeasurementUnits.UNITLESS,
-            },
-            None,
-            True,
-            220,
-        ),
-        ({"class": "testClass", "function": "test_function", "units": MeasurementUnits.UNITLESS}, None, True, None),
-        # TODO: handle provided time argument...
-    ],
+        (100, 80, 50, True, 100), # case 1 - overwrite with manual entry
+        (100, 80, 50, False, 80), # case 2 - keep what's in the map
+        (100, None, 50, True, 100), # case 3 - use manual entry
+        (100, None, 50, False, 100), # case 4 - still use manual entry
+        (None, None, 50, True, 50), # case 5 - use time
+        (None, None, 50, False, 50), # case 6 - still use time
+        (None, 80, 50, True, 50), # case 7 - overwrite with time
+        (None, 80, 50, False, 80), # case 8 - don't overwrite with time
+        (None, None, None, True, None), # No time for this
+    ]
 )
-@pytest.mark.parametrize("manual_day", [None, 15])
+def test_map_simulation_day(
+        manual_day: int | None,
+        map_day: int | None,
+        time_day: int | None,
+        overwrite: bool,
+        expected: int | None,
+        mocker: MockerFixture
+):
+    # Arrange
+    om = OutputManager()
+    mocker.patch.object(om, "variables_pool", {})  # mock an empty pool
+    rt = RufasTime(datetime(year=1992, month=1, day=1), datetime(year=2026, month=1, day=1))
+    mocker.patch.object(RufasTime, "simulation_day", time_day)
+    om.time = rt
+    imap: dict[str, Any] = {"class": "test", "function": "test_map_simulation_day"}
+
+    if map_day is not None:
+        imap["simulation_day"] = map_day
+
+    # Act
+    imap_copy = om._map_simulation_day(imap, overwrite, manual_day)
+    observed = imap_copy.get("simulation_day")
+    # Assert
+    assert observed == expected
+
+# fully factorial parameterization:
+@pytest.mark.parametrize("manual_day", [100, None])
+@pytest.mark.parametrize("map_day", [80, None])
+@pytest.mark.parametrize("time_day", [50, None])
+@pytest.mark.parametrize("overwrite", [True, False])
 def test_add_variable_infomap_simulation_day(
-    info_map: dict,
-    current_simulation_day: int,
-    overwrite_simulation_day: bool,
-    expected_day_value: int,
-    mocker: MockerFixture,
-    manual_day: int,
+    manual_day: int | None,
+    map_day: int | None,
+    time_day: int | None,
+    overwrite: bool,
+    mocker: MockerFixture
 ):
     """
     Test that add_variable properly adds simulation_day to the info map and respects previously specified
     simulation_day value, unless the overwrite_simulation_day option is used.
     """
-    # Setup
+    # Arrange
     om = OutputManager()
     mocker.patch.object(om, "variables_pool", {})  # mock an empty pool
     rt = RufasTime(datetime(year=1992, month=1, day=1), datetime(year=2026, month=1, day=1))
-    mocker.patch.object(
-        target=RufasTime,
-        attribute="simulation_day",
-        new_callable=PropertyMock,
-        return_value=current_simulation_day,
-    )
+    mocker.patch.object(RufasTime, "simulation_day", time_day)
+    imap: dict[str, Any] = {"class": "test", "function": "test_map_simulation_day", "units": MeasurementUnits.UNITLESS}
 
-    if current_simulation_day is not None:
-        # with time reference (simulate setup with SimulationEngine)
+    if map_day is not None:
+        imap["simulation_day"] = map_day
+
+    if time_day is not None:
         mocker.patch.object(om, "time", rt)
     else:
-        # no time reference (simulate default initialization)
         mocker.patch.object(om, "time", None)
 
-    # Calculations
-    om.add_variable(
-        name="test_variable",
-        value="hello, friends",
-        info_map=info_map,
-        overwrite_simulation_day=overwrite_simulation_day,
-        simulation_day=manual_day,
-    )
+    # Act
+    om.add_variable("test_var", "time flies!", imap, False, overwrite, manual_day)
 
     saved_info_map = [val for val in om.variables_pool.values()][0].get("info_maps")[0]
     observed_day = saved_info_map.get("simulation_day")
 
-    # Assertions (conditional)
-
-    if manual_day is not None and overwrite_simulation_day:
+    # Assertions (conditional, cascading)
+    if overwrite and manual_day is not None:
         assert observed_day == manual_day
         return
 
-    if expected_day_value is None:
-        assert om.time is None
-    else:
-        assert "simulation_day" in saved_info_map  # simulation day in every info map
-        assert info_map.get("simulation_day") == expected_day_value  # original info map correct(ed)
+    if overwrite and time_day is not None:
+        assert observed_day == time_day
+        return
 
-    assert observed_day == expected_day_value
+    if map_day is not None:
+        assert observed_day == map_day
+        return
+
+    if manual_day is not None:
+        assert observed_day == manual_day
+        return
+
+    if time_day is not None:
+        assert observed_day == time_day
+        return
+
+    # else
+    assert observed_day is None
 
 
 def construct_bulk_variables_list(
