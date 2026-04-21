@@ -1,6 +1,6 @@
 from datetime import datetime
 from random import shuffle, randint
-from typing import Any
+from typing import Any, cast
 from unittest.mock import call, MagicMock, PropertyMock
 
 import pytest
@@ -15,10 +15,12 @@ from RUFAS.biophysical.animal.data_types.animal_events import AnimalEvents
 from RUFAS.biophysical.animal.data_types.animal_population import AnimalPopulation
 from RUFAS.biophysical.animal.data_types.animal_typed_dicts import NewBornCalfValuesTypedDict
 from RUFAS.biophysical.animal.data_types.daily_routines_output import DailyRoutinesOutput
+from RUFAS.biophysical.animal.data_types.animal_manure_excretions import AnimalManureExcretions
 from RUFAS.biophysical.animal.data_types.reproduction import HerdReproductionStatistics
 from RUFAS.biophysical.animal.herd_manager import HerdManager
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 from RUFAS.current_day_conditions import CurrentDayConditions
+from RUFAS.data_structures.animal_to_manure_connection import ManureStream
 from RUFAS.data_structures.feed_storage_to_animal_connection import Feed, TotalInventory
 from RUFAS.rufas_time import RufasTime
 from RUFAS.weather import Weather
@@ -441,7 +443,7 @@ def test_apply_daily_herd_structure_updates(
     removed_animals = [mock_animal(AnimalType.LAC_COW, sold=True)]
     sold_oversupply_cows = [mock_animal(AnimalType.LAC_COW, sold=True)]
     replacement_heifers = [mock_animal(AnimalType.HEIFER_III)]
-    mock_available_feeds = [MagicMock(auto_spec=Feed)]
+    mock_available_feeds: list[Feed] = [MagicMock(auto_spec=Feed)]
     mock_total_inventory = MagicMock(auto_spec=TotalInventory)
     mock_current_day_conditions = MagicMock(auto_spec=CurrentDayConditions)
     mock_weather = MagicMock(auto_spec=Weather)
@@ -560,8 +562,8 @@ def test_warn_when_lactating_cows_have_no_milk(herd_manager: HerdManager, mocker
 
 def test_report_daily_routine_outputs(herd_manager: HerdManager, mocker: MockerFixture) -> None:
     """Unit test for _report_daily_routine_outputs()."""
-    herd_manager_output = {"stream": MagicMock()}
-    animal_manure_excretions_by_pen = {"CALF_PEN_1": MagicMock()}
+    herd_manager_output = {"stream": ManureStream.make_empty_manure_stream()}
+    animal_manure_excretions_by_pen = {"CALF_PEN_1": AnimalManureExcretions()}
     enteric_methane_emission_by_pen = {"CALF_PEN_1": 1.0}
     mocker.patch.object(HerdManager, "average_herd_305_days_milk_production", new_callable=PropertyMock)
     mock_report_enteric_methane_emission = mocker.patch(
@@ -751,7 +753,7 @@ def test_create_newborn_calf(
 
 def _create_sortable_mock_cow(
     id_val: int, is_dnb: bool, daily_milk: float, days_in_milk: int, days_in_pregnancy: int
-) -> MagicMock:
+) -> Animal:
     """Helper to create a mock cow with specific sorting attributes."""
     cow = MagicMock(spec=Animal)
     cow.id = id_val
@@ -768,7 +770,7 @@ def _create_sortable_mock_cow(
 
     cow.days_in_milk = days_in_milk
     cow.days_in_pregnancy = days_in_pregnancy
-    return cow
+    return cast(Animal, cow)
 
 
 def test_check_if_cows_need_to_be_sold_comprehensive(herd_manager: HerdManager, mocker: MockerFixture) -> None:
