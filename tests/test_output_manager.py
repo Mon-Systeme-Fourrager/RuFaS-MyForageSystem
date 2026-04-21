@@ -983,7 +983,7 @@ def test_map_simulation_day(
     mocker.patch.object(om, "variables_pool", {})  # mock an empty pool
     rt = RufasTime(datetime(year=1992, month=1, day=1), datetime(year=2026, month=1, day=1))
     mocker.patch.object(RufasTime, "simulation_day", time_day)
-    om.time = rt
+    mocker.patch.object(om, "time", rt)
     imap: dict[str, Any] = {"class": "test", "function": "test_map_simulation_day"}
 
     if map_day is not None:
