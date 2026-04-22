@@ -4237,8 +4237,10 @@
     "feeds": {
       "type": "array",
       "description": "Purchased feed definitions and feed-specific planning settings.",
+      "minimum_length": 0,
       "properties": {
         "type": "object",
+        "description": "Definition of a single purchased feed and its planning settings.",
         "feed_type": {
           "type": "number",
           "description": "Feed type identifier.",
@@ -4258,17 +4260,17 @@
         },
         "runtime_purchase_allowance": {
           "type": "number",
-          "description": "Upper limit of purchased feed mass and/or money that can be spent on this feed on a single day.",
+          "description": "Upper limit of purchased feed masses and/or money that can be spent on this feed on a single day.",
           "minimum": 0
         },
         "advance_purchase_allowance": {
           "type": "number",
-          "description": "Upper limit of purchased feed mass and/or money that can be spent on this feed at the beginning of a ration interval.",
+          "description": "Upper limit of purchased feed masses and/or money that can be spent on this feed at the beginning of a ration interval.",
           "minimum": 0
         },
         "planning_cycle_allowance": {
           "type": "number",
-          "description": "Upper limit of purchased feed mass and/or money that can be spent on this feed at the beginning of a new planning cycle.",
+          "description": "Upper limit of purchased feed masses and/or money that can be spent on this feed at the beginning of a new planning cycle.",
           "minimum": 0
         }
       }
@@ -4291,7 +4293,7 @@
       },
       "user_defined_ration_tolerance": {
         "type": "number",
-        "description": "Allowable +/- fractional variance for each defined ration inclusion percentage value. For example, a feed with a ration percentage of 20 and a tolerance of 0.1 corresponds to an allowable range of 18 to 22.",
+        "description": "Allowable +/- fractional variance for each defined ration inclusion percentage values.",
         "minimum": 0,
         "maximum": 1,
         "default": 0.0
@@ -4300,18 +4302,21 @@
     "rations": {
       "type": "array",
       "description": "Ration definitions by animal group.",
+      "minimum_length": 0,
       "properties": {
         "type": "object",
+        "description": "Ration definition for a single animal group.",
         "animal_group": {
           "type": "string",
-          "description": "Animal group for this ration.",
-          "pattern": "^(calf|growing|close_up|lac_cow)$"
+          "description": "Animal group for this ration."
         },
         "feeds": {
           "type": "array",
-          "description": "Feeds available to the specified animal group. In user-defined ration mode, ration percentages define feed inclusion rates.",
+          "description": "Feeds available to the specified animal group.",
+          "minimum_length": 0,
           "properties": {
             "type": "object",
+            "description": "A single feed entry within the ration.",
             "feed_type": {
               "type": "number",
               "description": "Feed type identifier used in this ration.",
