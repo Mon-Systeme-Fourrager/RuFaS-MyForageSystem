@@ -2747,9 +2747,7 @@ def test_check_target_and_save_block_message_contains_all_invalid_keys_eager_ter
         ),
     ],
 )
-def test_validate_expression_block_unknown_function(
-    expression_block: dict[str, Any], eager_termination: bool
-) -> None:
+def test_validate_expression_block_unknown_function(expression_block: dict[str, Any], eager_termination: bool) -> None:
     """Unknown aggregation function detected by _validate_expression_block."""
     cross_validator = CrossValidator()
 
@@ -2773,9 +2771,7 @@ def test_validate_expression_block_unknown_function(
         ({"aggregation": {"function": "multiply"}, "save_as": "alias_2"}, False),
     ],
 )
-def test_validate_expression_block_missing_operands(
-    expression_block: dict[str, Any], eager_termination: bool
-) -> None:
+def test_validate_expression_block_missing_operands(expression_block: dict[str, Any], eager_termination: bool) -> None:
     """Missing or empty operands detected by _validate_expression_block."""
     cross_validator = CrossValidator()
 
@@ -3313,6 +3309,7 @@ def test_evaluate_greater_or_equal_condition(eager_termination: bool) -> None:
         {"operator": "greater_or_equal_to", "left_hand": {}, "right_hand": {}}, eager_termination
     )
 
+
 def test_evaluate_greater_or_equal_condition_pairwise_lists() -> None:
     """Greater-or-equal should compare lists elementwise."""
     cv = CrossValidator()
@@ -3544,9 +3541,7 @@ def test_evaluate_iterate_array_of_dicts_success(
     cv = CrossValidator()
     mocker.patch.object(cv, "_get_alias_value", side_effect=alias_values)
 
-    result, status = cv._evaluate_for_each_block(
-        iter_block, eager_termination=False, outer_relationship="equal"
-    )
+    result, status = cv._evaluate_for_each_block(iter_block, eager_termination=False, outer_relationship="equal")
     assert status is True
     assert result == expected_result
 
