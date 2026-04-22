@@ -164,10 +164,7 @@ class HerdManager:
             for feed in feeds
         ]
 
-        sorted_purchased_allowances = sorted(
-            purchase_allowances,
-            key=lambda x: x["purchased_feed"]
-        )
+        sorted_purchased_allowances = sorted(purchase_allowances, key=lambda x: x["purchased_feed"])
         self.advance_purchase_allowance = AdvancePurchaseAllowance(sorted_purchased_allowances)
 
         self.formulation_interval = animal_config_data["ration"]["formulation_interval"]

@@ -74,9 +74,7 @@ class RationManager:
         return cls.ration_feeds[animal_combination]
 
     @classmethod
-    def set_user_defined_ration_tolerance(
-        cls, feed_config: dict[str, Any]
-    ) -> None:
+    def set_user_defined_ration_tolerance(cls, feed_config: dict[str, Any]) -> None:
         """
         Collects the tolerance value for user defined rations.
 
@@ -89,9 +87,7 @@ class RationManager:
         cls.tolerance = feed_config["ration_formulation_parameters"]["user_defined_ration_tolerance"]
 
     @classmethod
-    def set_user_defined_rations(
-        cls, feed_config: dict[str, Any]
-    ) -> None:
+    def set_user_defined_rations(cls, feed_config: dict[str, Any]) -> None:
         """
         Maps the input user-defined rations to Animal combinations.
 
@@ -106,10 +102,7 @@ class RationManager:
         cls.user_defined_rations = {animal_combination: {} for animal_combination in AnimalCombination}
 
         ration_config = feed_config["rations"]
-        user_defined_ration_percentages = {
-            ration["animal_group"]: ration["feeds"]
-            for ration in ration_config
-        }
+        user_defined_ration_percentages = {ration["animal_group"]: ration["feeds"] for ration in ration_config}
         tolerance = feed_config["ration_formulation_parameters"]["user_defined_ration_tolerance"]
 
         for combination in cls.user_defined_rations.keys():

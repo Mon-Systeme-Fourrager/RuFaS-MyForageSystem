@@ -110,10 +110,7 @@ class FeedManager:
             for feed in feeds
         ]
 
-        sorted_purchased_allowances = sorted(
-            purchase_allowances,
-            key=lambda x: x["purchased_feed"]
-        )
+        sorted_purchased_allowances = sorted(purchase_allowances, key=lambda x: x["purchased_feed"])
         self.planning_cycle_allowance: PlanningCycleAllowance = PlanningCycleAllowance(sorted_purchased_allowances)
         self.runtime_purchase_allowance: RuntimePurchaseAllowance = RuntimePurchaseAllowance(
             sorted_purchased_allowances
