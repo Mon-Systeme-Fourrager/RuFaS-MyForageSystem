@@ -1,3 +1,5 @@
+from typing import Any
+
 from RUFAS.biophysical.animal.data_types.nutrition_data_structures import NutritionRequirements
 from RUFAS.data_structures.feed_storage_to_animal_connection import RUFAS_ID
 from RUFAS.biophysical.animal.data_types.animal_combination import AnimalCombination
@@ -73,7 +75,7 @@ class RationManager:
 
     @classmethod
     def set_user_defined_ration_tolerance(
-        cls, ration_config: dict[str, dict[str, list[dict[str, int | float]] | float]]
+        cls, feed_config: dict[str, Any]
     ) -> None:
         """
         Collects the tolerance value for user defined rations.
@@ -84,11 +86,11 @@ class RationManager:
             Collection of animal requirements and feed supply information for ration formulation.
 
         """
-        cls.tolerance = ration_config["user_defined_ration_percentages"]["tolerance"]
+        cls.tolerance = feed_config["ration_formulation_parameters"]["user_defined_ration_tolerance"]
 
     @classmethod
     def set_user_defined_rations(
-        cls, ration_config: dict[str, dict[str, list[dict[str, int | float]] | float]]
+        cls, feed_config: dict[str, Any]
     ) -> None:
         """
         Maps the input user-defined rations to Animal combinations.
@@ -99,11 +101,17 @@ class RationManager:
             Collection of animal requirements and feed supply information for ration formulation.
 
         """
-        info_map = {"class": cls.__name__, "function": cls.set_user_defined_rations.__name__}
+        info_map: dict[str, object] = {"class": cls.__name__, "function": cls.set_user_defined_rations.__name__}
 
         cls.user_defined_rations = {animal_combination: {} for animal_combination in AnimalCombination}
 
-        user_defined_ration_percentages = ration_config["user_defined_ration_percentages"]
+        ration_config = feed_config["rations"]
+        user_defined_ration_percentages = {
+            ration["animal_group"]: ration["feeds"]
+            for ration in ration_config
+        }
+        tolerance = feed_config["ration_formulation_parameters"]["user_defined_ration_tolerance"]
+
         for combination in cls.user_defined_rations.keys():
             if combination.value not in user_defined_ration_percentages:
                 continue
@@ -120,9 +128,12 @@ class RationManager:
             info_map["ration"] = ration
             info_map["animal_combination"] = animal_combo.value
             info_map["units"] = MeasurementUnits.PERCENT
-            if abs(total_percentage_of_ration - 100.0) > ration_config["user_defined_ration_percentages"]["tolerance"]:
-                error_msg = f"Invalid user-defined ration for {animal_combo.value}. Ration percentages sum to"
-                f"{total_percentage_of_ration}. Simulation will be halted."
+            if abs(total_percentage_of_ration - 100.0) > tolerance:
+                error_msg = (
+                    f"Invalid user-defined ration for {animal_combo.value}. "
+                    f"Ration percentages sum to {total_percentage_of_ration}. "
+                    "Simulation will be halted."
+                )
                 cls._om.add_error("invalid_user_defined_ration_found", error_msg, info_map)
                 invalid_ration_found = True
             else:
