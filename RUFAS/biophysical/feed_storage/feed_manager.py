@@ -38,6 +38,8 @@ class FeedManager:
     ----------
     feed_config : dict[str, list[Any]]
         Configuration for the feeds available in the simulation.
+    available_feeds : AvailableFeedsBuilder
+        The list of feeds available for the simulation.
     crop_to_rufas_ids_mapping : dict[str, list[RUFAS_ID]]
         Mapping from crops to their corresponding RUFAS IDs.
     feed_storage_configs : dict[str, Any]
@@ -49,9 +51,6 @@ class FeedManager:
     ----------
     _om : OutputManager
         Output manager for reporting feed-related data.
-    _available_feeds : list[NASEMFeed | NRCFeed]
-        List of feeds available for purchase and feeding in the simulation, including their nutritional properties
-        and prices.
     active_storages : dict[StorageType, Storage]
         Contains the list of active farmgrown crop storage units in the simulation and their mapping from StorageType.
     purchased_feed_storage : PurchasedFeedStorage
