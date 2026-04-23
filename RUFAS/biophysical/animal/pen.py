@@ -20,7 +20,6 @@ from RUFAS.data_structures.animal_to_manure_connection import (
 from RUFAS.data_structures.feed_storage_to_animal_connection import (
     RequestedFeed,
     AdvancePurchaseAllowance,
-    TotalInventory,
     NutrientStandard,
 )
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType

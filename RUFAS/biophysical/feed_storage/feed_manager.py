@@ -356,7 +356,7 @@ class FeedManager:
 
     def manage_daily_feed_request(
         self, requested_feed: RequestedFeed, time: RufasTime
-    ) -> tuple[bool, dict[str, dict[RUFAS_ID, float]]]:
+    ) -> tuple[bool, FeedFulfillmentResults]:
         """Manages the daily feed request by checking available inventory and purchasing additional feed if necessary.
 
         Parameters
@@ -368,10 +368,10 @@ class FeedManager:
 
         Returns
         -------
-        tuple[bool, dict[str, dict[RUFAS_ID, float]]]
+        tuple[bool, FeedFulfillmentResults]
             A tuple where the first element is True if the feed request can be fulfilled (False otherwise),
-            and the second element is a dictionary detailing the amounts of feed deducted from purchased and
-            farmgrown sources.
+            and the second element is a FeedFulfillmentResults object containing the amounts of feed deducted
+            from purchased and farmgrown sources.
         """
         current_feed_totals = self._query_available_feed_totals(list(requested_feed.requested_feed.keys()))
         feeds_to_remove_from_inventory = {id: 0.0 for id in requested_feed.requested_feed.keys()}
@@ -385,7 +385,7 @@ class FeedManager:
             ) <= self.runtime_purchase_allowance.allowances[feed_id] + tolerance
             is_request_unfulfillable = not is_fulfillable_with_inventory and not is_fulfillable_with_purchase
             if is_request_unfulfillable:
-                return False, {}
+                return False, FeedFulfillmentResults.empty()
             self._om.add_variable(
                 f"{feed_id}_requested_amount",
                 amount_requested,

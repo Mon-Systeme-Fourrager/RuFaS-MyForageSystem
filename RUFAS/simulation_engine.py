@@ -18,6 +18,7 @@ from RUFAS.data_structures.feed_storage_to_animal_connection import (
     FeedFulfillmentResults,
     IdealFeeds,
     NutrientStandard,
+    RequestedFeed,
     TotalInventory,
 )
 from RUFAS.data_structures.field_manure_supplier import FieldManureSupplier
@@ -475,10 +476,15 @@ class SimulationEngine:
               from the daily routines. If animals are not being simulated, this will be None.
             - A dictionary mapping feed types to the amount of purchased feed fed to the herd.
         """
-        requested_feed = self.herd_manager.collect_daily_feed_request()
-        is_ok_to_feed_animals, daily_feeds_fed = (
-            self.feed_manager.manage_daily_feed_request(requested_feed, self.time) if self.simulate_feed else True
-        ), FeedFulfillmentResults.fulfill_feed_request_as_purchased(requested_feed)
+        requested_feed: RequestedFeed = self.herd_manager.collect_daily_feed_request()
+        if self.simulate_feed:
+            is_ok_to_feed_animals, daily_feeds_fed = self.feed_manager.manage_daily_feed_request(
+                requested_feed,
+                self.time,
+            )
+        else:
+            is_ok_to_feed_animals = True
+            daily_feeds_fed = FeedFulfillmentResults.fulfill_feed_request_as_purchased(requested_feed)
 
         daily_purchased_feeds_fed = daily_feeds_fed.purchased
 
