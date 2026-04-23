@@ -1944,7 +1944,8 @@ class CrossValidator:
             )
             if eager_termination:
                 raise ValueError(
-                    f"Cross-validation error: Unknown expression block: {expression_block}. Supported blocks are 'aggregation' and 'for_each'."
+                    f"Cross-validation error: Unknown expression block: "
+                    f"{expression_block}. Supported blocks are 'aggregation' and 'for_each'."
                 )
             return None, False
 
@@ -2153,13 +2154,25 @@ class CrossValidator:
 
         .. code-block:: python
 
-            {"in": "alias_list", "field": "status", "compare_value": "alias_status", "operator": "equal", "mode": "filter"}
+            {
+                "in": "alias_list",
+                "field": "status",
+                "compare_value": "alias_status",
+                "operator": "equal",
+                "mode": "filter"
+            }
 
         Enforce that all entries have ``"age"`` greater than a peer field:
 
         .. code-block:: python
 
-            {"in": "alias_list", "field": "age", "compare_field": "min_age", "operator": "greater_than", "mode": "enforce"}
+            {
+                "in": "alias_list",
+                "field": "age",
+                "compare_field": "min_age",
+                "operator": "greater_than",
+                "mode": "enforce"
+            }
         """
         source_alias: str = iter_block["in"]
         field: str = iter_block["field"]
@@ -2516,7 +2529,7 @@ class CrossValidator:
         }
         valid = True
         if self._validate_relationship(relationship, eager_termination):
-            missing = [name for name, val in fields.items() if not val]
+            missing = [name for name, val in fields.items() if val is False]
             for name in missing:
                 self._log_missing_condition_clause_field(name)
             if missing and eager_termination:
