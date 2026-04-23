@@ -3,7 +3,7 @@ from copy import deepcopy
 from dataclasses import replace
 from typing import Any
 
-from RUFAS.biophysical.manure.field_manure_supplier import FieldManureSupplier
+from RUFAS.data_structures.field_manure_supplier import FieldManureSupplier
 from RUFAS.biophysical.manure.handler.handler import Handler
 from RUFAS.biophysical.manure.manure_nutrient_manager import ManureNutrientManager
 from RUFAS.biophysical.manure.processor import Processor
