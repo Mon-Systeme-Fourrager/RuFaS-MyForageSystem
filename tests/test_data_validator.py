@@ -3918,9 +3918,7 @@ def test_evaluate_for_each_block_returns_none_false_when_comparand_fails(mocker:
         ({"aggregation": {}, "for_each": {}}, True),
     ],
 )
-def test_validate_expression_block_invalid_structure(
-    expression_block: dict[str, Any], eager_termination: bool
-) -> None:
+def test_validate_expression_block_invalid_structure(expression_block: dict[str, Any], eager_termination: bool) -> None:
     """_validate_expression_block logs an error and raises/returns False for invalid structure."""
     cv = CrossValidator()
 
@@ -4036,8 +4034,14 @@ def test_validate_for_each_block_structure_missing_required_keys(
     [
         ({"mode": "filter", "in": "src", "field": "x", "operator": "equal"}, False),
         (
-            {"mode": "filter", "in": "src", "field": "x", "compare_value": "cmp", "compare_field": "y",
-             "operator": "equal"},
+            {
+                "mode": "filter",
+                "in": "src",
+                "field": "x",
+                "compare_value": "cmp",
+                "compare_field": "y",
+                "operator": "equal",
+            },
             False,
         ),
         ({"mode": "filter", "in": "src", "field": "x", "operator": "equal"}, True),
