@@ -1,5 +1,4 @@
 from datetime import date, datetime, timedelta
-from typing import cast
 
 from RUFAS.EEE.emissions import EmissionsEstimator
 from RUFAS.data_structures.animal_to_manure_connection import ManureStream
@@ -18,7 +17,6 @@ from RUFAS.data_structures.events import ManureEvent
 from RUFAS.data_structures.feed_storage_to_animal_connection import (
     Feed,
     IdealFeeds,
-    TotalInventory,
     RequestedFeed,
     NutrientStandard,
 )
