@@ -333,9 +333,11 @@ class OutputManager(object):
             pool[key]["values"].append(deepcopy(value))
 
     def _add_simulation_day_to_info_map(
-            self, info_map: dict[str, Any],
-            overwrite: bool = False, simulation_day: int | None = None,
-            name: str | None = None
+        self,
+        info_map: dict[str, Any],
+        overwrite: bool = False,
+        simulation_day: int | None = None,
+        name: str | None = None,
     ) -> dict[str, Any]:
         """
         Update an info_map to include simulation_day
@@ -382,10 +384,10 @@ class OutputManager(object):
                 "function": self._add_simulation_day_to_info_map.__name__,
             }
             self.add_warning(
-                name = f"no simulation_day available",
-                msg = f"no simulation day was available to add to the info_map for variable {name} " +
-                    f"(from {info_map_copy.get('class')}.{info_map_copy.get('function')})",
-                info_map = warning_info_map
+                name=f"no simulation_day available",
+                msg=f"no simulation day was available to add to the info_map for variable {name} "
+                + f"(from {info_map_copy.get('class')}.{info_map_copy.get('function')})",
+                info_map=warning_info_map,
             )
 
         return info_map_copy

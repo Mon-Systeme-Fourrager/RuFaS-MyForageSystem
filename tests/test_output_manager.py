@@ -970,7 +970,7 @@ def test_add_variable(
         (None, None, 50, False, 50),  # case 6 - still use time
         (None, 80, 50, True, 50),  # case 7 - overwrite with time
         (None, 80, 50, False, 80),  # case 8 - don't overwrite with time
-        (None, 80, None, True, 80), # case 9 - don't overwrite valid day with None
+        (None, 80, None, True, 80),  # case 9 - don't overwrite valid day with None
         (None, None, None, True, "warn"),  # No time for this
     ],
 )
@@ -1612,7 +1612,7 @@ def test_output_manager_singleton(mocker: MockerFixture) -> None:
     om1.add_variable("dummy_name", "dummy_value", info_map)
     assert om2.variables_pool[key] == {
         "info_maps": [{"context": "dummy_context", "units": MeasurementUnits.ANIMALS.value}],
-        "values": ["dummy_value"]
+        "values": ["dummy_value"],
     }
 
 
