@@ -15,7 +15,7 @@ other input files and the RuFaS codebase.
 RUFAS_ID = int
 
 """Ratio of the price of an on-farm price to the price of buying that feed from an off farm source."""
-ON_FARM_TO_PURCHASED_PRICE_RATION = 0.01
+ON_FARM_TO_PURCHASED_PRICE_RATIO = 0.01
 
 
 class FeedCategorization(Enum):
@@ -339,9 +339,9 @@ class AvailableFeedsBuilder:
     the purchased feeds configured for the simulation.
     """
 
-    @classmethod
+    @staticmethod
     def setup_available_feeds(
-        cls, feed_config: dict[str, list[Any]], nutrient_standard: NutrientStandard
+        feed_config: dict[str, list[Any]], nutrient_standard: NutrientStandard
     ) -> list[Feed]:
         """
         Creates sorted list of feeds available for use in the simulation.
@@ -359,7 +359,7 @@ class AvailableFeedsBuilder:
             Nutrition and price information of feeds available in the simulation.
 
         """
-        feed_library = cls._process_feed_library(nutrient_standard)
+        feed_library = AvailableFeedsBuilder._process_feed_library(nutrient_standard)
 
         feed_representation = NASEMFeed if nutrient_standard is NutrientStandard.NASEM else NRCFeed
         available_feeds: list[Feed] = []
@@ -375,7 +375,7 @@ class AvailableFeedsBuilder:
             new_feed = feed_representation(
                 rufas_id=rufas_id,
                 amount_available=0.0,
-                on_farm_cost=price * ON_FARM_TO_PURCHASED_PRICE_RATION,
+                on_farm_cost=price * ON_FARM_TO_PURCHASED_PRICE_RATIO,
                 purchase_cost=price,
                 buffer=buffer,
                 **nutritive_properties,
@@ -513,7 +513,7 @@ class FeedFulfillmentResults:
         requested_feed_ids: list[RUFAS_ID] | None = None,
         farmgrown_feed_ids: list[RUFAS_ID] | None = None,
     ) -> "FeedFulfillmentResults":
-        """Create an empty results object with initialized keys."""
+        """Create an empty results object with optional initialized keys."""
         requested_feed_ids = requested_feed_ids or []
         farmgrown_feed_ids = farmgrown_feed_ids or []
 
