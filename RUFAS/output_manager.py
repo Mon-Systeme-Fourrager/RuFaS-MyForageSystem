@@ -384,7 +384,7 @@ class OutputManager(object):
                 "function": self._add_simulation_day_to_info_map.__name__,
             }
             self.add_warning(
-                name=f"no simulation_day available",
+                name="no simulation_day available",
                 msg=f"no simulation day was available to add to the info_map for variable {name} "
                 + f"(from {info_map_copy.get('class')}.{info_map_copy.get('function')})",
                 info_map=warning_info_map,
