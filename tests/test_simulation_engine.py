@@ -1028,7 +1028,7 @@ def test_initialize_simulation(mocker: MockerFixture) -> None:
         "dummy": "feed config",
         "ration_formulation_parameters": {
             "max_daily_feed_recalculations_per_year": mock_max_daily_feed_recalculations_per_year,
-        }
+        },
     }
     mock_feed_storage_configs = {"dummy": "storage configs"}
     mock_feed_storage_instances = {"dummy": "storage instances"}
