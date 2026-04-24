@@ -994,14 +994,15 @@ def test_add_simulation_day_to_info_map(
         imap["simulation_day"] = map_day
 
     # Act
-    imap_copy = om._add_simulation_day_to_info_map(imap, overwrite, manual_day)
+    imap_copy = om._add_simulation_day_to_info_map(imap, overwrite, manual_day, "test_name")
     observed = imap_copy.get("simulation_day")
     # Assert
     if expected == "warn":
         assert observed is None
-        assert False # TODO: test that the warning was created
+        assert len(om.warnings_pool) == 1
     else:
         assert observed == expected
+        assert len(om.warnings_pool) == 0
 
 
 # fully factorial parameterization:
