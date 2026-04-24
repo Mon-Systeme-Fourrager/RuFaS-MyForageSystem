@@ -340,9 +340,7 @@ class AvailableFeedsBuilder:
     """
 
     @staticmethod
-    def setup_available_feeds(
-        feed_config: dict[str, list[Any]], nutrient_standard: NutrientStandard
-    ) -> list[Feed]:
+    def setup_available_feeds(feed_config: dict[str, list[Any]], nutrient_standard: NutrientStandard) -> list[Feed]:
         """
         Creates sorted list of feeds available for use in the simulation.
 
