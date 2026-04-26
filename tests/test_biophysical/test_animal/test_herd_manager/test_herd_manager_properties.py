@@ -208,7 +208,6 @@ def test_average_herd_305_days_milk_production_milking_but_production_nonpositiv
     herd_manager: HerdManager,
 ) -> None:
     """Milking cows with ≤0 production should be excluded; if all excluded → 0.0."""
-
     herd_manager.cows = []
 
     for prod in [0, -2000, 0]:
@@ -218,3 +217,34 @@ def test_average_herd_305_days_milk_production_milking_but_production_nonpositiv
         herd_manager.cows.append(cow)
 
     assert herd_manager.average_herd_305_days_milk_production == 0.0
+
+
+def test_average_m305_by_lactation_group(herd_manager: HerdManager) -> None:
+    """Correctly returns average M305 values for L1, L2, and L3+ cohorts."""
+    herd_manager.cows = []
+
+    cow1 = MagicMock()
+    cow1.reproduction.calves = 1
+    cow1.milk_production.mature_305_day_prediction = 9000
+
+    cow2 = MagicMock()
+    cow2.reproduction.calves = 1
+    cow2.milk_production.mature_305_day_prediction = 7000
+
+    cow3 = MagicMock()
+    cow3.reproduction.calves = 2
+    cow3.milk_production.mature_305_day_prediction = 8500
+
+    cow4 = MagicMock()
+    cow4.reproduction.calves = 3
+    cow4.milk_production.mature_305_day_prediction = 10000
+
+    cow5 = MagicMock()
+    cow5.reproduction.calves = 4
+    cow5.milk_production.mature_305_day_prediction = 11000
+
+    herd_manager.cows.extend([cow1, cow2, cow3, cow4, cow5])
+
+    assert herd_manager.average_l1_m305 == 8000
+    assert herd_manager.average_l2_m305 == 8500
+    assert herd_manager.average_l3_plus_m305 == 10500
