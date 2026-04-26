@@ -87,7 +87,7 @@ def test_update_mature_equivalent_305_days_milk_production_for_partial_lactation
     cow = _make_cow_for_305_day_milk_prediction(days_in_milk=120, calves=calves)
     cow.milk_production.calculate_305_day_milk_yield.return_value = 8000.0
 
-    cow.update_mature_305_days_milk_production()
+    cow.update_305_days_milk_production()
 
     cow.milk_production.calculate_305_day_milk_yield.assert_called_once_with(1.0, 2.0, 3.0, [], 120)
     assert cow.mature_equivalent_milking_prediction_305_day == pytest.approx(8000.0 * parity_factor)
@@ -102,7 +102,7 @@ def test_update_mature_equivalent_305_days_milk_production_for_completed_lactati
         days_in_milk=305, calves=calves, current_lactation_305_day_milk_produced=9000.0
     )
 
-    cow.update_mature_305_days_milk_production()
+    cow.update_305_days_milk_production()
 
     cow.milk_production.calculate_305_day_milk_yield.assert_not_called()
     assert cow.mature_equivalent_milking_prediction_305_day == pytest.approx(9000.0 * parity_factor)

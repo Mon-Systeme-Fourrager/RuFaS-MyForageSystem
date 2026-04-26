@@ -2178,4 +2178,4 @@ class HerdManager:
 
     def update_milk_305_day_yield_predictions(self) -> None:
         for cow in self.cows:
-            cow.update_mature_305_days_milk_production()
+            cow.update_305_days_milk_production()
