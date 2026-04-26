@@ -79,33 +79,31 @@ def _make_cow_for_305_day_milk_prediction(
     return cow
 
 
-@pytest.mark.parametrize("calves, parity_factor", [(1, 1.25), (2, 1.18), (3, 1.0)])
-def test_update_mature_equivalent_305_days_milk_production_for_partial_lactation(
-    calves: int, parity_factor: float
-) -> None:
-    """Test mature-equivalent 305-day milk prediction for cows before day 305."""
-    cow = _make_cow_for_305_day_milk_prediction(days_in_milk=120, calves=calves)
-    cow.milk_production.calculate_305_day_milk_yield.return_value = 8000.0
+def test_update_305_days_milk_production_for_partial_lactation() -> None:
+    """Test 305-day milk prediction for cows before day 305."""
+    cow = _make_cow_for_305_day_milk_prediction(days_in_milk=120, calves=1)
+    cow.milk_production.update_manure_305_day_milk_prediction.return_value = 8000.0
 
-    cow.update_305_days_milk_production()
+    cow.update_mature_305_days_milk_production()
 
-    cow.milk_production.calculate_305_day_milk_yield.assert_called_once_with(1.0, 2.0, 3.0, [], 120)
-    assert cow.mature_equivalent_milking_prediction_305_day == pytest.approx(8000.0 * parity_factor)
+    cow.milk_production.update_manure_305_day_milk_prediction.assert_called_once_with(1.0, 2.0, 3.0, [], 120)
+    assert cow.milk_yield_305_day == pytest.approx(8000.0)
+    assert cow.mature_equivalent_milking_prediction_305_day == 0.0
 
 
-@pytest.mark.parametrize("calves, parity_factor", [(1, 1.25), (2, 1.18), (3, 1.0)])
-def test_update_mature_equivalent_305_days_milk_production_for_completed_lactation(
-    calves: int, parity_factor: float
-) -> None:
-    """Test mature-equivalent 305-day milk prediction for cows at or after day 305."""
-    cow = _make_cow_for_305_day_milk_prediction(
-        days_in_milk=305, calves=calves, current_lactation_305_day_milk_produced=9000.0
-    )
+def test_update_305_days_milk_production_for_completed_lactation() -> None:
+    """Test 305-day milk prediction for cows at or after day 305."""
+    cow = _make_cow_for_305_day_milk_prediction(days_in_milk=305, calves=1)
+    cow.milk_production.milk_production_history = [
+        {"milk_production": 4000.0},
+        {"milk_production": 5000.0},
+    ]
 
-    cow.update_305_days_milk_production()
+    cow.update_mature_305_days_milk_production()
 
-    cow.milk_production.calculate_305_day_milk_yield.assert_not_called()
-    assert cow.mature_equivalent_milking_prediction_305_day == pytest.approx(9000.0 * parity_factor)
+    cow.milk_production.update_manure_305_day_milk_prediction.assert_not_called()
+    assert cow.milk_yield_305_day == pytest.approx(9000.0)
+    assert cow.mature_equivalent_milking_prediction_305_day == 0.0
 
 
 @pytest.fixture

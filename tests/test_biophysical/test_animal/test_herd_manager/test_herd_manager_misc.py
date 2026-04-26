@@ -78,7 +78,7 @@ def test_update_milk_305_day_yield_predictions(herd_manager: HerdManager) -> Non
     herd_manager.update_milk_305_day_yield_predictions()
 
     for cow in cows:
-        cow.update_305_days_milk_production.assert_called_once_with()
+        cow.update_mature_305_days_milk_production.assert_called_once_with()
 
 
 def test_print_herd_snapshot(herd_manager: HerdManager, mocker: MockerFixture) -> None:

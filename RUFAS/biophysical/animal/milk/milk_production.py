@@ -38,6 +38,7 @@ class MilkProduction:
     lactose_content: float
     milk_production_reduction: float
     current_lactation_305_day_milk_produced: float
+    mature_305_day_prediction: float
     crude_protein_percent: float
     true_protein_percent: float
     fat_percent: float
@@ -59,6 +60,7 @@ class MilkProduction:
         self.milk_production_reduction = 0.0
         self.current_lactation_305_day_milk_produced = 0.0
         self.milk_production_history = []
+        self.mature_305_day_prediction = 0.0
 
     @property
     def daily_milk_produced(self) -> float:
@@ -260,7 +262,7 @@ class MilkProduction:
         return l_param * np.power(days_in_milk, m_param) * np.exp(-1 * n_param * days_in_milk)
 
     @staticmethod
-    def calculate_305_day_milk_yield(
+    def update_manure_305_day_milk_prediction(
         l_param: float,
         m_param: float,
         n_param: float,
@@ -282,10 +284,10 @@ class MilkProduction:
             Wood's lactation curve parameter m.
         n_param: float
             Wood's lactation curve parameter n.
+        milking_history : list[MilkProductionRecord] | None
+            The milk production history if the animal.
         days_in_milk : int
             Days in milk.
-        milking_history :
-            The milk production history if the animal.
 
         Returns
         -------
