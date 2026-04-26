@@ -580,9 +580,7 @@ def mock_animal(
     animal.milk_production.fat_content = milk_fat_content
     animal.milk_production.true_protein_content = milk_protein_content
     animal.milk_production.mature_305_day_prediction = (
-        daily_milk_produced
-        if mature_305_day_prediction is None
-        else mature_305_day_prediction
+        daily_milk_produced if mature_305_day_prediction is None else mature_305_day_prediction
     )
 
     return animal

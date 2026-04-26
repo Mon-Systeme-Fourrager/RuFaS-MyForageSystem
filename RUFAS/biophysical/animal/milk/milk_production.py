@@ -316,7 +316,9 @@ class MilkProduction:
         if 305 > days_in_milk > 0:
             current_lactation_history = MilkProduction._get_current_lactation_history(milking_history)
             production_history_sum = sum(
-                history["milk_production"] for history in current_lactation_history if history["days_in_milk"] <= days_in_milk
+                history["milk_production"]
+                for history in current_lactation_history
+                if history["days_in_milk"] <= days_in_milk
             )
 
         result, _ = quad(
@@ -327,7 +329,9 @@ class MilkProduction:
     def get_current_lactation_305_day_milk_produced(self) -> float:
         """Returns the actual milk produced from DIM 1 through DIM 305 of the current lactation."""
         current_lactation_history = self._get_current_lactation_history(self.milk_production_history)
-        return sum(history["milk_production"] for history in current_lactation_history if 1 <= history["days_in_milk"] <= 305)
+        return sum(
+            history["milk_production"] for history in current_lactation_history if 1 <= history["days_in_milk"] <= 305
+        )
 
     def _get_milk_production_adjustment(self) -> float:
         """
