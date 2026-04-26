@@ -527,7 +527,7 @@ def mock_animal(
     ED_days: int = 0,
     breeding_to_preg_time: int = 0,
     daily_milk_produced: float = 0.0,
-    mature_equivalent_milking_prediction_305_day: float | None = None,
+    mature_305_day_prediction: float | None = None,
     milk_fat_content: float = 0.0,
     milk_protein_content: float = 0.0,
     sold_at_day: int | None = None,
@@ -579,10 +579,10 @@ def mock_animal(
     animal.milk_production.daily_milk_produced = daily_milk_produced
     animal.milk_production.fat_content = milk_fat_content
     animal.milk_production.true_protein_content = milk_protein_content
-    animal.mature_equivalent_milking_prediction_305_day = (
+    animal.milk_production.mature_305_day_prediction = (
         daily_milk_produced
-        if mature_equivalent_milking_prediction_305_day is None
-        else mature_equivalent_milking_prediction_305_day
+        if mature_305_day_prediction is None
+        else mature_305_day_prediction
     )
 
     return animal

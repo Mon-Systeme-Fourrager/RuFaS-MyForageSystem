@@ -2466,6 +2466,9 @@ class Animal:
         return requirements
 
     def update_mature_305_days_milk_production(self) -> None:
+        if self.days_in_milk == 0:
+            return
+
         if self.days_in_milk < 305:
             self.milk_production.mature_305_day_prediction = self.milk_production.update_manure_305_day_milk_prediction(
                 self.milk_production.wood_l,
@@ -2474,16 +2477,10 @@ class Animal:
                 self.milk_production.milk_production_history,
                 self.days_in_milk,
             )
-        else:
-            self.milk_production.mature_305_day_prediction = sum(
-                history["milk_production"] for history in self.milk_production.milk_production_history
-            )
+            return
 
-        # parity_factor = {1: 1.25, 2: 1.18}.get(self.calves, 1.0)
-        #
-        # self.mature_equivalent_milking_prediction_305_day = (
-        #     self.mature_equivalent_milking_prediction_305_day * parity_factor
-        # )
+        self.milk_production.mature_305_day_prediction =\
+            self.milk_production.get_current_lactation_305_day_milk_produced()
 
     def update_genetic_history(self, simulation_day: int) -> None:
         """

@@ -385,7 +385,24 @@ def test_calculate_305_day_milk_yield_uses_available_history() -> None:
         l_param, m_param, n_param, milk_production_history, days_in_milk=2
     )
 
-    assert result == pytest.approx(200.0 + expected_projected_yield, rel=1e-6)
+    assert result == pytest.approx(30.0 + expected_projected_yield, rel=1e-6)
+
+
+def test_get_current_lactation_305_day_milk_produced_ignores_prior_lactations() -> None:
+    """Test that current-lactation 305-day milk uses only DIM 1..305 records after the last dry period."""
+    milk_production = MilkProduction()
+    milk_production.milk_production_history = [
+        {"simulation_day": 1, "days_in_milk": 1, "milk_production": 100.0, "days_born": 1000},
+        {"simulation_day": 2, "days_in_milk": 2, "milk_production": 110.0, "days_born": 1001},
+        {"simulation_day": 3, "days_in_milk": 0, "milk_production": 0.0, "days_born": 1002},
+        {"simulation_day": 4, "days_in_milk": 1, "milk_production": 10.0, "days_born": 1003},
+        {"simulation_day": 5, "days_in_milk": 2, "milk_production": 20.0, "days_born": 1004},
+        {"simulation_day": 6, "days_in_milk": 306, "milk_production": 30.0, "days_born": 1005},
+    ]
+
+    result = milk_production.get_current_lactation_305_day_milk_produced()
+
+    assert result == pytest.approx(30.0)
 
 
 @pytest.mark.parametrize(

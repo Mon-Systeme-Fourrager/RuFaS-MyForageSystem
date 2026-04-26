@@ -85,6 +85,23 @@ class MilkProduction:
         self.wood_m = wood_m
         self.wood_n = wood_n
 
+    @staticmethod
+    def _get_current_lactation_history(
+        milking_history: list[MilkProductionRecord] | None,
+    ) -> list[MilkProductionRecord]:
+        """Returns only the current lactation records from the full milk history."""
+        if milking_history is None:
+            return []
+
+        current_lactation_history: list[MilkProductionRecord] = []
+        for history in reversed(milking_history):
+            if history["days_in_milk"] == 0:
+                break
+            current_lactation_history.append(history)
+
+        current_lactation_history.reverse()
+        return current_lactation_history
+
     def perform_daily_milking_update(
         self, milk_production_inputs: MilkProductionInputs, time: RufasTime
     ) -> MilkProductionOutputs:
@@ -296,13 +313,21 @@ class MilkProduction:
 
         """
         production_history_sum = 0
-        if 305 > days_in_milk > 0 and milking_history is not None:
-            production_history_sum = sum(history["milk_production"] for history in milking_history[:days_in_milk])
+        if 305 > days_in_milk > 0:
+            current_lactation_history = MilkProduction._get_current_lactation_history(milking_history)
+            production_history_sum = sum(
+                history["milk_production"] for history in current_lactation_history if history["days_in_milk"] <= days_in_milk
+            )
 
         result, _ = quad(
             MilkProduction.calculate_daily_milk_production, days_in_milk + 1, 305, args=(l_param, m_param, n_param)
         )
         return result + production_history_sum
+
+    def get_current_lactation_305_day_milk_produced(self) -> float:
+        """Returns the actual milk produced from DIM 1 through DIM 305 of the current lactation."""
+        current_lactation_history = self._get_current_lactation_history(self.milk_production_history)
+        return sum(history["milk_production"] for history in current_lactation_history if 1 <= history["days_in_milk"] <= 305)
 
     def _get_milk_production_adjustment(self) -> float:
         """
