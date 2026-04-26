@@ -344,6 +344,36 @@ class HerdManager:
             else 0.0
         )
 
+    @staticmethod
+    def _get_cow_lactation_number(cow: Animal) -> int:
+        """Returns the current lactation number for a cow."""
+        if hasattr(cow, "reproduction") and hasattr(cow.reproduction, "calves"):
+            return cow.reproduction.calves
+        return cow.calves
+
+    @staticmethod
+    def _average_m305_for_cows(cows: list[Animal]) -> float:
+        """Returns the mean M305 value for the provided cohort of cows."""
+        if not cows:
+            return 0.0
+
+        return sum(cow.milk_production.mature_305_day_prediction for cow in cows) / len(cows)
+
+    @property
+    def average_l1_m305(self) -> float:
+        """Returns the mean M305 for cows in lactation 1."""
+        return self._average_m305_for_cows([cow for cow in self.cows if self._get_cow_lactation_number(cow) == 1])
+
+    @property
+    def average_l2_m305(self) -> float:
+        """Returns the mean M305 for cows in lactation 2."""
+        return self._average_m305_for_cows([cow for cow in self.cows if self._get_cow_lactation_number(cow) == 2])
+
+    @property
+    def average_l3_plus_m305(self) -> float:
+        """Returns the mean M305 for cows in lactation 3 or greater."""
+        return self._average_m305_for_cows([cow for cow in self.cows if self._get_cow_lactation_number(cow) >= 3])
+
     @property
     def all_animals(self) -> list[Animal]:
         """
@@ -721,6 +751,12 @@ class HerdManager:
         AnimalModuleReporter.report_manure_streams(herd_manager_output, time.simulation_day)
         AnimalModuleReporter.report_milk(self.daily_milk_report, time.simulation_day)
         AnimalModuleReporter.report_305d_milk(self.average_herd_305_days_milk_production)
+        AnimalModuleReporter.report_m305(
+            self._average_m305_for_cows(self.cows),
+            self.average_l1_m305,
+            self.average_l2_m305,
+            self.average_l3_plus_m305,
+        )
         self._report_ration(time.simulation_day)
         self._calculate_and_report_average_genetics(time.simulation_day)
 
@@ -812,7 +848,7 @@ class HerdManager:
         if not eligible_indices:
             return None
 
-        return min(eligible_indices, key=lambda i: self.cows[i].milk_production.daily_milk_produced)
+        return min(eligible_indices, key=lambda i: self.cows[i].milk_production.mature_305_day_prediction)
 
     def _check_if_cows_need_to_be_sold(self, simulation_day: int, removed_animal: list[Animal]) -> list[Animal]:
         """Checks if surplus cows need to be sold based on herd size."""
@@ -2175,3 +2211,7 @@ class HerdManager:
                     self.herd_statistics.total_enteric_methane[animal_type] = {
                         k: float(current_totals.get(k, 0) + new_emissions.get(k, 0)) for k in all_keys
                     }
+
+    def update_milk_305_day_yield_predictions(self) -> None:
+        for cow in self.cows:
+            cow.update_mature_305_days_milk_production()
