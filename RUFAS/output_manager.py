@@ -1937,9 +1937,11 @@ class OutputManager(object):
 
         if format_option == "inline":
             return [
-                f"{name}.{parsable_dict}: {list(keys)} ({units}){os.linesep}"
-                if not parsable_dict.endswith("info_maps") and units
-                else f"{name}.{parsable_dict}: {list(keys)}{os.linesep}"
+                (
+                    f"{name}.{parsable_dict}: {list(keys)} ({units}){os.linesep}"
+                    if not parsable_dict.endswith("info_maps") and units
+                    else f"{name}.{parsable_dict}: {list(keys)}{os.linesep}"
+                )
             ]
 
         lines: list[str] = []
