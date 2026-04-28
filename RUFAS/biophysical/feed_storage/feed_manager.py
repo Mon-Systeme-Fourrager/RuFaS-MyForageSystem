@@ -685,11 +685,7 @@ class FeedManager:
                     f"Not adequate feed to deduct remaining {remaining_amount_needed:.3f} kg DM of feed {feed_id}."
                 )
 
-        self._log_feed_deductions(
-            deduction_results.purchased,
-            deduction_results.farmgrown,
-            simulation_day
-        )
+        self._log_feed_deductions(deduction_results.purchased, deduction_results.farmgrown, simulation_day)
 
         return deduction_results
 
