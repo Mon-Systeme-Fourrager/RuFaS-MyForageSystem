@@ -124,21 +124,54 @@ class SimulationEngine:
 
     Attributes
     ----------
-    weather : Weather
-        The weather object that contains the weather data.
+    om : OutputManager
+        An instance of OutputManager.
+    im : InputManager
+        An instnace of InputManager.
+    simulation_type : SimulationType
+        The type of simulation that will be run.
+    simulate_animals : bool
+        Whether or not the simulation will have a HerdManager.
+    simulate_fields : bool
+        Whether or not the simulation will have a FieldManager.
+    simulate_manure : bool
+        Whether or not the simulation will have a ManureManager.
+    simulate_feed : bool
+        Whether or not the simulation will have a FeedManager.
+    _simulation_type_to_daily_simulation_function : dict[SimulationType, Callable]
+        A dictionary mapping the simulation type to the appropriate daily simulation function.
     time : RufasTime
         The RufasTime object that contains methods for accessing and manipulating the simulation time.
-    feed: Feed
-        The Feed object that stores the information for the feeds managed by the farm, and the methods for storage.
+    weather : Weather
+        The weather object that contains the weather data.
+    emissions_estimator : EmissionsEstimator
+        The engine used to estimate emissions associated with purchased feeds used for animals.
+    field_manager: FieldManager
+        The FieldManager object that manages all fields in the simulation.
+    feed_manager: FeedManager
+        The FeedManager object that stores the information for the feeds managed by the farm
+        and the methods for storage.
     herd_manager: HerdManager
         The HerdManager object that manages all animal in the herd.
     manure_manager: ManureManager
         The ManureManager object that sets up and manages different manure management components including manure
         handlers, reception pits, manure separators, and manure storage treatments.
-    field_manager: FieldManager
-        The FieldManager object that manages all fields in the simulation.
-    simulate_animals: bool
-        A boolean indicating whether user has chosen to simulate animals in config.
+    available_feeds : list[Feed]
+        The feeds set to be available for the simulation in the feed input.
+    max_daily_feed_recalculation_interval : timedelta
+        The interval on which `max_daily_feed_recalculation` should occur.
+    next_max_daily_feed_recalculation : datetime
+        The date on which the next max daily feed recalculation should occur.
+    feed_degradations_interval_length : timedelta
+        The interval on which feed degradations should occur.
+    next_degredations_process : datetime
+        The date on which the next feed degradations processing should occur.
+    ration_formulation_interval_length : timedelta
+        The interval on which ration reformulation should occur.
+    next_ration_reformulation : datetime
+        The date on which the next ration reformulation should occur.
+    is_ration_defined_by_user : bool
+        Whether or not the ration is user-defined.
     """
 
     def __init__(self, simulation_type: SimulationType) -> None:
