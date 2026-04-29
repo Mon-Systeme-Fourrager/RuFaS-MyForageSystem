@@ -71,6 +71,7 @@ v1.0.0
 - [2734](https://github.com/RuminantFarmSystems/RuFaS/pull/2734) - [minor change] [InputChange][OutputChange][Animal] Implements the Genetics submodule.
 - [2968](https://github.com/RuminantFarmSystems/RuFaS/pull/2968) - [minor change] [InputChange][OutputChange][Animal] Refactored HerdManager's daily_routine.
 - [2809](https://github.com/RuminantFarmSystems/RuFaS/pull/2809) - [minor change] [Animal] [NoInputChange] [NoOutputChange] Reorders grouping of attributes in some HerdStatistics methods, updates docstrings.
+- [2937](https://github.com/RuminantFarmSystems/RuFaS/pull/2937) - [minor change] [DataValidator] [InputChange] [NoOutputChange] Adds cross-validation support for complex data structures (`list`/`dict` operands and `for_each` iteration blocks) with `filter` and `enforce` modes.
 
 ### v1.0.0
 
