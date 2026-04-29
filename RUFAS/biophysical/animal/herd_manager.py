@@ -801,7 +801,7 @@ class HerdManager:
             enteric_methane_emission_by_pen,
             time.simulation_day,
         )
-        
+
         return herd_manager_output
 
     def _calculate_and_report_average_genetics(self, simulation_day: int) -> None:
