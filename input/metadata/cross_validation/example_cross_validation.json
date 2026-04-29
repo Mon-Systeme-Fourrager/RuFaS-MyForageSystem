@@ -17,7 +17,7 @@
         {
           "left_hand": {
             "aggregation": {
-              "function": "no_op",
+              "operation": "no_op",
               "mode": "aggregate",
               "operands": [
                 "pen_animal_type"
@@ -26,21 +26,21 @@
           },
           "right_hand": {
             "aggregation": {
-              "function": "no_op",
+              "operation": "no_op",
               "mode": "element_wise",
               "operands": [
                 "calf_pen_type"
               ]
             }
           },
-          "operator": "equal"
+          "relationship": "equal"
         }
       ],
       "rules": [
         {
           "left_hand": {
             "aggregation": {
-              "function": "sum",
+              "operation": "sum",
               "mode": "aggregate",
               "operands": [
                 "pen_stall_num"
@@ -49,7 +49,7 @@
           },
           "right_hand": {
             "aggregation": {
-              "function": "division",
+              "operation": "division",
               "mode": "element_wise",
               "operands": [
                 "number_of_calves",
@@ -58,7 +58,7 @@
             },
             "save_as": "min_num_stalls"
           },
-          "operator": "greater_or_equal_to"
+          "relationship": "greater_or_equal_to"
         }
       ]
     },
@@ -80,7 +80,7 @@
         {
           "left_hand": {
             "aggregation": {
-              "function": "no_op",
+              "operation": "no_op",
               "mode": "aggregate",
               "operands": [
                 "pen_animal_type"
@@ -89,21 +89,21 @@
           },
           "right_hand": {
             "aggregation": {
-              "function": "no_op",
+              "operation": "no_op",
               "mode": "element_wise",
               "operands": [
                 "growing_pen_type"
               ]
             }
           },
-          "operator": "equal"
+          "relationship": "equal"
         }
       ],
       "rules": [
         {
           "left_hand": {
             "aggregation": {
-              "function": "sum",
+              "operation": "sum",
               "mode": "aggregate",
               "operands": [
                 "pen_stall_num"
@@ -112,7 +112,7 @@
           },
           "right_hand": {
             "aggregation": {
-              "function": "division",
+              "operation": "division",
               "mode": "element_wise",
               "operands": [
                 "number_of_heifer1s",
@@ -121,12 +121,12 @@
             },
             "save_as": "min_num_stalls"
           },
-          "operator": "greater_or_equal_to"
+          "relationship": "greater_or_equal_to"
         },
         {
           "left_hand": {
             "aggregation": {
-              "function": "sum",
+              "operation": "sum",
               "mode": "aggregate",
               "operands": [
                 "pen_stall_num"
@@ -135,7 +135,7 @@
           },
           "right_hand": {
             "aggregation": {
-              "function": "division",
+              "operation": "division",
               "mode": "element_wise",
               "operands": [
                 "number_of_heifer2s",
@@ -144,7 +144,7 @@
             },
             "save_as": "max_num_stalls"
           },
-          "operator": "greater_or_equal_to"
+          "relationship": "greater_or_equal_to"
         }
       ]
     },
@@ -166,7 +166,7 @@
         {
           "left_hand": {
             "aggregation": {
-              "function": "sum",
+              "operation": "sum",
               "operands": [
                 "p1",
                 "p2",
@@ -179,13 +179,13 @@
           },
           "right_hand": {
             "aggregation": {
-              "function": "no_op",
+              "operation": "no_op",
               "operands": [
                 "summed_parity_fractions"
               ]
             }
           },
-          "operator": "equal"
+          "relationship": "equal"
         }
       ]
     },
@@ -206,20 +206,20 @@
               "mode": "enforce",
               "in": "crop_configurations",
               "field": "optimal_temperature",
-              "compare_field": "minimum_temperature",
-              "operator": "greater_or_equal_to"
+              "field_to_compare": "minimum_temperature",
+              "relationship": "greater_or_equal_to"
             }
           },
           "right_hand": {
             "aggregation": {
-              "function": "no_op",
+              "operation": "no_op",
               "mode": "element_wise",
               "operands": [
                 "true_constant"
               ]
             }
           },
-          "operator": "equal"
+          "relationship": "equal"
         }
       ]
     },
@@ -241,20 +241,20 @@
               "mode": "filter",
               "in": "pen_information",
               "field": "animal_combination",
-              "compare_value": "LAC_COW",
-              "operator": "equal"
+              "value_to_compare": "LAC_COW",
+              "relationship": "equal"
             }
           },
           "right_hand": {
             "aggregation": {
-              "function": "no_op",
+              "operation": "no_op",
               "mode": "element_wise",
               "operands": [
                 "true_constant"
               ]
             }
           },
-          "operator": "not_equal"
+          "relationship": "not_equal"
         }
       ]
     }

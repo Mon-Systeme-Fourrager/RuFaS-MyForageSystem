@@ -2710,37 +2710,37 @@ def test_check_target_and_save_block_message_contains_all_invalid_keys_eager_ter
     "expression_block, eager_termination",
     [
         (
-            {"aggregation": {"function": "add", "operands": ["alias_0", "alias_1"]}, "save_as": "alias_2"},
+            {"aggregation": {"operation": "add", "operands": ["alias_0", "alias_1"]}, "save_as": "alias_2"},
             True,
         ),
         (
             {
-                "aggregation": {"function": "subtract", "operands": ["alias_0", "alias_1"]},
+                "aggregation": {"operation": "subtract", "operands": ["alias_0", "alias_1"]},
                 "save_as": "alias_2",
             },
             True,
         ),
         (
             {
-                "aggregation": {"function": "multiply", "operands": ["alias_0", "alias_1"]},
+                "aggregation": {"operation": "multiply", "operands": ["alias_0", "alias_1"]},
                 "save_as": "alias_2",
             },
             True,
         ),
         (
-            {"aggregation": {"function": "add", "operands": ["alias_0", "alias_1"]}, "save_as": "alias_2"},
+            {"aggregation": {"operation": "add", "operands": ["alias_0", "alias_1"]}, "save_as": "alias_2"},
             False,
         ),
         (
             {
-                "aggregation": {"function": "subtract", "operands": ["alias_0", "alias_1"]},
+                "aggregation": {"operation": "subtract", "operands": ["alias_0", "alias_1"]},
                 "save_as": "alias_2",
             },
             False,
         ),
         (
             {
-                "aggregation": {"function": "multiply", "operands": ["alias_0", "alias_1"]},
+                "aggregation": {"operation": "multiply", "operands": ["alias_0", "alias_1"]},
                 "save_as": "alias_2",
             },
             False,
@@ -2763,12 +2763,12 @@ def test_validate_expression_block_unknown_function(expression_block: dict[str, 
 @pytest.mark.parametrize(
     "expression_block, eager_termination",
     [
-        ({"aggregation": {"function": "add"}, "save_as": "alias_2"}, True),
-        ({"aggregation": {"function": "subtract"}, "save_as": "alias_2"}, True),
-        ({"aggregation": {"function": "multiply", "operands": []}, "save_as": "alias_2"}, True),
-        ({"aggregation": {"function": "add"}, "save_as": "alias_2"}, False),
-        ({"aggregation": {"function": "subtract"}, "save_as": "alias_2"}, False),
-        ({"aggregation": {"function": "multiply"}, "save_as": "alias_2"}, False),
+        ({"aggregation": {"operation": "add"}, "save_as": "alias_2"}, True),
+        ({"aggregation": {"operation": "subtract"}, "save_as": "alias_2"}, True),
+        ({"aggregation": {"operation": "multiply", "operands": []}, "save_as": "alias_2"}, True),
+        ({"aggregation": {"operation": "add"}, "save_as": "alias_2"}, False),
+        ({"aggregation": {"operation": "subtract"}, "save_as": "alias_2"}, False),
+        ({"aggregation": {"operation": "multiply"}, "save_as": "alias_2"}, False),
     ],
 )
 def test_validate_expression_block_missing_operands(expression_block: dict[str, Any], eager_termination: bool) -> None:
@@ -2787,24 +2787,24 @@ def test_validate_expression_block_missing_operands(expression_block: dict[str, 
 @pytest.mark.parametrize(
     "expression_block, selected_variables, eager_termination",
     [
-        ({"function": "sum", "operands": ["alias_0", "alias_1"], "mode": "aggregate"}, [[], []], True),
-        ({"function": "difference", "operands": ["alias_0", "alias_1"], "mode": "aggregate"}, [{}, {}], True),
+        ({"operation": "sum", "operands": ["alias_0", "alias_1"], "mode": "aggregate"}, [[], []], True),
+        ({"operation": "difference", "operands": ["alias_0", "alias_1"], "mode": "aggregate"}, [{}, {}], True),
         (
-            {"function": "average", "operands": ["alias_0", "alias_1"], "mode": "aggregate"},
+            {"operation": "average", "operands": ["alias_0", "alias_1"], "mode": "aggregate"},
             [[1, 2, 3], {"a": 1, "b": 2}],
             True,
         ),
         (
-            {"function": "product", "operands": ["alias_0", "alias_1"], "mode": "aggregate"},
+            {"operation": "product", "operands": ["alias_0", "alias_1"], "mode": "aggregate"},
             [[4, 5, 6], ["a", "b", "c"]],
             False,
         ),
         (
-            {"function": "division", "operands": ["alias_0", "alias_1"], "mode": "aggregate"},
+            {"operation": "division", "operands": ["alias_0", "alias_1"], "mode": "aggregate"},
             [{"a": [], "b": []}, [{}, {}]],
             False,
         ),
-        ({"function": "no_op", "operands": ["alias_0", "alias_1"], "mode": "aggregate"}, [[{}], []], False),
+        ({"operation": "no_op", "operands": ["alias_0", "alias_1"], "mode": "aggregate"}, [[{}], []], False),
     ],
 )
 def test_validate_expression_block_with_complex_variable_values_multiple_complex_variable(
@@ -2831,12 +2831,12 @@ def test_validate_expression_block_with_complex_variable_values_multiple_complex
 @pytest.mark.parametrize(
     "expression_block, selected_variables, eager_termination",
     [
-        ({"function": "sum", "operands": ["alias_0"]}, [[]], True),
-        ({"function": "difference", "operands": ["alias_0"]}, [{}], True),
-        ({"function": "average", "operands": ["alias_0"]}, [[1, 2, 3]], True),
-        ({"function": "product", "operands": ["alias_0"]}, [{"a": 1, "b": 2, "c": 3}], False),
-        ({"function": "division", "operands": ["alias_0"]}, [{"a": [], "b": []}], False),
-        ({"function": "no_op", "operands": ["alias_0"]}, [[{}]], False),
+        ({"operation": "sum", "operands": ["alias_0"]}, [[]], True),
+        ({"operation": "difference", "operands": ["alias_0"]}, [{}], True),
+        ({"operation": "average", "operands": ["alias_0"]}, [[1, 2, 3]], True),
+        ({"operation": "product", "operands": ["alias_0"]}, [{"a": 1, "b": 2, "c": 3}], False),
+        ({"operation": "division", "operands": ["alias_0"]}, [{"a": [], "b": []}], False),
+        ({"operation": "no_op", "operands": ["alias_0"]}, [[{}]], False),
     ],
 )
 def test_validate_expression_block_with_complex_variable_values_no_mode(
@@ -2863,8 +2863,8 @@ def test_validate_expression_block_with_complex_variable_values_no_mode(
 @pytest.mark.parametrize(
     "aggregation_block, eager_termination",
     [
-        ({"function": "sum", "operands": ["alias_0"], "mode": "unknown"}, True),
-        ({"function": "sum", "operands": ["alias_0"], "mode": "unknown"}, False),
+        ({"operation": "sum", "operands": ["alias_0"], "mode": "unknown"}, True),
+        ({"operation": "sum", "operands": ["alias_0"], "mode": "unknown"}, False),
     ],
 )
 def test_validate_aggregation_block_structure_unknown_mode(
@@ -2886,30 +2886,30 @@ def test_validate_aggregation_block_structure_unknown_mode(
     "expression_block, selected_variables, expected_result",
     [
         (
-            {"aggregation": {"function": "no_op", "operands": ["alias_0"], "mode": "element_wise"}},
+            {"aggregation": {"operation": "no_op", "operands": ["alias_0"], "mode": "element_wise"}},
             [[1, 2, 3]],
             [1, 2, 3],
         ),
-        ({"aggregation": {"function": "no_op", "operands": ["alias_0"], "mode": "element_wise"}}, [[]], []),
+        ({"aggregation": {"operation": "no_op", "operands": ["alias_0"], "mode": "element_wise"}}, [[]], []),
         (
             {
-                "aggregation": {"function": "no_op", "operands": ["alias_0"], "mode": "element_wise"},
+                "aggregation": {"operation": "no_op", "operands": ["alias_0"], "mode": "element_wise"},
                 "save_as": "abc",
             },
             [{"a": 1, "b": 2, "c": 3}],
             [1, 2, 3],
         ),
-        ({"aggregation": {"function": "no_op", "operands": ["alias_0"], "mode": "element_wise"}}, [{}], []),
+        ({"aggregation": {"operation": "no_op", "operands": ["alias_0"], "mode": "element_wise"}}, [{}], []),
         (
             {
-                "aggregation": {"function": "no_op", "operands": ["alias_0"], "mode": "element_wise"},
+                "aggregation": {"operation": "no_op", "operands": ["alias_0"], "mode": "element_wise"},
                 "save_as": "def",
             },
             [{"a": [], "b": []}],
             [[], []],
         ),
         (
-            {"aggregation": {"function": "no_op", "operands": ["alias_0"], "mode": "element_wise"}},
+            {"aggregation": {"operation": "no_op", "operands": ["alias_0"], "mode": "element_wise"}},
             [[{}, {}, {}]],
             [{}, {}, {}],
         ),
@@ -2940,35 +2940,35 @@ def test_evaluate_expression_element_wise_mode(
     "expression_block, selected_variables, expected_result",
     [
         (
-            {"aggregation": {"function": "sum", "operands": ["alias_0"], "mode": "aggregate"}},
+            {"aggregation": {"operation": "sum", "operands": ["alias_0"], "mode": "aggregate"}},
             [[1, 2, 3]],
             [6],
         ),
         (
-            {"aggregation": {"function": "difference", "operands": ["alias_0"], "mode": "aggregate"}},
+            {"aggregation": {"operation": "difference", "operands": ["alias_0"], "mode": "aggregate"}},
             [[]],
             [None],
         ),
         (
             {
-                "aggregation": {"function": "product", "operands": ["alias_0"], "mode": "aggregate"},
+                "aggregation": {"operation": "product", "operands": ["alias_0"], "mode": "aggregate"},
                 "save_as": "abc",
             },
             [{"a": 1, "b": 2, "c": 3}],
             [6],
         ),
         (
-            {"aggregation": {"function": "division", "operands": ["alias_0"], "mode": "aggregate"}},
+            {"aggregation": {"operation": "division", "operands": ["alias_0"], "mode": "aggregate"}},
             [{}],
             [None],
         ),
         (
-            {"aggregation": {"function": "no_op", "operands": ["a", "b", "c"]}, "save_as": "def"},
+            {"aggregation": {"operation": "no_op", "operands": ["a", "b", "c"]}, "save_as": "def"},
             [2, 5, 8],
             [2, 5, 8],
         ),
         (
-            {"aggregation": {"function": "average", "operands": ["a", "b", "c", "d", "e", "f", "g", "h"]}},
+            {"aggregation": {"operation": "average", "operands": ["a", "b", "c", "d", "e", "f", "g", "h"]}},
             [8, 7, 6, 5, 4, 3, 2, 1],
             [4.5],
         ),
@@ -3225,7 +3225,7 @@ def test_evaluate_condition_equal_length_branch(mocker: MockerFixture, eager_ter
     mock_equal_length = mocker.patch.object(cv, "_evaluate_equal_data_length", return_value=True)
 
     result = cv._evaluate_condition(
-        {"operator": "is_equal_length", "left_hand": {}, "right_hand": {}}, eager_termination
+        {"relationship": "is_equal_length", "left_hand": {}, "right_hand": {}}, eager_termination
     )
 
     assert result is True
@@ -3241,7 +3241,7 @@ def test_evaluate_condition_short_circuits_when_validation_fails(
     mocker.patch.object(cv, "_validate_condition_clause", return_value=False)
     mock_eval = mocker.patch.object(cv, "_evaluate_expression")
 
-    valid = cv._evaluate_condition({"operator": "equal"}, eager_termination)
+    valid = cv._evaluate_condition({"relationship": "equal"}, eager_termination)
 
     assert not valid
     mock_eval.assert_not_called()
@@ -3256,7 +3256,7 @@ def test_evaluate_condition_returns_false_when_side_not_evaluated(
     mocker.patch.object(cv, "_validate_condition_clause", return_value=True)
     mocker.patch.object(cv, "_evaluate_expression", side_effect=[("L", False), ("R", True)])
 
-    valid = cv._evaluate_condition({"operator": "equal", "left_hand": {}, "right_hand": {}}, eager_termination)
+    valid = cv._evaluate_condition({"relationship": "equal", "left_hand": {}, "right_hand": {}}, eager_termination)
 
     assert not valid
 
@@ -3269,7 +3269,7 @@ def test_evaluate_condition_equal_path(mocker: MockerFixture, eager_termination:
     mocker.patch.object(cv, "_evaluate_expression", side_effect=[("A", True), ("B", True)])
     mock_eq = mocker.patch.object(cv, "_evaluate_equal_condition", return_value=True)
 
-    valid = cv._evaluate_condition({"operator": "equal", "left_hand": {}, "right_hand": {}}, eager_termination)
+    valid = cv._evaluate_condition({"relationship": "equal", "left_hand": {}, "right_hand": {}}, eager_termination)
 
     assert valid
     mock_eq.assert_called_once_with("A", "B", eager_termination)
@@ -3284,7 +3284,7 @@ def test_evaluate_condition_greater_or_equal_path(mocker: MockerFixture, eager_t
     mock_ge = mocker.patch.object(cv, "_evaluate_greater_or_equal_condition", return_value=True)
 
     valid = cv._evaluate_condition(
-        {"operator": "greater_or_equal_to", "left_hand": {}, "right_hand": {}}, eager_termination
+        {"relationship": "greater_or_equal_to", "left_hand": {}, "right_hand": {}}, eager_termination
     )
 
     assert valid
@@ -3315,7 +3315,7 @@ def test_evaluate_condition_not_equal_inverts_equality(mocker: MockerFixture, ea
     mocker.patch.object(cv, "_evaluate_expression", side_effect=[("foo", True), ("bar", True)])
     mock_eq = mocker.patch.object(cv, "_evaluate_equal_condition", return_value=False)
 
-    valid = cv._evaluate_condition({"operator": "not_equal", "left_hand": {}, "right_hand": {}}, eager_termination)
+    valid = cv._evaluate_condition({"relationship": "not_equal", "left_hand": {}, "right_hand": {}}, eager_termination)
 
     assert valid
     mock_eq.assert_called_once_with("foo", "bar", eager_termination)
@@ -3329,7 +3329,7 @@ def test_evaluate_condition_is_of_type_passes_eager(mocker: MockerFixture, eager
     mocker.patch.object(cv, "_evaluate_expression", side_effect=[("text", True), ("string", True)])
     mock_is_type = mocker.patch.object(cv, "_evaluate_is_type", return_value=True)
 
-    valid = cv._evaluate_condition({"operator": "is_of_type", "left_hand": {}, "right_hand": {}}, eager_termination)
+    valid = cv._evaluate_condition({"relationship": "is_of_type", "left_hand": {}, "right_hand": {}}, eager_termination)
 
     assert valid
     mock_is_type.assert_called_once_with("text", "string", eager_termination)
@@ -3343,7 +3343,7 @@ def test_evaluate_condition_is_null_branch(mocker: MockerFixture, eager_terminat
     mocker.patch.object(cv, "_evaluate_expression", side_effect=[(None, True), ("ignored", True)])
     mock_is_null = mocker.patch.object(cv, "_evaluate_is_null", return_value=True)
 
-    valid = cv._evaluate_condition({"operator": "is_null", "left_hand": {}, "right_hand": {}}, eager_termination)
+    valid = cv._evaluate_condition({"relationship": "is_null", "left_hand": {}, "right_hand": {}}, eager_termination)
 
     assert valid
     mock_is_null.assert_called_once_with(None)
@@ -3357,7 +3357,7 @@ def test_evaluate_condition_regex_branch(mocker: MockerFixture, eager_terminatio
     mocker.patch.object(cv, "_evaluate_expression", side_effect=[("abc", True), (r"a.c", True)])
     mock_regex = mocker.patch.object(cv, "_evaluate_regex", return_value=True)
 
-    ok = cv._evaluate_condition({"operator": "regex", "left_hand": {}, "right_hand": {}}, eager_termination)
+    ok = cv._evaluate_condition({"relationship": "regex", "left_hand": {}, "right_hand": {}}, eager_termination)
 
     assert ok is True
     mock_regex.assert_called_once_with("abc", r"a.c")
@@ -3381,7 +3381,7 @@ def test_validate_condition_clause_ok(mocker: MockerFixture) -> None:
     mocker.patch.object(v, "_validate_relationship", return_value=True)
     mocker.patch.object(v, "_validate_expression_block", return_value=True)
     log = mocker.patch.object(v, "_log_missing_condition_clause_field")
-    clause = {"left_hand": {"aggregation": {}}, "right_hand": {"aggregation": {}}, "operator": "equal"}
+    clause = {"left_hand": {"aggregation": {}}, "right_hand": {"aggregation": {}}, "relationship": "equal"}
     result = v._validate_condition_clause(clause, eager_termination=False)
     assert result is True
     log.assert_not_called()
@@ -3392,7 +3392,7 @@ def test_validate_condition_clause_missing_both_no_eager(mocker: MockerFixture) 
     v = CrossValidator()
     mocker.patch.object(v, "_validate_relationship", return_value=True)
     log = mocker.patch.object(v, "_log_missing_condition_clause_field")
-    clause = {"operator": "equal"}
+    clause = {"relationship": "equal"}
     result = v._validate_condition_clause(clause, eager_termination=False)
     assert result is False
     assert log.call_args_list == [call("left hand"), call("right hand")]
@@ -3403,7 +3403,7 @@ def test_validate_condition_clause_missing_left_no_eager(mocker: MockerFixture) 
     v = CrossValidator()
     mocker.patch.object(v, "_validate_relationship", return_value=True)
     log = mocker.patch.object(v, "_log_missing_condition_clause_field")
-    clause = {"right_hand": 2, "operator": "equal"}
+    clause = {"right_hand": 2, "relationship": "equal"}
     result = v._validate_condition_clause(clause, eager_termination=False)
     assert result is False
     assert log.call_args_list == [call("left hand")]
@@ -3414,7 +3414,7 @@ def test_validate_condition_clause_missing_right_no_eager(mocker: MockerFixture)
     v = CrossValidator()
     mocker.patch.object(v, "_validate_relationship", return_value=True)
     log = mocker.patch.object(v, "_log_missing_condition_clause_field")
-    clause = {"left_hand": 1, "operator": "equal"}
+    clause = {"left_hand": 1, "relationship": "equal"}
     result = v._validate_condition_clause(clause, eager_termination=False)
     assert result is False
     assert log.call_args_list == [call("right hand")]
@@ -3425,7 +3425,7 @@ def test_validate_condition_clause_missing_both_eager_raises(mocker: MockerFixtu
     v = CrossValidator()
     mocker.patch.object(v, "_validate_relationship", return_value=True)
     log = mocker.patch.object(v, "_log_missing_condition_clause_field")
-    clause = {"operator": "equal"}
+    clause = {"relationship": "equal"}
     with pytest.raises(KeyError):
         v._validate_condition_clause(clause, eager_termination=True)
     assert log.call_args_list == [call("left hand"), call("right hand")]
@@ -3436,7 +3436,7 @@ def test_validate_condition_clause_invalid_relationship(mocker: MockerFixture) -
     v = CrossValidator()
     mocker.patch.object(v, "_validate_relationship", return_value=False)
     log = mocker.patch.object(v, "_log_missing_condition_clause_field")
-    clause = {"left_hand": 1, "right_hand": 2, "operator": "bogus"}
+    clause = {"left_hand": 1, "right_hand": 2, "relationship": "bogus"}
     result = v._validate_condition_clause(clause, eager_termination=False)
     assert result is False
     log.assert_not_called()
@@ -3462,8 +3462,8 @@ def test_log_missing_condition_clause_field_only() -> None:
                 "mode": "filter",
                 "in": "items",
                 "field": "type",
-                "compare_value": "target_type",
-                "operator": "equal",
+                "value_to_compare": "target_type",
+                "relationship":"equal",
             },
             [
                 [{"type": "A", "val": 1}, {"type": "B", "val": 2}, {"type": "A", "val": 3}],
@@ -3477,8 +3477,8 @@ def test_log_missing_condition_clause_field_only() -> None:
                 "mode": "filter",
                 "in": "items",
                 "field": "type",
-                "compare_value": "target_type",
-                "operator": "equal",
+                "value_to_compare": "target_type",
+                "relationship":"equal",
             },
             [
                 [{"type": "X"}, {"type": "Y"}],
@@ -3492,8 +3492,8 @@ def test_log_missing_condition_clause_field_only() -> None:
                 "mode": "enforce",
                 "in": "items",
                 "field": "status",
-                "compare_value": "expected_status",
-                "operator": "equal",
+                "value_to_compare": "expected_status",
+                "relationship":"equal",
             },
             [
                 [{"status": "ok"}, {"status": "ok"}],
@@ -3507,8 +3507,8 @@ def test_log_missing_condition_clause_field_only() -> None:
                 "mode": "enforce",
                 "in": "items",
                 "field": "status",
-                "compare_value": "expected_status",
-                "operator": "equal",
+                "value_to_compare": "expected_status",
+                "relationship":"equal",
             },
             [
                 [{"status": "ok"}, {"status": "fail"}],
@@ -3537,8 +3537,8 @@ def test_validate_for_each_block_unknown_operator_no_eager() -> None:
         "mode": "filter",
         "in": "items",
         "field": "x",
-        "compare_value": "cmp",
-        "operator": "unknown_rel",
+        "value_to_compare": "cmp",
+        "relationship": "unknown_rel",
     }
     valid = cv._validate_for_each_block_structure(for_each_block, eager_termination=False)
     assert valid is False
@@ -3552,10 +3552,10 @@ def test_validate_for_each_block_unknown_operator_eager() -> None:
         "mode": "filter",
         "in": "items",
         "field": "x",
-        "compare_value": "cmp",
-        "operator": "unknown_rel",
+        "value_to_compare": "cmp",
+        "relationship": "unknown_rel",
     }
-    with pytest.raises(ValueError, match="Invalid operator"):
+    with pytest.raises(ValueError, match="Invalid relationship"):
         cv._validate_for_each_block_structure(for_each_block, eager_termination=True)
 
 
@@ -3567,8 +3567,8 @@ def test_evaluate_expression_with_for_each_block_and_save_as(mocker: MockerFixtu
             "mode": "filter",
             "in": "items",
             "field": "type",
-            "compare_value": "cmp",
-            "operator": "equal",
+            "value_to_compare": "cmp",
+            "relationship":"equal",
         },
         "save_as": "filtered_items",
     }
@@ -3822,7 +3822,7 @@ def test_evaluate_aggregation_block_returns_none_false_when_complex_validation_f
     cv._alias_pool = {"alias_a": [1, 2, 3]}
     mocker.patch.object(cv, "_validate_expression_block_with_complex_variable_values", return_value=False)
 
-    aggregation_block = {"function": "sum", "operands": ["alias_a"], "mode": "aggregate"}
+    aggregation_block = {"operation": "sum", "operands": ["alias_a"], "mode": "aggregate"}
     result, evaluated = cv._evaluate_aggregation_block(aggregation_block, eager_termination=False, relationship="equal")
 
     assert result is None
@@ -3859,8 +3859,8 @@ def test_build_comparand_getter_returns_none_when_alias_unresolved(mocker: Mocke
     mocker.patch.object(cv, "_get_alias_value", return_value=None)
 
     result = cv._build_comparand_getter(
-        compare_value_alias="missing_alias",
-        compare_field=None,
+        value_to_compare_alias="missing_alias",
+        field_to_compare=None,
         eager_termination=False,
         outer_relationship="equal",
     )
@@ -3873,8 +3873,8 @@ def test_build_comparand_getter_returns_callable_for_compare_field() -> None:
     cv = CrossValidator()
 
     getter = cv._build_comparand_getter(
-        compare_value_alias=None,
-        compare_field="score",
+        value_to_compare_alias=None,
+        field_to_compare="score",
         eager_termination=False,
         outer_relationship="equal",
     )
@@ -3889,7 +3889,7 @@ def test_evaluate_for_each_block_returns_none_false_when_source_fails(mocker: Mo
     cv = CrossValidator()
     mocker.patch.object(cv, "_resolve_for_each_source", return_value=None)
 
-    iter_block = {"in": "src", "field": "x", "compare_value": "cmp", "operator": "equal", "mode": "filter"}
+    iter_block = {"in": "src", "field": "x", "value_to_compare": "cmp", "relationship": "equal", "mode": "filter"}
     result, evaluated = cv._evaluate_for_each_block(iter_block, eager_termination=False, outer_relationship="equal")
 
     assert result is None
@@ -3902,7 +3902,7 @@ def test_evaluate_for_each_block_returns_none_false_when_comparand_fails(mocker:
     mocker.patch.object(cv, "_resolve_for_each_source", return_value=[{"x": 1}])
     mocker.patch.object(cv, "_build_comparand_getter", return_value=None)
 
-    iter_block = {"in": "src", "field": "x", "compare_value": "cmp", "operator": "equal", "mode": "filter"}
+    iter_block = {"in": "src", "field": "x", "value_to_compare": "cmp", "relationship": "equal", "mode": "filter"}
     result, evaluated = cv._evaluate_for_each_block(iter_block, eager_termination=False, outer_relationship="equal")
 
     assert result is None
@@ -3947,9 +3947,9 @@ def test_validate_expression_block_dispatches_to_for_each_validator(mocker: Mock
     "aggregation_block, eager_termination",
     [
         ({"operands": ["a", "b"]}, False),
-        ({"operands": ["a", "b"], "function": "no_op"}, False),
+        ({"operands": ["a", "b"], "operation": "no_op"}, False),
         ({"operands": ["a", "b"]}, True),
-        ({"operands": ["a", "b"], "function": "no_op"}, True),
+        ({"operands": ["a", "b"], "operation": "no_op"}, True),
     ],
 )
 def test_validate_aggregation_block_structure_multi_operand_no_op(
@@ -3973,7 +3973,7 @@ def test_validate_aggregation_block_structure_returns_true_when_valid() -> None:
     cv = CrossValidator()
 
     result = cv._validate_aggregation_block_structure(
-        {"operands": ["a", "b"], "function": "sum"}, eager_termination=False
+        {"operands": ["a", "b"], "operation": "sum"}, eager_termination=False
     )
 
     assert result is True
@@ -4008,9 +4008,9 @@ def test_validate_for_each_block_structure_invalid_mode(
 @pytest.mark.parametrize(
     "for_each_block, eager_termination",
     [
-        ({"mode": "filter", "compare_value": "cmp", "operator": "equal"}, False),
-        ({"mode": "filter", "in": "src", "compare_value": "cmp", "operator": "equal"}, False),
-        ({"mode": "filter", "compare_value": "cmp", "operator": "equal"}, True),
+        ({"mode": "filter", "value_to_compare": "cmp", "relationship": "equal"}, False),
+        ({"mode": "filter", "in": "src", "value_to_compare": "cmp", "relationship": "equal"}, False),
+        ({"mode": "filter", "value_to_compare": "cmp", "relationship": "equal"}, True),
     ],
 )
 def test_validate_for_each_block_structure_missing_required_keys(
@@ -4032,19 +4032,19 @@ def test_validate_for_each_block_structure_missing_required_keys(
 @pytest.mark.parametrize(
     "for_each_block, eager_termination",
     [
-        ({"mode": "filter", "in": "src", "field": "x", "operator": "equal"}, False),
+        ({"mode": "filter", "in": "src", "field": "x", "relationship": "equal"}, False),
         (
             {
                 "mode": "filter",
                 "in": "src",
                 "field": "x",
-                "compare_value": "cmp",
-                "compare_field": "y",
-                "operator": "equal",
+                "value_to_compare": "cmp",
+                "field_to_compare": "y",
+                "relationship":"equal",
             },
             False,
         ),
-        ({"mode": "filter", "in": "src", "field": "x", "operator": "equal"}, True),
+        ({"mode": "filter", "in": "src", "field": "x", "relationship": "equal"}, True),
     ],
 )
 def test_validate_for_each_block_structure_invalid_comparison_target(
@@ -4072,8 +4072,8 @@ def test_validate_for_each_block_structure_returns_true_when_valid() -> None:
             "mode": "filter",
             "in": "src",
             "field": "x",
-            "compare_value": "cmp",
-            "operator": "equal",
+            "value_to_compare": "cmp",
+            "relationship":"equal",
         },
         eager_termination=False,
     )
@@ -4091,7 +4091,7 @@ def test_validate_condition_clause_sets_valid_false_when_expression_block_invali
     mocker.patch.object(cv, "_validate_expression_block", return_value=False)
 
     condition_clause = {
-        "operator": "equal",
+        "relationship": "equal",
         "left_hand": {"aggregation": {"operands": ["a"]}},
         "right_hand": {"aggregation": {"operands": ["b"]}},
     }
@@ -4122,7 +4122,7 @@ def test_evaluate_condition_clause_array_returns_false_on_unsatisfied_clause(
     cv = CrossValidator()
     mocker.patch.object(cv, "_evaluate_condition", side_effect=[True, False, True])
 
-    clauses = [{"operator": "equal"}, {"operator": "equal"}, {"operator": "equal"}]
+    clauses = [{"relationship": "equal"}, {"relationship": "equal"}, {"relationship": "equal"}]
     result = cv._evaluate_condition_clause_array(clauses, eager_termination=False)
 
     assert result is False

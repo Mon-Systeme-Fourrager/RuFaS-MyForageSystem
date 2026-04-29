@@ -1921,11 +1921,11 @@ class CrossValidator:
         Two mutually exclusive sub-block forms are supported for the expression block:
 
         Aggregation form:
-        ``{"aggregation": {"function": "...", "operands": [...], "mode": "..."}, "save_as": "..."}``
+        ``{"aggregation": {"operation": "...", "operands": [...], "mode": "..."}, "save_as": "..."}``
 
         Array-of-dicts form:
-        ``{"for_each": {"in": "...", "field": "...", "compare_value": "..." | "compare_field": "...",
-        "operator": "...", "mode": "filter" | "enforce"}, "save_as": "..."}``
+        ``{"for_each": {"in": "...", "field": "...", "value_to_compare": "..." | "field_to_compare": "...",
+        "relationship": "...", "mode": "filter" | "enforce"}, "save_as": "..."}``
         """
         if "for_each" in expression_block:
             result, evaluated = self._evaluate_for_each_block(
@@ -1985,7 +1985,7 @@ class CrossValidator:
         -----
         Expected keys in ``aggregation_block``:
 
-        - ``function``: aggregation function name (e.g. ``"sum"``, ``"no_op"``).
+        - ``operation``: aggregation function name (e.g. ``"sum"``, ``"no_op"``).
           Defaults to ``"no_op"`` when absent.
         - ``operands``: list of alias names to resolve and aggregate.
         - ``mode``: ``"element_wise"`` or ``"aggregate"`` — required when any
@@ -1998,13 +1998,13 @@ class CrossValidator:
 
         .. code-block:: python
 
-            {"function": "sum", "operands": ["alias_a", "alias_b"]}
+            {"operation": "sum", "operands": ["alias_a", "alias_b"]}
 
         Pass a single alias through without aggregation:
 
         .. code-block:: python
 
-            {"function": "no_op", "operands": ["alias_a"]}
+            {"operation": "no_op", "operands": ["alias_a"]}
 
         Element-wise operation on a list variable:
 
@@ -2012,7 +2012,7 @@ class CrossValidator:
 
             {"operands": ["alias_list"], "mode": "element_wise"}
         """
-        operation = aggregation_block.get("function", "no_op")
+        operation = aggregation_block.get("operation", "no_op")
         aggregator = AGGREGATION_FUNCTIONS[operation]
         ordered_variable_alias: list[str] = aggregation_block["operands"]
         ordered_values: list[Any] = []
@@ -2072,26 +2072,26 @@ class CrossValidator:
 
     def _build_comparand_getter(
         self,
-        compare_value_alias: str | None,
-        compare_field: str | None,
+        value_to_compare_alias: str | None,
+        field_to_compare: str | None,
         eager_termination: bool,
         outer_relationship: str,
     ) -> Callable[[dict[str, Any]], list[Any]] | None:
         """
         Builds a callable that produces the right-hand comparison value for each entry.
 
-        When ``compare_value_alias`` is given, the alias is resolved once from the pool
-        and the same value is reused for every entry. When ``compare_field`` is given,
+        When ``value_to_compare_alias`` is given, the alias is resolved once from the pool
+        and the same value is reused for every entry. When ``field_to_compare`` is given,
         the value is read from that key within each entry at call time.
 
         Parameters
         ----------
-        compare_value_alias : str or None
+        value_to_compare_alias : str or None
             Alias name for a scalar comparison value. Mutually exclusive with
-            ``compare_field``.
-        compare_field : str or None
+            ``field_to_compare``.
+        field_to_compare : str or None
             Key within each dict entry to use as the right-hand value. Mutually exclusive
-            with ``compare_value_alias``.
+            with ``value_to_compare_alias``.
         eager_termination : bool
             Whether to raise on alias-pool lookup error.
         outer_relationship : str
@@ -2103,15 +2103,15 @@ class CrossValidator:
             A callable ``(entry) -> list`` on success, or ``None`` if alias resolution
             fails.
         """
-        if compare_value_alias is not None:
-            comparison_value = self._get_alias_value(compare_value_alias, eager_termination, outer_relationship)
+        if value_to_compare_alias is not None:
+            comparison_value = self._get_alias_value(value_to_compare_alias, eager_termination, outer_relationship)
             if comparison_value is None:
                 return None
             if not isinstance(comparison_value, list):
                 comparison_value = [comparison_value]
             return lambda _entry: comparison_value
-        assert compare_field is not None
-        return lambda entry: [entry.get(compare_field)]
+        assert field_to_compare is not None
+        return lambda entry: [entry.get(field_to_compare)]
 
     def _evaluate_for_each_block(
         self, iter_block: dict[str, Any], eager_termination: bool, outer_relationship: str
@@ -2140,11 +2140,11 @@ class CrossValidator:
 
         - ``in``: alias for the ``list[dict]`` value in the alias pool.
         - ``field``: key within each dict entry to evaluate.
-        - ``compare_value``: alias for a scalar comparison value. Mutually
-          exclusive with ``compare_field``.
-        - ``compare_field``: key within each dict entry used as the right-hand
-          comparand. Mutually exclusive with ``compare_value``.
-        - ``operator``: one of the supported operator strings (e.g. ``"equal"``).
+        - ``value_to_compare``: alias for a scalar comparison value. Mutually
+          exclusive with ``field_to_compare``.
+        - ``field_to_compare``: key within each dict entry used as the right-hand
+          comparand. Mutually exclusive with ``value_to_compare``.
+        - ``relationship``: one of the supported relationship strings (e.g. ``"equal"``).
         - ``mode``: ``"filter"`` to return the matching subset; ``"enforce"`` to
           return ``[True]`` when all entries satisfy, otherwise ``[False]``.
 
@@ -2157,8 +2157,8 @@ class CrossValidator:
             {
                 "in": "alias_list",
                 "field": "status",
-                "compare_value": "alias_status",
-                "operator": "equal",
+                "value_to_compare": "alias_status",
+                "relationship": "equal",
                 "mode": "filter"
             }
 
@@ -2169,26 +2169,26 @@ class CrossValidator:
             {
                 "in": "alias_list",
                 "field": "age",
-                "compare_field": "min_age",
-                "operator": "greater_than",
+                "field_to_compare": "min_age",
+                "relationship": "greater_than",
                 "mode": "enforce"
             }
         """
         source_alias: str = iter_block["in"]
         field: str = iter_block["field"]
-        compare_value_alias: str | None = iter_block.get("compare_value", None)
-        compare_field: str | None = iter_block.get("compare_field", None)
-        operator: str = iter_block["operator"]
+        value_to_compare_alias: str | None = iter_block.get("value_to_compare", None)
+        field_to_compare: str | None = iter_block.get("field_to_compare", None)
+        relationship: str = iter_block["relationship"]
         mode: str = iter_block["mode"]
 
-        compare_function = self.relation_mapping[operator]
+        compare_function = self.relation_mapping[relationship]
 
         array_of_dicts = self._resolve_for_each_source(source_alias, eager_termination, outer_relationship)
         if array_of_dicts is None:
             return None, False
 
         comparand_for = self._build_comparand_getter(
-            compare_value_alias, compare_field, eager_termination, outer_relationship
+            value_to_compare_alias, field_to_compare, eager_termination, outer_relationship
         )
         if comparand_for is None:
             return None, False
@@ -2344,9 +2344,9 @@ class CrossValidator:
         The following rules are enforced:
 
         - ``operands`` must be a non-empty list.
-        - When ``operands`` has more than one entry, ``function`` must be provided
+        - When ``operands`` has more than one entry, ``operation`` must be provided
           and cannot be ``"no_op"``.
-        - ``function``, when provided, must be a known aggregation function.
+        - ``operation``, when provided, must be a known aggregation function.
         - ``mode``, when provided, must be ``"element_wise"`` or ``"aggregate"``.
         """
         function_name = self._validate_aggregation_block_structure.__name__
@@ -2362,30 +2362,30 @@ class CrossValidator:
                 raise ValueError("Cross-validation error: 'operands' must be a non-empty list in aggregation block.")
             return False
 
-        function = aggregation_block.get("function")
+        operation = aggregation_block.get("operation")
         if len(operands) > 1:
-            if not function or function == "no_op":
+            if not operation or operation == "no_op":
                 self._log_cross_validation_error(
-                    "Invalid function for multi-operand aggregation",
-                    "When 'operands' has more than one entry, 'function' must be provided and " "cannot be 'no_op'.",
+                    "Invalid operation for multi-operand aggregation",
+                    "When 'operands' has more than one entry, 'operation' must be provided and " "cannot be 'no_op'.",
                     function_name,
                 )
                 if eager_termination:
                     raise ValueError(
-                        "Cross-validation error: 'function' must be provided and cannot be 'no_op' "
+                        "Cross-validation error: 'operation' must be provided and cannot be 'no_op' "
                         "when 'operands' has more than one entry."
                     )
                 return False
 
-        if function is not None and function not in AGGREGATION_FUNCTIONS:
+        if operation is not None and operation not in AGGREGATION_FUNCTIONS:
             self._log_cross_validation_error(
-                "Unknown aggregation function",
-                f"Unknown function '{function}' in aggregation block. "
+                "Unknown aggregation operation",
+                f"Unknown operation '{operation}' in aggregation block. "
                 f"Expected one of {list(AGGREGATION_FUNCTIONS.keys())}.",
                 function_name,
             )
             if eager_termination:
-                raise ValueError(f"Cross-validation error: Unknown function '{function}' in aggregation block.")
+                raise ValueError(f"Cross-validation error: Unknown operation '{operation}' in aggregation block.")
             return False
 
         mode = aggregation_block.get("mode")
@@ -2428,8 +2428,8 @@ class CrossValidator:
 
         - ``mode`` must be present and be either ``"enforce"`` or ``"filter"``.
         - ``in`` and ``field`` must both be present and non-empty.
-        - Exactly one of ``compare_value`` or ``compare_field`` must be provided.
-        - ``operator`` must be present and be a known relation string.
+        - Exactly one of ``value_to_compare`` or ``field_to_compare`` must be provided.
+        - ``relationship`` must be present and be a known relation string.
         """
         function_name = self._validate_for_each_block_structure.__name__
 
@@ -2455,30 +2455,30 @@ class CrossValidator:
                 raise ValueError(f"Cross-validation error: Missing required key(s) {missing} in for_each block.")
             return False
 
-        has_compare_value = "compare_value" in for_each_block
-        has_compare_field = "compare_field" in for_each_block
-        if has_compare_value == has_compare_field:
+        has_value_to_compare = "value_to_compare" in for_each_block
+        has_field_to_compare = "field_to_compare" in for_each_block
+        if has_value_to_compare == has_field_to_compare:
             self._log_cross_validation_error(
                 "Invalid comparison target in for_each block",
-                "Exactly one of 'compare_value' or 'compare_field' must be provided in " "for_each block.",
+                "Exactly one of 'value_to_compare' or 'field_to_compare' must be provided in " "for_each block.",
                 function_name,
             )
             if eager_termination:
                 raise ValueError(
-                    "Cross-validation error: Exactly one of 'compare_value' or 'compare_field' "
+                    "Cross-validation error: Exactly one of 'value_to_compare' or 'field_to_compare' "
                     "must be provided in for_each block."
                 )
             return False
 
-        operator = for_each_block.get("operator")
-        if operator not in self.relation_mapping:
+        relationship = for_each_block.get("relationship")
+        if relationship not in self.relation_mapping:
             self._log_cross_validation_error(
-                "Invalid or missing operator in for_each block",
-                f"'operator' must be one of {list(self.relation_mapping.keys())}. " f"Got: {operator!r}.",
+                "Invalid or missing relationship in for_each block",
+                f"'relationship' must be one of {list(self.relation_mapping.keys())}. " f"Got: {relationship!r}.",
                 function_name,
             )
             if eager_termination:
-                raise ValueError(f"Cross-validation error: Invalid operator '{operator}' in for_each block.")
+                raise ValueError(f"Cross-validation error: Invalid relationship '{relationship}' in for_each block.")
             return False
 
         return True
@@ -2503,7 +2503,7 @@ class CrossValidator:
         """
         if not self._validate_condition_clause(condition_clause, eager_termination):
             return False
-        relationship = condition_clause.get("operator", "")
+        relationship = condition_clause.get("relationship", "")
         left_hand, left_evaluated = self._evaluate_expression(
             condition_clause["left_hand"], eager_termination, relationship
         )
@@ -2514,18 +2514,18 @@ class CrossValidator:
         if not (left_evaluated and right_evaluated):
             return False
 
-        evaluation_function = self.relation_mapping[condition_clause["operator"]]
+        evaluation_function = self.relation_mapping[condition_clause["relationship"]]
         return evaluation_function(left_hand, right_hand, eager_termination)
 
     def _validate_condition_clause(self, condition_clause: dict[str, Any], eager_termination: bool) -> bool:
         """Validate the whole condition block."""
         left_expression = condition_clause.get("left_hand", False)
         right_expression = condition_clause.get("right_hand", False)
-        relationship = condition_clause.get("operator", False)
+        relationship = condition_clause.get("relationship", False)
         fields = {
             "left hand": left_expression,
             "right hand": right_expression,
-            "operator": relationship,
+            "relationship": relationship,
         }
         valid = True
         if self._validate_relationship(relationship, eager_termination):
