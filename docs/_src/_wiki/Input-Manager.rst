@@ -578,7 +578,7 @@ Supported relationship operators:
 +-------------------------+-----------------------------------------------+
 | ``greater``             | LHS > RHS (pairwise when both are lists)      |
 +-------------------------+-----------------------------------------------+
-| ``greater_or_equal_to`` | LHS >= RHS (pairwise when both are lists)    |
+| ``greater_or_equal_to`` | LHS >= RHS (pairwise when both are lists)     |
 +-------------------------+-----------------------------------------------+
 | ``is_of_type``          | All LHS values match the type string in RHS   |
 |                         | (``"string"``, ``"integer"``, ``"float"``,    |
