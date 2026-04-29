@@ -3463,7 +3463,7 @@ def test_log_missing_condition_clause_field_only() -> None:
                 "in": "items",
                 "field": "type",
                 "value_to_compare": "target_type",
-                "relationship":"equal",
+                "relationship": "equal",
             },
             [
                 [{"type": "A", "val": 1}, {"type": "B", "val": 2}, {"type": "A", "val": 3}],
@@ -3478,7 +3478,7 @@ def test_log_missing_condition_clause_field_only() -> None:
                 "in": "items",
                 "field": "type",
                 "value_to_compare": "target_type",
-                "relationship":"equal",
+                "relationship": "equal",
             },
             [
                 [{"type": "X"}, {"type": "Y"}],
@@ -3493,7 +3493,7 @@ def test_log_missing_condition_clause_field_only() -> None:
                 "in": "items",
                 "field": "status",
                 "value_to_compare": "expected_status",
-                "relationship":"equal",
+                "relationship": "equal",
             },
             [
                 [{"status": "ok"}, {"status": "ok"}],
@@ -3508,7 +3508,7 @@ def test_log_missing_condition_clause_field_only() -> None:
                 "in": "items",
                 "field": "status",
                 "value_to_compare": "expected_status",
-                "relationship":"equal",
+                "relationship": "equal",
             },
             [
                 [{"status": "ok"}, {"status": "fail"}],
@@ -3568,7 +3568,7 @@ def test_evaluate_expression_with_for_each_block_and_save_as(mocker: MockerFixtu
             "in": "items",
             "field": "type",
             "value_to_compare": "cmp",
-            "relationship":"equal",
+            "relationship": "equal",
         },
         "save_as": "filtered_items",
     }
@@ -4040,7 +4040,7 @@ def test_validate_for_each_block_structure_missing_required_keys(
                 "field": "x",
                 "value_to_compare": "cmp",
                 "field_to_compare": "y",
-                "relationship":"equal",
+                "relationship": "equal",
             },
             False,
         ),
@@ -4073,7 +4073,7 @@ def test_validate_for_each_block_structure_returns_true_when_valid() -> None:
             "in": "src",
             "field": "x",
             "value_to_compare": "cmp",
-            "relationship":"equal",
+            "relationship": "equal",
         },
         eager_termination=False,
     )
