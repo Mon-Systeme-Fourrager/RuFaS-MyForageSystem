@@ -582,6 +582,7 @@ def test_report_daily_routine_outputs(herd_manager: HerdManager, mocker: MockerF
     mock_report_305d_milk = mocker.patch(
         "RUFAS.biophysical.animal.animal_module_reporter.AnimalModuleReporter.report_305d_milk"
     )
+    mock_report_m305 = mocker.patch("RUFAS.biophysical.animal.animal_module_reporter.AnimalModuleReporter.report_m305")
     mock_report_ration = mocker.patch.object(herd_manager, "_report_ration")
     mock_calculate_and_report_average_genetics = mocker.patch.object(
         herd_manager, "_calculate_and_report_average_genetics"
@@ -598,6 +599,12 @@ def test_report_daily_routine_outputs(herd_manager: HerdManager, mocker: MockerF
     mock_report_manure_streams.assert_called_once_with(herd_manager_output, 15)
     mock_report_milk.assert_called_once_with(herd_manager.daily_milk_report, 15)
     mock_report_305d_milk.assert_called_once()
+    mock_report_m305.assert_called_once_with(
+        herd_manager._average_m305_for_cows(herd_manager.cows),
+        herd_manager.average_l1_m305,
+        herd_manager.average_l2_m305,
+        herd_manager.average_l3_plus_m305,
+    )
     mock_report_ration.assert_called_once_with(15)
     mock_calculate_and_report_average_genetics.assert_called_once_with(15)
 
@@ -671,6 +678,7 @@ def test_daily_routines(herd_manager: HerdManager, mock_herd: dict[str, list[Ani
     mock_report_305d_milk = mocker.patch(
         "RUFAS.biophysical.animal.animal_module_reporter.AnimalModuleReporter.report_305d_milk"
     )
+    mock_report_m305 = mocker.patch("RUFAS.biophysical.animal.animal_module_reporter.AnimalModuleReporter.report_m305")
     mock_report_ration = mocker.patch.object(herd_manager, "_report_ration")
 
     for pen in herd_manager.all_pens:
@@ -706,7 +714,13 @@ def test_daily_routines(herd_manager: HerdManager, mock_herd: dict[str, list[Ani
     mock_report_manure_streams.assert_called_once()
     mock_report_manure_excretions.assert_called_once()
     mock_report_milk.assert_called_once()
-    mock_report_305d_milk.assert_called_once()
+    mock_report_305d_milk.assert_called_once_with(herd_manager.average_herd_305_days_milk_production)
+    mock_report_m305.assert_called_once_with(
+        herd_manager._average_m305_for_cows(herd_manager.cows),
+        herd_manager.average_l1_m305,
+        herd_manager.average_l2_m305,
+        herd_manager.average_l3_plus_m305,
+    )
     mock_report_ration.assert_called_once()
 
 
@@ -764,6 +778,7 @@ def _create_sortable_mock_cow(
 
     cow.milk_production = MagicMock()
     cow.milk_production.daily_milk_produced = daily_milk
+    cow.milk_production.mature_305_day_prediction = daily_milk
 
     cow.days_in_milk = days_in_milk
     cow.days_in_pregnancy = days_in_pregnancy
@@ -804,6 +819,7 @@ def test_check_if_cows_need_to_be_sold_comprehensive(herd_manager: HerdManager, 
         fillers.append(_create_sortable_mock_cow(10 + i, False, 100.0, 200, 20))
 
     fillers[0].milk_production.daily_milk_produced = 90.0
+    fillers[0].milk_production.mature_305_day_prediction = 90.0
 
     all_cows = [
         cow_dnb_low_milk,
