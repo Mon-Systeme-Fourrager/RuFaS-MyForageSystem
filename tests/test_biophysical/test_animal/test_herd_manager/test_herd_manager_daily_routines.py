@@ -582,6 +582,7 @@ def test_report_daily_routine_outputs(herd_manager: HerdManager, mocker: MockerF
     mock_report_305d_milk = mocker.patch(
         "RUFAS.biophysical.animal.animal_module_reporter.AnimalModuleReporter.report_305d_milk"
     )
+    mock_report_m305 = mocker.patch("RUFAS.biophysical.animal.animal_module_reporter.AnimalModuleReporter.report_m305")
     mock_report_ration = mocker.patch.object(herd_manager, "_report_ration")
     mock_calculate_and_report_average_genetics = mocker.patch.object(
         herd_manager, "_calculate_and_report_average_genetics"
@@ -598,6 +599,12 @@ def test_report_daily_routine_outputs(herd_manager: HerdManager, mocker: MockerF
     mock_report_manure_streams.assert_called_once_with(herd_manager_output, 15)
     mock_report_milk.assert_called_once_with(herd_manager.daily_milk_report, 15)
     mock_report_305d_milk.assert_called_once()
+    mock_report_m305.assert_called_once_with(
+        herd_manager._average_m305_for_cows(herd_manager.cows),
+        herd_manager.average_l1_m305,
+        herd_manager.average_l2_m305,
+        herd_manager.average_l3_plus_m305,
+    )
     mock_report_ration.assert_called_once_with(15)
     mock_calculate_and_report_average_genetics.assert_called_once_with(15)
 

@@ -716,6 +716,12 @@ class HerdManager:
         AnimalModuleReporter.report_manure_streams(herd_manager_output, simulation_day)
         AnimalModuleReporter.report_milk(self.daily_milk_report, simulation_day)
         AnimalModuleReporter.report_305d_milk(self.average_herd_305_days_milk_production)
+        AnimalModuleReporter.report_m305(
+            self._average_m305_for_cows(self.cows),
+            self.average_l1_m305,
+            self.average_l2_m305,
+            self.average_l3_plus_m305,
+        )
         self._report_ration(simulation_day)
         self._calculate_and_report_average_genetics(simulation_day)
 
