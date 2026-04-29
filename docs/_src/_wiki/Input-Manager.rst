@@ -533,11 +533,12 @@ Template:
      "rules":      [ <condition clause>, ... ]
    }
 
+
 Aliases
 '''''''
 
 The ``aliases`` block populates a local *alias pool* used only while
-evaluating this validation block. It has two optional sub-keys:
+evaluating cross validation rules. It has two optional sub-keys:
 
 - ``variables`` — a mapping of alias name → dot-separated address.
   Input Manager resolves each address against the IM data pool (the
@@ -549,6 +550,7 @@ evaluating this validation block. It has two optional sub-keys:
 
 Only the keys ``variables`` and ``constants`` are accepted; any other
 key in ``aliases`` is treated as an error.
+
 
 Condition clauses
 '''''''''''''''''
@@ -567,27 +569,27 @@ right-hand expression using a relationship operator:
 
 Supported relationship operators:
 
-+-----------------------+-----------------------------------------------+
-| Operator              | Meaning                                       |
-+=======================+===============================================+
-| ``equal``             | LHS == RHS (pairwise when both are lists)     |
-+-----------------------+-----------------------------------------------+
-| ``not_equal``         | LHS != RHS                                    |
-+-----------------------+-----------------------------------------------+
-| ``greater``           | LHS > RHS (pairwise when both are lists)      |
-+-----------------------+-----------------------------------------------+
-| ``greater_or_equal_to``| LHS >= RHS (pairwise when both are lists)    |
-+-----------------------+-----------------------------------------------+
-| ``is_of_type``        | All LHS values match the type string in RHS   |
-|                       | (``"string"``, ``"integer"``, ``"float"``,    |
-|                       | ``"boolean"``, ``"number"``)                  |
-+-----------------------+-----------------------------------------------+
-| ``is_null``           | All LHS values are ``None``                   |
-+-----------------------+-----------------------------------------------+
-| ``regex``             | LHS value fully matches the RHS regex pattern |
-+-----------------------+-----------------------------------------------+
-| ``is_equal_length``   | LHS and RHS are lists of the same length      |
-+-----------------------+-----------------------------------------------+
++-------------------------+-----------------------------------------------+
+| Operator                | Meaning                                       |
++=========================+===============================================+
+| ``equal``               | LHS == RHS (pairwise when both are lists)     |
++-------------------------+-----------------------------------------------+
+| ``not_equal``           | LHS != RHS                                    |
++-------------------------+-----------------------------------------------+
+| ``greater``             | LHS > RHS (pairwise when both are lists)      |
++-------------------------+-----------------------------------------------+
+| ``greater_or_equal_to`` | LHS >= RHS (pairwise when both are lists)    |
++-------------------------+-----------------------------------------------+
+| ``is_of_type``          | All LHS values match the type string in RHS   |
+|                         | (``"string"``, ``"integer"``, ``"float"``,    |
+|                         | ``"boolean"``, ``"number"``)                  |
++-------------------------+-----------------------------------------------+
+| ``is_null``             | All LHS values are ``None``                   |
++-------------------------+-----------------------------------------------+
+| ``regex``               | LHS value fully matches the RHS regex pattern |
++-------------------------+-----------------------------------------------+
+| ``is_equal_length``     | LHS and RHS are lists of the same length      |
++-------------------------+-----------------------------------------------+
 
 When both sides resolve to lists of equal length, comparison operators
 (``equal``, ``not_equal``, ``greater``, ``greater_or_equal_to``) are
@@ -767,7 +769,9 @@ if the first pen is not a calf pen:
 
 Decision-tree flow diagram
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-To be embedded?
+.. mermaid:: /_static/cross_validation_flow.mmd
+   :zoom:
+
 
 
 .. |RuFaS Overview - IM| image:: https://github.com/RuminantFarmSystems/RuFaS/assets/70217952/33d2952d-a49e-4cbd-b2d8-798a0ea69dcc
