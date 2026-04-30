@@ -26,7 +26,7 @@ data = im.get_data("manure_management")
 ```
 
 Implementation rules (do not deviate):
-- Override `__new__`, guard `__init__` with `if cls.__instance is None`
+- Must return a single shared instance and ensure `__init__` logic runs only once
 - Private state via name-mangling (`self.__pool`), exposed via `@property`
 - Never pass the instance around — just call `InputManager()` at the call site
 

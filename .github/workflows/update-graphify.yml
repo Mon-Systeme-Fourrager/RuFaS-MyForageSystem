@@ -13,6 +13,8 @@ on:
     paths:
       - 'RUFAS/**'
       - 'scripts/generate-graph-mermaid.py'
+      - '.graphifyignore'
+      - '.github/workflows/update-graphify.yml'
 
 concurrency:
   group: graphify-update

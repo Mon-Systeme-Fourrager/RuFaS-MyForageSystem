@@ -6,6 +6,8 @@ Guidance for calculation classes in `routines/`. See `RUFAS/CLAUDE.md` for modul
 
 Routines are **stateless calculation classes**. They receive all inputs as parameters and return results. They do not hold simulation state across calls and do not import from `RUFAS/biophysical/`.
 
+> **Known exception**: `RUFAS/routines/animal/ration/user_defined_ration.py` imports `AnimalCombination` from `RUFAS.biophysical.animal.data_types.animal_combination`. This type should be migrated to `RUFAS/data_structures/` in a future cleanup PR.
+
 ## Class Design Rules
 
 - Organize related calculations into a class (e.g., `EmissionsEstimator`, `RationManager`).

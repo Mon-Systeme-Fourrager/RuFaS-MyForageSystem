@@ -60,7 +60,7 @@ After all tasks complete and verified:
 - Don't skip verifications
 - Reference skills when plan says to
 - Stop when blocked, don't guess
-- Never start implementation on main/master branch without explicit user consent
+- Never start implementation or push code directly to main, master, or dev-msf. All work must be on a feature branch and submitted via PR using GitHub MCP tools (mcp__github__*)
 
 ## Integration
 

@@ -73,9 +73,9 @@ or empty → refuse and explain.
   > running `/apply-plan`.
 
 **Branch guard.** Run `git rev-parse --abbrev-ref HEAD`. If the result
-is `main` → refuse:
+is `main` or `dev-msf` → refuse:
 
-> ⚠️ Cannot run `/apply-plan` directly on `main` (protected branch).
+> ⚠️ Cannot run `/apply-plan` directly on `main` or `dev-msf` (protected branches).
 > Switch to a feature branch first.
 
 ### 2. Task orchestration
@@ -121,7 +121,7 @@ python -m mypy . &
 PID_TC=$!
 flake8 . &
 PID_LINT=$!
-pytest <affected test files> &
+pytest <affected test files — use specific paths matching changed source, or bare `pytest` if uncertain> &
 PID_VT=$!
 TC=0; LINT=0; VT=0
 wait $PID_TC  || TC=$?
@@ -163,11 +163,11 @@ After all tasks complete:
    not product documentation; it MUST NOT appear in the PR diff.
 
    ```bash
-   if git ls-files --error-unmatch PLAN_<slug>.md >/dev/null 2>&1; then
-     git rm -f PLAN_<slug>.md
+   if git ls-files --error-unmatch "$PLAN_FILE" >/dev/null 2>&1; then
+     git rm -f "$PLAN_FILE"
      git commit -m "chore: remove plan file after implementation"
    else
-     rm PLAN_<slug>.md
+     rm "$PLAN_FILE"
    fi
    ```
 

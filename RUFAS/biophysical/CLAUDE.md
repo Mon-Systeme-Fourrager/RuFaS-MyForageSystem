@@ -9,13 +9,13 @@ Biophysical managers own simulation state across the daily loop. They are instan
 ## Class Design Rules
 
 - **No base class** — managers are standalone classes, not subclasses of a framework base.
-- **Dependency injection in `__init__`**: receive config dicts or typed objects as constructor arguments. Pull shared config from `InputManager()` inside `__init__` when needed.
+- **Dependency injection in `__init__`**: constructors may accept config dicts or typed objects. Any raw `dict` received in `__init__` must be immediately converted into a typed config object (from `data_structures/` or `InputManager()`) and stored as protected state (`self._config`). All public methods must receive/return typed objects or primitives only — never raw `dict`.
 - **Private state**: use `self._name` (single underscore) for protected attributes, `self.__name` (double underscore) for truly private state. Expose via `@property` when read access is needed externally.
-- **No cross-manager imports**: managers communicate exclusively through `data_structures/` objects, never by importing each other.
+- **Cross-manager imports**: avoid importing managers from other domains. Managers within the same domain subdirectory (e.g., `biophysical/manure/`) may compose each other directly (e.g., `ManureManager` instantiates `ManureNutrientManager`). Cross-domain interactions must go through `data_structures/` objects.
 
 ## Receiving and Returning Data
 
-- **Receive**: typed objects from `data_structures/` or primitive types. Never accept raw `dict` at a public method boundary — wrap it in a typed structure first.
+- **Receive**: public methods accept typed objects from `data_structures/` or primitives only. The constructor (`__init__`) is the sole exception where config dicts are allowed (converted immediately — see above).
 - **Return**: dataclasses or TypedDicts from `data_structures/`, or primitives (`float`, `int`, `bool`). Side effects (logging, output) go through `OutputManager()`.
 
 ## Calling Routines

@@ -127,23 +127,27 @@ impacted by the critique.
 
 ### Before editing
 
-Verify the plan source exists and is non-empty (`Read` tool).
+Verify the active source exists and is non-empty (`Read` tool).
 
 - If `Read` errors (file not found) → print:
 
-  > ⚠️ `PLAN_<slug>.md` is missing on disk. Run `/diagnose` to
+  > ⚠️ Source file is missing on disk. Run `/diagnose` to
   > recreate it before refining.
 
   **Stop.**
 
-- If `Read` succeeds but the file is empty, does not start with
-  `## Plan —`, does not contain at least one `📝` / `✨` / `🗑️` /
+- **PLAN mode only**: If `Read` succeeds but the file is empty, does not
+  start with `## Plan —`, does not contain at least one `📝` / `✨` / `🗑️` /
   `🧪` marker, or has no `REUSES` section → print:
 
   > ⚠️ `PLAN_<slug>.md` is empty or truncated. Run `/diagnose`
   > to regenerate it before refining.
 
   **Stop.**
+
+- **OpenSpec mode only**: Validate each artifact (`proposal.md`, `design.md`,
+  `tasks.md`) exists and is non-empty. Do not apply `PLAN_*.md` marker checks
+  to OpenSpec artifacts.
 
 - Otherwise → proceed.
 
@@ -174,13 +178,13 @@ Do **not** rewrite sections the critique did not touch.
 
 ### Chat output
 
-After all edits land, print exactly one line:
+After all edits land, print this line first:
 
 > Plan updated. Run `/challenge-plan` (PLAN mode) or
 > `/challenge-plan openspec:<name>` (OpenSpec mode) to re-validate.
 
 If you rejected any critique points, add the rejection justifications
-in chat **after** that line.
+in chat after that line.
 
 ## Constraints (non-negotiable)
 

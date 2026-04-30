@@ -48,15 +48,17 @@ Or ask: "This branch split from main - is that correct?"
 
 ### Step 3: Present Options
 
-Present exactly these 4 options:
+**Branch guard:** Check the current branch name. If it is `main`, `master`, or `dev-msf`, Options 1 and 4 are unavailable — these branches are protected. Only Options 2 and 3 are available. State clearly why Options 1 and 4 are disabled.
+
+Present the applicable options:
 
 ```
 Implementation complete. What would you like to do?
 
-1. Merge back to <base-branch> locally
+1. Merge back to <base-branch> locally        ← disabled on main/master/dev-msf
 2. Push and create a Pull Request
 3. Keep the branch as-is (I'll handle it later)
-4. Discard this work
+4. Discard this work                          ← disabled on main/master/dev-msf
 
 Which option?
 ```
@@ -91,19 +93,11 @@ Then: Cleanup worktree (Step 5)
 ```bash
 # Push branch
 git push -u origin <feature-branch>
-
-# Create PR
-gh pr create --title "<title>" --body "$(cat <<'EOF'
-## Summary
-<2-3 bullets of what changed>
-
-## Test Plan
-- [ ] <verification steps>
-EOF
-)"
 ```
 
-Then: Cleanup worktree (Step 5)
+Then use `mcp__github__create_pull_request` with title and body (Summary + Test Plan).
+
+**Do not cleanup the worktree** — keep it available for follow-up fixes after review.
 
 #### Option 3: Keep As-Is
 

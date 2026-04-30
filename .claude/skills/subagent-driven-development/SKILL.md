@@ -234,7 +234,7 @@ Done!
 ## Red Flags
 
 **Never:**
-- Start implementation on main/master branch without explicit user consent
+- Start implementation or push code directly to main, master, or dev-msf. All PRs must go through GitHub MCP tools (mcp__github__*) — never push directly to protected branches
 - Skip reviews (spec compliance OR code quality)
 - Proceed with unfixed issues
 - Dispatch multiple implementation subagents in parallel (conflicts)
