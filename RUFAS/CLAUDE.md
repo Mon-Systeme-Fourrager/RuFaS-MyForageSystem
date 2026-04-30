@@ -4,7 +4,7 @@ Module-specific guidance for the `RUFAS/` package. The root `CLAUDE.md` covers p
 
 ## Module Structure
 
-```
+```text
 RUFAS/
 ├── biophysical/      # Stateful manager classes (own state, drive the simulation)
 ├── routines/         # Pure calculation classes (stateless, called by biophysical/)

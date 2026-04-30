@@ -236,8 +236,7 @@ When all CI checks pass and no unresolved review threads remain:
 > All CI checks pass. No unresolved review threads.
 > Merge via the GitHub interface when ready.
 
-**Never merge automatically.** `main` is protected; the user merges
-via the GitHub interface.
+**Never merge automatically.** `main` and `dev-msf` are protected; the user must merge via the GitHub interface.
 
 ## RuFaS constraints (injected into every subagent prompt)
 
@@ -261,7 +260,7 @@ via the GitHub interface.
   workflow must not be modified without maintainer approval.
 - **Commit hygiene**: never `git add .` or `git add -A`. Always stage
   files explicitly by name.
-- **Never push to `main`**: protected branch. Always via PR.
+- **Never push to `main` or `dev-msf`**: protected branches. Always via PR.
 - **GitHub MCP tools**: use `mcp__github__*` for all GitHub operations.
   The `gh` CLI is not available.
 

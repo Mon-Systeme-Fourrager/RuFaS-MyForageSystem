@@ -40,11 +40,13 @@ Stop. Don't proceed to Step 2.
 ### Step 2: Determine Base Branch
 
 ```bash
-# Try common base branches
-git merge-base HEAD main 2>/dev/null || git merge-base HEAD master 2>/dev/null
+# Pick base branch by existence/priority (returns branch name, not SHA)
+git show-ref --verify --quiet refs/heads/dev-msf && echo dev-msf || \
+git show-ref --verify --quiet refs/heads/main && echo main || \
+git show-ref --verify --quiet refs/heads/master && echo master
 ```
 
-Or ask: "This branch split from main - is that correct?"
+Store the result as `$BASE_BRANCH`. Or ask: "This branch split from dev-msf/main — is that correct?"
 
 ### Step 3: Present Options
 
@@ -129,16 +131,16 @@ Then: Cleanup worktree (Step 5)
 
 ### Step 5: Cleanup Worktree
 
-**For Options 1, 2, 4:**
+**For Options 1 and 4:**
 
 Check if in worktree:
 ```bash
-git worktree list | grep $(git branch --show-current)
+git worktree list | grep -F " $FEATURE_BRANCH "
 ```
 
 If yes:
 ```bash
-git worktree remove <worktree-path>
+git worktree remove "$FEATURE_WORKTREE_PATH"
 ```
 
 **For Option 3:** Keep worktree.
