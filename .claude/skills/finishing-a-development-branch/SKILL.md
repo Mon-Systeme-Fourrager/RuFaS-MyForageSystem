@@ -21,11 +21,12 @@ Guide completion of development work by presenting clear options and handling ch
 
 ```bash
 # Run project's test suite
-npm test / cargo test / pytest / go test ./...
+pytest
 ```
 
 **If tests fail:**
-```
+
+```text
 Tests failing (<N> failures). Must fix before completing:
 
 [Show failures]
@@ -54,7 +55,7 @@ Store the result as `$BASE_BRANCH`. Or ask: "This branch split from dev-msf/main
 
 Present the applicable options:
 
-```
+```text
 Implementation complete. What would you like to do?
 
 1. Merge back to <base-branch> locally        ← disabled on main/master/dev-msf
@@ -110,7 +111,8 @@ Report: "Keeping branch <name>. Worktree preserved at <path>."
 #### Option 4: Discard
 
 **Confirm first:**
-```
+
+```text
 This will permanently delete:
 - Branch <name>
 - All commits: <commit-list>
@@ -135,7 +137,7 @@ Then: Cleanup worktree (Step 5)
 
 Check if in worktree:
 ```bash
-git worktree list | grep -F " $FEATURE_BRANCH "
+git worktree list | grep -E "\[$FEATURE_BRANCH\]$"
 ```
 
 If yes:

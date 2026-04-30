@@ -12,6 +12,8 @@ model: claude-sonnet-4-6
 
 $ARGUMENTS
 
+# Apply Plan
+
 ## Precondition
 
 This command runs **only after** a `/challenge-plan` returned ✅
@@ -171,7 +173,7 @@ After all tasks complete:
    fi
    ```
 
-4. Invoke `superpowers:finishing-a-development-branch`. Given `main` is
+4. Invoke `superpowers:finishing-a-development-branch`. Given `main` and `dev-msf` are
    protected, the output MUST be a **pull request**, not a direct merge.
 
 5. **PR creation requires explicit user confirmation** — present the
@@ -276,8 +278,8 @@ When all CI checks pass and no unresolved review threads remain:
 
 ## Do not
 
-- Push directly to `main` (protected).
-- **Merge to `main` under any circumstance** — the user merges via
+- Push directly to `main` or `dev-msf` (protected).
+- **Merge to `main` or `dev-msf` under any circumstance** — the user merges via
   the GitHub interface.
 - Create the PR without explicit user confirmation.
 - Use `gh` CLI (not available — use `mcp__github__*` tools).
@@ -291,7 +293,7 @@ When all CI checks pass and no unresolved review threads remain:
 
 ## Full workflow recap
 
-```
+```text
 [OpenSpec] /opsx:propose       → proposal + design + tasks
 [PLAN]     /diagnose            → PLAN_<slug>.md
 /challenge-plan [openspec:<name>] → critique

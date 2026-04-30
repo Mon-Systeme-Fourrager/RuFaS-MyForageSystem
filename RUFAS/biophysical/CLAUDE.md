@@ -9,7 +9,7 @@ Biophysical managers own simulation state across the daily loop. They are instan
 ## Class Design Rules
 
 - **No base class** — managers are standalone classes, not subclasses of a framework base.
-- **Dependency injection in `__init__`**: constructors may accept config dicts or typed objects. Any raw `dict` received in `__init__` must be immediately converted into a typed config object (from `data_structures/` or `InputManager()`) and stored as protected state (`self._config`). All public methods must receive/return typed objects or primitives only — never raw `dict`.
+- **Dependency injection in `__init__`**: constructors may accept config dicts or typed objects. For new or modified managers, any raw `dict` received in `__init__` must be immediately converted into a typed config object (from `data_structures/` or `InputManager()`) and stored as protected state (`self._config`). Legacy managers (e.g., `FeedManager`) should be migrated incrementally and may document temporary exceptions inline. All public methods must receive/return typed objects or primitives only — never raw `dict`.
 - **Private state**: use `self._name` (single underscore) for protected attributes, `self.__name` (double underscore) for truly private state. Expose via `@property` when read access is needed externally.
 - **Cross-manager imports**: avoid importing managers from other domains. Managers within the same domain subdirectory (e.g., `biophysical/manure/`) may compose each other directly (e.g., `ManureManager` instantiates `ManureNutrientManager`). Cross-domain interactions must go through `data_structures/` objects.
 
