@@ -19,6 +19,13 @@ Invoke `superpowers:systematic-debugging` to find the root cause, then
 **Read-only at this stage**: explore with Read, Grep, Glob only.
 No files may be written until Step 3.
 
+### 1a — Graphify impact check
+
+If `graphify-out/GRAPH_REPORT.md` exists, read it before exploring source files.
+Identify which god nodes (high-degree files) are in the blast radius of the
+reported problem. Use this to prioritize which files to read first and to
+anticipate ripple effects in the plan.
+
 ## Step 2 — Interactive confirmation
 
 Before writing anything to disk, confirm direction with the user.

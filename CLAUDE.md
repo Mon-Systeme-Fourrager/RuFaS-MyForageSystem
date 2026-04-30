@@ -144,3 +144,19 @@ Use these four commands in sequence for any non-trivial change:
 ### Hooks
 
 - `.claude/hooks/session-start.sh` — installs `@fission-ai/openspec` automatically in remote sessions (Claude Code Web). Injects Graphify dependency report when available.
+
+## Graphify Dependency Graph
+
+`graphify-out/GRAPH_REPORT.md` is a dependency graph of the `RUFAS/` module, auto-committed to `dev-msf` by CI on every push. The session-start hook injects it into each Claude Code session automatically.
+
+- **AST pass** (`graphify update .`) — free, runs on every push to `dev-msf` via CI. Captures all structural dependencies (imports, calls, inheritance).
+- **Semantic pass** (`graphify .`) — uses `ANTHROPIC_API_KEY`, run manually once to enrich the graph with inferred relationships.
+
+### Triggering a semantic pass
+
+GitHub → Actions → **Update Graphify Graph** → Run workflow → check **"Run full semantic pass"**.
+Requires `ANTHROPIC_API_KEY` to be set as a GitHub repository secret.
+
+### How Claude uses the graph
+
+`/diagnose` reads `graphify-out/GRAPH_REPORT.md` at the start of every analysis to identify god nodes (high-degree files) in the blast radius of a change, prioritize file exploration, and anticipate ripple effects before writing the plan.
