@@ -3,12 +3,10 @@ description: Diagnose, produce a fix plan, and persist it to PLAN_<slug>.md
 argument-hint: [description, file path, or paste logs]
 model: claude-sonnet-4-6
 allowed-tools: Read, Grep, Glob, Write, Edit, Bash(git log:*), Bash(git diff:*)
-# Write and Edit are scoped to PLAN_<slug>.md at repo root (AgriDoc
-# convention, CLAUDE.md). No other file may be written by this
-# command. The incremental write strategy (see ### Write strategy)
-# uses Write for the header section and Edit for each subsequent
-# section append — both are required to avoid the monolithic-write
-# timeout this command exists to prevent.
+# Write and Edit are scoped to PLAN_<slug>.md at repo root (RuFaS convention,
+# CLAUDE.md). No other file may be written by this command. The incremental
+# write strategy (see ### Write strategy) uses Write for the header section
+# and Edit for each subsequent section append.
 ---
 
 $ARGUMENTS
@@ -39,24 +37,16 @@ One question set per message. **Wait for the user's answers before continuing.**
 
 ### 2b — UI wireframes (UI changes only)
 
-If the plan involves visible UI changes, render a compact ASCII before/after
-wireframe alongside the confirmation questions — so the user can redirect before
-the plan is written. Keep it brief (≤ 10 lines per frame, low token cost):
-
-```text
-AVANT               APRÈS
-┌──────────────┐    ┌──────────────┐
-│ [Tab1][Tab2] │    │ ≡ Sidebar    │
-│              │    │ ▶ Tab1       │
-│   contenu    │    │   Tab2       │
-└──────────────┘    └──────────────┘
-```
+If the plan involves visible output or report changes, render a compact ASCII
+before/after sketch alongside the confirmation questions. Keep it brief (≤ 10
+lines per frame).
 
 ## Constraints
 
 - **Do not modify source files.** The only write allowed is the final
   `PLAN_<slug>.md` at repo root (see Step 3 below).
-- Respect CLAUDE.md (Bun, Grep tool, no `grep` in Bash, no `npx`).
+- Respect CLAUDE.md: pytest (not unittest directly), Grep tool (not `grep`
+  in Bash), Black formatting, line length 120.
 - YAGNI: the minimum required to fix the identified problem, nothing more.
 
 ## Step 3 — Persist
@@ -68,8 +58,8 @@ Once the user has confirmed the direction in Step 2, write the plan to disk.
 From the plan title, derive `<slug>` as kebab-case, ASCII only,
 ≤ 40 characters. Examples:
 
-- "Fix race condition in offline sync" → `fix-race-condition-offline-sync`
-- "Add CASL guard to billing route" → `add-casl-guard-billing-route`
+- "Fix race condition in simulation loop" → `fix-race-condition-simulation-loop`
+- "Add field manager unit tests" → `add-field-manager-unit-tests`
 
 ### Collision handling (non-negotiable)
 
@@ -103,10 +93,8 @@ even if it looks short:
    - `🧪` Tests block → one `Edit` append.
    - `YAGNI CHECK` + `REUSES` → one final `Edit` append.
 
-   If a single section exceeds 2 KB (e.g. a large SQL migration
-   block or a long test plan), split it further at logical
-   boundaries — per SQL statement, per RED/GREEN test, per
-   bullet group. **Never produce a tool call whose text payload
+   If a single section exceeds 2 KB, split it further at logical
+   boundaries. **Never produce a tool call whose text payload
    exceeds 2 KB.**
 
 2. **Verify after the first `Write`**: immediately `Read` the file
@@ -119,17 +107,12 @@ even if it looks short:
    > fichier `PLAN_<slug>.md` à la racine du repo.
 
    Then print **only the header + first section** (≤ 50 lines) as
-   a fallback the user can copy. Never print the full plan body —
-   that itself would timeout.
+   a fallback the user can copy. Never print the full plan body.
 
 3. **Chain the section writes automatically.** Issue the header
    `Write` and each subsequent `Edit` append in succession, one
    section per tool call, without pausing to ask the user to
-   confirm between sections. The sectioning itself (≤ 2 KB per
-   call) is the timeout defense; user confirmation between
-   sections adds friction without adding safety. If a write
-   fails, fall back to step 2's recovery flow rather than
-   retrying the full file.
+   confirm between sections.
 
 4. **Verify after the last `Edit` append**: `Read` the file and
    confirm it ends with the `REUSES` section. If truncated, print:
@@ -138,8 +121,7 @@ even if it looks short:
    > sections manquantes sont listées ci-dessous — ajoute-les
    > manuellement à la fin du fichier.
 
-   Then print only the missing sections, themselves split if
-   needed (≤ 50 lines per chat block).
+   Then print only the missing sections (≤ 50 lines per chat block).
 
 5. **Never retry a full-file write after a timeout.** Always `Read`
    first to determine what is already on disk, then append only

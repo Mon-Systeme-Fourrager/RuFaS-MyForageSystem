@@ -6,8 +6,6 @@ model: claude-sonnet-4-6
 allowed-tools: Read, Grep, Glob, Edit, Bash(git log:*), Bash(git diff:*)
 # Edit is scoped to PLAN_*.md at repo root OR OpenSpec artifact files
 # under openspec/changes/<name>/. No source files may be written.
-# The plan source is created by /diagnose or /opsx:propose and
-# modified in place here — git holds the version history.
 ---
 
 $ARGUMENTS
@@ -56,26 +54,17 @@ Identify the plan file path and critique in this order:
    file. The critique is retrieved from the current conversation
    (the last `/challenge-plan` output).
 2. Else if `$ARGUMENTS` is empty → retrieve from the current
-   conversation both the last plan file path (typically
-   `PLAN_<slug>.md` created by `/diagnose`) and the last critique
-   produced (typically from `/challenge-plan`).
-3. Else (`$ARGUMENTS` contains prose, a pasted plan, a pasted
-   critique, or any non-path) → **refuse**. Print exactly:
+   conversation both the last plan file path and the last critique.
+3. Else (`$ARGUMENTS` contains prose, a pasted plan, or any
+   non-path) → **refuse**. Print exactly:
 
    > `/refine-plan` requires the plan as a file path. The critique
    > is read from the current session (the last `/challenge-plan`
    > output). Re-run without arguments, or pass the
    > `PLAN_<slug>.md` path alone.
 
-   Do not parse inline plan/critique bodies: coordinating around a
-   single file is what keeps the chain safe from stream idle
-   timeouts on the next `/challenge-plan` or `/apply-plan`.
-
 4. If either the plan path or the critique is missing after steps
    1-2 → ask the user for it before proceeding. Do not guess.
-
-The plan file already exists on disk (created by `/diagnose`). Do
-**not** attempt to recreate it — you edit it in place.
 
 ## Step 1 — Counter-validate the diagnosis
 
@@ -91,13 +80,10 @@ of the critique:
 - Do the existing patterns cited by the critique suggest a different
   approach?
 - If 3+ 🔴 points all target the same area → it may be an
-  architectural problem, not an execution problem (Phase 4.5 of
-  systematic-debugging).
+  architectural problem, not an execution problem.
 
 **If the diagnosis must change**: state it explicitly in chat after
-editing, and re-justify the new root cause. Reflect the change inside
-the plan file by editing the relevant sections (not by appending a
-"v2" marker — git history tracks versions).
+editing, and re-justify the new root cause.
 
 ## Step 2 — Triage the critique
 
@@ -108,28 +94,24 @@ For each point raised by `/challenge-plan`, decide:
 | ✅ **Accepted**                 | Valid point, correction obvious                                  | Apply a surgical `Edit` to the impacted section of the plan file |
 | 🔄 **Accepted with adaptation** | Valid point but the suggested correction doesn't fit the context | Propose a different correction via `Edit`, explain why in chat   |
 | ❌ **Rejected**                 | Invalid point, out of scope, or subagent misunderstanding        | Do not edit. Justify the rejection in chat in 1–2 sentences      |
-| ❓ **Needs clarification**      | Real ambiguity that changes the nature of the fix (see below)    | **STOP** and ask the question before editing                     |
+| ❓ **Needs clarification**      | Real ambiguity that changes the nature of the fix                | **STOP** and ask the question before editing                     |
 
-**Do not accept out of politeness.** A performative critique from the
-subagent deserves a reasoned rejection, not a cosmetic correction.
+**Do not accept out of politeness.** A performative critique deserves
+a reasoned rejection, not a cosmetic correction.
 
 ## Step 3 — Clarifying questions
 
 Ask a question before editing **only if**:
 
-- The critique reveals multiple valid approaches with real trade-offs
-  (large refactor vs. targeted patch, hook extraction vs. inline,
-  adding a dependency vs. implementing manually).
-- The correction changes user-facing behavior (even subtly).
-- The critique touches shared code and you don't know which consumers
-  are impacted.
+- The critique reveals multiple valid approaches with real trade-offs.
+- The correction changes observable simulation behavior.
+- The critique touches shared code (e.g. `InputManager`, `OutputManager`) and
+  you don't know which consumers are impacted.
 - Two points in the critique contradict each other.
-- The critique rejects a choice the user explicitly validated in an
-  earlier decision in the session.
+- The critique rejects a choice the user explicitly validated earlier in the session.
 
 **Question format**: one at a time, 2–3 concrete options with
-trade-offs and your recommendation. Wait for the answer before
-continuing.
+trade-offs and your recommendation. Wait for the answer.
 
 **Do not ask** when:
 
@@ -139,56 +121,31 @@ continuing.
 
 ## Step 4 — Apply surgical edits to the active plan source
 
-**PLAN\_\*.md mode:** the plan file `PLAN_<slug>.md` lives at repo root.
-**OpenSpec mode:** edit the relevant artifact(s) — `proposal.md`,
-`design.md`, and/or `tasks.md` under `openspec/changes/<name>/`.
-
 In both modes, you **do not rewrite from scratch**. You use the `Edit`
 tool with targeted `old_string` / `new_string` pairs on the sections
 impacted by the critique.
 
 ### Before editing
 
-0. **Verify the plan source exists and is non-empty** (`Read` tool).
-   This is a non-negotiable pre-flight check.
+Verify the plan source exists and is non-empty (`Read` tool).
 
-   **OpenSpec mode:** `Read` each of the three artifact files. If
-   any is missing or empty → print:
+- If `Read` errors (file not found) → print:
 
-   > ⚠️ `openspec/changes/<name>/<file>` is missing. Run
-   > `/opsx:propose` to regenerate artifacts before refining.
-   > **Stop.**
+  > ⚠️ `PLAN_<slug>.md` is missing on disk. Run `/diagnose` to
+  > recreate it before refining.
 
-   **PLAN\_\*.md mode:** it catches the case where `/diagnose` timed
-   out and never finished writing the file (or wrote a truncated
-   stub). Specifically:
-   - If `Read` errors (file not found) → print:
+  **Stop.**
 
-     > ⚠️ `PLAN_<slug>.md` is missing on disk. `/diagnose` likely
-     > timed out. Run `/diagnose` to recreate it before refining.
+- If `Read` succeeds but the file is empty, does not start with
+  `## Plan —`, does not contain at least one `📝` / `✨` / `🗑️` /
+  `🧪` marker, or has no `REUSES` section → print:
 
-     **Stop.** Do not attempt to recreate the file from session
-     memory — that is `/diagnose`'s job, and improvising here
-     would re-trigger the same write timeout.
+  > ⚠️ `PLAN_<slug>.md` is empty or truncated. Run `/diagnose`
+  > to regenerate it before refining.
 
-   - If `Read` succeeds but the file is empty, does not start
-     with `## Plan —`, does not contain at least one `📝` /
-     `✨` / `🗑️` / `🧪` marker, or has no `REUSES` section → print:
+  **Stop.**
 
-     > ⚠️ `PLAN_<slug>.md` is empty or truncated. Run `/diagnose`
-     > to regenerate it before refining.
-
-     **Stop.** Wait for the user.
-
-   - Otherwise → proceed to step 1.
-
-1. **Read the plan file** (`Read` tool) to see its current exact
-   content. `old_string` must match byte-for-byte — no line-number
-   prefixes, no whitespace drift.
-2. **Verify the header**: the plan uses `## Plan — <title>` (no
-   `v1`/`v2`/`v3` — git history tracks versions). If you find a
-   legacy `## Plan v2 —` header, normalize it to `## Plan — <title>`
-   in the same edit pass.
+- Otherwise → proceed.
 
 ### What to edit
 
@@ -196,65 +153,41 @@ For each accepted (✅) or adapted (🔄) critique point, locate the
 smallest block in the plan file that needs to change and edit it:
 
 - 📝 sections where BEFORE/AFTER must be corrected.
-- ✨ sections where a file creation must be removed (rejected on YAGNI
-  grounds) or added (new file surfaced by the critique).
+- ✨ sections where a file creation must be removed (YAGNI) or added.
 - 🗑️ sections where a deletion target must be adjusted.
 - 🧪 sections where expected RED/GREEN tests must be revised.
-- `REUSES:` lines where a cited path/utility needs correction (verify
-  with `Read`/`Glob` before finalizing — a plan that cites
-  non-existent paths is blocking per `/challenge-plan`).
+- `REUSES:` lines where a cited path/module needs correction
+  (verify with `Read`/`Glob` before finalizing).
 
-Do **not** rewrite sections that the critique did not touch. Do
-**not** introduce a "Summary of changes" block — the change log lives
-in `git log` + the `/challenge-plan` critique that prompted this
-revision.
-
-### Rejected (❌) points
-
-Do not edit the plan for rejected points. State the rejection in chat
-after the edits land, in 1–2 sentences with the context that
-contradicts the critique. The user can then decide whether to re-run
-`/challenge-plan` or accept the rejection.
+Do **not** rewrite sections the critique did not touch.
 
 ### Coherence checklist (self-check before concluding)
 
 - Every 🔴 from the critique is either addressed by an `Edit` or
-  rejected with justification in chat.
-- Edited sections remain coherent with surrounding unchanged sections
-  (no dangling cross-reference, no orphaned `REUSES:` line).
-- No correction introduces new duplication or new dead code.
-- Cited paths and utilities exist (verify with Read/Glob).
+  rejected with justification.
+- Edited sections remain coherent with surrounding unchanged sections.
+- No correction introduces new duplication or dead code.
+- Cited paths and modules exist (verify with Read/Glob).
 - YAGNI still respected.
-- `CLAUDE.md` respected: Bun, co-located tests, no `npx`, no `grep`
-  in Bash, CASL guards, i18n, design tokens, size-limit, RLS/pgTAP,
-  edge function config.
+- `CLAUDE.md` respected: pytest, flake8, mypy, black (line length 120),
+  no `git add .` / `git add -A`, changelog.md updated if applicable.
 
 ### Chat output
 
-After all edits land, print exactly one line to the user:
+After all edits land, print exactly one line:
 
 > Plan updated. Run `/challenge-plan` (PLAN mode) or
 > `/challenge-plan openspec:<name>` (OpenSpec mode) to re-validate.
 
 If you rejected any critique points, add the rejection justifications
-in chat **after** that line (not inside the plan file).
+in chat **after** that line.
 
 ## Constraints (non-negotiable)
 
-- **Read-only for source code**: no edits to source files. In PLAN
-  mode, edits are scoped to `PLAN_*.md` at repo root. In OpenSpec
-  mode, edits are scoped to artifact files under
-  `openspec/changes/<name>/`. No commits. The plan source itself
-  (PLAN file or OpenSpec artifacts) is edited in place via `Edit`;
-  its prior state lives in git history.
-- **Surgical edits, not rewrite**: change only what the critique
-  flagged. Sections the critique did not touch must not drift. If you
-  feel the need to rewrite the whole file, stop and question the
-  diagnosis (Step 1) instead.
+- **Read-only for source code**: no edits to source files.
+- **Surgical edits, not rewrite**: change only what the critique flagged.
 - **No capitulation**: if the critique is wrong, reject and explain.
-  The goal is a good plan, not a plan that appeases the critic.
-- **No scope expansion**: corrections target the critique points only,
-  not "while we're here, let's improve X".
+- **No scope expansion**: corrections target the critique points only.
 
 ## Full workflow
 
@@ -267,7 +200,3 @@ in chat **after** that line (not inside the plan file).
                     → si décision escaladée : /refine-plan (manuel) puis /challenge-plan
 /apply-plan       → exécution du plan approuvé (toujours manuel)
 ```
-
-En mode normal, `/challenge-plan` orchestre le cycle complet. Utilisez
-`/refine-plan` manuellement seulement si vous interrompez le cycle
-automatique.

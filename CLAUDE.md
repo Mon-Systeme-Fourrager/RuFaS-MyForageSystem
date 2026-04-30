@@ -110,3 +110,37 @@ RUFAS/
 ### Testing
 
 Tests mirror the source structure under `tests/`. Files prefixed with `_test_` (older convention) and `test_` (newer) are both collected by pytest. Coverage target is ~96%.
+
+## Slash Commands & Development Workflow
+
+### Plan-based development workflow
+
+Use these four commands in sequence for any non-trivial change:
+
+```
+/diagnose          → analyse, questions interactives → PLAN_<slug>.md
+/challenge-plan    → sous-agent critique le plan (auto-cycle jusqu'à ✅)
+/refine-plan       → corrections manuelles si cycle interrompu
+/apply-plan        → exécution TDD + double review + PR
+```
+
+- Plans are stored as `PLAN_<slug>.md` at the repo root (work artifact, never committed to the PR).
+- `/apply-plan` runs per-task: `pytest` + `flake8` + `mypy` must all pass before moving to the next task.
+- All PRs go through GitHub MCP tools (`mcp__github__*`). Never push directly to `main`.
+
+### OpenSpec workflow (spec-driven)
+
+```
+/opsx:propose      → proposal + design + tasks artifacts
+/challenge-plan openspec:<name>
+/apply-plan openspec:<name>
+/opsx:archive      → archive after PR merged
+```
+
+### Utility commands
+
+- `/sync-claude-md` — audits the codebase and proposes an updated CLAUDE.md.
+
+### Hooks
+
+- `.claude/hooks/session-start.sh` — installs `@fission-ai/openspec` automatically in remote sessions (Claude Code Web). Injects Graphify dependency report when available.
