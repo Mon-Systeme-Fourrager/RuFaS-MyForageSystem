@@ -18,28 +18,28 @@ def valid_ration_config() -> dict[str, Any]:
         },
         "rations": [
             {
-                "animal_group": "calf",
+                "animal_combination": "calf",
                 "feeds": [
                     {"feed_type": 101, "ration_percentage": 50.0},
                     {"feed_type": 102, "ration_percentage": 50.0},
                 ],
             },
             {
-                "animal_group": "growing",
+                "animal_combination": "growing",
                 "feeds": [
                     {"feed_type": 201, "ration_percentage": 60.0},
                     {"feed_type": 202, "ration_percentage": 40.0},
                 ],
             },
             {
-                "animal_group": "close_up",
+                "animal_combination": "close_up",
                 "feeds": [
                     {"feed_type": 301, "ration_percentage": 70.0},
                     {"feed_type": 302, "ration_percentage": 30.0},
                 ],
             },
             {
-                "animal_group": "lac_cow",
+                "animal_combination": "lac_cow",
                 "feeds": [
                     {"feed_type": 401, "ration_percentage": 80.0},
                     {"feed_type": 402, "ration_percentage": 20.0},
@@ -57,28 +57,28 @@ def invalid_ration_config() -> dict[str, Any]:
         },
         "rations": [
             {
-                "animal_group": "calf",
+                "animal_combination": "calf",
                 "feeds": [
                     {"feed_type": 101, "ration_percentage": 55.0},
                     {"feed_type": 102, "ration_percentage": 50.0},
                 ],
             },
             {
-                "animal_group": "growing",
+                "animal_combination": "growing",
                 "feeds": [
                     {"feed_type": 201, "ration_percentage": 60.0},
                     {"feed_type": 202, "ration_percentage": 50.0},
                 ],
             },
             {
-                "animal_group": "close_up",
+                "animal_combination": "close_up",
                 "feeds": [
                     {"feed_type": 301, "ration_percentage": 90.0},
                     {"feed_type": 302, "ration_percentage": 10.0},
                 ],
             },
             {
-                "animal_group": "lac_cow",
+                "animal_combination": "lac_cow",
                 "feeds": [
                     {"feed_type": 401, "ration_percentage": 85.0},
                     {"feed_type": 402, "ration_percentage": 25.0},
@@ -92,13 +92,13 @@ def test_set_ration_feeds_maps_config_to_animal_combinations() -> None:
     """set_ration_feeds should initialize ration_feeds for all combos and map config lists correctly."""
     ration_config: dict[str, Any] = {
         "rations": [
-            {"animal_group": "calf", "feeds": [{"feed_type": 1}, {"feed_type": 2}]},
+            {"animal_combination": "calf", "feeds": [{"feed_type": 1}, {"feed_type": 2}]},
             {
-                "animal_group": "growing",
+                "animal_combination": "growing",
                 "feeds": [{"feed_type": 3}],
             },
-            {"animal_group": "close_up", "feeds": [{"feed_type": 4}, {"feed_type": 5}, {"feed_type": 6}]},
-            {"animal_group": "lac_cow", "feeds": [{"feed_type": 7}]},
+            {"animal_combination": "close_up", "feeds": [{"feed_type": 4}, {"feed_type": 5}, {"feed_type": 6}]},
+            {"animal_combination": "lac_cow", "feeds": [{"feed_type": 7}]},
         ]
     }
 
@@ -112,25 +112,25 @@ def test_set_ration_feeds_maps_config_to_animal_combinations() -> None:
     assert ration_feeds[AnimalCombination.CALF] == [
         feed["feed_type"]
         for ration in ration_config["rations"]
-        if ration["animal_group"] == "calf"
+        if ration["animal_combination"] == "calf"
         for feed in ration["feeds"]
     ]
     assert ration_feeds[AnimalCombination.GROWING] == [
         feed["feed_type"]
         for ration in ration_config["rations"]
-        if ration["animal_group"] == "growing"
+        if ration["animal_combination"] == "growing"
         for feed in ration["feeds"]
     ]
     assert ration_feeds[AnimalCombination.CLOSE_UP] == [
         feed["feed_type"]
         for ration in ration_config["rations"]
-        if ration["animal_group"] == "close_up"
+        if ration["animal_combination"] == "close_up"
         for feed in ration["feeds"]
     ]
     assert ration_feeds[AnimalCombination.LAC_COW] == [
         feed["feed_type"]
         for ration in ration_config["rations"]
-        if ration["animal_group"] == "lac_cow"
+        if ration["animal_combination"] == "lac_cow"
         for feed in ration["feeds"]
     ]
 

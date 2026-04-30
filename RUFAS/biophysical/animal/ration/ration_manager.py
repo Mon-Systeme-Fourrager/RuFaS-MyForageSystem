@@ -53,28 +53,28 @@ class RationManager:
         cls.ration_feeds[AnimalCombination.CALF] = [
             feed["feed_type"]
             for ration in ration_config["rations"]
-            if ration["animal_group"] == "calf"
+            if ration["animal_combination"] == "calf"
             for feed in ration["feeds"]
         ]
 
         cls.ration_feeds[AnimalCombination.GROWING] = [
             feed["feed_type"]
             for ration in ration_config["rations"]
-            if ration["animal_group"] == "growing"
+            if ration["animal_combination"] == "growing"
             for feed in ration["feeds"]
         ]
 
         cls.ration_feeds[AnimalCombination.CLOSE_UP] = [
             feed["feed_type"]
             for ration in ration_config["rations"]
-            if ration["animal_group"] == "close_up"
+            if ration["animal_combination"] == "close_up"
             for feed in ration["feeds"]
         ]
 
         cls.ration_feeds[AnimalCombination.LAC_COW] = [
             feed["feed_type"]
             for ration in ration_config["rations"]
-            if ration["animal_group"] == "lac_cow"
+            if ration["animal_combination"] == "lac_cow"
             for feed in ration["feeds"]
         ]
 
@@ -125,7 +125,7 @@ class RationManager:
         cls.user_defined_rations = {animal_combination: {} for animal_combination in AnimalCombination}
 
         ration_config = feed_config["rations"]
-        user_defined_ration_percentages = {ration["animal_group"]: ration["feeds"] for ration in ration_config}
+        user_defined_ration_percentages = {ration["animal_combination"]: ration["feeds"] for ration in ration_config}
         tolerance = feed_config["ration_formulation_parameters"]["user_defined_ration_tolerance"]
 
         for combination in cls.user_defined_rations.keys():

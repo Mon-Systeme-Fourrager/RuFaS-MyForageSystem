@@ -96,7 +96,7 @@
   },
   "rations": [
     {
-      "animal_group": "calf",
+      "animal_combination": "calf",
       "feeds": [
         {
           "feed_type": 202,
@@ -109,7 +109,7 @@
       ]
     },
     {
-      "animal_group": "growing",
+      "animal_combination": "growing",
       "feeds": [
         {
           "feed_type": 44,
@@ -138,7 +138,7 @@
       ]
     },
     {
-      "animal_group": "close_up",
+      "animal_combination": "close_up",
       "feeds": [
         {
           "feed_type": 44,
@@ -167,7 +167,7 @@
       ]
     },
     {
-      "animal_group": "lac_cow",
+      "animal_combination": "lac_cow",
       "feeds": [
         {
           "feed_type": 44,

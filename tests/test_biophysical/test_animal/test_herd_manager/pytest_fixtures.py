@@ -357,14 +357,14 @@ def feed_json() -> dict[str, Any]:
         },
         "rations": [
             {
-                "animal_group": "calf",
+                "animal_combination": "calf",
                 "feeds": [
                     {"feed_type": 202, "ration_percentage": 50},
                     {"feed_type": 216, "ration_percentage": 50},
                 ],
             },
             {
-                "animal_group": "growing",
+                "animal_combination": "growing",
                 "feeds": [
                     {"feed_type": 2, "ration_percentage": 3.4},
                     {"feed_type": 44, "ration_percentage": 4.2},
@@ -377,7 +377,7 @@ def feed_json() -> dict[str, Any]:
                 ],
             },
             {
-                "animal_group": "close_up",
+                "animal_combination": "close_up",
                 "feeds": [
                     {"feed_type": 2, "ration_percentage": 3.8},
                     {"feed_type": 44, "ration_percentage": 4.1},
@@ -390,7 +390,7 @@ def feed_json() -> dict[str, Any]:
                 ],
             },
             {
-                "animal_group": "lac_cow",
+                "animal_combination": "lac_cow",
                 "feeds": [
                     {"feed_type": 2, "ration_percentage": 11.7},
                     {"feed_type": 44, "ration_percentage": 11.2},
