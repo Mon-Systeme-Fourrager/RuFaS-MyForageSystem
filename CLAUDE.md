@@ -147,13 +147,13 @@ Use these four commands in sequence for any non-trivial change:
 
 ## Graphify Dependency Graph
 
-`graphify-out/GRAPH_REPORT.md` is a dependency graph of the `RUFAS/` module, auto-committed to `dev-msf` by CI on every push. The session-start hook injects it into each Claude Code session automatically.
+`graphify-out/GRAPH_REPORT.md` is a dependency graph of the `RUFAS/` module, updated via PR to `dev-msf` by CI on every push to `RUFAS/`. The session-start hook injects it into each Claude Code session automatically.
 
 - **AST pass** (`graphify update .`) — free, runs on every push to `dev-msf` via CI. Captures all structural dependencies (imports, calls, inheritance).
 
 ### Triggering a manual update
 
-GitHub → Actions → **Update Graphify Graph** → Run workflow. The CI creates a PR `graphify/update-graph-report → dev-msf` with the updated report.
+GitHub → Actions → **Update Graphify Graph** → Run workflow. The CI creates a PR `graphify/update-graph-report` → `dev-msf` with the updated report.
 
 ### How Claude uses the graph
 
