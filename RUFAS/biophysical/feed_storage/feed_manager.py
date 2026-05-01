@@ -38,6 +38,8 @@ class FeedManager:
     ----------
     feed_config : dict[str, list[Any]]
         Configuration for the feeds available in the simulation.
+    available_feeds : list[Feed]
+        The list of feeds available for the simulation.
     crop_to_rufas_ids_mapping : dict[str, list[RUFAS_ID]]
         Mapping from crops to their corresponding RUFAS IDs.
     feed_storage_configs : dict[str, Any]
@@ -49,9 +51,6 @@ class FeedManager:
     ----------
     _om : OutputManager
         Output manager for reporting feed-related data.
-    _available_feeds : list[NASEMFeed | NRCFeed]
-        List of feeds available for purchase and feeding in the simulation, including their nutritional properties
-        and prices.
     active_storages : dict[StorageType, Storage]
         Contains the list of active farmgrown crop storage units in the simulation and their mapping from StorageType.
     purchased_feed_storage : PurchasedFeedStorage
@@ -87,7 +86,18 @@ class FeedManager:
         self._create_all_storages(feed_storage_configs, feed_storage_instances)
         self.purchased_feed_storage: PurchasedFeedStorage = PurchasedFeedStorage(self._available_feeds)
 
-        purchase_allowances: list[dict[str, int | float]] = feed_config["allowances"]
+        feeds: list[dict[str, int | float]] = feed_config["feeds"]
+
+        purchase_allowances = [
+            {
+                "purchased_feed": feed["feed_type"],
+                "runtime_purchase_allowance": feed["runtime_purchase_allowance"],
+                "advance_purchase_allowance": feed["advance_purchase_allowance"],
+                "planning_cycle_allowance": feed["planning_cycle_allowance"],
+            }
+            for feed in feeds
+        ]
+
         sorted_purchased_allowances = sorted(purchase_allowances, key=lambda x: x["purchased_feed"])
         self.planning_cycle_allowance: PlanningCycleAllowance = PlanningCycleAllowance(sorted_purchased_allowances)
         self.runtime_purchase_allowance: RuntimePurchaseAllowance = RuntimePurchaseAllowance(
@@ -356,7 +366,7 @@ class FeedManager:
 
     def manage_daily_feed_request(
         self, requested_feed: RequestedFeed, time: RufasTime
-    ) -> tuple[bool, dict[str, dict[RUFAS_ID, float]]]:
+    ) -> tuple[bool, FeedFulfillmentResults]:
         """Manages the daily feed request by checking available inventory and purchasing additional feed if necessary.
 
         Parameters
@@ -368,10 +378,10 @@ class FeedManager:
 
         Returns
         -------
-        tuple[bool, dict[str, dict[RUFAS_ID, float]]]
+        tuple[bool, FeedFulfillmentResults]
             A tuple where the first element is True if the feed request can be fulfilled (False otherwise),
-            and the second element is a dictionary detailing the amounts of feed deducted from purchased and
-            farmgrown sources.
+            and the second element is a FeedFulfillmentResults object containing the amounts of feed deducted
+            from purchased and farmgrown sources.
         """
         current_feed_totals = self._query_available_feed_totals(list(requested_feed.requested_feed.keys()))
         feeds_to_remove_from_inventory = {id: 0.0 for id in requested_feed.requested_feed.keys()}
@@ -385,7 +395,7 @@ class FeedManager:
             ) <= self.runtime_purchase_allowance.allowances[feed_id] + tolerance
             is_request_unfulfillable = not is_fulfillable_with_inventory and not is_fulfillable_with_purchase
             if is_request_unfulfillable:
-                return False, {}
+                return False, FeedFulfillmentResults.empty()
             self._om.add_variable(
                 f"{feed_id}_requested_amount",
                 amount_requested,
@@ -686,11 +696,7 @@ class FeedManager:
                     f"Not adequate feed to deduct remaining {remaining_amount_needed:.3f} kg DM of feed {feed_id}."
                 )
 
-        self._log_feed_deductions(
-            deduction_results.purchased,
-            deduction_results.farmgrown,
-            simulation_day,
-        )
+        self._log_feed_deductions(deduction_results.purchased, deduction_results.farmgrown, simulation_day)
 
         return deduction_results
 
