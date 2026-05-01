@@ -27,7 +27,8 @@ jobs:
     # Éviter une boucle infinie : skip les commits faits par le bot lui-même
     if: github.actor != 'github-actions[bot]'
     permissions:
-      contents: write   # nécessaire pour git push
+      contents: write
+      pull-requests: write
 
     steps:
       - name: Checkout code
@@ -88,21 +89,32 @@ jobs:
             echo "📝 GRAPH_REPORT.md changed — will commit"
           fi
 
-      - name: Commit and push updated report
+      - name: Commit and push updated report via PR
         if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          BRANCH="graphify/update-graph-report"
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Crée/réinitialise la branche dédiée depuis dev-msf
+          git checkout -B "$BRANCH"
           git add graphify-out/GRAPH_REPORT.md
           git commit --no-verify -m "chore: update graphify graph report [skip ci]"
-          if ! git pull --rebase origin dev-msf; then
-            if [ -d .git/rebase-merge ] || [ -d .git/rebase-apply ]; then
-              git rebase --abort || true
-              echo "::warning::Rebase conflict — graph report commit skipped. Will retry on next push."
-              exit 0
-            fi
-            echo "::error::git pull --rebase failed for a non-conflict reason."
-            exit 1
+          git push -f origin "$BRANCH"
+
+          # Crée la PR si elle n'existe pas encore
+          if ! gh pr view "$BRANCH" --json number -q .number 2>/dev/null; then
+            gh pr create \
+              --base dev-msf \
+              --head "$BRANCH" \
+              --title "chore: update graphify graph report [skip ci]" \
+              --body "Mise à jour automatique du rapport de dépendances Graphify."
           fi
-          git push
-          echo "✅ Graph report updated and pushed!"
+
+          # Active l'auto-merge (squash) — se fusionne dès que les checks passent
+          gh pr merge "$BRANCH" --auto --squash 2>/dev/null || true
+
+          echo "✅ PR du rapport Graphify créée/mise à jour !"
