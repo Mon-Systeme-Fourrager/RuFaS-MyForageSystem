@@ -51,7 +51,7 @@ When testing a manager that uses `InputManager`, reset the singleton in the fixt
 ```python
 @pytest.fixture
 def fresh_input_manager() -> InputManager:
-    InputManager._InputManager__instance = None  # reset init guard
+    InputManager._InputManager__instance = None  # reset name-mangled singleton storage
     if hasattr(InputManager, "instance"):
         delattr(InputManager, "instance")  # reset __new__ singleton storage
     return InputManager()

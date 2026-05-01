@@ -51,9 +51,10 @@ managed by `/opsx:archive`, not deleted by this command.
 4. Else → ask the user for the path. Do **not** fall back to embedding
    a pasted plan.
 
-Remember the exact filename — it is passed to every subagent dispatch
-and removed in the cleanup step. The file must remain on disk,
-unchanged, for the entire duration of `/apply-plan`.
+Store the resolved filename in a shell variable `$PLAN_FILE` — it is
+passed to every subagent dispatch and removed in the cleanup step.
+The file must remain on disk, unchanged, for the entire duration of
+`/apply-plan`.
 
 ## Workflow (non-negotiable)
 
@@ -123,7 +124,7 @@ python -m mypy . &
 PID_TC=$!
 flake8 . &
 PID_LINT=$!
-pytest <affected test files — use specific paths matching changed source, or bare `pytest` if uncertain> &
+pytest <affected test files — mirror RUFAS/ path to tests/, e.g., RUFAS/biophysical/foo.py → tests/biophysical/test_foo.py; fall back to bare pytest if uncertain> &
 PID_VT=$!
 TC=0; LINT=0; VT=0
 wait $PID_TC  || TC=$?

@@ -73,6 +73,12 @@ Which option?
 #### Option 1: Merge Locally
 
 ```bash
+# Capture current context before switching branches
+FEATURE_BRANCH=$(git branch --show-current)
+FEATURE_WORKTREE_PATH=$(git worktree list | grep -E "\[$FEATURE_BRANCH\]$" | awk '{print $1}')
+```
+
+```bash
 # Switch to base branch
 git checkout <base-branch>
 
@@ -124,6 +130,13 @@ Type 'discard' to confirm.
 Wait for exact confirmation.
 
 If confirmed:
+
+```bash
+# Capture current context before switching branches
+FEATURE_BRANCH=$(git branch --show-current)
+FEATURE_WORKTREE_PATH=$(git worktree list | grep -E "\[$FEATURE_BRANCH\]$" | awk '{print $1}')
+```
+
 ```bash
 git checkout <base-branch>
 git branch -D <feature-branch>
@@ -136,11 +149,13 @@ Then: Cleanup worktree (Step 5)
 **For Options 1 and 4:**
 
 Check if in worktree:
+
 ```bash
 git worktree list | grep -E "\[$FEATURE_BRANCH\]$"
 ```
 
 If yes:
+
 ```bash
 git worktree remove "$FEATURE_WORKTREE_PATH"
 ```
