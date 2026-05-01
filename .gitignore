@@ -66,3 +66,12 @@ DataCollectionApp/schema/*
 docs/_build/
 example/input*
 example/output*
+
+# Graphify — seul GRAPH_REPORT.md est commité
+graphify-out/graph.json
+graphify-out/graph.html
+graphify-out/.graphify_root
+graphify-out/cache/
+graphify-out/manifest.json
+graphify-out/cost.json
+graphify-out/exports/

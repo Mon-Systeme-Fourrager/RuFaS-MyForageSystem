@@ -1,0 +1,43 @@
+# .graphifyignore — périmètre du graph pour RuFaS
+# Le graph cible exclusivement RUFAS/ (logique métier de la simulation)
+
+# Tests — edges unidirectionnels, bruit sans valeur pour le graph
+tests/
+
+# Données d'entrée/sortie — pas de logique Python
+input/
+output/
+graphify-out/
+
+# Application web statique (HTML/JS)
+DataCollectionApp/
+
+# Documentation, scripts utilitaires, exemples
+docs/
+helpful_scripts/
+scientific_documentation/
+example/
+
+# Scripts utilitaires racine (non-core)
+scripts/
+
+# Artefacts Claude Code et CI
+.claude/
+.github/
+openspec/
+
+# Fichiers de configuration et documentation racine
+main.py
+check_changes.bat
+check_changes.sh
+changelog.md
+CLAUDE.md
+README.md
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+pyproject.toml
+.flake8
+.gitignore
+.graphifyignore
+COPYING.txt
+COPYING.LESSER.txt
