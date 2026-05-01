@@ -4,7 +4,6 @@ from RUFAS.data_structures.events import ManureEvent
 from RUFAS.data_structures.manure_types import ManureType
 import math
 
-
 """Factor for converting dry matter mass of liquid manure to wet mass."""
 LIQUID_MANURE_DRY_MASS_TO_WET_MASS = 21.739
 
