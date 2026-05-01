@@ -3,11 +3,6 @@ name: Update Graphify Graph
 
 on:
   workflow_dispatch:
-    inputs:
-      semantic:
-        description: 'Run full semantic pass (uses ANTHROPIC_API_KEY — incurs API cost)'
-        type: boolean
-        default: false
   push:
     branches: [dev-msf]
     paths:
@@ -58,15 +53,8 @@ jobs:
 
       - name: Update graph
         run: |
-          if [ "${{ inputs.semantic }}" = "true" ]; then
-            echo "🧠 Running full semantic pass (graphify .)"
-            graphify .
-          else
-            echo "🔍 Running AST-only pass (graphify update .)"
-            graphify update .
-          fi
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          echo "🔍 Running AST pass (graphify update .)"
+          graphify update .
 
       - name: Regenerate Mermaid block in GRAPH_REPORT.md
         run: python3 scripts/generate-graph-mermaid.py
