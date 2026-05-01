@@ -254,7 +254,7 @@ When all CI checks pass and no unresolved review threads remain:
   are collected by pytest.
 - **Type annotations required**: new functions and methods must be
   fully annotated. New code must not increase the mypy error count
-  compared to `dev`.
+  compared to `dev-msf`.
 - **Black formatting**: line length 120, target Python 3.12.
 - **Flake8**: max line length 120, max complexity 10, ignore E203/W503.
 - **changelog.md**: must be updated for any PR that changes public
@@ -275,7 +275,7 @@ When all CI checks pass and no unresolved review threads remain:
   Escalate to the user. Likely return to `/refine-plan`.
 - An implementer subagent returns `BLOCKED` or `NEEDS_CONTEXT` → do
   not retry blindly. Provide missing context or escalate.
-- Mypy error count increases compared to `dev` → blocking. Do not push.
+- Mypy error count increases compared to `dev-msf` → blocking. Do not push.
 
 ## Do not
 

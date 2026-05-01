@@ -75,7 +75,7 @@ Which option?
 ```bash
 # Capture current context before switching branches
 FEATURE_BRANCH=$(git branch --show-current)
-FEATURE_WORKTREE_PATH=$(git worktree list | grep -E "\[$FEATURE_BRANCH\]$" | awk '{print $1}')
+FEATURE_WORKTREE_PATH=$(git worktree list | awk -v b="[$FEATURE_BRANCH]" '$NF == b {print $1}')
 ```
 
 ```bash
@@ -134,7 +134,7 @@ If confirmed:
 ```bash
 # Capture current context before switching branches
 FEATURE_BRANCH=$(git branch --show-current)
-FEATURE_WORKTREE_PATH=$(git worktree list | grep -E "\[$FEATURE_BRANCH\]$" | awk '{print $1}')
+FEATURE_WORKTREE_PATH=$(git worktree list | awk -v b="[$FEATURE_BRANCH]" '$NF == b {print $1}')
 ```
 
 ```bash
@@ -151,7 +151,7 @@ Then: Cleanup worktree (Step 5)
 Check if in worktree:
 
 ```bash
-git worktree list | grep -E "\[$FEATURE_BRANCH\]$"
+git worktree list | awk -v b="[$FEATURE_BRANCH]" '$NF == b {found=1} END {exit(found ? 0 : 1)}'
 ```
 
 If yes:
