@@ -178,7 +178,7 @@ class HerdManager:
                 info_map={
                     "class": self.__class__.__name__,
                     "function": self.__init__.__name__,
-                }
+                },
             )
             raise RuntimeError("Herd population has not been initialized.")
         self.calves, self.heiferIs, self.heiferIIs, self.heiferIIIs, self.cows, self.replacement_market = (
