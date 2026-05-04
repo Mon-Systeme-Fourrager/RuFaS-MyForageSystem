@@ -7,7 +7,7 @@ from copy import deepcopy
 from enum import Enum
 from functools import partial
 from pathlib import Path
-from typing import Any, KeysView, Sequence, TextIO, Union, Callable
+from typing import Any, Sequence, TextIO, Union, Callable
 
 from collections import Counter
 import collections
@@ -1929,7 +1929,7 @@ class OutputManager(object):
         name: str,
         prefix: str,
         parsable_dict: str,
-        keys: KeysView[str],
+        keys: list[str],
         units: str | dict[str, str],
         format_option: str,
     ) -> list[str]:
