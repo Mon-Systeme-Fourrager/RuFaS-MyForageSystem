@@ -70,6 +70,7 @@ v1.0.0
 - [2960](https://github.com/RuminantFarmSystems/RuFaS/pull/2960) - [minor change] [Docs][NoInputChange] [NoOutputChange] Adds SME evaluation report for v1.0.
 - [2734](https://github.com/RuminantFarmSystems/MASM/pull/2734) - [minor change] [InputChange][OutputChange][Animal] Implements the Genetics submodule.
 - [2809](https://github.com/RuminantFarmSystems/RuFaS/pull/2809) - [minor change] [Animal] [NoInputChange] [NoOutputChange] Reorders grouping of attributes in some HerdStatistics methods, updates docstrings.
+- [2977](https://github.com/RuminantFarmSystems/RuFaS/pull/2977) - [minor change] [OutputManager] [NoInputChange] [NoOutputChange] Refactors `OutputManager.dump_variable_names_and_contexts()` by extracting logic into `_get_parsable_dicts()`, `_format_variable_entry()`, and `_format_parsable_dict_lines()`, and moves ignored keys to a class-level constant `_VARIABLE_DUMP_KEYS_TO_IGNORE`.
 
 ### v1.0.0
 
