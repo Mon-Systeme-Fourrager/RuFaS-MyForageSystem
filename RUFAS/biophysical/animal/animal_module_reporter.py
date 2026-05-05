@@ -1074,6 +1074,55 @@ class AnimalModuleReporter:
         )
 
     @classmethod
+    def report_m305(
+        cls,
+        average_herd_m305: float,
+        average_l1_m305: float,
+        average_l2_m305: float,
+        average_l3_plus_m305: float,
+    ) -> None:
+        """
+        Adds herd-level average M305 outputs to the output manager.
+
+        Parameters
+        ----------
+        average_herd_m305 : float
+            The whole-herd average M305 across adult cows.
+        average_l1_m305 : float
+            The average M305 for lactation 1 cows.
+        average_l2_m305 : float
+            The average M305 for lactation 2 cows.
+        average_l3_plus_m305 : float
+            The average M305 for lactation 3+ cows.
+
+        """
+        info_map = {
+            "class": AnimalModuleReporter.__name__,
+            "function": AnimalModuleReporter.report_m305.__name__,
+            "data_origin": [("MilkProduction", "perform_daily_milking_update")],
+        }
+        om.add_variable(
+            "m305_herd_mean",
+            average_herd_m305,
+            dict(info_map, **{"units": MeasurementUnits.KILOGRAMS}),
+        )
+        om.add_variable(
+            "m305_l1_mean",
+            average_l1_m305,
+            dict(info_map, **{"units": MeasurementUnits.KILOGRAMS}),
+        )
+        om.add_variable(
+            "m305_l2_mean",
+            average_l2_m305,
+            dict(info_map, **{"units": MeasurementUnits.KILOGRAMS}),
+        )
+        om.add_variable(
+            "m305_l3plus_mean",
+            average_l3_plus_m305,
+            dict(info_map, **{"units": MeasurementUnits.KILOGRAMS}),
+        )
+
+    @classmethod
     def report_end_of_simulation(
         cls,
         herd_statistics: HerdStatistics,
