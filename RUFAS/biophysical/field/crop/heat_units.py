@@ -9,20 +9,20 @@ class HeatUnits:
 
     Parameters
     ----------
-    crop_data : Optional[CropData], optional
+    crop_data : CropData, optional
         An instance of `CropData` containing crop specifications and attributes. If not provided, a default
         `CropData` instance is initialized with default values.
     maximum_temperature : float, default 38
         Maximum temperature for plant growth (Celsius).
     use_heat_unit_temperature : bool, default False
         If alternative heat unit method is used.
-    new_heat_units : Optional[float], default None
+    new_heat_units : float, optional
         Heat units accumulated on the current day (Celsius).
-    minimum_heat_unit_temperature : Optional[float], default None
+    minimum_heat_unit_temperature : float, optional
         Minimum temperature for heat unit calculations (Celsius).
-    maximum_heat_unit_temperature : Optional[float], default None
+    maximum_heat_unit_temperature : float, optional
         Maximum temperature for heat unit calculations (Celsius).
-    heat_unit_temperature : Optional[float], default None
+    heat_unit_temperature : float, optional
         Heat unit temperature for alternative method (Celsius).
 
     Attributes
@@ -78,11 +78,11 @@ class HeatUnits:
 
         Parameters
         ----------
-        mean_air_temperature : Optional[float]
+        mean_air_temperature : float, optional
             Average air temperature for the day (°C).
-        min_air_temperature : Optional[float]
+        min_air_temperature : float, optional
             Minimum air temperature for the day (°C).
-        max_air_temperature : Optional[float]
+        max_air_temperature : float, optional
             Maximum air temperature for the day (°C).
 
         Notes
@@ -118,7 +118,20 @@ class HeatUnits:
 
         Parameters
         ----------
-        air_temperature : float
+        air_temperature : float, optional
+            The average air temperature during the day (°C).
+
+        """
+        self.assign_new_heat_units(air_temperature)
+        self.add_heat_units()
+
+    def assign_new_heat_units(self, air_temperature: Optional[float] = None) -> None:
+        """
+        Assign new heat units based on whether the alternative accumulation method is to be used.
+
+        Parameters
+        ----------
+        air_temperature : Optional[float], optional
             The average air temperature during the day (°C).
 
         Notes
@@ -137,19 +150,6 @@ class HeatUnits:
                the middle of the crop temperature window.
             4. If the crop's temperature range is entirely within the air temperature range, accumulation equals
                the middle of the air temperature range.
-
-        """
-        self.assign_new_heat_units(air_temperature)
-        self.add_heat_units()
-
-    def assign_new_heat_units(self, air_temperature: Optional[float] = None) -> None:
-        """
-        Assign new heat units based on whether the alternative accumulation method is to be used.
-
-        Parameters
-        ----------
-        air_temperature : Optional[float], optional
-            The average air temperature during the day (°C).
 
         """
         if self.use_heat_unit_temperature or (air_temperature is None):  # alternative method
