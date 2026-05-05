@@ -9,7 +9,7 @@ from RUFAS.rufas_time import RufasTime
 
 class BaseFieldManagementEvent:
     """
-    This module defines the various BaseFieldManagementEvent classes and helper functions.
+    This class defines the various BaseFieldManagementEvent classes and helper functions.
 
     Events will facilitate scheduling of different management operations. At their core, they
     are simply pairs of attributes (``year`` and ``day``), indicating when particular operations should occur.
