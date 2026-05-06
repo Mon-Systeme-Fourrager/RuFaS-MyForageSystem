@@ -2053,6 +2053,45 @@ def test_format_variable_entry_nested_values_appends_values_to_parsable_dicts(
     assert "values" in called_parsable_dicts
 
 
+def test_format_variable_entry_block_flat_no_units_no_duplicate(
+    mock_output_manager: OutputManager, mocker: MockerFixture
+) -> None:
+    """Block format with flat no-units variable: bare name line not duplicated."""
+    variable_data: dict[str, Any] = {"values": [1]}
+    mocker.patch.object(mock_output_manager, "_format_parsable_dict_lines", return_value=[])
+    result = mock_output_manager._format_variable_entry("myvar", variable_data, True, "block")
+
+    assert result.count(f"myvar{os.linesep}") == 1
+
+
+def test_format_variable_entry_block_flat_with_units_appends_bare_name(
+    mock_output_manager: OutputManager, mocker: MockerFixture
+) -> None:
+    """Block format with flat variable that has units: bare name line appended after name(units) line."""
+    variable_data: dict[str, Any] = {
+        "values": [1],
+        "info_maps": [{"units": "kg"}],
+    }
+    mocker.patch.object(mock_output_manager, "_format_parsable_dict_lines", return_value=[])
+    result = mock_output_manager._format_variable_entry("myvar", variable_data, False, "block")
+
+    assert f"myvar (kg){os.linesep}" in result
+    assert f"myvar{os.linesep}" in result
+
+
+def test_format_variable_entry_block_nested_appends_bare_name(
+    mock_output_manager: OutputManager, mocker: MockerFixture
+) -> None:
+    """Block format with nested values: bare name line appended (lines starts empty), prefix is spaces."""
+    variable_data: dict[str, Any] = {"values": [{"k1": 1}]}
+    mock_format_lines = mocker.patch.object(mock_output_manager, "_format_parsable_dict_lines", return_value=[])
+    result = mock_output_manager._format_variable_entry("myvar", variable_data, True, "block")
+
+    assert f"myvar{os.linesep}" in result
+    prefix_arg = mock_format_lines.call_args.args[1]
+    assert prefix_arg == " " * len("myvar")
+
+
 @pytest.mark.parametrize(
     "keys, units, parsable_dict, expected_fragment",
     [
