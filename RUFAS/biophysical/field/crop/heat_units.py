@@ -1,4 +1,3 @@
-
 from RUFAS.biophysical.field.crop.crop_data import CropData
 
 
