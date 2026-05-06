@@ -1,4 +1,3 @@
-
 from RUFAS.biophysical.field.soil.soil_data import SoilData
 from RUFAS.user_constants import UserConstants
 

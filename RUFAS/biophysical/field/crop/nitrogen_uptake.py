@@ -1,4 +1,3 @@
-
 from RUFAS.output_manager import OutputManager
 from RUFAS.biophysical.field.crop.crop_data import CropData
 from RUFAS.biophysical.field.crop.non_water_uptake import NonWaterUptake
