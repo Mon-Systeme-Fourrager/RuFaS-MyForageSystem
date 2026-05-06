@@ -956,11 +956,13 @@ class Pen:
 
         if self.pen_type not in exposed_manure_surface_area_by_pen_type:
             self.om.add_error(
-                "PenManureData not set",
-                f"Pen {self.id} had a manure_stream with no pen_manure_data.",
+                "Invalid PenType Error.",
+                f"Invalid pen type: {self.pen_type}. "
+                "Cannot calculate manure surface area, pen_type must be in "
+                f"{exposed_manure_surface_area_by_pen_type.keys}.",
                 info_map={
                     "class": self.__class__.__name__,
-                    "function": self._apply_bedding.__name__,
+                    "function": self._calculate_manure_surface_area.__name__,
                 }
             )
             raise ValueError(f"Invalid pen type: {self.pen_type}")
@@ -1069,9 +1071,10 @@ class Pen:
         simulation_day : int
             Day of simulation.
 
-        Returns
-        -------
-        None
+        Raises
+        ------
+        ValueError
+            If no previous ration is available when needed.
 
         """
         info_map = {
@@ -1170,12 +1173,12 @@ class Pen:
             )
         elif self.ration == {}:
             self.om.add_error(
-                "No previous ration available",
+                "No previous ration available.",
                 f"Check failed_constraint_summary_for_pen_{self.id} to see what caused formulation to fail. "
                 f"Possible solution is to provide additional feed ingredients to {self.animal_combination.name}.",
                 info_map,
             )
-            raise ValueError("No previous ration available")
+            raise ValueError("No previous ration available.")
         else:
             self.om.add_log(
                 "Previous ration used because automated ration formulation failed for non lactating cow pen.",
@@ -1271,7 +1274,7 @@ class Pen:
         """Processes failures and attempts milk reduction if needed for lactating cows."""
         if self.average_milk_production < AnimalModuleConstants.MINIMUM_AVG_PEN_MILK:
             self.om.add_error(
-                "Milk production too low",
+                "Milk production too low.",
                 f"Check failed_constraint_summary_for_pen_{self.id} to see cause.",
                 info_map,
             )
