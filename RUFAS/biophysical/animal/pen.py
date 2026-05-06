@@ -859,9 +859,22 @@ class Pen:
         ManureStream
             A new ManureStream object with updated attributes reflecting the impact of the applied bedding.
 
+        Raises
+        ------
+        ValueError
+            If Pen's manure_stream has no pen_manure_data.
+
         """
         bedding = self.beddings[bedding_name]
         if manure_stream.pen_manure_data is None:
+            self.om.add_error(
+                "PenManureData not set",
+                f"Pen {self.id} had a manure_stream with no pen_manure_data.",
+                info_map={
+                    "class": self.__class__.__name__,
+                    "function": self._apply_bedding.__name__,
+                }
+            )
             raise ValueError(f"No PenManureData for pen {self.id}: pen_manure_data must be set to apply bedding.")
         num_animals = manure_stream.pen_manure_data.num_animals
         total_bedding_mass = bedding.calculate_total_bedding_mass(num_animals)
@@ -942,6 +955,14 @@ class Pen:
         }
 
         if self.pen_type not in exposed_manure_surface_area_by_pen_type:
+            self.om.add_error(
+                "PenManureData not set",
+                f"Pen {self.id} had a manure_stream with no pen_manure_data.",
+                info_map={
+                    "class": self.__class__.__name__,
+                    "function": self._apply_bedding.__name__,
+                }
+            )
             raise ValueError(f"Invalid pen type: {self.pen_type}")
 
         exposed_manure_surface_area = exposed_manure_surface_area_by_pen_type[self.pen_type]
