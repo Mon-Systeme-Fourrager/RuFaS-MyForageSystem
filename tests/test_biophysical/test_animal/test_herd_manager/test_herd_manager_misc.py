@@ -1,6 +1,6 @@
 from random import randint, uniform
-from typing import Any
-from unittest.mock import call
+from typing import Any, cast
+from unittest.mock import MagicMock, call
 
 import pytest
 from pytest_mock import MockerFixture
@@ -78,7 +78,7 @@ def test_update_herd_305_day_milk_yields(herd_manager: HerdManager) -> None:
     herd_manager.update_herd_305_day_milk_yields()
 
     for cow in cows:
-        cow.update_305_day_milk_yield.assert_called_once_with()
+        cast(MagicMock, cow.update_305_day_milk_yield).assert_called_once_with()
 
 
 def test_print_herd_snapshot(herd_manager: HerdManager, mocker: MockerFixture) -> None:
