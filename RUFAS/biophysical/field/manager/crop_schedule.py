@@ -58,7 +58,7 @@ class CropSchedule(Schedule):
 
     Notes
     -----
-    This class extends the `Schedule` class, adding specific functionality for managing agricultural crop schedules.
+    This class extends the ``Schedule`` class, adding specific functionality for managing agricultural crop schedules.
     It involves detailed tracking and management of planting and harvesting events, including optional heat scheduling
     for advanced crop management.
 

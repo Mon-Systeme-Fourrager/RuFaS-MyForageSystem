@@ -1,5 +1,4 @@
 from abc import abstractmethod, ABC
-from typing import Optional
 from RUFAS.biophysical.field.crop.crop_data import CropData
 from RUFAS.biophysical.field.soil.soil_data import SoilData
 
@@ -11,12 +10,12 @@ class NutrientUptake(ABC):
     Parameters
     ----------
     crop_data : CropData, optional
-        An instance of `CropData` containing crop specifications and attributes.
-        Defaults to a new instance of `CropData` if not provided.
+        An instance of ``CropData`` containing crop specifications and attributes.
+        Defaults to a new instance of ``CropData`` if not provided.
 
     """
 
-    def __init__(self, crop_data: Optional[CropData]):
+    def __init__(self, crop_data: CropData | None):
         self.crop_data = crop_data or CropData()
 
     @abstractmethod

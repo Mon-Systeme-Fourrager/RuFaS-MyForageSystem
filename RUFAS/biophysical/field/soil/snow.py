@@ -1,5 +1,4 @@
 import math
-from typing import Optional
 
 from RUFAS.current_day_conditions import CurrentDayConditions
 from RUFAS.biophysical.field.soil.soil_data import SoilData
@@ -21,7 +20,7 @@ class Snow:
 
     Attributes
     ----------
-    soil_data : Optional[SoilData]
+    soil_data : SoilData | None
         The object that tracks all soil variables throughout the simulation.
 
     Methods
@@ -42,7 +41,7 @@ class Snow:
         Update snow-related data including snow content and temperatures.
     """
 
-    def __init__(self, soil_data: Optional[SoilData] = None, field_size: Optional[float] = None):
+    def __init__(self, soil_data: SoilData | None = None, field_size: float | None = None):
         """object that tracks all soil variable throughout the simulation"""
         self.soil_data = soil_data or SoilData(field_size=field_size)
 

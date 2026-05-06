@@ -1,4 +1,3 @@
-from typing import Optional
 
 from RUFAS.general_constants import GeneralConstants
 from RUFAS.biophysical.field.soil.carbon_cycling.decomposition import Decomposition
@@ -15,7 +14,7 @@ class CarbonCycling:
     Parameters
     ----------
     soil_data : SoilData, optional
-        An instance of `SoilData` containing initial soil properties and state. If not provided,
+        An instance of ``SoilData`` containing initial soil properties and state. If not provided,
         a default instance with initialized values is used.
 
     Attributes
@@ -40,7 +39,7 @@ class CarbonCycling:
 
     """
 
-    def __init__(self, soil_data: Optional[SoilData] = None):
+    def __init__(self, soil_data: SoilData | None = None):
         self.data = soil_data or SoilData()  # initialize with defaults, if not given
 
         self.decomposition = Decomposition(self.data)

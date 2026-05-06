@@ -1,6 +1,5 @@
 from dataclasses import InitVar, dataclass, field
 from math import exp, log
-from typing import Optional
 
 from RUFAS.general_constants import GeneralConstants
 from RUFAS.user_constants import UserConstants
@@ -249,8 +248,8 @@ class LayerData:
 
     field_size: InitVar[float] = None
     residue: InitVar[float] = 0
-    top_depth: Optional[float] = None
-    bottom_depth: Optional[float] = None
+    top_depth: float | None = None
+    bottom_depth: float | None = None
 
     pH: float = 7.0
 
@@ -272,8 +271,8 @@ class LayerData:
 
     # --- Temperature
     bulk_density: float = 1.4
-    previous_day_temperature: Optional[float] = None
-    decomposition_temperature_effect: Optional[float] = None
+    previous_day_temperature: float | None = None
+    decomposition_temperature_effect: float | None = None
 
     # --- Erosion
     organic_carbon_fraction: float = 0.012
@@ -316,15 +315,15 @@ class LayerData:
 
     # pseudocode_soil S.6.C.3
     active_carbon_decomposition_amount: float = 0.0
-    active_carbon_amount: Optional[float] = None
+    active_carbon_amount: float | None = None
 
     # pseudocode_soil S.6.C.4
-    slow_carbon_amount: Optional[float] = None
+    slow_carbon_amount: float | None = None
     slow_carbon_decomposition_amount: float = 0.0
 
     # pseudocode_soil S.6.C.5
     passive_carbon_decomposition_amount: float = 0.0
-    passive_carbon_amount: Optional[float] = None
+    passive_carbon_amount: float | None = None
 
     # pseudocode_soil S.6.C.7
     active_carbon_to_slow_amount: float = 0.0
@@ -380,10 +379,10 @@ class LayerData:
     soil_structural_to_slow_or_active_rate: float = 0.0
 
     # ---- Nitrogen
-    initial_soil_nitrate_concentration: Optional[float] = None
-    initial_soil_ammonium_concentration: Optional[float] = None
-    nitrate_content: Optional[float] = None
-    ammonium_content: Optional[float] = None
+    initial_soil_nitrate_concentration: float | None = None
+    initial_soil_ammonium_concentration: float | None = None
+    nitrate_content: float | None = None
+    ammonium_content: float | None = None
     active_organic_nitrogen_content: float = field(init=False)
     stable_organic_nitrogen_content: float = field(init=False)
     fresh_organic_nitrogen_content: float = 0
@@ -403,10 +402,10 @@ class LayerData:
     percolated_active_organic_nitrogen: float = 0.0
 
     # --- Carbon cycling
-    soil_overall_carbon_fraction: Optional[float] = None
-    total_soil_carbon_amount: Optional[float] = None
-    annual_decomposition_carbon_CO2_lost: Optional[float] = None
-    annual_carbon_CO2_lost: Optional[float] = None
+    soil_overall_carbon_fraction: float | None = None
+    total_soil_carbon_amount: float | None = None
+    annual_decomposition_carbon_CO2_lost: float | None = None
+    annual_carbon_CO2_lost: float | None = None
 
     def __post_init__(self, field_size: float, residue: float):
         """

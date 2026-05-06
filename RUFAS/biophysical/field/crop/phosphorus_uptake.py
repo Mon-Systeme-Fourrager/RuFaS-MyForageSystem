@@ -1,4 +1,3 @@
-from typing import Optional
 
 from RUFAS.biophysical.field.crop.crop_data import CropData
 from RUFAS.biophysical.field.crop.non_water_uptake import NonWaterUptake
@@ -16,8 +15,8 @@ class PhosphorusUptake(NonWaterUptake):
     Parameters
     ----------
     crop_data : CropData, optional
-        An instance of `CropData` containing crop specifications and attributes. If not provided, a default
-        `CropData` instance is initialized with default values.
+        An instance of ``CropData`` containing crop specifications and attributes. If not provided, a default
+        ``CropData`` instance is initialized with default values.
     nutrient_distro_param : float, default 10
         Phosphorus uptake distribution parameter (unitless).
     nutrient_shapes : list[float], optional
@@ -46,16 +45,16 @@ class PhosphorusUptake(NonWaterUptake):
 
     def __init__(
         self,
-        crop_data: Optional[CropData] = None,
+        crop_data: CropData | None = None,
         nutrient_distro_param: float = 10.0,
-        nutrient_shapes: Optional[list[float]] = None,
-        previous_nutrient: Optional[float] = None,
-        potential_nutrient_uptake: Optional[float] = None,
-        layer_nutrient_potentials: Optional[float] = None,
-        unmet_nutrient_demands: Optional[float] = None,
-        nutrient_requests: Optional[float] = None,
-        actual_nutrient_uptakes: Optional[list[float]] = None,
-        total_nutrient_uptake: Optional[float] = None,
+        nutrient_shapes: list[float] | None = None,
+        previous_nutrient: float | None = None,
+        potential_nutrient_uptake: float | None = None,
+        layer_nutrient_potentials: float | None = None,
+        unmet_nutrient_demands: float | None = None,
+        nutrient_requests: float | None = None,
+        actual_nutrient_uptakes: list[float] | None = None,
+        total_nutrient_uptake: float | None = None,
     ):
         super().__init__(
             crop_data,

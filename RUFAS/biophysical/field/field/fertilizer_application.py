@@ -1,5 +1,3 @@
-from typing import Optional
-
 from RUFAS.biophysical.field.soil.soil import Soil
 
 
@@ -31,7 +29,7 @@ class FertilizerApplication:
         Generates a list of fractions that partitions sub-surface nutrients between the different soil layers.
     """
 
-    def __init__(self, soil: Optional[Soil] = None, field_size: Optional[float] = None):
+    def __init__(self, soil: Soil | None = None, field_size: float | None = None):
         self.soil = soil or Soil(field_size=field_size)
 
     def apply_fertilizer(

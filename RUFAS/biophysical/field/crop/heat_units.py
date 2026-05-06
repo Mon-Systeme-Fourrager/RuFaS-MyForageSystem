@@ -1,4 +1,3 @@
-from typing import Optional
 
 from RUFAS.biophysical.field.crop.crop_data import CropData
 
@@ -10,8 +9,8 @@ class HeatUnits:
     Parameters
     ----------
     crop_data : CropData, optional
-        An instance of `CropData` containing crop specifications and attributes. If not provided, a default
-        `CropData` instance is initialized with default values.
+        An instance of ``CropData`` containing crop specifications and attributes. If not provided, a default
+        ``CropData`` instance is initialized with default values.
     maximum_temperature : float, default 38
         Maximum temperature for plant growth (Celsius).
     use_heat_unit_temperature : bool, default False
@@ -28,19 +27,19 @@ class HeatUnits:
     Attributes
     ----------
     data : CropData
-        A reference to the `crop_data` object, used for accessing and updating crop-related data like
+        A reference to the ``crop_data`` object, used for accessing and updating crop-related data like
         temperature thresholds, accumulated heat units, and growth stages.
     maximum_temperature : float
         Maximum temperature for plant growth (Celsius).
     use_heat_unit_temperature : bool
         If alternative heat unit method is used.
-    new_heat_units : Optional[float]
+    new_heat_units : float | None
         Heat units accumulated on the current day (Celsius*).
-    minimum_heat_unit_temperature : Optional[float]
+    minimum_heat_unit_temperature : float | None
         Minimum temperature for heat unit calculations (Celsius).
-    maximum_heat_unit_temperature : Optional[float]
+    maximum_heat_unit_temperature : float | None
         Maximum temperature for heat unit calculations (Celsius).
-    heat_unit_temperature : Optional[float]
+    heat_unit_temperature : float | None
         Heat unit temperature for alternative method (Celsius).
 
     Notes
@@ -51,13 +50,13 @@ class HeatUnits:
 
     def __init__(
         self,
-        crop_data: Optional[CropData] = None,
+        crop_data: CropData | None = None,
         maximum_temperature: float = 38.0,
         use_heat_unit_temperature: bool = False,
-        new_heat_units: Optional[float] = None,
-        minimum_heat_unit_temperature: Optional[float] = None,
-        maximum_heat_unit_temperature: Optional[float] = None,
-        heat_unit_temperature: Optional[float] = None,
+        new_heat_units: float | None = None,
+        minimum_heat_unit_temperature: float | None = None,
+        maximum_heat_unit_temperature: float | None = None,
+        heat_unit_temperature: float | None = None,
     ) -> None:
         self.data = crop_data or CropData()
         self.maximum_temperature = maximum_temperature
@@ -87,8 +86,8 @@ class HeatUnits:
 
         Notes
         -----
-        If the attribute `use_heat_unit_temperature` in CropData is False, both `min_air_temperature` and
-        `max_air_temperature` are optional. Otherwise, they are used to determine heat unit accumulation rather than
+        If the attribute ``use_heat_unit_temperature`` in CropData is False, both ``min_air_temperature`` and
+        ``max_air_temperature`` are optional. Otherwise, they are used to determine heat unit accumulation rather than
         average air temperature.
 
         References
@@ -112,7 +111,7 @@ class HeatUnits:
         self.data.is_growing = self.data.minimum_temperature <= use_temp <= self.maximum_temperature
         self.accumulate_heat_units(mean_air_temperature)
 
-    def accumulate_heat_units(self, air_temperature: Optional[float] = None) -> None:
+    def accumulate_heat_units(self, air_temperature: float | None = None) -> None:
         """
         Add the day's heat unit value to the cumulative sum of heat unit values from previous days.
 
@@ -123,14 +122,14 @@ class HeatUnits:
 
         Notes
         -----
-        The method for calculating the heat units depends on `self.use_heat_unit_temperature` and possibly
-        `self.heat_unit_temperature`. See documentation of `self.assign_new_heat_units` for details.
+        The method for calculating the heat units depends on ``self.use_heat_unit_temperature`` and possibly
+        ``self.heat_unit_temperature``. See documentation of ``self.assign_new_heat_units`` for details.
 
         """
         self.assign_current_heat_units(air_temperature)
         self.add_heat_units()
 
-    def assign_current_heat_units(self, air_temperature: Optional[float] = None) -> None:
+    def assign_current_heat_units(self, air_temperature: float | None = None) -> None:
         """
         Determine and save the day's "heat units".
 
@@ -138,8 +137,8 @@ class HeatUnits:
         ----------
         air_temperature : float, optional
             The average air temperature during the day (°C) used to determine the heat units via
-            `self._determine_new_heat_units`. If None or if `self.use_heat_unit_temperature=True`, then
-            `self.heat_unit_temperature` is used instead.
+            ``self._determine_new_heat_units``. If None or if ``self.use_heat_unit_temperature=True``, then
+            ``self.heat_unit_temperature`` is used instead.
 
         """
         if self.use_heat_unit_temperature or (air_temperature is None):  # alternative method
@@ -171,7 +170,8 @@ class HeatUnits:
         Returns
         -------
         float
-            The heat units for the day in degrees C, calculated by subtracting min_growing_temperature from air_temperature.
+            The heat units for the day in degrees C, calculated by subtracting min_growing_temperature from
+            ``air_temperature``.
             If the temperature difference is negative, 0 the result is 0.
 
         References

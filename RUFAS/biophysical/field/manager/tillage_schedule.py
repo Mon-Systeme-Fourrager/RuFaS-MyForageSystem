@@ -8,7 +8,7 @@ from RUFAS.util import Utility
 
 class TillageSchedule(Schedule):
     """
-    A `Schedule` child class that defines when and how a field will be tilled.
+    A ``Schedule`` child class that defines when and how a field will be tilled.
 
     Parameters
     ----------

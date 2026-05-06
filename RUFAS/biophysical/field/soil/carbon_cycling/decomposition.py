@@ -1,5 +1,4 @@
 import math
-from typing import Optional
 
 from RUFAS.biophysical.field.soil.soil_data import SoilData
 
@@ -30,13 +29,13 @@ class Decomposition:
     Notes
     -----
     The equations for this model, referenced in the soil psuedocode, are derived from an
-    `excel file <https://3.basecamp.com/3486446/buckets/5296287/vaults/2740532358>`_ on Basecamp, but the meaning (and
+    ``excel file <https://3.basecamp.com/3486446/buckets/5296287/vaults/2740532358>``_ on Basecamp, but the meaning (and
     validity) of terms is extremely unclear from both sources. The documentation cannot be adequately completed without
     a better understanding of these methods.
 
     """
 
-    def __init__(self, soil_data: Optional[SoilData], field_size: Optional[float] = None):
+    def __init__(self, soil_data: SoilData | None, field_size: float | None = None):
         self.data = soil_data or SoilData(field_size=field_size)
 
     def decompose(self) -> None:

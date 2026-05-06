@@ -1,5 +1,4 @@
 from math import exp, log, sqrt
-from typing import Optional
 
 from RUFAS.output_manager import OutputManager
 from RUFAS.biophysical.field.crop.crop_data import CropData
@@ -12,8 +11,8 @@ class LeafAreaIndex:
     Parameters
     ----------
     crop_data : CropData, optional
-        A `CropData` instance containing crop specifications and attributes. Defaults to a new instance of `CropData` if
-        not provided.
+        A ``CropData`` instance containing crop specifications and attributes. Defaults to a new instance
+         of ``CropData`` if not provided.
     lai_shapes : float, optional
         Shape coefficients for calculating leaf area index (unitless).
     optimal_leaf_area_fraction : float, optional
@@ -32,34 +31,34 @@ class LeafAreaIndex:
     Attributes
     ----------
     data : CropData
-        Reference to the provided `CropData` instance or a new default instance.
-    lai_shapes : Optional[float]
+        Reference to the provided ``CropData`` instance or a new default instance.
+    lai_shapes : float | None
         Shape coefficients for calculating leaf area index (unitless).
-    optimal_leaf_area_fraction : Optional[float]
+    optimal_leaf_area_fraction : float | None
         Fraction of max leaf area index for current heat fraction (unitless).
-    canopy_height : Optional[float]
+    canopy_height : float | None
         Current height of the plant (m).
-    leaf_area_added : Optional[float]
+    leaf_area_added : float | None
         Leaf area index change during the day (unitless).
-    optimal_leaf_area_change : Optional[float]
+    optimal_leaf_area_change : float | None
         Leaf area index added under ideal conditions (unitless).
-    previous_leaf_area_index : Optional[float]
+    previous_leaf_area_index : float | None
         Leaf area index on the previous day (unitless).
-    previous_optimal_leaf_area_fraction : Optional[float]
+    previous_optimal_leaf_area_fraction : float | None
         Optimal leaf area fraction on the previous day (unitless).
 
     """
 
     def __init__(
         self,
-        crop_data: Optional[CropData] = None,
-        lai_shapes: Optional[float] = None,
-        optimal_leaf_area_fraction: Optional[float] = None,
-        canopy_height: Optional[float] = None,
-        leaf_area_added: Optional[float] = None,
-        optimal_leaf_area_change: Optional[float] = None,
-        previous_leaf_area_index: Optional[float] = None,
-        previous_optimal_leaf_area_fraction: Optional[float] = None,
+        crop_data: CropData | None = None,
+        lai_shapes: float | None = None,
+        optimal_leaf_area_fraction: float | None = None,
+        canopy_height: float | None = None,
+        leaf_area_added: float | None = None,
+        optimal_leaf_area_change: float | None = None,
+        previous_leaf_area_index: float | None = None,
+        previous_optimal_leaf_area_fraction: float | None = None,
     ) -> None:
         self.data = crop_data or CropData()
         self.lai_shapes = lai_shapes
@@ -418,8 +417,8 @@ class LeafAreaIndex:
 
         Notes
         -----
-        This function is primarily used by the `determine_lai_shapes` method. Error handling for the input
-        parameters is conducted within `determine_lai_shapes`.
+        This function is primarily used by the ``determine_lai_shapes`` method. Error handling for the input
+        parameters is conducted within ``determine_lai_shapes``.
 
         """
         return log((heat_fraction / leaf_area_fraction) - heat_fraction)

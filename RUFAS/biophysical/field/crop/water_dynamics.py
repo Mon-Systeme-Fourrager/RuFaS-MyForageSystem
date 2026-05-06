@@ -1,4 +1,3 @@
-from typing import Optional
 
 from RUFAS.biophysical.field.crop.crop_data import CropData
 
@@ -10,7 +9,7 @@ class WaterDynamics:
     Parameters
     ----------
     crop_data : CropData, optional
-        An instance of `CropData` containing crop specifications and states relevant to water dynamics.
+        An instance of ``CropData`` containing crop specifications and states relevant to water dynamics.
         If not provided, a default instance with generic parameters is used.
     cumulative_evapotranspiration : float, default 0.0
         Total water lost to evapotranspiration by the plant during the growing season (mm).
@@ -18,7 +17,7 @@ class WaterDynamics:
     Attributes
     ----------
     data : CropData
-        Reference to the `CropData` instance used to access and modify water-related parameters and states
+        Reference to the ``CropData`` instance used to access and modify water-related parameters and states
         for the crop.
     cumulative_evapotranspiration : float
         Total water lost to evapotranspiration by the plant during the growing season (mm).
@@ -27,7 +26,7 @@ class WaterDynamics:
 
     def __init__(
         self,
-        crop_data: Optional[CropData] = None,
+        crop_data: CropData | None = None,
         cumulative_evapotranspiration: float = 0.0,
     ):
         self.data = crop_data or CropData()

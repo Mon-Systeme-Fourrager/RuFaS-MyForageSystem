@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional
 
 from RUFAS.biophysical.field.soil.carbon_cycling.carbon_cycle import CarbonCycling
 from RUFAS.biophysical.field.soil.evaporation import Evaporation
@@ -52,7 +51,7 @@ class Soil:
 
     """
 
-    def __init__(self, soil_data: Optional[SoilData] = None, field_size: Optional[float] = None):
+    def __init__(self, soil_data: SoilData | None = None, field_size: float | None = None):
         self.data = soil_data or SoilData(field_size=field_size)
 
         self.soil_temp = SoilTemp(self.data)

@@ -1,5 +1,4 @@
 from math import exp, log
-from typing import Optional
 
 from RUFAS.general_constants import GeneralConstants
 from RUFAS.biophysical.field.soil.soil_data import SoilData
@@ -26,7 +25,7 @@ class Fertilizer:
 
     """
 
-    def __init__(self, soil_data: Optional[SoilData], field_size: Optional[float] = None):
+    def __init__(self, soil_data: SoilData | None, field_size: float | None = None):
         self.data = soil_data or SoilData(field_size=field_size)
 
     def do_fertilizer_phosphorus_operations(self, rainfall: float, runoff: float, field_size: float) -> None:

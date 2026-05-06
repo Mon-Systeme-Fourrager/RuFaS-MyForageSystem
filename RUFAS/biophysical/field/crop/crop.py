@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional
 
 from RUFAS.current_day_conditions import CurrentDayConditions
 from RUFAS.data_structures.crop_soil_to_feed_storage_connection import HarvestedCrop
@@ -71,7 +70,7 @@ class Crop:
 
     """
 
-    def __init__(self, crop_data: Optional[CropData] = None):
+    def __init__(self, crop_data: CropData | None = None):
         self._data = crop_data or CropData()
         self._growth_constraints = GrowthConstraints(self._data)
         self._biomass_allocation = BiomassAllocation(self._data)

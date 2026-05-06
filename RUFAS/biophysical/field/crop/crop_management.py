@@ -1,5 +1,4 @@
 from math import exp
-from typing import Optional
 
 from RUFAS.general_constants import GeneralConstants
 from RUFAS.data_structures.crop_soil_to_feed_storage_connection import HarvestedCrop
@@ -18,18 +17,18 @@ class CropManagement:
 
     Parameters
     ----------
-    crop_data : Optional[CropData], optional
+    crop_data : CropData, optional
         The data class containing crop specifications and tracked attributes.
         If not provided, default CropData will be used.
     harvest_efficiency : float, default 1.0
         Efficiency of the harvest operation: the proportion of yield that will be extracted from the field
         (unitless; [0, 1]).
-    potential_harvest_index : Optional[float], optional
+    potential_harvest_index : float, optional
         Potential harvest index for a given day (unitless).
-    harvest_index : Optional[float], optional
+    harvest_index : float, optional
         Harvest index for a given day; fraction of above-ground plant biomass that is harvestable economic yield
         (unitless).
-    cut_biomass : Optional[float], optional
+    cut_biomass : float, optional
         Total amount of the desired crop product (kg/ha).
     wet_yield_collected : float, default 0.0
         Amount of the desired crop product to be removed from the field (kg/ha).
@@ -37,9 +36,9 @@ class CropManagement:
         Dry matter mass collected at harvest (kg/ha).
     yield_residue : float, default 0.0
         Amount of dry matter residue created; unharvested yield (kg/ha).
-    yield_nitrogen : Optional[float], optional
+    yield_nitrogen : float, optional
         Nitrogen contained in the harvested yield (kg/ha).
-    yield_phosphorus : Optional[float], optional
+    yield_phosphorus : float, optional
         Phosphorus contained in the harvested yield (kg/ha).
     residue_nitrogen : float, default 0.0
         Amount of nitrogen in the residue from this plant (kg/ha).
@@ -49,16 +48,16 @@ class CropManagement:
     Attributes
     ----------
     data : CropData
-        A reference to `crop_data`, on which crop management operations will be conducted.
+        A reference to ``crop_data``, on which crop management operations will be conducted.
     harvest_efficiency : float
         Efficiency of the harvest operation: the proportion of yield that will be extracted from the field
         (unitless; [0, 1]).
-    potential_harvest_index : Optional[float]
+    potential_harvest_index : float | None
         Potential harvest index for a given day (unitless).
-    harvest_index : Optional[float]
+    harvest_index : float | None
         Harvest index for a given day; fraction of above-ground plant biomass that is harvestable economic yield
         (unitless).
-    cut_biomass : Optional[float]
+    cut_biomass : float | None
         Total amount of the desired crop product (kg/ha).
     wet_yield_collected : float
         Amount of the desired crop product to be removed from the field (kg/ha).
@@ -66,9 +65,9 @@ class CropManagement:
         Dry matter mass collected at harvest (kg/ha).
     yield_residue : float
         Amount of dry matter residue created; unharvested yield (kg/ha).
-    yield_nitrogen : Optional[float]
+    yield_nitrogen : float | None
         Nitrogen contained in the harvested yield (kg/ha).
-    yield_phosphorus : Optional[float]
+    yield_phosphorus : float | None
         Phosphorus contained in the harvested yield (kg/ha).
     residue_nitrogen : float
         Amount of nitrogen in the residue from this plant (kg/ha).
@@ -77,23 +76,23 @@ class CropManagement:
 
     Notes
     -----
-    This class is designed to handle various crop management operations using data provided by the `CropData` class.
+    This class is designed to handle various crop management operations using data provided by the ``CropData`` class.
     It is primarily based upon the "Crop Yield" (5:2.4) and "General Management" (6:1) sections of the SWAT model.
 
     """
 
     def __init__(
         self,
-        crop_data: Optional[CropData] = None,
+        crop_data: CropData | None = None,
         harvest_efficiency: float = 1.0,
-        potential_harvest_index: Optional[float] = None,
-        harvest_index: Optional[float] = None,
-        cut_biomass: Optional[float] = None,
+        potential_harvest_index: float | None = None,
+        harvest_index: float | None = None,
+        cut_biomass: float | None = None,
         wet_yield_collected: float = 0.0,
         dry_matter_yield_collected: float = 0.0,
         yield_residue: float = 0.0,
-        yield_nitrogen: Optional[float] = None,
-        yield_phosphorus: Optional[float] = None,
+        yield_nitrogen: float | None = None,
+        yield_phosphorus: float | None = None,
         residue_nitrogen: float = 0.0,
         residue_phosphorus: float = 0.0,
     ) -> None:

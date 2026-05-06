@@ -1,4 +1,3 @@
-from typing import Optional
 
 from RUFAS.biophysical.field.soil.soil_data import SoilData
 
@@ -29,7 +28,7 @@ class PoolGasPartition:
 
     """
 
-    def __init__(self, soil_data: Optional[SoilData], field_size: Optional[float] = None):
+    def __init__(self, soil_data: SoilData | None, field_size: float | None = None):
         self.data = soil_data or SoilData(field_size=field_size)
 
     def partition_pool_gas(self):
@@ -39,7 +38,7 @@ class PoolGasPartition:
         Notes
         ------
         This method applies all the gas-partitioning sub routines to each layer of soil that is present in the soil
-        `data` object.
+        ``data`` object.
 
         """
         layer = self.data.soil_layers[0]

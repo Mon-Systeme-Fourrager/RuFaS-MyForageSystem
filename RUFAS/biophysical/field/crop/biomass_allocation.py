@@ -1,5 +1,4 @@
 from math import exp
-from typing import Optional
 
 from RUFAS.biophysical.field.crop.crop_data import CropData
 
@@ -11,16 +10,16 @@ class BiomassAllocation:
 
     Parameters
     ----------
-    crop_data : Optional[CropData]
+    crop_data : CropData, optional
         The data object used for biomass calculation. Stores information
         about the plant's growth and environmental factors.
     light_extinction : float, default 0.65
         Light extinction coefficient (unitless).
-    usable_light : Optional[float], optional
+    usable_light : float, optional
         Solar radiation captured for photosynthesis (MJ/m^2).
-    biomass_growth : Optional[float], optional
+    biomass_growth : float, optional
         Biomass accumulated during the day (kg/ha).
-    previous_biomass : Optional[float], optional
+    previous_biomass : float, optional
         Biomass accumulated on the previous day (kg/ha).
 
     Attributes
@@ -30,11 +29,11 @@ class BiomassAllocation:
         about the plant's growth and environmental factors.
     light_extinction : float
         Light extinction coefficient (unitless).
-    usable_light : Optional[float]
+    usable_light : float | None
         Solar radiation captured for photosynthesis (MJ/m^2).
-    biomass_growth : Optional[float]
+    biomass_growth : float | None
         Biomass accumulated during the day (kg/ha).
-    previous_biomass : Optional[float]
+    previous_biomass : float | None
         Biomass accumulated on the previous day (kg/ha).
 
     Methods
@@ -59,11 +58,11 @@ class BiomassAllocation:
 
     def __init__(
         self,
-        crop_data: Optional[CropData] = None,
+        crop_data: CropData | None = None,
         light_extinction: float = 0.65,
-        usable_light: Optional[float] = None,
-        biomass_growth: Optional[float] = None,
-        previous_biomass: Optional[float] = None,
+        usable_light: float | None = None,
+        biomass_growth: float | None = None,
+        previous_biomass: float | None = None,
     ) -> None:
         self.data = crop_data or CropData()
         self.light_extinction = light_extinction

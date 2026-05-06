@@ -1,4 +1,4 @@
-from typing import Optional, Any
+from typing import Any
 
 from RUFAS.data_structures.events import ManureEvent
 from RUFAS.data_structures.manure_supplement_methods import ManureSupplementMethod
@@ -72,8 +72,8 @@ class ManureSchedule(Schedule):
         manure_types: list[ManureType],
         manure_supplement_methods: list[ManureSupplementMethod],
         field_coverages: list[float],
-        application_depths: Optional[list[float]] = None,
-        surface_remainder_fractions: Optional[list[float]] = None,
+        application_depths: list[float] | None = None,
+        surface_remainder_fractions: list[float] | None = None,
         pattern_skip: int = 0,
         pattern_repeat: int = 0,
     ):

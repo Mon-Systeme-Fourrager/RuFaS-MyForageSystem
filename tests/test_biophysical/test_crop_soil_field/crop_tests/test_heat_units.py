@@ -24,7 +24,7 @@ def mock_crop_data() -> CropData:
         (13.77, 29.9),  # arbitrary
     ],
 )
-def test_determine_new_heat_units(temp: float, min_t: float) -> None:
+def test_determine_heat_unit_value(temp: float, min_t: float) -> None:
     """check that new heat units are correctly calculated by calc_new_heat_units()"""
     diff = temp - min_t
     if diff < 0:

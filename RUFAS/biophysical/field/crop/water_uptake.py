@@ -1,5 +1,4 @@
 from math import exp
-from typing import Optional
 
 from RUFAS.biophysical.field.crop.crop_data import CropData
 from RUFAS.biophysical.field.crop.nutrient_uptake import NutrientUptake
@@ -13,7 +12,7 @@ class WaterUptake(NutrientUptake):
     Parameters
     ----------
     crop_data : CropData, optional
-        An instance of `CropData` containing specific crop parameters and states. If not provided, a default
+        An instance of ``CropData`` containing specific crop parameters and states. If not provided, a default
         instance with generic crop parameters is created.
     water_distro_parameter : float, default 10
         Water-use distribution parameter governing water-uptake from the soil (unitless).
@@ -35,15 +34,15 @@ class WaterUptake(NutrientUptake):
         like root depth, growth rates, and environmental conditions affecting root expansion.
     water_distro_parameter : float
         Water-use distribution parameter governing water-uptake from the soil (unitless).
-    potential_water_uptakes : Optional[list[float]]
+    potential_water_uptakes : list[float] | None
         The maximum amount of water to be potentially taken up by a crop, from each soil layer (mm).
     water_compensation_factor : float
         Factor that determines the ability of a plant to draw water from deeper layers when demands are not met
         (unitless). 0 indicates no water can be drawn from deeper than expected and 1 indicates that any and all water
         can be drawn from deeper layers.
-    unmet_water_demands : Optional[list[float]]
+    unmet_water_demands : list[float] | None
         Cumulative water demands not met by all previous layers (mm).
-    actual_water_uptakes : Optional[list[float]]
+    actual_water_uptakes : list[float] | None
         The actual amount of water to be removed from the soil (mm).
 
     References
@@ -54,12 +53,12 @@ class WaterUptake(NutrientUptake):
 
     def __init__(
         self,
-        crop_data: Optional[CropData] = None,
+        crop_data: CropData | None = None,
         water_distro_parameter: float = 10,
-        potential_water_uptakes: Optional[list[float]] = None,
+        potential_water_uptakes: list[float] | None = None,
         water_compensation_factor: float = 0.01,
-        unmet_water_demands: Optional[list[float]] = None,
-        actual_water_uptakes: Optional[list[float]] = None,
+        unmet_water_demands: list[float] | None = None,
+        actual_water_uptakes: list[float] | None = None,
     ):
         super().__init__(crop_data)
         self.water_distro_parameter = water_distro_parameter
@@ -128,7 +127,7 @@ class WaterUptake(NutrientUptake):
         Raises
         ------
         Exception
-            If the lengths of `soil_data.soil_layers` and `self.actual_water_uptakes` aren't equal.
+            If the lengths of ``soil_data.soil_layers`` and ``self.actual_water_uptakes`` aren't equal.
 
         Notes
         -----
@@ -175,7 +174,7 @@ class WaterUptake(NutrientUptake):
         Raises
         ------
         Exception
-            If the lengths of `potential_uptakes`, `water_availabilities`, and `wilting_points` are not all equal.
+            If the lengths of ``potential_uptakes``, ``water_availabilities``, and ``wilting_points`` are not all equal.
 
         Notes
         -----
@@ -237,7 +236,7 @@ class WaterUptake(NutrientUptake):
         Raises
         ------
         Exception
-            If `potential_uptakes`, `water_availabilities`, and `available_capacities` are not all equal lengths.
+            If ``potential_uptakes``, ``water_availabilities``, and ``available_capacities`` are not all equal lengths.
 
         Notes
         -----
@@ -310,7 +309,7 @@ class WaterUptake(NutrientUptake):
         Raises
         ------
         Exception
-            If the lengths of `potential_uptakes` and `unmet_demands` are not equal.
+            If the lengths of ``potential_uptakes`` and ``unmet_demands`` are not equal.
 
         References
         ----------
@@ -356,7 +355,7 @@ class WaterUptake(NutrientUptake):
         Raises
         ------
         Exception
-            If the lengths of `upper_depths` and `lower_depths` are not equal.
+            If the lengths of ``upper_depths`` and ``lower_depths`` are not equal.
 
         References
         ----------

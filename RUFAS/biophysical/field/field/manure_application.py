@@ -1,5 +1,3 @@
-from typing import Optional
-
 from RUFAS.general_constants import GeneralConstants
 from RUFAS.biophysical.field.field.fertilizer_application import FertilizerApplication
 from RUFAS.biophysical.field.soil.soil_data import SoilData
@@ -48,7 +46,7 @@ class ManureApplication:
         be tracked.
     """
 
-    def __init__(self, soil_data: Optional[SoilData] = None, field_size: Optional[float] = None) -> None:
+    def __init__(self, soil_data: SoilData | None = None, field_size: float | None = None) -> None:
         self.data = soil_data or SoilData(field_size=field_size)
 
     def apply_grazing_manure(

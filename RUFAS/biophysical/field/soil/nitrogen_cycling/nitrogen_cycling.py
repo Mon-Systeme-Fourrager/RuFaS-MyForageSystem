@@ -1,4 +1,3 @@
-from typing import Optional
 
 from RUFAS.biophysical.field.soil.nitrogen_cycling.denitrification import Denitrification
 from RUFAS.biophysical.field.soil.nitrogen_cycling.humus_mineralization import HumusMineralization
@@ -38,7 +37,7 @@ class NitrogenCycling:
 
     """
 
-    def __init__(self, soil_data: Optional[SoilData] = None, field_size: Optional[float] = None):
+    def __init__(self, soil_data: SoilData | None = None, field_size: float | None = None):
         self.data = soil_data or SoilData(field_size=field_size)
 
         self.leaching_runoff_erode = LeachingRunoffErosion(self.data)

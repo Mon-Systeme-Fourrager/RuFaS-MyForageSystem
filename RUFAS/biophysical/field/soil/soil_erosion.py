@@ -1,5 +1,4 @@
 from math import atan, exp, log, sin
-from typing import Optional
 
 from RUFAS.general_constants import GeneralConstants
 from RUFAS.biophysical.field.soil.soil_data import SoilData
@@ -27,7 +26,7 @@ class SoilErosion:
 
     """
 
-    def __init__(self, soil_data: Optional[SoilData], field_size: Optional[float] = None):
+    def __init__(self, soil_data: SoilData | None, field_size: float | None = None):
         """This method initializes the SoilData object that this module will work with, or create one if none provided.
 
         Parameters

@@ -1,5 +1,4 @@
 from math import exp
-from typing import Optional
 
 from RUFAS.biophysical.field.soil.layer_data import LayerData
 from RUFAS.biophysical.field.soil.soil_data import SoilData
@@ -26,7 +25,7 @@ class Percolation:
 
     """
 
-    def __init__(self, soil_data: Optional[SoilData], field_size: Optional[float] = None):
+    def __init__(self, soil_data: SoilData | None, field_size: float | None = None):
         self.data = soil_data or SoilData(field_size=field_size)
 
     def percolate(self, has_seasonal_high_water_table: bool) -> None:
@@ -42,7 +41,7 @@ class Percolation:
         -----
         RuFaS allows percolation even when the temperature of the soil layer is below zero degrees Celsius.
 
-        This routine calls the subroutine `_percolate_infiltrated_water` to handle percolating water from infiltration
+        This routine calls the subroutine ``_percolate_infiltrated_water`` to handle percolating water from infiltration
         into the soil profile. If that routine percolates water out of any soil layers (which is the case when there are
         high or sustained amounts of infiltration), this routine will only percolate water out of the soil layers which
         have not had water percolated out of them on the current day.

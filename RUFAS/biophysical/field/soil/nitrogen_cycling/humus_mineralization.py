@@ -1,4 +1,3 @@
-from typing import Optional
 
 from RUFAS.biophysical.field.soil.soil_data import SoilData
 from RUFAS.user_constants import UserConstants
@@ -29,7 +28,7 @@ class HumusMineralization:
 
     """
 
-    def __init__(self, soil_data: Optional[SoilData] = None, field_size: Optional[float] = None):
+    def __init__(self, soil_data: SoilData | None = None, field_size: float | None = None):
         self.data = soil_data or SoilData(field_size=field_size)
 
     def mineralize_organic_nitrogen(self) -> None:

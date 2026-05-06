@@ -1,5 +1,3 @@
-from typing import Optional
-
 from RUFAS.data_structures.tillage_implements import TillageImplement
 from RUFAS.output_manager import OutputManager
 from RUFAS.biophysical.field.field.field_data import FieldData
@@ -45,9 +43,9 @@ class TillageApplication:
 
     def __init__(
         self,
-        field_data: Optional[FieldData] = None,
-        soil_data: Optional[SoilData] = None,
-        field_size: Optional[float] = None,
+        field_data: FieldData | None = None,
+        soil_data: SoilData | None = None,
+        field_size: float | None = None,
     ):
         """
         Creates a TillageApplication object based on a SoilData object.

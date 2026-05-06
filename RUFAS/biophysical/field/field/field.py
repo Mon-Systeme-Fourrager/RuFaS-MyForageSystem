@@ -1,6 +1,6 @@
 import math
 from math import exp
-from typing import Dict, List, Optional, Sequence, TypeVar
+from typing import Dict, List, Sequence, TypeVar
 
 from RUFAS.current_day_conditions import CurrentDayConditions
 from RUFAS.data_structures.crop_soil_to_feed_storage_connection import HarvestedCrop
@@ -99,14 +99,14 @@ class Field:
 
     def __init__(
         self,
-        field_data: Optional[FieldData] = None,
-        soil: Optional[Soil] = None,
-        plantings: Optional[List[PlantingEvent]] = None,
-        harvestings: Optional[List[HarvestEvent]] = None,
-        tillage_events: Optional[List[TillageEvent]] = None,
-        fertilizer_events: Optional[List[FertilizerEvent]] = None,
-        fertilizer_mixes: Optional[Dict[str, Dict[str, float]]] = None,
-        manure_events: Optional[List[ManureEvent]] = None,
+        field_data: FieldData | None = None,
+        soil: Soil | None = None,
+        plantings: List[PlantingEvent] | None = None,
+        harvestings: List[HarvestEvent] | None = None,
+        tillage_events: List[TillageEvent] | None = None,
+        fertilizer_events: List[FertilizerEvent] | None = None,
+        fertilizer_mixes: Dict[str, Dict[str, float]] | None = None,
+        manure_events: List[ManureEvent] | None = None,
     ) -> None:
         # field-wide attributes
         self.om = OutputManager()
@@ -541,7 +541,7 @@ class Field:
             Calendar year in which this manure application occurs.
         day : int
             Julian day on which this manure application occurs.
-        manure_supplied : NutrientRequestResults | None
+        manure_supplied : NutrientRequestResults, optional
             An object containing the information that defines a manure application.
         manure_supplement_method : ManureSupplementMethod
             Enum option indicating how to supplement the manure application.
@@ -828,7 +828,7 @@ class Field:
         year: int,
         day: int,
         output_name: str,
-        potassium: Optional[float] = None,
+        potassium: float | None = None,
     ) -> None:
         """
         Records the amount of manure and related values for an individual manure application.
@@ -853,7 +853,7 @@ class Field:
             Calendar year in which this manure application occurs.
         day : int
             Julian day on which this manure application occurs.
-        potassium : float, Optional
+        potassium : float, optional
             Mass of potassium in the manure applied (kg).
 
         """
@@ -927,7 +927,7 @@ class Field:
     def _record_nutrient_application_error(
         self,
         application_depth: float,
-        surface_remainder_fraction: Optional[float],
+        surface_remainder_fraction: float | None,
         error_name: str,
         year: int,
         day: int,
@@ -939,7 +939,7 @@ class Field:
         ----------
         application_depth : float
             Depth of the manure or fertilizer application (mm).
-        surface_remainder_fraction : Optional[float]
+        surface_remainder_fraction : float, optional
             Fraction of manure or fertilizer applied that remains on the soil surface after application (unitless).
         error_name : str
             Name of the error, indicating whether it occurred during manure or fertilizer application.
@@ -948,8 +948,8 @@ class Field:
         -----
         There are two possible errors that this method can log. One is an invalid combination of application depth and
         surface remainder fraction, the other is an application depth deeper than the bottom of the soil profile. The
-        two are differentiated by what is passed for `surface_remainder_fraction`. If it is a number, it is the former,
-        and if None, then it is the latter.
+        two are differentiated by what is passed for ``surface_remainder_fraction``. If it is a number, it is the
+        former, and if None, then it is the latter.
 
         """
         info_map = {
