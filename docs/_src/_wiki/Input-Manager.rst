@@ -484,12 +484,9 @@ Examples of properties blobs in action:
 The "cross-validation" blob
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Cross-validation enforces consistency *across* fields and files — checks
-that the individual-field validation in the ``properties`` blob cannot
-catch. For example, verifying that the total number of stalls across all
-calf pens is at least as large as the number of calves divided by the
-maximum stocking density requires values from two separate parts of the
-input tree; that kind of check lives here.
+Cross-validation enforces coherence across fields and files — ensuring that independently valid inputs also make sense when considered together. While individual-field validation in the properties blob can confirm that values are well-formed and within acceptable ranges, it cannot capture relationships between different parts of the input structure.
+
+Cross-validation fills this gap by validating cross-field dependencies and system-level constraints. For example, verifying that the total number of stalls across all calf pens is at least as large as the number of calves divided by the maximum stocking density requires values from multiple parts of the input tree. These checks ensure that the overall configuration is not just syntactically valid, but operationally realistic and internally consistent, helping prevent subtle configuration errors that could lead to invalid or misleading simulation results.
 
 The cross-validation configuration is stored in one or more standalone
 JSON files (separate from the main metadata file). Each file contains a
