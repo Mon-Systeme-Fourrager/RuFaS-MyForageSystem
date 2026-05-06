@@ -1,4 +1,3 @@
-from typing import Optional
 
 from RUFAS.biophysical.field.crop.crop_data import CropData
 from RUFAS.rufas_time import RufasTime
@@ -15,7 +14,7 @@ class RootDevelopment:
     Parameters
     ----------
     crop_data : CropData, optional
-        An instance of `CropData` containing specific crop parameters and states. If not provided, a default
+        An instance of ``CropData`` containing specific crop parameters and states. If not provided, a default
         instance with generic crop parameters is created.
 
     Attributes
@@ -26,7 +25,7 @@ class RootDevelopment:
 
     """
 
-    def __init__(self, crop_data: Optional[CropData] = None):
+    def __init__(self, crop_data: CropData | None = None):
         self.data = crop_data or CropData()
 
     def develop_roots(self, time: RufasTime) -> None:
