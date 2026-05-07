@@ -230,6 +230,11 @@ class NonWaterUptake(NutrientUptake):
         List[float]
             The actual amounts of a resource extracted from the soil layers.
 
+        Raises
+        ------
+        ValueError
+            If requests and sources are not the same length.
+
         References
         ----------
         SWAT 5:2.3.8, 5:2.3.26
@@ -464,6 +469,11 @@ class NonWaterUptake(NutrientUptake):
         -------
         float
             The potential amount of nutrient that can be taken up from the soil surface to the specified depth (kg/ha).
+
+        Raises
+        ------
+        ValueError
+            If nutrient_distribution_paramenter is 0.
 
         References
         ----------
@@ -859,6 +869,11 @@ class NonWaterUptake(NutrientUptake):
         -------
         List[float]
             Amount of nutrient mass taken up from each soil layer.
+
+        Raises
+        ------
+        ValueError
+            If layer_potential, layer_demand, and layer_nitrate are not all the same length.
 
         References
         ----------

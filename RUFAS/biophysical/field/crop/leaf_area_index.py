@@ -198,8 +198,24 @@ class LeafAreaIndex:
 
         """
         if max_canopy_height < 0:
+            OutputManager().add_error(
+                "Max Canopy Height Error",
+                f"max_canopy_height must be greater than 0 and got {max_canopy_height}",
+                info_map={
+                    "class": LeafAreaIndex.__name__,
+                    "function": LeafAreaIndex.determine_canopy_height.__name__
+                }
+            )
             raise ValueError("max_canopy_height must be greater than 0")
         if not 0 <= optimal_leaf_area_fraction <= 1:
+            OutputManager().add_error(
+                "Optimal Leaf Area Fraction Error",
+                f"optimal_leaf_area_index must be >= 0 and <= 1 and got {optimal_leaf_area_fraction}",
+                info_map={
+                    "class": LeafAreaIndex.__name__,
+                    "function": LeafAreaIndex.determine_canopy_height.__name__
+                }
+            )
             raise ValueError("optimal_leaf_area_index must be >= 0 and <= 1")
         return min(max_canopy_height, max_canopy_height * sqrt(optimal_leaf_area_fraction))
 
@@ -228,6 +244,15 @@ class LeafAreaIndex:
         -------
         List[float]
             A list of shape coefficients used in the optimal LAI formula.
+
+        Raises
+        ------
+        ValueError
+            If first heat fraction is <= 0.
+            If second heat fraction is <= 0.
+            If first leaf fraction is not between 0 and 1.
+            If second leaf fraction is not between 0 and 1.
+            If first and second heat fractions are exactly equal.
 
         """
         info_map = {
@@ -379,6 +404,11 @@ class LeafAreaIndex:
         -------
         float
             The calculated leaf area index of the plant during its senescence phase.
+        
+        Raises
+        ------
+        ValueError
+            If senescent heat fraction is >= 1.
 
         Notes
         -----
@@ -392,6 +422,14 @@ class LeafAreaIndex:
 
         """
         if senescent_heat_fraction >= 1:
+            OutputManager().add_error(
+                "Senescent heat fraction error",
+                f"Senescent heat fraction must be less than 1 and received {senescent_heat_fraction}",
+                info_map={
+                    "class": LeafAreaIndex.__name__,
+                    "function": LeafAreaIndex._determine_senescent_leaf_area_index
+                }
+            )
             raise ValueError("Senescent heat fraction must be less than 1")
         else:
             prop = (1 - heat_fraction) / (1 - senescent_heat_fraction)
