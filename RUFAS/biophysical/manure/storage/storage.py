@@ -127,6 +127,11 @@ class Storage(Processor):
         minimum_manure_temperature : float
             The minimum temperature of the manure in storage (°C).
 
+        Raises
+        ------
+        ValueError
+            If missing data needed to calculate outdoor storage temp.
+
         Returns
         -------
         float
@@ -149,6 +154,15 @@ class Storage(Processor):
             )
             return max(minimum_manure_temperature, estimated_temperature)
         else:
+            self._om.add_error(
+                "Storage temperature calculation error",
+                "No data for outdoor storage temperature calculations. "
+                f"amplitude is {self.amplitude}, intercept_mean_temp is {self.intercept_mean_temp} "
+                f"phase_shift is {self.phase_shift}."
+                info_map={
+                    
+                }
+            )
             raise ValueError("No data for outdoor storage temperature calculations.")
 
     def _calculate_surface_area(self) -> None:

@@ -216,6 +216,11 @@ class OpenLot(Storage):
 
         """
         if received_nitrogen < 0.0:
+            OpenLot._om.add_error(
+                "Negative received nitrogen",
+                f"Daily nitrogen input mass must be non-negative: {received_nitrogen}",
+                info_map={"class": OpenLot.__name__, "function": OpenLot._calculate_open_lot_ammonia_emissions.__name__},
+            )
             raise ValueError(f"Daily nitrogen input mass must be non-negative: {received_nitrogen}")
 
         return ManureConstants.AMMONIA_EMISSION_COEFFICIENT_IN_OPEN_LOTS * received_nitrogen
