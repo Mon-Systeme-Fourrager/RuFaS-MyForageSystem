@@ -286,6 +286,14 @@ class BeddedPack(Storage):
         """
 
         if received_nitrogen < 0.0:
+            BeddedPack._om.add_error(
+                "Negative received nitrogen error",
+                f"Daily nitrogen input mass must be non-negative: {received_nitrogen}",
+                info_map={
+                    "class": BeddedPack.__name__,
+                    "function": BeddedPack._calculate_bedded_pack_nitrous_oxide_emission.__name__
+                },
+            )
             raise ValueError(f"Daily nitrogen input mass must be non-negative: {received_nitrogen}")
         if is_mixed:
             coefficient = ManureConstants.NITROUS_OXIDE_COEFFICIENT_WITH_TILLED_BEDDING
@@ -318,8 +326,15 @@ class BeddedPack(Storage):
         """
 
         if received_nitrogen < 0.0:
+            BeddedPack._om.add_error(
+                "Negative received nitrogen error",
+                f"Daily nitrogen input mass must be non-negative: {received_nitrogen}",
+                info_map={
+                    "class": BeddedPack.__name__, 
+                    "function": BeddedPack._calculate_bedded_pack_ammonia_emission.__name__
+                },
+            )
             raise ValueError(f"Daily nitrogen input mass must be non-negative: {received_nitrogen}")
-
         if is_mixed:
             coefficient = ManureConstants.AMMONIA_EMISSION_COEFFICIENT_WITH_TILLED_BEDDING
         else:
@@ -347,6 +362,10 @@ class BeddedPack(Storage):
         methane_production_potential : float
             Achievable emission of methane from dairy manure (m^3 methane / kg volatile solids).
 
+        Raises
+        ------
+        ValueError
+            If manure_volatile_solids is < 0.
 
         Returns
         -------
@@ -355,6 +374,14 @@ class BeddedPack(Storage):
 
         """
         if manure_volatile_solids < 0:
+            BeddedPack._om.add_error(
+                "Negative manure solids error",
+                f"Manure volatile solids mass must be positive. Received {manure_volatile_solids}.",
+                info_map={
+                    "class": BeddedPack.__name__, 
+                    "function": BeddedPack.calculate_bedded_pack_methane_emission.__name__
+                },
+            )
             raise ValueError(f"Manure volatile solids mass must be positive. Received {manure_volatile_solids}.")
         Bo = methane_production_potential
         methane_conversion_factor = BeddedPack.calculate_bedded_pack_methane_conversion_factor(is_mixed,
@@ -376,6 +403,11 @@ class BeddedPack(Storage):
         manure_temperature : float
             The annual average temperature of the barn (Celsius).
 
+        Raises
+        ------
+        ValueError
+            If manure temperature is out of defined range.
+
         Returns
         -------
         float
@@ -390,4 +422,12 @@ class BeddedPack(Storage):
         for (lower_bound, upper_bound), mcf in BEDDED_PACK_MCF_TABLE[mix].items():
             if lower_bound < manure_temperature <= upper_bound:
                 return mcf
+        BeddedPack._om.add_error(
+            "BeddedPack manure temp error",
+            f"Temperature {manure_temperature}°C out of any defined bin",
+            info_map={
+                "class": BeddedPack.__name__, 
+                "function": BeddedPack.calculate_bedded_pack_methane_conversion_factor.__name__
+            },
+        )
         raise ValueError(f"Temperature {manure_temperature}°C out of any defined bin")
