@@ -158,9 +158,10 @@ class Storage(Processor):
                 "Storage temperature calculation error",
                 "No data for outdoor storage temperature calculations. "
                 f"amplitude is {self.amplitude}, intercept_mean_temp is {self.intercept_mean_temp} "
-                f"phase_shift is {self.phase_shift}."
+                f"phase_shift is {self.phase_shift}.",
                 info_map={
-                    
+                    "class": Storage.__name__,
+                    "function": Storage._determine_outdoor_storage_temperature.__name__
                 }
             )
             raise ValueError("No data for outdoor storage temperature calculations.")
@@ -332,6 +333,14 @@ class Storage(Processor):
             <= UserConstants.GENERAL_UPPER_BOUND_TEMPERATURE
         )
         if is_temp_invalid:
+            Storage._om.add_error(
+                "Storage arrhenius exponent calculation error",
+                f"Temperature must be between -40 and 60 degrees Celsius. Temperature provided: {temperature}",
+                info_map={
+                    "class": Storage.__name__,
+                    "function": Storage._calculate_arrhenius_exponent.__name__
+                }
+            )
             raise ValueError(
                 f"Temperature must be between -40 and 60 degrees Celsius. Temperature provided: {temperature}"
             )
