@@ -550,6 +550,7 @@ def test_validate_storage_config_names_duplicate_raises(feed_manager: FeedManage
     assert "['S1']" in msg
     add_error.assert_called_once()
 
+
 def test_update_available_feed_amounts(
     feed_manager: FeedManager, mock_available_feeds: list[Feed], mocker: MockerFixture
 ) -> None:

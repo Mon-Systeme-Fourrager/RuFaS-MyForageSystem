@@ -587,7 +587,8 @@ class FeedManager:
         }
         for rufas_id, purchase_amount in feeds_to_purchase.items():
             feed_info = next(
-                (available_feed for available_feed in self._available_feeds if available_feed.rufas_id == rufas_id), None
+                (available_feed for available_feed in self._available_feeds if available_feed.rufas_id == rufas_id),
+                None,
             )
             if feed_info is None:
                 raise ValueError(f"Trying to purchase unavailable feed {rufas_id}")
