@@ -836,7 +836,8 @@ class HerdManager:
         if not eligible_indices:
             return None
 
-        return min(eligible_indices, key=lambda i: self.cows[i].milk_production.milk_305_day_yield)
+        # For now we keep using daily production so cow-removal behavior stays unchanged.
+        return min(eligible_indices, key=lambda i: self.cows[i].milk_production.daily_milk_produced)
 
     def _check_if_cows_need_to_be_sold(self, simulation_day: int, removed_animal: list[Animal]) -> list[Animal]:
         """Checks if surplus cows need to be sold based on herd size."""
