@@ -276,15 +276,15 @@ class FieldManager:
         fertilizer_schedule : str
             Name of the metadata blob that contains the fertilizer schedule.
 
-        Raises
-        ------
-        ValueError
-            If no fertilizer data sent.
-
         Returns
         -------
         tuple[dict[str, dict[str, float], FertilizerSchedule]
             Dictionary containing the specifications of the available fertilizer mixes, and a FertilizerSchedule.
+
+        Raises
+        ------
+        ValueError
+            If no fertilizer data sent.
 
         """
         im = InputManager()

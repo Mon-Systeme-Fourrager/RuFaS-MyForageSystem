@@ -833,7 +833,7 @@ class Animal:
             self.om.add_error(
                 "Gestation length setter error",
                 "The animal attempting to be assigned a gestation length cannot be a CALF or HEIFER_I.",
-                info_map={"class": self.__class__.__name__, "function": "calving_interval.setter"},
+                info_map={"class": self.__class__.__name__, "function": "gestation_length.setter"},
             )
             raise TypeError("The animal attempting to be assigned a gestation length cannot be a CALF or HEIFER_I.")
         self.reproduction.gestation_length = gestation_length
@@ -874,10 +874,10 @@ class Animal:
         if self.animal_type in [AnimalType.CALF, AnimalType.HEIFER_I]:
             self.om.add_error(
                 "Calf birth weight setter error",
-                "Calf birth weigth cannot be set for an Animal of type CALF or Heifer_I.",
+                "Calf birth weight cannot be set for an Animal of type CALF or Heifer_I.",
                 info_map={"class": self.__class__.__name__, "function": "calf_birth_weight.setter"},
             )
-            raise TypeError("Calf birth weigth cannot be set for an Animal of type CALF or Heifer_I.")
+            raise TypeError("Calf birth weight cannot be set for an Animal of type CALF or Heifer_I.")
         self.reproduction.calf_birth_weight = calf_birth_weight
 
     @property
@@ -900,9 +900,9 @@ class Animal:
             self.om.add_error(
                 "Calving interval history property error",
                 "Calving interval history is only a property of a cow.",
-                info_map={"class": self.__class__.__name__, "function": "calving_interval_history.setter"},
+                info_map={"class": self.__class__.__name__, "function": "calving_interval_history.property"},
             )
-            raise TypeError("The calving birth history property is only available for cows.")
+            raise TypeError("The calving interval history property is only available for cows.")
         return self.reproduction.calving_interval_history
 
     @property
