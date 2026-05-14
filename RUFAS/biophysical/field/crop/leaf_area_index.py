@@ -416,7 +416,7 @@ class LeafAreaIndex:
                 f"Senescent heat fraction must be less than 1 and received {senescent_heat_fraction}",
                 info_map={
                     "class": LeafAreaIndex.__name__,
-                    "function": LeafAreaIndex._determine_senescent_leaf_area_index,
+                    "function": LeafAreaIndex._determine_senescent_leaf_area_index.__name__,
                 },
             )
             raise ValueError("Senescent heat fraction must be less than 1")

@@ -1248,7 +1248,7 @@ class HerdManager:
                 "Execute Pen Allocation Error",
                 "The length of the allocation plan must match the number of pens. "
                 f"Got allocation_plan of length {len(allocation_plan)} with "
-                f"animal_pens number of {len(animal_pens)}",
+                f"total of {len(animals)} animals",
                 info_map={"class": self.__class__.__name__, "function": self._execute_allocation_plan.__name__},
             )
             raise ValueError("The length of the allocation plan must match the number of pens.")

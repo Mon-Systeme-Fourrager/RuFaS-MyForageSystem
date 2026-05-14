@@ -959,7 +959,7 @@ class Pen:
                 "Invalid PenType Error.",
                 f"Invalid pen type: {self.pen_type}. "
                 "Cannot calculate manure surface area, pen_type must be in "
-                f"{exposed_manure_surface_area_by_pen_type.keys}.",
+                f"{exposed_manure_surface_area_by_pen_type.keys()}.",
                 info_map={
                     "class": self.__class__.__name__,
                     "function": self._calculate_manure_surface_area.__name__,
