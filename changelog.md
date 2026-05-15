@@ -80,6 +80,7 @@ v1.0.0
 - [2991](https://github.com/RuminantFarmSystems/RuFaS/pull/2991) - [minor change] [NoInputChange] [NoOutputChange] Updated the docstrings in the Crop and Soil module.
 - [3004](https://github.com/RuminantFarmSystems/RuFaS/pull/3004) - [minor change] [NoInputChange] [NoOutputChange] Removes public `available_feeds` property from FeedManager.
 - [3000](https://github.com/RuminantFarmSystems/RuFaS/pull/3000) - [minor change] [NoInputChange] [NoOutputChange] Updated the error messages for all biophysical modules.
+- [2715](https://github.com/RuminantFarmSystems/RuFaS/pull/2715) - [minor change] [Animal] [NoInputChange] [OutputChange] Renames the 305-day milk yield output from `milk_production_305days_herd_mean` to `milk_305_day_yield_herd_mean`, splits the calculation into a pure Wood's-curve integral and a per-cow simulation estimate, and adds L1/L2/L3+ herd-level reporting.
 
 ### v1.0.0
 
