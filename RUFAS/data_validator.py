@@ -1413,7 +1413,7 @@ class DataValidator:
                 else variable_parent[int(element_hierarchy[-1])]
             )
             error_message = (
-                f"Variable: '{element_hierarchy[-1]}' has invalid value: '{invalid_value}'"
+                f"Variable: '{element_hierarchy[-1]}' in '{input_path}' has invalid value: '{invalid_value}'"
                 f", and cannot be changed to a default value. {properties_violation_message}"
             )
             self.event_logs.append(
@@ -1432,7 +1432,8 @@ class DataValidator:
             original_invalid_value = variable_parent.get(str(element_hierarchy[-1]))
 
         warning_message = (
-            f"Variable: '{element_path}' has value: {original_invalid_value}. {properties_violation_message}"
+            f"Variable: '{element_path}' in '{input_path}' has value: {original_invalid_value}."
+            f" {properties_violation_message}"
         )
         self.event_logs.append(
             {"warning": "Validation: invalid data found", "message": warning_message, "info_map": info_map}
@@ -1444,7 +1445,7 @@ class DataValidator:
             variable_parent[str(element_hierarchy[-1])] = variable_properties["default"]
 
         warning_message = (
-            f"Invalid data from '{input_path}' fixed: '{element_path}' in value changed from "
+            f"Invalid data from '{input_path}' fixed: '{element_path}' value changed from "
             f"{original_invalid_value} to {variable_properties['default']}. Fix enabled by default value specified in "
             f"'{properties_blob_key}'."
         )
