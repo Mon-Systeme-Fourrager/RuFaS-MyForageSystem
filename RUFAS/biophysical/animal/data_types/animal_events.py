@@ -20,8 +20,11 @@ class AnimalEvents:
         """
         Initialize event from a string
 
-        Args:
-                events_str: string representation of events
+        Parameters
+        ----------
+        events_str : str
+            A string representation of events
+
         """
         split_by_date = list(
             filter(
@@ -41,8 +44,10 @@ class AnimalEvents:
         """
         Add a cow life event
 
-        Args:
-                animal_age: the date counter for the cow (from birth)
+        Parameters
+        ----------
+        animal_age : int
+            The date counter for the cow from birth
                 simulation_day: day in the simulation
                 description: the event happened on that day
         """
