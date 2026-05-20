@@ -108,7 +108,7 @@
     "crop_configurations": {
       "title": "Crop Configurations",
       "description": "Configurations for how crops grow and are managed.",
-      "path": "input/data/crop_configurations/no_crop.json",
+      "path": "input/data/crop_configurations/no_crop_configs.json",
       "type": "json",
       "properties": "crop_configuration_properties"
     },
@@ -171,7 +171,7 @@
     "tractor_dataset": {
       "title": "Tractor Dataset",
       "description": "Details agricultural machinery operations for various crops, including tractor size, operations (planting, mowing, collection, etc.), implement details, operational parameters (depth, width, mass), and throughput metrics, spanning different crop types and soil management practices.",
-      "path": "input/data/EEE/tractor_dataset.csv",
+      "path": "input/data/EEE/no_tractor_dataset.csv",
       "type": "csv",
       "properties": "tractor_dataset_properties"
     },
