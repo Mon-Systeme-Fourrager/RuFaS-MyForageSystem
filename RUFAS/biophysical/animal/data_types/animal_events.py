@@ -18,12 +18,12 @@ class AnimalEvents:
 
     def init_from_string(self, events_str: str) -> None:
         """
-        Initialize event from a string
+        Initialize an event from a string.
 
         Parameters
         ----------
         events_str : str
-            A string representation of events
+            A string representation of events.
 
         """
         split_by_date = list(
@@ -42,14 +42,17 @@ class AnimalEvents:
 
     def add_event(self, animal_age: int, simulation_day: int, description: str) -> None:
         """
-        Add a cow life event
+        Add a cow life event.
 
         Parameters
         ----------
         animal_age : int
-            The date counter for the cow from birth
-                simulation_day: day in the simulation
-                description: the event happened on that day
+            The date counter for the cow from birth.
+        simulation_day : int
+            The day in the simulation.
+        description : str
+            The event happened on that day
+
         """
         if animal_age in self.events:
             self.events[animal_age].append(description)
@@ -71,7 +74,7 @@ class AnimalEvents:
 
     def get_most_recent_date(self, event_description: str) -> int:
         """
-        Return the most recent age at which the event_description happened
+        Return the most recent age at which the ``event_description`` happened.
 
         Parameters
         ----------
@@ -81,7 +84,8 @@ class AnimalEvents:
         Returns
         -------
         int
-            The most recent age at which the event_description happened, -1 if not found.
+            The most recent age at which the ``event_description`` happened, ``-1`` if not found.
+
         """
 
         dates = list(self.events.keys())
