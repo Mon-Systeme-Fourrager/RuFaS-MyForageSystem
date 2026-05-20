@@ -194,8 +194,6 @@ class NASEMRequirementsCalculator(NutritionRequirementsCalculator):
 
         Notes
         -----
-        [AN.NSM.1], [AN.NSM.2], [AN.NSM.3], [AN.NSM.4], [AN.NSM.5]
-
         NASEM (2021)[1] does not adjust energy requirements for environmental temperature as it assumes that confinement
         conditions already provide comfort temperature to the animals. This is something to consider and update for the
         grazing module. Instead of calculating `calf_birth_weight`, NASEM (2021) also contains standards
@@ -208,6 +206,7 @@ class NASEMRequirementsCalculator(NutritionRequirementsCalculator):
         ----------
         .. [1] The National Academies of Sciences, Engineering, and Medicine "Nutrient Requirements of Dairy Cattle,
             8th edition." National Academic Press, Chapter 3 "Energy", pp. 29, 2021.
+        [AN.NSM.1], [AN.NSM.2], [AN.NSM.3], [AN.NSM.4], [AN.NSM.5]
 
         """
         if day_of_pregnancy is None:
