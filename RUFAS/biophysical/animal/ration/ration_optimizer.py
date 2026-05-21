@@ -20,6 +20,24 @@ class RationConfig:
     RationConfig provides a structured way to represent the collection of animal requirements and feed supply
     information for the ration formulation process.
 
+    Parameters
+    ----------
+    nutrient_standard : NutrientStandard
+        Nutrient standard used in supply and requirement calculations.
+    animal_requirements : NutritionRequirements
+        Nutrition requirements for pen, used in constraint methods.
+    pen_available_feeds : list[Feed], optional
+        List of available feeds in pen.
+    initial_dry_matter_requirement : float
+        Dry matter intake requirement at start of ration formulation.
+    initial_protein_requirement : float
+        Metabolizable protein requirement at start of ration formulation.
+    pen_average_body_weight : float
+        Average body weight in pen, used in constraint methods.
+    pen_average_enteric_methane : float | None, default=None
+        Average enteric methane
+    pen_average_urine_nitrogen
+
     Attributes
     ----------
     nutrient_standard : NutrientStandard
@@ -46,15 +64,6 @@ class RationConfig:
         NDF for each feed used in ration formulation.
     EE_list : list[float]
         EE for each feed used in ration formulation.
-
-    Parameters
-    ----------
-    animal_requirements : NutritionRequirements
-        Nutrition requirements for pen, used in constraint methods.
-    pen_available_feeds : list[Feed], optional
-        List of available feeds in pen.
-    pen_average_body_weight : float
-        Average body weight in pen, used in constraint methods.
 
     """
 
@@ -117,6 +126,8 @@ class RationOptimizer:
     Nonlinear programming methods to optimally formulate a ration by comparing feed supply and the requirements for
     animals in a given pen.
 
+    Notes
+    -----
     This class sets an objective, defines constraints, attempts optimization using scipy's minimize method, and
     reports unsuccessful optimization attempts to the user.
 
