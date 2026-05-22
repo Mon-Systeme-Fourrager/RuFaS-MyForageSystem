@@ -5,7 +5,6 @@ from numpy import exp, log
 from RUFAS.data_structures.feed_storage_to_animal_connection import RUFAS_ID, NutrientStandard, NASEMFeed, NRCFeed
 from RUFAS.general_constants import GeneralConstants
 
-
 """RuFaS IDs for supported calf feeds."""
 WHOLE_MILK_ID: RUFAS_ID = 202
 MILK_REPLACER_ID: RUFAS_ID = 203

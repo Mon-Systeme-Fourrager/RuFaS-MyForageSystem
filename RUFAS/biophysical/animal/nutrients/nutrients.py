@@ -7,6 +7,7 @@ from RUFAS.general_constants import GeneralConstants
 
 class Nutrients:
     """Representation of the nutrients of an animal."""
+
     phosphorus_excess_in_diet: float
     phosphorus_intake: float
     phosphorus_requirement: float

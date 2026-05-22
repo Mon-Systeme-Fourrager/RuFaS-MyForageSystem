@@ -9,7 +9,6 @@ from RUFAS.user_constants import UserConstants
 
 from .nutrition_requirements_calculator import NutritionRequirementsCalculator
 
-
 """Calculator for the amino acid requirements of an animal."""
 AMINO_ACID_CALCULATOR = AminoAcidCalculator()
 
@@ -677,11 +676,13 @@ class NASEMRequirementsCalculator(NutritionRequirementsCalculator):
                     )
                 )
             )
-        return float(max(
-            dry_matter_intake_estimate,
-            AnimalModuleConstants.MINIMUM_DAILY_DMI_RATIO * body_weight,
-            AnimalModuleConstants.MINIMUM_DMI,
-        ))
+        return float(
+            max(
+                dry_matter_intake_estimate,
+                AnimalModuleConstants.MINIMUM_DAILY_DMI_RATIO * body_weight,
+                AnimalModuleConstants.MINIMUM_DMI,
+            )
+        )
 
     @classmethod
     def _calculate_activity_energy_requirements(

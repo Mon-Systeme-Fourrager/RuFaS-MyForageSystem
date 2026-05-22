@@ -116,6 +116,7 @@ class HerdManager:
         Number of simulation days between ration reformulations, (simulation days).
 
     """
+
     DEFAULT_NUM_STALLS_BY_COMBINATION = {
         AnimalCombination.CALF: AnimalModuleConstants.DEFAULT_NUM_STALLS_FOR_CALF_PEN,
         AnimalCombination.GROWING: AnimalModuleConstants.DEFAULT_NUM_STALLS_FOR_GROWING_PEN,
