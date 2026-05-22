@@ -2,7 +2,7 @@ from sys import maxsize
 import math
 import random
 from math import floor
-from typing import Callable, Union, Any, Optional
+from typing import Callable, Union, Any
 
 from scipy.stats import truncnorm
 

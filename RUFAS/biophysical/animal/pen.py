@@ -896,7 +896,7 @@ class Pen:
         ValueError
             If the pen type is not one of the following: "freestall", "tiestall",
             "bedded pack", or "open lot".
-        
+
         Notes
         -----
         The exposed manure surface area is looked up from the following table:

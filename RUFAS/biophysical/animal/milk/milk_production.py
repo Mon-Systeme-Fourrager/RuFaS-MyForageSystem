@@ -298,7 +298,7 @@ class MilkProduction:
         """
         Per-cow estimate of the cow's current-lactation 305-day milk yield, combining
         observed daily production with Wood's-curve predictions for any unobserved DIMs
-        in 1..305. 
+        in 1..305.
 
         Returns
         -------
