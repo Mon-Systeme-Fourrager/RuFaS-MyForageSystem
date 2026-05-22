@@ -33,7 +33,7 @@ class EntericMethaneCalculator:
 
         """
         if methane_model == "Pattanaik":
-            methane_emission = (
+            methane_emission: float = (
                 0.013 * (body_weight**0.75) * GeneralConstants.KCAL_TO_MJ
             ) / GeneralConstants.MJ_CH4_TO_G_CH4
             return methane_emission
@@ -48,13 +48,6 @@ class EntericMethaneCalculator:
         """
         Calculates the amount of methane emission for heifer.
 
-        Notes
-        -----
-        Soluble residue: [AN.MET.1]
-        Gross energy concentration: [AN.MET.2]
-        Starch to acid detergent fiber concentration ratio: [AN.MET.3]
-        Enteric methane emission:  [AN.MET.5]
-
         Parameters
         ----------
         methane_model: str
@@ -66,6 +59,13 @@ class EntericMethaneCalculator:
         -------
         dict[str, float]
             Amount of methane emission for heifer (g/day).
+
+        Notes
+        -----
+        Soluble residue: [AN.MET.1]
+        Gross energy concentration: [AN.MET.2]
+        Starch to acid detergent fiber concentration ratio: [AN.MET.3]
+        Enteric methane emission:  [AN.MET.5]
 
         References
         ----------
@@ -91,11 +91,6 @@ class EntericMethaneCalculator:
         """
         Calculates the daily enteric emissions for cows.
 
-        Notes
-        -----
-        The dry matter ("dm") unit is kg per animal. Crude protein ("CP"), ADF, NDF, lignin, ash, phosphorus, potassium,
-        and nitrogen ("N") are all percentages of dry matter.
-
         Parameters
         ----------
         body_weight: float
@@ -120,6 +115,11 @@ class EntericMethaneCalculator:
         -------
         float
             The daily enteric emissions for cows (g/day).
+
+        Notes
+        -----
+        The dry matter ("dm") unit is kg per animal. Crude protein ("CP"), ADF, NDF, lignin, ash, phosphorus, potassium,
+        and nitrogen ("N") are all percentages of dry matter.
 
         """
         dry_matter_intake = nutrient_amounts.dry_matter
@@ -293,7 +293,7 @@ class EntericMethaneCalculator:
         methane_emission_MJ = mitscherlich_parameter_a - (mitscherlich_parameter_a + mitscherlich_parameter_b) * exp(
             -mitscherlich_parameter_c * metabolizable_energy_intake * GeneralConstants.KCAL_TO_MJ
         )
-        methane_emission = methane_emission_MJ / GeneralConstants.MJ_CH4_TO_G_CH4
+        methane_emission: float = methane_emission_MJ / GeneralConstants.MJ_CH4_TO_G_CH4
         return methane_emission
 
     @staticmethod
