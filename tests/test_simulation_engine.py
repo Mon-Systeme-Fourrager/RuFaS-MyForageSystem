@@ -820,7 +820,7 @@ def test_execute_daily_animal_operations(
     is_ok_to_feed_animals: bool,
     expected_purchased_feeds: dict[int, float],
     expect_warning: bool,
-    expect_formulate_ration: bool
+    expect_formulate_ration: bool,
 ) -> None:
     """
     Unit test for function _execute_daily_animal_operations in simulation_engine.py
@@ -898,7 +898,7 @@ def test_execute_daily_animal_operations(
             ]
         )
 
-    if expect_formulate_ration: 
+    if expect_formulate_ration:
         mock_formulate_ration.assert_called_once_with()
     else:
         mock_formulate_ration.assert_not_called()
