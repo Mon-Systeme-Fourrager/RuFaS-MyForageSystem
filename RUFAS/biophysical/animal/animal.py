@@ -96,10 +96,6 @@ class Animal:
         The age of the animal, (simulation days).
     birth_weight: float
         The birth weight of the animal, (kg).
-    stillborn_day : int | None
-        The simulation day on which the animal was stillborn.
-    _milk_production_output_days_in_milk : int
-        Days in milk used for milk production output reporting, (simulation days).
     body_weight: float
         The body weight of the animal, (kg).
     body_condition_score_5: float
@@ -110,11 +106,11 @@ class Animal:
         The body weight history of the animal.
     pen_history: list[PenHistory]
         The pen history of the animal.
-    sold_at_day: int | None
+    sold_at_day: int, optional
         The simulation day in which the animal was sold.
-    stillborn_day : int | None
+    stillborn_day : int, optional
         The simulation day on which the animal was stillborn.
-    dead_at_day: int | None
+    dead_at_day: int, optional
         The simulation day in which the animal died, (simulation day).
     events: AnimalEvents
         The AnimalEvents object that records all major events of the animal.
@@ -132,7 +128,7 @@ class Animal:
         The nutrition requirement for the animal.
     nutrition_supply: NutritionSupply
         The supplied nutrition in the current ration interval for the animal.
-    previous_nutrition_supply: NutritionSupply | None
+    previous_nutrition_supply: NutritionSupply, optional
         Nutrition supplied during the previous ration interval.
     days_in_milk: int
         The number of days that the animal has been in milk production, (days).
@@ -140,9 +136,9 @@ class Animal:
         Days in milk used for milk production output reporting, (simulation days).
     days_in_pregnancy: int
         The number of days that the animal has been in pregnancy, (days).
-    future_cull_date: int | None
+    future_cull_date: int, optional
         The age of which the animal will be culled, (day).
-    future_death_date: int | None
+    future_death_date: int, optional
         The age of which the animal will die, (day).
     daily_horizontal_distance: float
         The daily horizontal distance traveled by the animal, (m).
@@ -150,7 +146,7 @@ class Animal:
         The daily vertical distance traveled by the animal, (m).
     daily_distance: float
         The total daily distance traveled by the animal, (m).
-    genetics: Genetics | None
+    genetics: Genetics, optional
         The genetic attributes of the animal.
     mature_body_weight: float
         The mature body weight of the animal, (kg).
@@ -421,6 +417,7 @@ class Animal:
         """
         Returns the cull death date of the animal.
 
+        Returns
         -------
         int
             The future cull date or the maximum possible integer value if the animal is not a cow.

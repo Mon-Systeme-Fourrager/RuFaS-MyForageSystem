@@ -60,16 +60,13 @@ class EntericMethaneCalculator:
         dict[str, float]
             Amount of methane emission for heifer (g/day).
 
-        Notes
-        -----
+        References
+        ----------
+        (IPCC tier 2, 2006)
         Soluble residue: [AN.MET.1]
         Gross energy concentration: [AN.MET.2]
         Starch to acid detergent fiber concentration ratio: [AN.MET.3]
         Enteric methane emission:  [AN.MET.5]
-
-        References
-        ----------
-        (IPCC tier 2, 2006)
 
         """
         if methane_model == "IPCC":

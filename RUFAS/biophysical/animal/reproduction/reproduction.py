@@ -49,17 +49,17 @@ class Reproduction:
 
     Parameters
     ----------
-    heifer_reproduction_program : HeiferReproductionProtocol | None, default=None
+    heifer_reproduction_program : HeiferReproductionProtocol, optional
         The reproduction program for heifers.
-    heifer_reproduction_sub_program : HEIFER_REPRODUCTION_SUB_PROTOCOLS | None, default=None
+    heifer_reproduction_sub_program : HEIFER_REPRODUCTION_SUB_PROTOCOLS, optional
         The sub-program for heifer reproduction.
-    cow_reproduction_program : CowReproductionProtocol | None, default=None
+    cow_reproduction_program : CowReproductionProtocol, optional
         The reproduction program for cows.
-    cow_presynch_program: CowPreSynchSubProtocol | None, default=None
+    cow_presynch_program: CowPreSynchSubProtocol, optional
         The presynch program for cows.
-    cow_ovsynch_program: CowTAISubProtocol | None, default=None
+    cow_ovsynch_program: CowTAISubProtocol, optional
         The ovsynch program for cows.
-    cow_resynch_program: CowReSynchSubProtocol | None, default=None
+    cow_resynch_program: CowReSynchSubProtocol, optional
         The resynch program for cows.
     ai_day : int, default=0
         The day of artificial insemination.
@@ -77,11 +77,11 @@ class Reproduction:
         The TAI conception rate for heifers will be dynamically determined later on.
     num_conception_rate_decreases : int, default=0
         Number of times the conception rate decreases.
-    hormone_schedule : dict[int, dict[str, Any]] | None, default=None
+    hormone_schedule : dict[int, dict[str, Any]], optional
         The hormone schedule for the reproduction protocol.
     gestation_length : int, default=0
         Length of the gestation period.
-    conceptus_weight : float,  default=0.0
+    conceptus_weight : float, default=0.0
         Weight of the conceptus.
     calf_birth_weight : float, default=0.0
         Birth weight of the calf.
@@ -89,7 +89,7 @@ class Reproduction:
         Number of calves.
     calving_interval : int, default=AnimalConfig.calving_interval
         Interval between calvings.
-    calving_interval_history : list[int], default=None
+    calving_interval_history : list[int], optional
         History of calving intervals.
     body_weight_at_calving : float, default=0.0
         Body weight of the animal at calving.

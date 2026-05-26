@@ -10,9 +10,9 @@ class PregnancyCheckConfig(TypedDict, total=False):
     ----------
     day : int
         The number of days from the artificial insemination day when the pregnancy check
-        should occur, (simulation days).
+        should occur.
     loss_rate : float
-        The probability of pregnancy loss at this check, (unitless).
+        The probability of pregnancy loss at this check.
     on_preg_loss : str
         The event message to log if pregnancy loss occurs at this check.
     on_preg : str

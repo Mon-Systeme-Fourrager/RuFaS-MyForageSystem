@@ -75,11 +75,11 @@ class Growth:
 
         References
         ----------
-        Calf growth - [AN.BWT.1]
-        Non-preg heifer growth - [AN.BWT.2]
-        Preg heifer growth -  [AN.BWT.3]
-        1st & 2nd parity cow growth - [AN.BWT.4]
-        Parity 3+ cow growth - [AN.BWT.5]
+        Calf growth : [AN.BWT.1]
+        Non-preg heifer growth : [AN.BWT.2]
+        Preg heifer growth : [AN.BWT.3]
+        1st & 2nd parity cow growth : [AN.BWT.4]
+        Parity 3+ cow growth : [AN.BWT.5]
 
         """
         growth_outputs = GrowthOutputs(
@@ -296,12 +296,12 @@ class Growth:
         tuple[float, float]
             The conceptus growth for pregnant heifers (kg), and the updated conceptus weight (kg).
 
-        Referemces
+        References
         ----------
-        Total conceptus weight - [AN.BWT.14]
-        conceptus parameter - [AN.BWT.15]
-        Conceptus growth - [AN.BWT.16]
-        Conceptus weight change at parturition - [AN.BWT.17]
+        Total conceptus weight : [AN.BWT.14]
+        Conceptus parameter : [AN.BWT.15]
+        Conceptus growth : [AN.BWT.16]
+        Conceptus weight change at parturition : [AN.BWT.17]
 
         """
         updated_conceptus_weight = growth_inputs.conceptus_weight
@@ -335,10 +335,10 @@ class Growth:
 
         Referemces
         ----------
-        Total conceptus weight - [AN.BWT.14]
-        conceptus parameter - [AN.BWT.15]
-        Conceptus growth - [AN.BWT.16]
-        Conceptus weight change at parturition - [AN.BWT.17]
+        Total conceptus weight : [AN.BWT.14]
+        conceptus parameter : [AN.BWT.15]
+        Conceptus growth : [AN.BWT.16]
+        Conceptus weight change at parturition : [AN.BWT.17]
 
         """
         updated_tissue_change = (
@@ -387,7 +387,7 @@ class Growth:
         float
             The daily growth rate for cows (kg).
 
-        Referemces
+        References
         ----------
         [AN.BWT.10]
         [AN.BWT.11]

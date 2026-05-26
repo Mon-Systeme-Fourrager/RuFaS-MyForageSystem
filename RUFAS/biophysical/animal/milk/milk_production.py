@@ -286,7 +286,7 @@ class MilkProduction:
         at the start of the simulation, and is also the fallback when a cow has no
         current-lactation history yet (e.g. dry cows at sim start).
 
-        Referemces
+        References
         ----------
         [AN.MLK.10]
 

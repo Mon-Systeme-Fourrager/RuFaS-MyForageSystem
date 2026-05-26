@@ -329,7 +329,7 @@ class LactationCurve:
             Mapping of the parity (1, 2, 3+) to the estimated 305 day milk production of an individual cow of that
             parity (kg).
 
-        Referemces
+        References
         ----------
         Herd average 305-day milk yield: [AN.MLK.4]
         Parity specific 305-day milk yield: [AN.MLK.5], [AN.MLK.6], [AN.MLK.7]
@@ -405,7 +405,7 @@ class LactationCurve:
         float
             Wood's l parameter adjusted to best fit the given milk yield.
 
-        Referemces
+        References
         ----------
         [AN.MLK.8]
 

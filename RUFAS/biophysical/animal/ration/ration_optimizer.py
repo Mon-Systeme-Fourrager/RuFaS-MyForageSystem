@@ -34,9 +34,9 @@ class RationConfig:
         Metabolizable protein requirement at start of ration formulation.
     pen_average_body_weight : float
         Average body weight in pen, used in constraint methods.
-    pen_average_enteric_methane : float | None, default=None
+    pen_average_enteric_methane : float, optional
         Average enteric methane in the pen.
-    pen_average_urine_nitrogen : float | None, default=None
+    pen_average_urine_nitrogen : float, optional
         Average urine nitrogen in the pen.
 
     Attributes

@@ -320,7 +320,7 @@ class NutritionSupplyCalculator:
 
         References
         ----------
-        AN.SUP.3.2
+        [AN.SUP.3.2]
 
         """
         dstarch: float = feed.info.starch_digested * GeneralConstants.PERCENTAGE_TO_FRACTION - 1.0 * (
@@ -837,7 +837,7 @@ class NutritionSupplyCalculator:
         Returns
         -------
         dict[RUFAS_ID, float]
-            Mapping of RuFaS Feed IDs to RDP percentages (percent).]
+            Mapping of RuFaS Feed IDs to RDP percentages (percent).
 
         References
         ----------

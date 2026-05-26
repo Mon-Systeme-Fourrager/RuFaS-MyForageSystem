@@ -5,12 +5,6 @@ class Bedding:
     """
     Abstract base class for all bedding types.
 
-    This class provides a base for all bedding types. It initializes with a configuration of bedding
-    attributes and includes methods for calculating various bedding properties. While bedding mass
-    and nutrients are added to individual manure streams, which may represent only a fraction of the
-    total manure excreted by a pen, the mass of bedding applied per animal is based on the total
-    number of animals housed in the pen from which the manure stream originated.
-
     Parameters
     ----------
     name : str
@@ -63,6 +57,14 @@ class Bedding:
         Calculates the mass of total dry solids in the bedding used.
     calc_total_bedding_water(num_animals: int) -> float
         Calculates the mass of water in the bedding used.
+
+    Notes
+    -----
+    This class provides a base for all bedding types. It initializes with a configuration of bedding
+    attributes and includes methods for calculating various bedding properties. While bedding mass
+    and nutrients are added to individual manure streams, which may represent only a fraction of the
+    total manure excreted by a pen, the mass of bedding applied per animal is based on the total
+    number of animals housed in the pen from which the manure stream originated.
 
     """
 
