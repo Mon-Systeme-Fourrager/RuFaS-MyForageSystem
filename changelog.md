@@ -87,6 +87,7 @@ v1.0.0
 - [3026](https://github.com/RuminantFarmSystems/RuFaS/pull/3026) - [minor change] [E2ETesting] [NoInputChange] [NoOutputChange] Fixes E2E test results comparison tolerence.
 - [2999](https://github.com/RuminantFarmSystems/RuFaS/pull/2999) - [minor change] [Cross Validation] [Feed Storage] [NoInputChange] [NoOutputChange] Added cross validation rules for feed storage inputs.
 - [3024](https://github.com/RuminantFarmSystems/RuFaS/pull/3024) - [minor change] [DataValidator] [NoInputChange] [NoOutputChange] Adds path to input to error/warning messages in `DataValidator` for easier invalid input fixing.
+- [3041](https://github.com/RuminantFarmSystems/RuFaS/pull/3041) - [minor change] [NoInputChange] [NoOutputChange] [OutputManager] [GraphGenerator] [ReportGenerator] Updates docstrings in post-processing modules to follow NumPy-style format.
 
 ### v1.0.0
 
