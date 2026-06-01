@@ -144,7 +144,9 @@ class FieldManager:
         return next_harvest_dates
 
     @staticmethod
-    def _setup_field(field_name: str, field_configuration_data: dict[str, Any], available_crop_configs: list[str]) -> Field:
+    def _setup_field(
+        field_name: str, field_configuration_data: dict[str, Any], available_crop_configs: list[str]
+    ) -> Field:
         """
 
         Parameters

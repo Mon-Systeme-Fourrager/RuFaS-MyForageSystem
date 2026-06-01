@@ -57,7 +57,9 @@ def test_field_manager_init(mocker: MockerFixture, field_blob_names: list[str]) 
     available_crop_configs = ["alfalfa", "corn", "oats"]
     mock_field_config = {"dummy": "config"}
     field_data = {field_name: mock_field_config for field_name in field_blob_names}
-    expected_field_setup_calls = [call(field_name, mock_field_config, available_crop_configs) for field_name in field_blob_names]
+    expected_field_setup_calls = [
+        call(field_name, mock_field_config, available_crop_configs) for field_name in field_blob_names
+    ]
     field_setup = mocker.patch(
         "RUFAS.biophysical.field.manager.field_manager.FieldManager._setup_field", return_value=MagicMock(Field)
     )
@@ -182,9 +184,7 @@ def test_daily_update_routine(
     )
 
     mock_send = mocker.patch.object(FieldDataReporter, "send_daily_variables")
-    actual = fm.daily_update_routine(
-        weather=mock_weather, time=mocked_time, manure_applications=manure_applications
-    )
+    actual = fm.daily_update_routine(weather=mock_weather, time=mocked_time, manure_applications=manure_applications)
 
     assert mock_manage.call_count == len(fields)
     assert get_conditions.call_count == len(fields)
