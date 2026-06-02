@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Any, Callable, Dict, List
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, call
 
 import pytest
 from pytest_mock.plugin import MockerFixture
