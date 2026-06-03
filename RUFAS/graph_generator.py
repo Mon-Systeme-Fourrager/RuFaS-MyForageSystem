@@ -132,7 +132,14 @@ class GraphGenerator:
     metadata_prefix : str, optional
         Prefix applied to graph metadata. Defaults to ``""``.
     time : RufasTime, optional
-        RufasTime object used to track simulation time. Defaults to ``None``.
+        ``RufasTime`` object used to track simulation time. Defaults to ``None``.
+
+    Attributes
+    ----------
+    metadata_prefix : str, optional
+        Prefix applied to graph metadata. Defaults to ``""``.
+    time : RufasTime, optional
+        ``RufasTime`` object used to track simulation time. Defaults to ``None``.
 
     Notes
     -----

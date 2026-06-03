@@ -23,6 +23,11 @@ class ReportGenerator:
     """
     A class to generate reports based on filtered data and aggregation criteria and store them in a dictionary.
 
+    Parameters
+    ----------
+    time : RufasTime | None
+        A ``RufasTime`` object used to track the simulation time
+
     Attributes
     ----------
     reports : dict[str, dict[str, list[Any]]]
