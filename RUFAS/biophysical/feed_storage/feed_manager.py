@@ -278,7 +278,7 @@ class FeedManager:
         self, next_harvest_dates: dict[str, date | None]
     ) -> dict[RUFAS_ID, date]:
         """
-        Remap crop configs and their next harvest date to RuFaS feed IDs and their next harvest date.
+        Remaps crop configs and their next harvest dates to RuFaS feed IDs and their next harvest dates.
 
         Parameters
         ----------

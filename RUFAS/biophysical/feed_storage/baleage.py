@@ -19,10 +19,10 @@ class Baleage(Storage):
 
     Attributes
     ----------
-    bale_density : float
-        Density of the bale, calculated based on the dry matter.
     post_wilting_moisture_percentage : float
         The post-wilting moisture level that baleage will dry down to (unitless).
+    bale_density : float
+        Density of the bale (kg/m^3).
 
     """
 

@@ -46,6 +46,10 @@ class PurchasedFeedStorage:
         The list of feeds available for storage and purchasing.
     stored : list[PurchasedFeed]
         The currently stored purchased feeds.
+    _prefix : str
+        The prefix prepended to reported output variable names.
+    _om : OutputManager
+        The singleton output manager used for model outputs.
 
     """
 
