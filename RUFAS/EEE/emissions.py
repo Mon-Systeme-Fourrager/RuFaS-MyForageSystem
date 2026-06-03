@@ -140,13 +140,15 @@ class EmissionsEstimator:
         """
         Checks that all purchased feed IDs used in the simulation have emissions data available for them.
 
-        Any feed IDs that are missing purchased feed or land use change emissions data are recorded and reported as
-        warnings to the ``OutputManager``.
-
         Parameters
         ----------
         available_feed_ids : list[int]
             The RuFaS feed IDs used in the simulation to check for available emissions data.
+
+        Notes
+        -----
+        Any feed IDs that are missing purchased feed or land use change emissions data are recorded and reported as
+        warnings to the ``OutputManager``.
         """
         available_feeds = {str(feed_id) for feed_id in available_feed_ids}
         missing_purchased = sorted(available_feeds - set(self.purchased_feed_emissions_by_location.keys()))

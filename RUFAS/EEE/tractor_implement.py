@@ -30,6 +30,39 @@ class TractorImplement:
         The depth of the application (cm).
     harvest_type : HarvestOperation | None, optional
         The type of harvest operation for the operation.
+
+    Attributes
+    ----------
+    operation_event : FieldOperationEvent
+        The event type of the field operation.
+    operation_type : OperationType
+        The type of operation to perform.
+    crop_type : str | None
+        The type of crop to perform the operation on.
+    tractor_size : TractorSize
+        The size of the tractor.
+    tillage_implement : TillageImplement | None
+        The type of tillage implement used for the operation.
+    harvest_type : HarvestOperation | None
+        The type of harvest operation, set only for harvest operation events.
+    field_speed_km_per_hr : float
+        The field speed of the implement (km/hr).
+    field_efficiency : float
+        The field efficiency of the implement (unitless).
+    implement_name : str
+        The name of the selected tractor implement.
+    A, B, C, E, F, G : float
+        The tractor coefficients used in the draft and PTO calculations (unitless).
+    width_m : float
+        The working width of the implement (m).
+    mass_kg : float
+        The mass of the implement (kg).
+    throughput : float
+        The maximum throughput of the implement (tons dm/hour).
+    depth_cm : float
+        The operating depth of the implement (cm).
+    is_depth_relevant : bool
+        Whether the operating depth is relevant for the implement's draft calculation.
     """
 
     def __init__(
@@ -73,8 +106,8 @@ class TractorImplement:
         -----
         Not all operations depend on the crop type.
 
-        Reference
-        ---------
+        References
+        ----------
         Implements Helper Function 419 in the EEE Functions file.
         """
         dataset_raw = input_manager.get_data("tractor_dataset")
@@ -132,8 +165,8 @@ class TractorImplement:
         float
             The field capacity for the operation (ha/hr).
 
-        Reference
-        ---------
+        References
+        ----------
         Implements Helper Functions 418a, 418b, and 418c in the EEE Functions file.
         """
         if self.operation_type == OperationType.COLLECTION and self.harvest_type != HarvestOperation.KILL_ONLY:  # 418b
@@ -176,8 +209,8 @@ class TractorImplement:
         float
             The time taken to perform the operation (hr).
 
-        Reference
-        ---------
+        References
+        ----------
         Implements Helper Function 416 in the EEE Functions file.
         """
         field_capacity = self.field_capacity_ha_per_hr(crop_yield_ton_per_ha, application_mass)
@@ -202,8 +235,8 @@ class TractorImplement:
         Drawbar power is the power required by the implement for forward propulsion if it requires a transfer of
         tractor power to its wheel drives for this purpose.
 
-        Reference
-        ---------
+        References
+        ----------
         Implements Helper Function 414 in the EEE Functions file.
         """
         functional_draft = self.calculate_functional_draft(clay_percent)
@@ -224,8 +257,8 @@ class TractorImplement:
         float
             The functional draft required for the operation (N).
 
-        Reference
-        ---------
+        References
+        ----------
         Implements Helper Functions 417 and 421 in the EEE Functions file.
         """
         soil_texture_adjustment = (
@@ -262,8 +295,8 @@ class TractorImplement:
         float
             The PTO power needed to power the implement's operation (kW).
 
-        Reference
-        ---------
+        References
+        ----------
         Implements Helper Function 415 in the EEE Functions file.
         """
         coefficient_to_use = (

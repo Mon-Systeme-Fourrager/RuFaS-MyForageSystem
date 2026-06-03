@@ -431,8 +431,8 @@ class EnergyEstimator:
         float
             The total power needed for the field operation (kW).
 
-        Reference
-        ---------
+        References
+        ----------
         Implements Helper Function 412 in the EEE Functions file.
         """
         tractor_axel_power = tractor.calculate_axel_power(implement)

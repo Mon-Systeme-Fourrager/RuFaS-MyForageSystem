@@ -41,6 +41,21 @@ class Tractor:
     harvest_type : HarvestOperation | None, optional
         The type of harvest operation for the operation.
 
+    Attributes
+    ----------
+    operation_event : FieldOperationEvent
+        The type of field operation for which the tractor is intended.
+    crop_type : str | None
+        The type of crop for which the tractor is intended.
+    tractor_size : TractorSize
+        The size of the tractor.
+    operation_types : list[OperationType]
+        The operation types the tractor performs for the operation event.
+    implements : list[TractorImplement]
+        The tractor implements used for each operation type.
+    constants_by_ID : dict[Any, dict[str, Any]]
+        The EEE constants data keyed by their ID.
+
     Raises
     ------
     ValueError
@@ -102,8 +117,8 @@ class Tractor:
         ValueError
             If ``herd_size`` is negative.
 
-        Reference
-        ---------
+        References
+        ----------
         Implements Helper Function 420 in the EEE Functions file.
         """
         if herd_size < 0:
@@ -130,8 +145,8 @@ class Tractor:
         list[OperationType]
             The operation types required for the field operation event.
 
-        Reference
-        ---------
+        References
+        ----------
         Implements Helper Function 421 in the EEE Functions file.
         """
         if self.operation_event == FieldOperationEvent.HARVEST:
@@ -215,8 +230,8 @@ class Tractor:
         """
         Power take-off (PTO) power available from the tractor based on its size (kW).
 
-        Reference
-        ---------
+        References
+        ----------
         Constants 589, 592, and 595 in the EEE Functions file.
         """
         pto_mapping: dict[TractorSize, float] = {
@@ -231,8 +246,8 @@ class Tractor:
         """
         Power available from the tractor based on its size, derived from the PTO power (kW).
 
-        Reference
-        ---------
+        References
+        ----------
         Constants 590, 593, and 596 in the EEE Functions file.
         """
         return self.PTO_kW / 1.4
@@ -242,8 +257,8 @@ class Tractor:
         """
         Mass of the tractor based on its size (kg).
 
-        Reference
-        ---------
+        References
+        ----------
         Constants 591, 594, and 597 in the EEE Functions file.
         """
         mass_mapping: dict[TractorSize, float] = {
@@ -258,8 +273,8 @@ class Tractor:
         """
         Travel speed of the tractor (km/hr).
 
-        Reference
-        ---------
+        References
+        ----------
         Constant 598 in the EEE Functions file.
         """
         return float(self.constants_by_ID[TRACTOR_SPEED_CONSTANT_ID]["Value"])
@@ -279,8 +294,8 @@ class Tractor:
         float
             The total axle power required to move the tractor and implement (kW).
 
-        Reference
-        ---------
+        References
+        ----------
         Implements Helper Function 413 in the EEE Functions file.
         """
         return (self.mass_kg + implement.mass_kg) * self.speed_km_hr * 9.8 * 0.08 * 1.1 * 0.92 / 3600
