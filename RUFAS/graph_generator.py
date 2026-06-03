@@ -127,19 +127,22 @@ class GraphGenerator:
     """
     GraphGenerator is used to generate graphs from the simulation results.
 
-    Attributes
-    ----------
-    metadata_prefix : str
-        A string to prefix the metadata of the graph.
-    time : RufasTime
-        A ``RufasTime`` object used to track the simulation time
-
     Notes
     -----
     This class is not multi-thread safe!!!
     """
 
     def __init__(self, metadata_prefix: str = "", time=None) -> None:
+        """
+        Initializes a GraphGenerator for producing graphs from simulation results.
+
+        Parameters
+        ----------
+        metadata_prefix : str, optional
+            Prefix applied to graph metadata. Defaults to ``""``.
+        time : RufasTime, optional
+            RufasTime object used to track simulation time. Defaults to ``None``.
+        """
         self.metadata_prefix = metadata_prefix
         self.time = time
 
@@ -165,7 +168,7 @@ class GraphGenerator:
         graphics_dir : Path
             The directory for saving graphics.
         produce_graphics: bool
-            Flag for whether the user wants to produce graphs at after the simulation.
+            Flag for whether the user wants to produce graphs after the simulation.
 
         Returns
         -------

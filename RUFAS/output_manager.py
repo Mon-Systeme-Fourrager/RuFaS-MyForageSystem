@@ -27,7 +27,7 @@ DISCLAIMER_MESSAGE = "Under construction, use the results with caution."
 
 class LogVerbosity(Enum):
     """
-    The different types of logs printed by OutputManager. Set by the ``verbose`` gnu arg in main.py.
+    The different types of logs printed by ``OutputManager``. Set by the ``verbose`` gnu arg in main.py.
 
     Attributes
     ----------
@@ -103,7 +103,7 @@ class OutputManager(object):
     logs, warnings, and errors into separate pools, and populates requested
     output channels from the pools once the simulation is done.
 
-    OutputManager is a singleton, i.e., only one instance of it can exist. After
+    ``OutputManager`` is a singleton. After
     the first instance is created, future calls to the constructor method
     return the first instance. Also, the initializer method only works once.
 
