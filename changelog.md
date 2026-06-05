@@ -24,7 +24,7 @@ A **changelog** is a structured record of changes made to the codebase over time
 v1.0.0
 
 ### Next Version Updates
-- [TBD](https://github.com/Mon-Systeme-Fourrager/RuFaS-MyForageSystem/pull/TBD) - [minor change] [TaskManager] [Tests] [CI] [NoInputChange] [NoOutputChange] Run the format/lint/test/mypy workflow on `dev-msf` and fix the two pre-existing failures it surfaces: flake8 E225 on the walrus operator in `task_manager.py`, and a stale `get_rufas_version` mock in `test_task_manager.py` (the method was removed; patch `get_installed_version` instead).
+- [18](https://github.com/Mon-Systeme-Fourrager/RuFaS-MyForageSystem/pull/18) - [minor change] [TaskManager] [Tests] [CI] [NoInputChange] [NoOutputChange] Run the format/lint/test/mypy workflow on `dev-msf` and fix the two pre-existing failures it surfaces: flake8 E225 on the walrus operator in `task_manager.py`, and a stale `get_rufas_version` mock in `test_task_manager.py` (the method was removed; patch `get_installed_version` instead).
 - [2793](https://github.com/RuminantFarmSystems/RuFaS/pull/2793) - [minor change] [Animal] [OutputManager] [NoInputChange] [OutputChange] Track and summarize when effective DMI falls below the empirical domain of manure equations for lactating and dry cows at end of simulation.
 - [2865](https://github.com/RuminantFarmSystems/RuFaS/pull/2865) - [minor change] [NoInputChange] [NoOutputChange] Update to tables and formatting in scientific documentation.
 - [2727](https://github.com/RuminantFarmSystems/RuFaS/pull/2727) - [minor change] [NoInputChange] [NoOutputChange] Update the TaskType in Wiki, and fix the broken Sphinx action.
