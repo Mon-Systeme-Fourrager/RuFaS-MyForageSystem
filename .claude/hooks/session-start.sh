@@ -23,4 +23,27 @@ if [ -f "$report" ]; then
   fi
 fi
 
+# Remote-only (Claude Code Web). Desktop/CLI users install caveman manually.
+if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
+  exit 0
+fi
+
+_CAVEMAN_JUST_INSTALLED=0
+install_caveman() {
+  command -v claude >/dev/null 2>&1 || { echo "session-start: no claude CLI; skip caveman" >&2; return 0; }
+  claude plugin list 2>/dev/null | grep -q 'caveman@caveman' && return 0
+  echo "session-start: installing caveman plugin..." >&2
+  claude plugin marketplace add JuliusBrussee/caveman >&2 || true
+  claude plugin install caveman@caveman >&2 || { echo "session-start: caveman install failed (non-fatal)" >&2; return 0; }
+  _CAVEMAN_JUST_INSTALLED=1
+}
+activate_caveman_now() {
+  command -v node >/dev/null 2>&1 || return 0
+  [ -d "$HOME/.claude/plugins/cache/caveman" ] || return 0
+  local js
+  js=$(find "$HOME/.claude/plugins/cache/caveman" -maxdepth 4 -path '*/hooks/caveman-activate.js' -printf '%T@\t%p\n' 2>/dev/null | sort -rn | head -1 | cut -f2-)
+  [ -n "$js" ] && [ -f "$js" ] && node "$js" 2>/dev/null || true
+}
+install_caveman
+[ "${_CAVEMAN_JUST_INSTALLED}" = "1" ] && activate_caveman_now
 exit 0
