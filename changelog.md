@@ -24,7 +24,7 @@ A **changelog** is a structured record of changes made to the codebase over time
 v1.0.0
 
 ### Next Version Updates
-- [TBD](https://github.com/RuminantFarmSystems/RuFaS/pull/TBD) - [minor change] [Tooling] [NoInputChange] [NoOutputChange] Add Claude Code large-codebase setup: layered `CLAUDE.md` files (root + per-subsystem), path-scoped protected-inputs rule, `pyright-lsp` code intelligence, `Read` deny rules, and a graphify dependency-graph report with a CI auto-update workflow.
+- [17](https://github.com/Mon-Systeme-Fourrager/RuFaS-MyForageSystem/pull/17) - [minor change] [Tooling] [NoInputChange] [NoOutputChange] Add Claude Code large-codebase setup: layered `CLAUDE.md` files (root + per-subsystem), path-scoped protected-inputs rule, `pyright-lsp` code intelligence, `Read` deny rules, and a graphify dependency-graph report with a CI auto-update workflow.
 - [2793](https://github.com/RuminantFarmSystems/RuFaS/pull/2793) - [minor change] [Animal] [OutputManager] [NoInputChange] [OutputChange] Track and summarize when effective DMI falls below the empirical domain of manure equations for lactating and dry cows at end of simulation.
 - [2865](https://github.com/RuminantFarmSystems/RuFaS/pull/2865) - [minor change] [NoInputChange] [NoOutputChange] Update to tables and formatting in scientific documentation.
 - [2727](https://github.com/RuminantFarmSystems/RuFaS/pull/2727) - [minor change] [NoInputChange] [NoOutputChange] Update the TaskType in Wiki, and fix the broken Sphinx action.
