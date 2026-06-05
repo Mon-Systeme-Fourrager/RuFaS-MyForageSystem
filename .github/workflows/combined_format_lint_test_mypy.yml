@@ -7,6 +7,10 @@ on:
     branches: [ dev, dev-msf ]
   workflow_dispatch:
 
+permissions:
+  contents: write        # format_code pushes Black formatting; lint job updates README badges
+  pull-requests: write   # posts coverage / mypy / status comments on the PR
+
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
