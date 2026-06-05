@@ -147,3 +147,27 @@ Rules:
   Requires `uv tool install graphifyy` locally to run graphify yourself.
 - Optional semantic pass (richer edges, **uses API tokens**): `/graphify` in a
   Claude Code session. Fine for this public repo; skip if you want zero cost.
+
+## Dev workflow (skills + slash commands)
+
+Agent dev-workflow skills are vendored under `.claude/skills/` (self-sufficient).
+Use them directly: `superpowers:test-driven-development`,
+`systematic-debugging`, `writing-plans`, `requesting-code-review`,
+`verification-before-completion`, `using-git-worktrees`, etc.
+
+Two planning tracks, both ending in a per-task TDD implementation via `/apply-plan`:
+
+- **Lightweight (PLAN file)**: `/diagnose` → `PLAN_<slug>.md` → `/challenge-plan`
+  (counter-validates via a fresh-context subagent; auto-cycles `/refine-plan` +
+  re-challenge) → `/apply-plan`.
+- **Spec-driven (OpenSpec)**: `/opsx:propose` → `/challenge-plan openspec:<name>`
+  → `/apply-plan openspec:<name>` → `/opsx:archive` after merge. OpenSpec is
+  scaffolded under `openspec/` (CLI `@fission-ai/openspec`; `openspec list`,
+  `openspec validate`).
+
+`/apply-plan` runs each task RED→GREEN→REFACTOR with a spec + quality double
+review, enforces the RuFaS gates (mypy strict, flake8 ≤ 10, pytest, Black 120,
+changelog, protected inputs), and opens a PR into `dev-msf` via `gh`. The
+`code-reviewer` agent (`.claude/agents/`) gives a Python/scientific-integrity
+review on demand. `/graphify` queries the dependency graph; `/sync-claude-md`
+audits the layered `CLAUDE.md` files against the code.
