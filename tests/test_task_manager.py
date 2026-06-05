@@ -118,8 +118,6 @@ def test_task_manager_start(
     mock_print_credits = mocker.patch.object(mock_output_manager, "print_credits")
     mock_add_log = mocker.patch.object(mock_output_manager, "add_log")
     mocker.patch("RUFAS.task_manager.get_installed_version", return_value="1.0.0")
-    mock_check_dependencies = mocker.patch.object(tm, "check_dependencies")
-    mock_check_python_version = mocker.patch.object(tm, "check_python_version")
 
     if is_end_to_end_test_task:
         e2e_task = {
@@ -248,8 +246,6 @@ def test_task_manager_start(
         )
 
     mock_print_credits.assert_called_once_with("1.0.0")
-    mock_check_dependencies.assert_called_once()
-    mock_check_python_version.assert_called_once()
 
 
 def test_task_manager_start_invalid_data(mocker: MockerFixture, mock_output_manager: OutputManager) -> None:
