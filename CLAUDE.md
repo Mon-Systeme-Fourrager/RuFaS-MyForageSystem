@@ -147,16 +147,24 @@ Use these four commands in sequence for any non-trivial change:
 
 ## Graphify Dependency Graph
 
-`graphify-out/GRAPH_REPORT.md` is a dependency graph of the `RUFAS/` module, auto-committed to `dev-msf` by CI on every push. The session-start hook injects it into each Claude Code session automatically.
+`graphify-out/GRAPH_REPORT.md` is a dependency graph of the `RUFAS/` module, updated via PR to `dev-msf` by CI on every push to `RUFAS/`. The session-start hook injects it into each Claude Code session automatically.
 
 - **AST pass** (`graphify update .`) — free, runs on every push to `dev-msf` via CI. Captures all structural dependencies (imports, calls, inheritance).
-- **Semantic pass** (`graphify .`) — uses `ANTHROPIC_API_KEY`, run manually once to enrich the graph with inferred relationships.
 
-### Triggering a semantic pass
+### Triggering a manual update
 
-GitHub → Actions → **Update Graphify Graph** → Run workflow → check **"Run full semantic pass"**.
-Requires `ANTHROPIC_API_KEY` to be set as a GitHub repository secret.
+GitHub → Actions → **Update Graphify Graph** → Run workflow. The CI creates a PR `graphify/update-graph-report` → `dev-msf` with the updated report.
 
 ### How Claude uses the graph
 
 `/diagnose` reads `graphify-out/GRAPH_REPORT.md` at the start of every analysis to identify god nodes (high-degree files) in the blast radius of a change, prioritize file exploration, and anticipate ripple effects before writing the plan.
+
+## graphify
+
+This project has a graphify knowledge graph at graphify-out/.
+
+Rules:
+- Before answering architecture or codebase questions, read graphify-out/GRAPH_REPORT.md for god nodes and community structure
+- If graphify-out/wiki/index.md exists, navigate it instead of reading raw files
+- For cross-module "how does X relate to Y" questions, prefer `graphify query "<question>"`, `graphify path "<A>" "<B>"`, or `graphify explain "<concept>"` over grep — these traverse the graph's EXTRACTED + INFERRED edges instead of scanning files
+- After modifying code files in this session, run `graphify update .` to keep the graph current (AST-only, no API cost)
