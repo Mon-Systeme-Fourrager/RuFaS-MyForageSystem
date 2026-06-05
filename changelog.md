@@ -24,6 +24,7 @@ A **changelog** is a structured record of changes made to the codebase over time
 v1.0.0
 
 ### Next Version Updates
+- [18](https://github.com/Mon-Systeme-Fourrager/RuFaS-MyForageSystem/pull/18) - [minor change] [TaskManager] [Tests] [CI] [NoInputChange] [NoOutputChange] Run the format/lint/test/mypy workflow on `dev-msf` and fix the pre-existing failures it surfaces: flake8 E225 on the walrus operator in `task_manager.py`, and stale `test_task_manager_start` assertions — the `get_rufas_version` mock (method removed; now patches `get_installed_version`) and the `check_dependencies` / `check_python_version` call assertions (both calls were deactivated in `start()`).
 - [17](https://github.com/Mon-Systeme-Fourrager/RuFaS-MyForageSystem/pull/17) - [minor change] [Tooling] [NoInputChange] [NoOutputChange] Add Claude Code large-codebase setup: layered `CLAUDE.md` files (root + per-subsystem), path-scoped protected-inputs rule, `pyright-lsp` code intelligence, `Read` deny rules, and a graphify dependency-graph report with a CI auto-update workflow.
 - [2793](https://github.com/RuminantFarmSystems/RuFaS/pull/2793) - [minor change] [Animal] [OutputManager] [NoInputChange] [OutputChange] Track and summarize when effective DMI falls below the empirical domain of manure equations for lactating and dry cows at end of simulation.
 - [2865](https://github.com/RuminantFarmSystems/RuFaS/pull/2865) - [minor change] [NoInputChange] [NoOutputChange] Update to tables and formatting in scientific documentation.
