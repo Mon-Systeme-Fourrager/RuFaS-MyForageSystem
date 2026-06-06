@@ -18,7 +18,10 @@
 - **Mocking**: `pytest-mock` (`mocker.patch.object(...)`). Prefer patching
   estimator/manager methods over rewiring whole objects.
 - **Fixtures**: per-package fixture modules (e.g. `tests/test_EEE/fixtures.py`),
-  imported explicitly into test files. `pytest-lazy-fixture` is available.
+  imported explicitly into test files. `pytest-lazy-fixtures` is available — use
+  `from pytest_lazy_fixtures import lf` to reference a fixture inside
+  `@pytest.mark.parametrize` (the maintained successor of `pytest-lazy-fixture`,
+  which broke on pytest ≥ 8).
 - **Time**: freeze with `freezegun` when exercising `RUFAS/rufas_time.py` or
   date-dependent logic.
 - Tests commonly build real `InputManager()` / `OutputManager()` and patch the
