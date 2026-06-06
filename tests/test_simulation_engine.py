@@ -175,7 +175,14 @@ def test_simulate(
 
     # Assert
     mock_run_simulation_main_loop.assert_called_once()
-    assert mock_om_add_log.call_args_list == [
+    # OutputManager.add_log (and sibling loggers) mutate the passed info_map by
+    # adding a non-deterministic "timestamp" key. Strip it before comparing so the
+    # assertion is robust and does not depend on which logger ran first.
+    actual_add_log_calls = [
+        call(name, msg, {key: value for key, value in extra.items() if key != "timestamp"})
+        for name, msg, extra in (logged_call.args for logged_call in mock_om_add_log.call_args_list)
+    ]
+    assert actual_add_log_calls == [
         call("Simulation complete", "Simulation Completed.", info_map),
         call("total_simulation_time", expected_log_message, info_map),
     ]
