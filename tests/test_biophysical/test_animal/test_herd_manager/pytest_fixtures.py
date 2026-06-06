@@ -32,7 +32,6 @@ def config_json() -> dict[str, Any]:
         "end_date": "2018:243",
         "random_seed": 42,
         "set_seed": True,
-        "simulate_animals": True,
         "nutrient_standard": "NASEM",
         "FIPS_county_code": 55025,
         "include_detailed_values": True,
@@ -482,7 +481,6 @@ def mock_herd_manager(
     mock_time.simulation_day = 0
 
     mock_available_feeds: list[Feed] = [mock_feed] * 8
-    mock_simulate_animals = True
 
     im = InputManager()
 
@@ -528,7 +526,6 @@ def mock_herd_manager(
         mock_time,
         True,
         mock_available_feeds,
-        mock_simulate_animals,
     )
 
     return herd_manager, {
@@ -563,6 +560,7 @@ def mock_animal(
     ED_days: int = 0,
     breeding_to_preg_time: int = 0,
     daily_milk_produced: float = 0.0,
+    milk_305_day_yield: float | None = None,
     milk_fat_content: float = 0.0,
     milk_protein_content: float = 0.0,
     sold_at_day: int | None = None,
@@ -614,6 +612,9 @@ def mock_animal(
     animal.milk_production.daily_milk_produced = daily_milk_produced
     animal.milk_production.fat_content = milk_fat_content
     animal.milk_production.true_protein_content = milk_protein_content
+    animal.milk_production.milk_305_day_yield = (
+        daily_milk_produced if milk_305_day_yield is None else milk_305_day_yield
+    )
 
     return animal
 

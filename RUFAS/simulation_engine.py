@@ -3,6 +3,7 @@
 from enum import Enum
 import time as timer
 from datetime import date, timedelta
+from typing import Any
 
 from RUFAS.EEE.EEE_manager import EEEManager
 from RUFAS.EEE.emissions import EmissionsEstimator
@@ -21,8 +22,7 @@ from RUFAS.data_structures.feed_storage_to_animal_connection import (
     RequestedFeed,
     TotalInventory,
 )
-from RUFAS.data_structures.field_manure_supplier import FieldManureSupplier
-from RUFAS.data_structures.manure_to_crop_soil_connection import ManureEventNutrientRequestResults
+from RUFAS.data_structures.manure_to_crop_soil_connection import FieldManureSupplier, ManureEventNutrientRequestResults
 from RUFAS.input_manager import InputManager
 from RUFAS.output_manager import OutputManager
 from RUFAS.biophysical.field.manager.field_manager import FieldManager
@@ -43,10 +43,14 @@ class SimulationType(Enum):
         Represents a full farm simulation with all sub-modules active.
     FIELD_AND_FEED : str
         Represents a simulation that includes only field and feed modules, no animal and manure modules.
+    ANIMALS_ONLY : str
+        Represents a simulation that only simulates animals, no other biophysical modules.
     """
 
     FULL_FARM = "full_farm"
     FIELD_AND_FEED = "field_and_feed"
+    FIELD_ONLY = "field_only"
+    ANIMALS_ONLY = "animals_only"
 
     @property
     def simulate_animals(self) -> bool:
@@ -73,6 +77,7 @@ class SimulationType(Enum):
         """Return the set of simulation types that simulate animals."""
         return {
             cls.FULL_FARM,
+            cls.ANIMALS_ONLY,
         }
 
     @classmethod
@@ -85,7 +90,7 @@ class SimulationType(Enum):
     @classmethod
     def _fields_simulation_types(cls) -> set["SimulationType"]:
         """Return the set of simulation types that simulate crops, soil, and fields."""
-        return {cls.FULL_FARM, cls.FIELD_AND_FEED}
+        return {cls.FULL_FARM, cls.FIELD_AND_FEED, cls.FIELD_ONLY}
 
     @classmethod
     def _feed_simulation_types(cls) -> set["SimulationType"]:
@@ -189,6 +194,8 @@ class SimulationEngine:
         self._simulation_type_to_daily_simulation_function = {
             SimulationType.FULL_FARM: self._execute_full_farm_daily_simulation,
             SimulationType.FIELD_AND_FEED: self._execute_field_and_feed_daily_simulation,
+            SimulationType.FIELD_ONLY: self._execute_field_only_simulation,
+            SimulationType.ANIMALS_ONLY: self._execute_animals_only_daily_simulation,
         }
 
         self._setup_simulation_modules()
@@ -203,7 +210,8 @@ class SimulationEngine:
         self.emissions_estimator: EmissionsEstimator = EmissionsEstimator()
 
         if self.simulate_fields:
-            self.field_manager: FieldManager = FieldManager()
+            field_data = self._gather_field_data()
+            self.field_manager: FieldManager = FieldManager(field_data)
 
         if self.simulate_animals or self.simulate_feed:
             feeds_config = self.im.get_data("feed")
@@ -243,13 +251,33 @@ class SimulationEngine:
                 self.time,
                 is_ration_defined_by_user=self.is_ration_defined_by_user,
                 available_feeds=self.available_feeds,
-                simulate_animals=self.simulate_animals,
             )
 
         if self.simulate_manure:
             self.manure_manager: ManureManager = ManureManager(
                 self.weather.intercept_mean_temp, self.weather.phase_shift, self.weather.amplitude
             )
+
+    def _gather_field_data(self) -> dict[str, dict[str, Any]]:
+        """
+        Gathers configuration data for all fields from the InputManager.
+
+        Logs a warning if no field input files are found.
+
+        Returns
+        -------
+        dict[str, dict[str, Any]]
+            Mapping of field names to their configuration data.
+        """
+        info_map = {"class": SimulationEngine.__name__, "function": SimulationEngine._gather_field_data.__name__}
+        field_names: list[str] = self.im.get_data_keys_by_properties("field_properties")
+        if not field_names:
+            self.om.add_warning("No field input files.", "No fields will be simulated.", info_map)
+        field_data: dict[str, dict[str, Any]] = {}
+        for field_name in field_names:
+            field_configuration_data: dict[str, Any] = self.im.get_data(field_name)
+            field_data[field_name] = field_configuration_data
+        return field_data
 
     def simulate(self) -> None:
         """Executes the simulation."""
@@ -323,6 +351,22 @@ class SimulationEngine:
 
         self._advance_time()
 
+    def _execute_field_only_simulation(self) -> None:
+        """
+        Executes the daily simulation routines for a field only modules.
+
+        Daily Field Process:
+        1. Field operations without sending the crops to the feed manager
+        2. Record keeping (time, weather, purchased feeds fed emissions)
+        3. Advance simulation date
+
+        """
+        self._execute_daily_field_operations()
+
+        self._report_daily_records()
+
+        self._advance_time()
+
     def _execute_field_and_feed_daily_simulation(self) -> None:
         """
         Executes the daily simulation routines for a farm with only the field and feed modules.
@@ -344,6 +388,25 @@ class SimulationEngine:
         self._execute_feed_planning(harvest_schedule)
 
         self._report_daily_records()
+
+        self._advance_time()
+
+    def _execute_animals_only_daily_simulation(self) -> None:
+        """
+        Executes the daily simulation routines for a farm with only animals.
+
+        Daily Animals Only Simulation Process:
+        1. Ration planning (periodic reformulation check, formulate ration)
+        2. Animal operations (feeding, growth, reproduction, and milk production routines)
+        3. Record keeping (time, weather, purchased feeds fed emissions)
+        4. Advance simulation date
+
+        """
+        self._execute_ration_planning()
+
+        _, daily_purchased_feeds_fed = self._execute_daily_animal_operations()
+
+        self._report_daily_records(daily_purchased_feeds_fed)
 
         self._advance_time()
 
@@ -391,8 +454,6 @@ class SimulationEngine:
                 crop for crop in self.feed_manager.crop_to_rufas_id.keys() if crop not in harvest_schedule_crops
             ]
             harvest_schedule_crops = harvest_schedule_crops.union(crops_to_get_next_harvest_dates)
-            # TODO figure out where this goes and when it should happen in Animals-only simulation
-            # - also should this check on `_should_recalculate_feed_planning` be happening in this function at all?
             self.next_max_daily_feed_recalculation = self.time.current_date + self.max_daily_feed_recalculation_interval
 
     def _build_harvest_schedule(self, harvested_crops: list[HarvestedCrop]) -> dict[str, date | None]:
@@ -463,7 +524,6 @@ class SimulationEngine:
         next_harvest_dates_with_rufas_ids: dict[RUFAS_ID, date],
     ) -> IdealFeeds:
         """Wrapper function for HerdManager daily max feeds update."""
-        # TODO figure out what data to send to this function and where to call it if there is no feed module.
         return self.herd_manager.update_all_max_daily_feeds(
             total_projected_inventory, next_harvest_dates_with_rufas_ids, self.time
         )
@@ -478,6 +538,7 @@ class SimulationEngine:
         if self._is_time_to_reformulate_ration:
             self.next_ration_reformulation = (self.time.current_date + self.ration_formulation_interval_length).date()
             self._formulate_ration()
+            self.herd_manager.update_herd_305_day_milk_yields()
 
     @property
     def _is_time_to_reformulate_ration(self) -> bool:
@@ -511,6 +572,12 @@ class SimulationEngine:
               from the daily routines. If animals are not being simulated, this will be None.
             - A dictionary mapping feed types to the amount of purchased feed fed to the herd.
         """
+        all_manure_data = self.herd_manager.execute_daily_routines(
+            self.available_feeds,
+            self.time,
+            self.weather,
+        )
+
         requested_feed: RequestedFeed = self.herd_manager.collect_daily_feed_request()
         if self.simulate_feed:
             is_ok_to_feed_animals, daily_feeds_fed = self.feed_manager.manage_daily_feed_request(
@@ -527,12 +594,6 @@ class SimulationEngine:
             info_map = {"class": self.__class__.__name__, "function": self._execute_daily_animal_operations.__name__}
             self.om.add_warning("Value: not enough feed for the herd", "Reformulating ration for all pens", info_map)
             self._formulate_ration()
-
-        all_manure_data = self.herd_manager.execute_daily_routines(
-            self.available_feeds,
-            self.time,
-            self.weather,
-        )
 
         return all_manure_data, daily_purchased_feeds_fed
 
@@ -596,7 +657,8 @@ class SimulationEngine:
         """
         Resets all annual variables that require reset.
         """
-        self.field_manager.annual_update_routine()
+        if self.simulate_fields:
+            self.field_manager.annual_update_routine()
 
     def annual_mass_balance(self, time: RufasTime) -> None:
         pass
