@@ -90,12 +90,35 @@ Non-Python: **`DataCollectionApp/`** is a separate static JS/HTML web app
 
 ## Conventions
 
+These mirror the RuFaS wiki — see
+[Code review](https://github.com/RuminantFarmSystems/RuFaS/wiki/Code-review),
+[How to write a design doc](https://github.com/RuminantFarmSystems/RuFaS/wiki/How-to-write-a-design-doc%3F),
+[Branching Strategy](https://github.com/RuminantFarmSystems/RuFaS/wiki/Branching-Strategy-in-RuFaS).
+
 - **Full type hints everywhere** — mypy strict will reject untyped defs.
+- **NumPy-style docstrings** on every modified/added function (+ a unit test).
 - **Line length 120**, Black-formatted. Don't hand-format against Black.
 - **Keep cyclomatic complexity ≤ 10** (flake8 `max-complexity`). Refactor
-  rather than suppress.
-- **Tests mirror `RUFAS/`** under `tests/` (`test_<module>.py`, `test_<pkg>/`).
-  See `tests/CLAUDE.md`.
+  rather than suppress. Apply DRY / SOLID; keep functions small.
+- **Comments are discouraged** — clean code should explain *what* it does; only a
+  comment explaining *why* an approach was chosen is acceptable.
+- **Tests mirror `RUFAS/`** under `tests/` (`test_<module>.py`, `test_<pkg>/`),
+  and must cover **normal operation, edge cases, and invalid inputs**. See
+  `tests/CLAUDE.md` (unit + E2E). For the E2E workflow use the
+  `rufas-e2e-testing` skill.
+- **Design-doc-driven for large work** — a change ≈ 1 engineer-month or more needs
+  a design doc agreed before coding. Use the `rufas-design-doc` skill.
+
+## Branching & PRs
+
+Upstream flow: feature branch → `dev` → `test` → `main`. **This fork integrates on
+`dev-msf`** (its `dev`); CI runs there. PR rules (from the Code-review wiki):
+
+- Keep PRs **≤ ~200 lines** where possible (larger = "large", needs design review).
+- PR description follows **what / why / how** (concise) + a **Test Plan**; link the
+  GitHub issue; no temp/unused files; rebase before review.
+- **Two reviews** required (ideally one SME + one software engineer) + all CI green
+  before merge; the author merges and deletes the branch.
 
 ## Gotchas
 
