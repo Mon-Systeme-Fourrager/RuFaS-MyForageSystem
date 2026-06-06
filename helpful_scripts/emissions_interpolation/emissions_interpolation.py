@@ -52,7 +52,7 @@ def get_latlong_from_zip(
     latlonglist = []
     latlist = []
     longlist = []
-    missing_zip_codes = 0
+    missing_count = 0
     for zip_code in zipcodes:
         try:
             lat = float(zip_to_latlong_sheet.loc[zip_to_latlong_sheet["zip_code"] == zip_code]["lat"].values[0])
@@ -61,9 +61,9 @@ def get_latlong_from_zip(
             latlist.append(lat)
             longlist.append(long)
         except Exception:
-            missing_zip_codes += 1
-    if missing_zip_codes:
-        print(f"{missing_zip_codes} zip code(s) missing from the lat/long sheet")
+            missing_count += 1
+    if missing_count:
+        print(f"{missing_count} zip code(s) missing from the lat/long sheet")
     if not latlist:
         print("latlist nonexistent")
         return (0.0, 0.0), [(0.0, 0.0)]
