@@ -39,3 +39,19 @@ Each has its own `CLAUDE.md`.
   `InputManager()`, `OutputManager()`); follow the surrounding pattern.
 - Keep functions under flake8 complexity 10 — these modules are already large,
   so prefer extracting helpers over growing a method.
+
+## Reference docs (RuFaS wiki)
+
+Deep per-module write-ups live on the wiki (too large to inline — read on demand):
+
+- [Output-Manager](https://github.com/RuminantFarmSystems/RuFaS/wiki/Output-Manager)
+  (log/data pools, filters, verbosity) ·
+  [Chunkification](https://github.com/RuminantFarmSystems/RuFaS/wiki/Chunkification)
+  (periodic pool dumps to cap memory — `chunkification` task flag,
+  `save_chunk_threshold_call_count` / `maximum_memory_usage`)
+- [Input-Manager](https://github.com/RuminantFarmSystems/RuFaS/wiki/Input-Manager) ·
+  [Task-Manager](https://github.com/RuminantFarmSystems/RuFaS/wiki/Task-Manager) ·
+  [Report-Generator](https://github.com/RuminantFarmSystems/RuFaS/wiki/Report-Generator) ·
+  [Graph-Generator](https://github.com/RuminantFarmSystems/RuFaS/wiki/Graph-Generator)
+- [Data-Origins](https://github.com/RuminantFarmSystems/RuFaS/wiki/Data-Origins) ·
+  [Command-Line Arguments](https://github.com/RuminantFarmSystems/RuFaS/wiki/RuFaS-Command-Line-Arguments)

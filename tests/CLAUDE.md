@@ -29,10 +29,33 @@
 - Full type annotations on test functions and fixtures (mypy strict applies to
   `tests/` too — see `pyproject.toml` mypy `exclude`).
 
+## What to cover (RuFaS code-review rule)
+
+- **Every modified/added function needs a unit test** + a NumPy-style docstring.
+- The suite must cover **normal operation, edge cases, AND invalid inputs** — not
+  just the happy path. See the
+  [Code review](https://github.com/RuminantFarmSystems/RuFaS/wiki/Code-review) wiki.
+- **Patch via `mocker` / `with patch(...)`, never `Class.method = MagicMock()`** —
+  direct class-attribute assignment leaks across tests (no teardown) and breaks
+  under pytest's collection order. `mocker.patch.object` auto-restores.
+
+## End-to-end (E2E) tests
+
+Beyond unit tests, RuFaS freezes expected model outputs per domain and compares
+on each run (guards against unintended output changes). Run:
+
+```
+python main.py -p input/metadata/end_to_end_testing_tm_metadata.json
+```
+
+Setting up a new domain or updating expected results has a human-in-the-loop
+guard — use the **`rufas-e2e-testing`** skill (it mirrors the wiki procedure).
+A deliberate output change → mark the PR `[OutputChange]`.
+
 ## Running
 
 ```
-pytest                                   # all
+pytest                                   # all unit/integration
 pytest tests/test_EEE/test_energy.py     # one file
 pytest tests/test_units.py::test_x       # one test
 coverage run --rcfile=.github/.coveragerc && coverage report
