@@ -69,10 +69,23 @@ class Animal:
     """
     This class represents an animal in the RuFaS simulation.
 
-    DO NOT USE THE PROPERTIES THAT START WITH '_'. INSTEAD, USE THE FUNCTIONS THAT ARE DECORATED WITH @property.
+    Parameters
+    ----------
+    args : NewBornCalfValuesTypedDict | CalfValuesTypedDict | HeiferIValuesTypedDict | HeiferIIValuesTypedDict \
+        | HeiferIIIValuesTypedDict | CowValuesTypedDict
+        Configuration data used to initialize the animal. The required keys depend on the animal type being created and
+        may include identifiers, breed, age, body weight, reproduction status, and other life-stage-specific attributes.
+
+    time : RufasTime
+        Simulation time information used during initialization, including the
+        current simulation day and calendar date.
 
     Attributes
     ----------
+    nutrient_standard: NutrientStandard
+        The nutrient standard used to calculate nutrition related values.
+    om : OutputManager
+        The singleton output manager used for model outputs.
     id: int
         The unique identifier of the animal, (unitless).
     breed: Breed
@@ -81,18 +94,10 @@ class Animal:
         The current life stage of the animal.
     days_born: int
         The age of the animal, (simulation days).
-    body_weight: float
-        The body weight of the animal, (kg).
     birth_weight: float
         The birth weight of the animal, (kg).
-    mature_body_weight: float
-        The mature body weight of the animal, (kg).
-    wean_weight: float
-        The body weight of the animal at weaning, (kg).
-    genetics: Genetics
-        The genetic attributes of the animal.
-    genetic_history: list[GeneticHistory]
-        The genetic history of the animal.
+    body_weight: float
+        The body weight of the animal, (kg).
     body_condition_score_5: float
         The body condition score on a scale of 1 to 5, (unitless).
     cull_reason: str
@@ -101,9 +106,11 @@ class Animal:
         The body weight history of the animal.
     pen_history: list[PenHistory]
         The pen history of the animal.
-    sold_at_day: int | None
+    sold_at_day: int, optional
         The simulation day in which the animal was sold.
-    dead_at_day: int | None
+    stillborn_day : int, optional
+        The simulation day on which the animal was stillborn.
+    dead_at_day: int, optional
         The simulation day in which the animal died, (simulation day).
     events: AnimalEvents
         The AnimalEvents object that records all major events of the animal.
@@ -115,32 +122,41 @@ class Animal:
         The milk production submodule that handles the daily milk production of the animal.
     nutrients: Nutrients
         The nutrients submodule that handles the daily phosphorus update of the animal.
-    _reproduction: Reproduction
+    reproduction: Reproduction
         The reproduction submodule that handles the daily reproduction update of the animal.
     nutrition_requirements: NutrientsRequirements
         The nutrition requirement for the animal.
     nutrition_supply: NutritionSupply
         The supplied nutrition in the current ration interval for the animal.
-    previous_nutrition_supply: NutritionSupply
-        The previously supplied nutrition from the las ration interval for the animal.
-    _days_in_milk: int
+    previous_nutrition_supply: NutritionSupply, optional
+        Nutrition supplied during the previous ration interval.
+    days_in_milk: int
         The number of days that the animal has been in milk production, (days).
-    _days_in_pregnancy: int
+    _milk_production_output_days_in_milk : int
+        Days in milk used for milk production output reporting, (simulation days).
+    days_in_pregnancy: int
         The number of days that the animal has been in pregnancy, (days).
-    _future_cull_date: int | None
+    future_cull_date: int, optional
         The age of which the animal will be culled, (day).
-    _future_death_date: int | None
+    future_death_date: int, optional
         The age of which the animal will die, (day).
-    _daily_horizontal_distance: float
+    daily_horizontal_distance: float
         The daily horizontal distance traveled by the animal, (m).
-    _daily_vertical_distance: float
+    daily_vertical_distance: float
         The daily vertical distance traveled by the animal, (m).
-    _daily_distance: float
+    daily_distance: float
         The total daily distance traveled by the animal, (m).
+    genetics: Genetics, optional
+        The genetic attributes of the animal.
+    mature_body_weight: float
+        The mature body weight of the animal, (kg).
+    wean_weight: float
+        The body weight of the animal at weaning, (kg).
+    genetic_history: list[GeneticHistory]
+        The genetic history of the animal.
     sex: Sex
         The sex of the animal.
-    nutrient_standard: NutrientStandard
-        The nutrient standard used to calculate nutrition related values.
+
     """
 
     nutrient_standard: NutrientStandard
@@ -159,18 +175,6 @@ class Animal:
     ) -> None:
         """
         Initializes an Animal object.
-
-        Parameters
-        ----------
-        args : (
-                    NewBornCalfValuesTypedDict |
-                    CalfValuesTypedDict |
-                    HeiferIValuesTypedDict |
-                    HeiferIIValuesTypedDict |
-                    CowValuesTypedDict
-                )
-            The dictionary that contains the configuration to initialize an Animal object.
-
         """
         self.om = OutputManager()
         initialize_animal_methods: dict[AnimalType, Callable[..., None]] = {
@@ -370,7 +374,12 @@ class Animal:
 
         """
         if self.animal_type in [AnimalType.CALF, AnimalType.HEIFER_I]:
-            raise TypeError()
+            self.om.add_error(
+                "Days in pregnancy setter error",
+                "Pregnant animal cannot be type CALF or Heifer_I.",
+                info_map={"class": self.__class__.__name__, "function": "days_in_pregnancy.setter"},
+            )
+            raise TypeError("Pregnant animal cannot be type CALF or Heifer_I.")
         self._days_in_pregnancy = days_in_pregnancy
 
     @property
@@ -393,9 +402,6 @@ class Animal:
         """
         Check if the animal is milking.
 
-        This property determines if the animal is currently milking. It specifically checks if the animal type is a cow
-        and if the cow has been in milk for at least one day.
-
         Returns
         -------
         bool
@@ -410,9 +416,6 @@ class Animal:
     def future_cull_date(self) -> int:
         """
         Returns the cull death date of the animal.
-
-        If the animal is not a cow, the method returns the maximum possible integer value.
-        Otherwise, it returns the pre-calculated future cull date.
 
         Returns
         -------
@@ -441,16 +444,18 @@ class Animal:
 
         """
         if not self.animal_type.is_cow:
-            raise TypeError()
+            self.om.add_error(
+                "Future cull date setter error",
+                "The animal attempting to be assigned a cull date must be a cow.",
+                info_map={"class": self.__class__.__name__, "function": "future_cull_date.setter"},
+            )
+            raise TypeError("The animal attempting to be assigned a cull date is not a cow.")
         self._future_cull_date = future_cull_date
 
     @property
     def future_death_date(self) -> int:
         """
         Returns the future death date of the animal.
-
-        If the animal is not a cow, the method returns the maximum possible integer value.
-        Otherwise, it returns the pre-calculated future death date.
 
         Returns
         -------
@@ -479,7 +484,12 @@ class Animal:
 
         """
         if not self.animal_type.is_cow:
-            raise TypeError()
+            self.om.add_error(
+                "Future death date setter error",
+                "The animal attempting to be assigned a future death date must be a cow.",
+                info_map={"class": self.__class__.__name__, "function": "future_death_date.setter"},
+            )
+            raise TypeError("The animal attempting to be assigned a future death date is not a cow.")
         self._future_death_date = future_death_date
 
     @property
@@ -499,7 +509,12 @@ class Animal:
 
         """
         if not self.animal_type.is_cow:
-            raise TypeError()
+            self.om.add_error(
+                "Daily horizontal distance property error",
+                "The animal whose daily horizontal distance is attempting to be referenced must be a cow.",
+                info_map={"class": self.__class__.__name__, "function": "daily_horizontal_distance.property"},
+            )
+            raise TypeError("The animal's daily horizontal distance attempting to be referenced here is not a cow.")
         return self._daily_horizontal_distance
 
     @daily_horizontal_distance.setter
@@ -519,7 +534,12 @@ class Animal:
 
         """
         if not self.animal_type.is_cow:
-            raise TypeError()
+            self.om.add_error(
+                "Daily horizontal distance setter error",
+                "The animal attempting to be assigned a daily horizontal distance must be a cow.",
+                info_map={"class": self.__class__.__name__, "function": "daily_horizontal_distance.setter"},
+            )
+            raise TypeError("The animal attempting to be assigned a daily horizontal distance is not a cow.")
         self._daily_horizontal_distance = daily_horizontal_distance
 
     @property
@@ -539,7 +559,12 @@ class Animal:
 
         """
         if not self.animal_type.is_cow:
-            raise TypeError()
+            self.om.add_error(
+                "Daily vertical distance property error",
+                "The animal whose daily vertical distance is attempting to be referenced must be a cow.",
+                info_map={"class": self.__class__.__name__, "function": "daily_vertical_distance.property"},
+            )
+            raise TypeError("The animal's daily vertical distance attempting to be referenced here is not a cow.")
         return self._daily_vertical_distance
 
     @daily_vertical_distance.setter
@@ -559,7 +584,12 @@ class Animal:
 
         """
         if not self.animal_type.is_cow:
-            raise TypeError()
+            self.om.add_error(
+                "Daily vertical distance setter error",
+                "The animal attempting to be assigned a daily vertical distance must be a cow.",
+                info_map={"class": self.__class__.__name__, "function": "daily_vertical_distance.setter"},
+            )
+            raise TypeError("The animal attempting to be assigned a daily vertical distance is not a cow.")
         self._daily_vertical_distance = daily_vertical_distance
 
     @property
@@ -567,14 +597,15 @@ class Animal:
         """
         Returns the daily distance traveled by the animal.
 
-        If the animal is not a cow and is currently milking, the daily distance
-        is considered to be 0.0. Otherwise, it returns the value of
-        the stored daily distance.
-
         Returns
         -------
         float
             The daily distance traveled by the animal.
+
+        Notes
+        -----
+        If the animal is not a cow and is currently milking, the daily distance is considered to be 0.0.
+        Otherwise, it returns the value of the stored daily distance.
 
         """
         if not self.animal_type.is_cow and self.is_milking:
@@ -598,7 +629,12 @@ class Animal:
 
         """
         if not self.animal_type.is_cow:
-            raise TypeError()
+            self.om.add_error(
+                "Daily distance setter error",
+                "The animal attempting to be assigned a daily distance must be a cow.",
+                info_map={"class": self.__class__.__name__, "function": "daily_distance.setter"},
+            )
+            raise TypeError("The animal attempting to be assigned a daily distance is not a cow.")
         self._daily_distance = daily_distance
 
     @property
@@ -631,7 +667,12 @@ class Animal:
 
         """
         if self.animal_type in [AnimalType.CALF, AnimalType.HEIFER_I]:
-            raise TypeError()
+            self.om.add_error(
+                "Reproduction setter error",
+                "Reproduction attribute cannot be set for an Animal of type CALF or Heifer_I.",
+                info_map={"class": self.__class__.__name__, "function": "reproduction.setter"},
+            )
+            raise TypeError("Reproduction attribute cannot be set for an Animal of type CALF or Heifer_I.")
         self._reproduction = reproduction
 
     @property
@@ -669,16 +710,18 @@ class Animal:
 
         """
         if not self.animal_type.is_cow:
-            raise TypeError()
+            self.om.add_error(
+                "Calves setter error",
+                "The animal attempting to be assigned calves must be a cow.",
+                info_map={"class": self.__class__.__name__, "function": "calves.setter"},
+            )
+            raise TypeError("The animal attempting to be assigned calves is not a cow.")
         self.reproduction.calves = calves
 
     @property
     def calving_interval(self) -> int:
         """
         Returns the calving interval for the animal.
-
-        If the animal type is not a cow, the calving interval is 0.
-        Otherwise, it retrieves the calving interval from the reproduction information.
 
         Returns
         -------
@@ -707,7 +750,12 @@ class Animal:
 
         """
         if not self.animal_type.is_cow:
-            raise TypeError()
+            self.om.add_error(
+                "Calving interval setter error",
+                "The animal attempting to be assigned a calving interval must be a cow.",
+                info_map={"class": self.__class__.__name__, "function": "calving_interval.setter"},
+            )
+            raise TypeError("The animal attempting to be assigned a calving interval is not a cow.")
         self.reproduction.calving_interval = calving_interval
 
     @property
@@ -759,9 +807,8 @@ class Animal:
     @gestation_length.setter
     def gestation_length(self, gestation_length: int) -> None:
         """
-        Sets the gestation length for the animal. This property is not applicable
-        for animals of type CALF or HEIFER_I and will raise a TypeError if attempted
-        to set for these types.
+        Sets the gestation length for the animal. This property is not applicable for animals of type CALF or HEIFER_I
+        and will raise a TypeError if attempted to set for these types.
 
         Parameters
         ----------
@@ -775,7 +822,12 @@ class Animal:
 
         """
         if self.animal_type in [AnimalType.CALF, AnimalType.HEIFER_I]:
-            raise TypeError()
+            self.om.add_error(
+                "Gestation length setter error",
+                "The animal attempting to be assigned a gestation length cannot be a CALF or HEIFER_I.",
+                info_map={"class": self.__class__.__name__, "function": "gestation_length.setter"},
+            )
+            raise TypeError("The animal attempting to be assigned a gestation length cannot be a CALF or HEIFER_I.")
         self.reproduction.gestation_length = gestation_length
 
     @property
@@ -800,10 +852,6 @@ class Animal:
         """
         Setter method for the calf_birth_weight attribute.
 
-        This method sets the calf birth weight for the animal. However, it raises a
-        TypeError if the animal type is either CALF or HEIFER_I, as these types are
-        not applicable for setting the calf birth weight.
-
         Parameters
         ----------
         calf_birth_weight : float
@@ -816,7 +864,12 @@ class Animal:
 
         """
         if self.animal_type in [AnimalType.CALF, AnimalType.HEIFER_I]:
-            raise TypeError()
+            self.om.add_error(
+                "Calf birth weight setter error",
+                "Calf birth weight cannot be set for an Animal of type CALF or Heifer_I.",
+                info_map={"class": self.__class__.__name__, "function": "calf_birth_weight.setter"},
+            )
+            raise TypeError("Calf birth weight cannot be set for an Animal of type CALF or Heifer_I.")
         self.reproduction.calf_birth_weight = calf_birth_weight
 
     @property
@@ -836,7 +889,12 @@ class Animal:
 
         """
         if not self.animal_type.is_cow:
-            raise TypeError()
+            self.om.add_error(
+                "Calving interval history property error",
+                "Calving interval history is only a property of a cow.",
+                info_map={"class": self.__class__.__name__, "function": "calving_interval_history.property"},
+            )
+            raise TypeError("The calving interval history property is only available for cows.")
         return self.reproduction.calving_interval_history
 
     @property
@@ -857,7 +915,12 @@ class Animal:
 
         """
         if self.animal_type in [AnimalType.CALF, AnimalType.HEIFER_I]:
-            raise TypeError()
+            self.om.add_error(
+                "Heifer repro program property error",
+                "heifer_reproduction_program property is not available for an Animal of type CALF or Heifer_I.",
+                info_map={"class": self.__class__.__name__, "function": "heifer_reproduction_program.property"},
+            )
+            raise TypeError("heifer_reproduction_program is not available for an Animal of type CALF or Heifer_I.")
         return self.reproduction.heifer_reproduction_program
 
     @heifer_reproduction_program.setter
@@ -877,7 +940,12 @@ class Animal:
 
         """
         if self.animal_type in [AnimalType.CALF, AnimalType.HEIFER_I]:
-            raise TypeError()
+            self.om.add_error(
+                "Heifer repro program setter error",
+                "heifer_reproduction_program cannot be set for an Animal of type CALF or Heifer_I.",
+                info_map={"class": self.__class__.__name__, "function": "heifer_reproduction_program.setter"},
+            )
+            raise TypeError("heifer_reproduction_program cannot be set for an Animal of type CALF or Heifer_I.")
         self.reproduction.heifer_reproduction_program = heifer_reproduction_program
 
     @property
@@ -900,7 +968,12 @@ class Animal:
 
         """
         if self.animal_type in [AnimalType.CALF, AnimalType.HEIFER_I]:
-            raise TypeError()
+            self.om.add_error(
+                "Heifer repro sub program property error",
+                "heifer_reproduction_sub_program property is not available for an Animal of type CALF or Heifer_I.",
+                info_map={"class": self.__class__.__name__, "function": "heifer_reproduction_sub_program.property"},
+            )
+            raise TypeError("heifer_reproduction_sub_program is not available for an Animal of type CALF or Heifer_I.")
         return self.reproduction.heifer_reproduction_sub_program
 
     @heifer_reproduction_sub_program.setter
@@ -922,7 +995,12 @@ class Animal:
 
         """
         if self.animal_type in [AnimalType.CALF, AnimalType.HEIFER_I]:
-            raise TypeError()
+            self.om.add_error(
+                "Heifer repro sub program setter error",
+                "heifer_reproduction_sub_program cannot be set for an Animal of type CALF or Heifer_I.",
+                info_map={"class": self.__class__.__name__, "function": "heifer_reproduction_sub_program.setter"},
+            )
+            raise TypeError("heifer_reproduction_sub_program cannot be set for an Animal of type CALF or Heifer_I.")
         self.reproduction.heifer_reproduction_sub_program = heifer_reproduction_sub_program
 
     @property
@@ -945,7 +1023,12 @@ class Animal:
 
         """
         if not self.animal_type.is_cow:
-            raise TypeError()
+            self.om.add_error(
+                "Cow repro program property error",
+                "The animal whose cow_reproduction_program is attempting to be referenced must be a cow.",
+                info_map={"class": self.__class__.__name__, "function": "cow_reproduction_program.property"},
+            )
+            raise TypeError("The animal's cow_reproduction_program attempting to be referenced here is not a cow.")
         return self.reproduction.cow_reproduction_program
 
     @cow_reproduction_program.setter
@@ -965,7 +1048,12 @@ class Animal:
 
         """
         if not self.animal_type.is_cow:
-            raise TypeError()
+            self.om.add_error(
+                "Cow repro program setter error",
+                "The animal attempting to be assigned a cow_reproduction_program must be a cow.",
+                info_map={"class": self.__class__.__name__, "function": "cow_reproduction_program.setter"},
+            )
+            raise TypeError("The animal attempting to be assigned a cow_reproduction_program is not a cow.")
         self.reproduction.cow_reproduction_program = cow_program
 
     @property
@@ -985,7 +1073,12 @@ class Animal:
 
         """
         if not self.animal_type.is_cow:
-            raise TypeError()
+            self.om.add_error(
+                "Cow presynch program property error",
+                "The animal whose cow_presynch_program is attempting to be referenced must be a cow.",
+                info_map={"class": self.__class__.__name__, "function": "cow_presynch_program.property"},
+            )
+            raise TypeError("The animal's cow_presynch_program attempting to be referenced here is not a cow.")
         return self.reproduction.cow_presynch_program
 
     @cow_presynch_program.setter
@@ -1009,7 +1102,12 @@ class Animal:
 
         """
         if not self.animal_type.is_cow:
-            raise TypeError()
+            self.om.add_error(
+                "Cow presynch program setter error",
+                "The animal attempting to be assigned a cow_presynch_program must be a cow.",
+                info_map={"class": self.__class__.__name__, "function": "cow_presynch_program.setter"},
+            )
+            raise TypeError("The animal attempting to be assigned a cow_presynch_program is not a cow.")
         self.reproduction.cow_presynch_program = cow_presynch_program
 
     @property
@@ -1029,7 +1127,12 @@ class Animal:
 
         """
         if not self.animal_type.is_cow:
-            raise TypeError()
+            self.om.add_error(
+                "Cow ovsynch program property error",
+                "The animal whose cow_ovsynch_program is attempting to be referenced must be a cow.",
+                info_map={"class": self.__class__.__name__, "function": "cow_ovsynch_program.property"},
+            )
+            raise TypeError("The animal's cow_ovsynch_program attempting to be referenced here is not a cow.")
         return self.reproduction.cow_ovsynch_program
 
     @cow_ovsynch_program.setter
@@ -1049,7 +1152,12 @@ class Animal:
 
         """
         if not self.animal_type.is_cow:
-            raise TypeError()
+            self.om.add_error(
+                "Cow ovsynch program setter error",
+                "The animal attempting to be assigned a cow_ovsynch_program must be a cow.",
+                info_map={"class": self.__class__.__name__, "function": "cow_ovsynch_program.setter"},
+            )
+            raise TypeError("The animal attempting to be assigned a cow_ovsynch_program is not a cow.")
         self.reproduction.cow_ovsynch_program = cow_ovsynch_program
 
     @property
@@ -1069,15 +1177,18 @@ class Animal:
 
         """
         if not self.animal_type.is_cow:
-            raise TypeError()
+            self.om.add_error(
+                "Cow resynch program property error",
+                "The animal whose cow_resynch_program is attempting to be referenced must be a cow.",
+                info_map={"class": self.__class__.__name__, "function": "cow_resynch_program.property"},
+            )
+            raise TypeError("The animal's cow_resynch_program attempting to be referenced here is not a cow.")
         return self.reproduction.cow_resynch_program
 
     @cow_resynch_program.setter
     def cow_resynch_program(self, cow_resynch_program: CowReSynchSubProtocol) -> None:
         """
-        Sets the cow ReSynch program for the object. This method ensures
-        that the operation is allowed only for objects with an animal type of 'cow'.
-        If the animal type is not 'cow', a TypeError is raised.
+        Sets the cow ReSynch program for the object.
 
         Parameters
         ----------
@@ -1091,7 +1202,12 @@ class Animal:
 
         """
         if not self.animal_type.is_cow:
-            raise TypeError()
+            self.om.add_error(
+                "Cow resynch program setter error",
+                "The animal attempting to be assigned a cow_resynch_program must be a cow.",
+                info_map={"class": self.__class__.__name__, "function": "cow_resynch_program.setter"},
+            )
+            raise TypeError("The animal attempting to be assigned a cow_resynch_program is not a cow.")
         self.reproduction.cow_resynch_program = cow_resynch_program
 
     @property
@@ -1138,7 +1254,12 @@ class Animal:
     def milk_statistics(self) -> MilkProductionStatistics:
         """Returns the milk statistics for the animal."""
         if not self.animal_type.is_cow:
-            raise TypeError()
+            self.om.add_error(
+                "Cow milk statistics property error",
+                "The animal whose milk_statistics property is attempting to be referenced must be a cow.",
+                info_map={"class": self.__class__.__name__, "function": "milk_statistics.property"},
+            )
+            raise TypeError("The animal whose milk_statistics property is attempting to be referenced must be a cow.")
         if AnimalConfig.simulate_genetics and self.genetics is not None:
             return MilkProductionStatistics(
                 cow_id=self.id,
@@ -1182,10 +1303,6 @@ class Animal:
     def _assign_sex_to_newborn_calf(self) -> None:
         """
         Assign a sex to a newborn calf based on the semen type and male calf rate.
-
-        Determines the sex of the calf by evaluating the type of semen used (conventional
-        or sexed) and the corresponding male calf rate. Raises a ValueError if an
-        unexpected semen type is encountered.
 
         Raises
         ------
@@ -1383,6 +1500,8 @@ class Animal:
         """
         Updates the daily nutrients requirements and performs phosphorus update.
 
+        Notes
+        -----
         This method compiles the daily nutrient inputs required for the animal
         based on its type, weight, growth, pregnancy stages, milk production,
         and other factors. It then triggers the process to update the animal's
@@ -1404,6 +1523,8 @@ class Animal:
         """
         Performs the daily digestive system updates for the animal.
 
+        Notes
+        -----
         This method gathers all relevant inputs related to the animal's digestive
         system, including nutritional supply, metabolic energy intake, and milk
         production factors, into a `DigestiveSystemInputs` instance. It then
@@ -1431,6 +1552,8 @@ class Animal:
         """
         Performs the daily milk production update.
 
+        Notes
+        -----
         If the animal type is not a cow, the method exits without performing any operation.
         For cows, the method calculates the milking updates using the animal's daily metrics
         and adjusts the milking-related data accordingly.
@@ -1457,6 +1580,9 @@ class Animal:
     def daily_milking_update_without_history(self) -> None:
         """
         Performs the daily milk production update without updating the milk production history attributes.
+
+        Notes
+        -----
         Intended for use prior to first ration formulation interval, since that process requires the milk production
         to be set for proper estimation of animal requirements.
 
@@ -1481,13 +1607,15 @@ class Animal:
         """
         Updates the daily growth parameters of the animal based on the provided time input.
 
-        This method gathers the necessary animal attributes and performs the daily body weight update. It then updates
-        attributes such as body weight, conceptual weight, and events of the animal accordingly.
-
         Parameters
         ----------
         time : RufasTime
             The RufasTime instance used for updating growth and body weight changes.
+
+        Notes
+        -----
+        This method gathers the necessary animal attributes and performs the daily body weight update. It then updates
+        attributes such as body weight, conceptual weight, and events of the animal accordingly.
 
         """
         growth_inputs = GrowthInputs(
@@ -1559,7 +1687,12 @@ class Animal:
                 return 1
             return self._milk_production_output_days_in_milk
         else:
-            raise ValueError("Unexpected days in milk value")
+            self.om.add_error(
+                "Cow days in milk error",
+                f"Unexpected days in milk value: {self.days_in_milk}",
+                info_map={"class": self.__class__.__name__, "function": self._determine_days_in_milk.__name__},
+            )
+            raise ValueError(f"Unexpected days in milk value: {self.days_in_milk}")
 
     def daily_reproduction_update(
         self, time: RufasTime
@@ -1574,7 +1707,7 @@ class Animal:
 
         Returns
         -------
-        NewBornCalfValuesTypedDict or None
+        NewBornCalfValuesTypedDict | None
             A dictionary containing details related to a newly born calf if a calf is born during this update;
             otherwise, None.
         HerdReproductionStatistics
@@ -1685,7 +1818,6 @@ class Animal:
     def _calf_life_stage_update(self, _: RufasTime) -> tuple[AnimalStatus, None]:
         """
         Determines and updates the life stage of a calf based on specific evaluation criteria.
-        Transitions the calf to the 'HeiferI' stage if the criteria are met, otherwise retains the current life stage.
 
         Parameters
         ----------
@@ -1699,6 +1831,10 @@ class Animal:
             (AnimalStatus.LIFE_STAGE_CHANGED) or remains the same (AnimalStatus.REMAIN).
             The second value is always None.
 
+        Notes
+        -----
+        Transitions the calf to the 'HeiferI' stage if the criteria are met, otherwise retains the current life stage.
+
         """
         if self._evaluate_calf_for_heiferI():
             self._transition_calf_to_heiferI()
@@ -1708,8 +1844,6 @@ class Animal:
     def _heiferI_life_stage_update(self, time: RufasTime) -> tuple[AnimalStatus, None]:
         """
         Updates the life stage of a heiferI animal based on specific evaluation criteria.
-        If the evaluation determines that the heiferI should transition to heiferII,
-        the necessary transition is performed. Otherwise, the animal remains in its current life stage.
 
         Parameters
         ----------
@@ -1722,6 +1856,11 @@ class Animal:
             AnimalStatus.LIFE_STAGE_CHANGED, None: If the heiferI transitions to the heifer II life stage.
             AnimalStatus.REMAIN, None: If the heiferI remains in the current life stage.
 
+        Notes
+        -----
+        If the evaluation determines that the heiferI should transition to heiferII,
+        the necessary transition is performed. Otherwise, the animal remains in its current life stage.
+
         """
         if self._evaluate_heiferI_for_heiferII():
             self._transition_heiferI_to_heiferII(time)
@@ -1731,8 +1870,6 @@ class Animal:
     def _heiferII_life_stage_update(self, time: RufasTime) -> tuple[AnimalStatus, None]:
         """
         Updates the life stage of a heiferII based on evaluation criteria such as culling or transitioning to heiferIII.
-        If the evaluation determines that the heiferII should transition to heiferIII,
-        the necessary transition is performed. Otherwise, the animal remains in its current life stage.
 
         Parameters
         ----------
@@ -1744,6 +1881,11 @@ class Animal:
         tuple[AnimalStatus, None]
             A tuple containing the status of the animal (whether it is sold, its life stage
             has changed, or it remains in the current state) and None.
+
+        Notes
+        -----
+        If the evaluation determines that the heiferII should transition to heiferIII,
+        the necessary transition is performed. Otherwise, the animal remains in its current life stage.
 
         """
         if self._evaluate_heiferII_for_culling():
@@ -1979,6 +2121,11 @@ class Animal:
         newborn_calf_config, _ = self.daily_reproduction_update(time)
 
         if not newborn_calf_config:
+            self.om.add_error(
+                "HeiferIII transition error",
+                f"HeiferIII {self.id} should give birth to a calf when transitioning to cow.",
+                info_map={"class": self.__class__.__name__, "function": self.transition_heiferIII_to_cow.__name__},
+            )
             raise ValueError(f"HeiferIII {self.id} should give birth to a calf when transitioning to cow.")
 
         wood_parameters = LactationCurve.get_wood_parameters(self.calves)
@@ -2287,10 +2434,9 @@ class Animal:
 
     def update_pen_history(self, current_pen: int, current_day: int, animal_types_in_pen: set[AnimalType]) -> None:
         """
-        Updates the animal's pen history by either appending to the existing
-        history if the animal is in a different pen than it was the last time
-        this method is called or modifying the last element in the pen_history
-        list to reflect the current simulation day.
+        Updates the animal's pen history by either appending to the existing history if the animal is in a different
+        pen than it was the last time this method is called or modifying the last element in the pen_history list to
+        reflect the current simulation day.
 
         Parameters
         ----------
@@ -2318,8 +2464,7 @@ class Animal:
 
     def set_daily_walking_distance(self, vertical_dist_to_parlor: float, horizontal_dist_to_parlor: float) -> None:
         """
-        Calculates and sets the animal's daily vertical and horizontal
-        walking distance (DVD and DHD).
+        Calculates and sets the animal's daily vertical and horizontal walking distance (DVD and DHD).
 
         Parameters
         ----------
@@ -2330,6 +2475,11 @@ class Animal:
 
         """
         if not self.animal_type.is_cow:
+            self.om.add_error(
+                "Daily walking distance set method error",
+                "Cannot calculate daily walking distance for animal types other than cow.",
+                info_map={"class": self.__class__.__name__, "function": self.set_daily_walking_distance.__name__},
+            )
             raise ValueError("Cannot calculate daily walking distance for animal types other than cow.")
         self.daily_vertical_distance = 2 * vertical_dist_to_parlor * AnimalConfig.cow_times_milked_per_day
         self.daily_horizontal_distance = 2 * horizontal_dist_to_parlor * AnimalConfig.cow_times_milked_per_day
@@ -2367,7 +2517,7 @@ class Animal:
 
         """
         if self.animal_type is AnimalType.CALF:
-            calf_intake = CalfRationManager.calc_intake(
+            calf_intake = CalfRationManager.calculate_intake(
                 self.birth_weight,
                 self.body_weight,
                 AnimalConfig.wean_day,
@@ -2375,7 +2525,7 @@ class Animal:
                 cast(list[NASEMFeed | NRCFeed], available_feeds),
                 self.nutrient_standard,
             )
-            calf_requirements = CalfRationManager.calc_requirements(
+            calf_requirements = CalfRationManager.calculate_requirements(
                 self.days_born, self.body_weight, previous_temperature, calf_intake
             )
             # TODO: do not use dummy values for calf calcium and phosphorus requirements - issue 2517.
@@ -2464,19 +2614,42 @@ class Animal:
 
         return requirements
 
+    def update_305_day_milk_yield(self) -> None:
+        """
+        Update the cow's 305-day milk yield estimate.
+
+        Notes
+        -----
+        Dry cows (DIM == 0) retain their previous estimate so a value carried over from
+        the prior lactation isn't wiped out. The exception is a dry cow that has never
+        had an in-sim lactation yet (estimate still at the 0.0 init default) — those fall
+        through to ``calculate_305_day_milk_yield``, which returns the pure Wood's-curve
+        integral when no current-lactation history exists. This avoids zero-valued dry
+        cows pulling the herd mean down at sim start.
+
+        For all other cows the estimate is recomputed from observed daily production
+        combined with Wood's curve predictions for any unobserved DIMs in 1..305.
+        """
+        if self.days_in_milk == 0 and self.milk_production.milk_305_day_yield > 0.0:
+            return
+
+        self.milk_production.milk_305_day_yield = self.milk_production.calculate_305_day_milk_yield()
+
     def update_genetic_history(self, simulation_day: int) -> None:
         """
         Updates the genetic history record for the animal on the given simulation day.
-
-        If the animal's current genetics differ from the most recent genetic history entry,
-        a new ``GeneticHistory`` record is appended. Otherwise, the end day of the most
-        recent entry is extended to the current simulation day. A warning is issued if a
-        duplicate entry is detected for the same day.
 
         Parameters
         ----------
         simulation_day : int
             The current simulation day used to timestamp the genetic history entry.
+
+        Notes
+        -----
+        If the animal's current genetics differ from the most recent genetic history entry, a new ``GeneticHistory``
+        record is appended. Otherwise, the end day of the most recent entry is extended to the current simulation day.
+        A warning is issued if a duplicate entry is detected for the same day.
+
         """
         if AnimalConfig.simulate_genetics and self.genetics is not None:
             if (
