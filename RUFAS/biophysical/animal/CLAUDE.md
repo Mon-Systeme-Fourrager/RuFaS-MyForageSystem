@@ -24,7 +24,8 @@ Models the dairy herd. Entry/orchestration:
 
 ## Notes
 
-- Inputs come from `input/data/animal/*.json` (validated in
+- Inputs come from `input/data/animal/*.json` plus
+  `input/data/animal_genetics/` and `input/data/animal_health/` (validated in
   `RUFAS/data_validator.py`). Several are CI-protected — see
   `.claude/rules/protected-inputs.md`.
 - Feed arrives via the feed_storage→animal connection; manure/bedding leave via
