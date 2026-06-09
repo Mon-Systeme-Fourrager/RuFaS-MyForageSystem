@@ -38,7 +38,8 @@ matching file enters context (e.g. `protected-inputs.md`).
   `ignore = E203, W503` (see `.flake8`).
 - **Types**: mypy **strict** (`disallow_untyped_defs`, `strict = True`,
   `disallow_any_generics`, …). Every function needs full type annotations.
-- **Tests**: pytest 7.4.4 + `pytest-mock`, `pytest-lazy-fixture`, `freezegun`.
+- **Tests**: pytest `>=9.0.3` + `pytest-mock`, `pytest-lazy-fixtures`
+  (`from pytest_lazy_fixtures import lf`), `freezegun`.
 - **Coverage**: `coverage` via `.github/.coveragerc`.
 - **Docs**: Sphinx (`pip install -e ".[build_docs]"`, build under `docs/`).
 
