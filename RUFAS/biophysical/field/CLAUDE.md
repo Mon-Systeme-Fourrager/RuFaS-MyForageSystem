@@ -12,7 +12,9 @@ Models cropland: soil biogeochemistry, crop growth, and field operations.
 
 ## Notes
 
-- Inputs: `input/data/field/`, `input/data/crop/`, `input/data/soil/`,
+- Inputs: `input/data/field/`, `input/data/crop/`,
+  `input/data/crop_configurations/` (crop config presets, e.g.
+  `default_crop_configs.json` / `no_crop_configs.json`), `input/data/soil/`,
   `input/data/fertilizer_schedule/`, `input/data/tillage_schedule/`,
   `input/data/manure_schedule/`. Many are CI-protected — see
   `.claude/rules/protected-inputs.md`.
