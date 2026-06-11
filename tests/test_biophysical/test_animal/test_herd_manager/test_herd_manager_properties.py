@@ -32,6 +32,8 @@ def test_animals_by_type(herd_manager: HerdManager, mock_herd: dict[str, list[An
         AnimalType.HEIFER_III: mock_herd["heiferIIIs"],
         AnimalType.DRY_COW: mock_herd["dry_cows"],
         AnimalType.LAC_COW: mock_herd["lac_cows"],
+        AnimalType.FEEDLOT_STEER: herd_manager.feedlot_animals,
+        AnimalType.FEEDLOT_HEIFER: herd_manager.feedlot_animals,
     }
     actual = herd_manager.animals_by_type
 
@@ -78,6 +80,8 @@ def test_phosphorus_concentration_by_animal_class(
         AnimalType.HEIFER_III: 0.0,
         AnimalType.DRY_COW: 0.0,
         AnimalType.LAC_COW: 0.0,
+        AnimalType.FEEDLOT_STEER: 0.0,
+        AnimalType.FEEDLOT_HEIFER: 0.0,
     }
     animals_by_type_mapping: dict[AnimalType, list[Animal]] = {
         AnimalType.CALF: mock_herd["calves"],
@@ -86,6 +90,8 @@ def test_phosphorus_concentration_by_animal_class(
         AnimalType.HEIFER_III: mock_herd["heiferIIIs"],
         AnimalType.DRY_COW: mock_herd["dry_cows"],
         AnimalType.LAC_COW: mock_herd["lac_cows"],
+        AnimalType.FEEDLOT_STEER: [],
+        AnimalType.FEEDLOT_HEIFER: [],
     }
 
     for animal_type in [
@@ -95,6 +101,8 @@ def test_phosphorus_concentration_by_animal_class(
         AnimalType.HEIFER_III,
         AnimalType.LAC_COW,
         AnimalType.DRY_COW,
+        AnimalType.FEEDLOT_STEER,
+        AnimalType.FEEDLOT_HEIFER,
     ]:
         animals = animals_by_type_mapping[animal_type]
         total_phosphorus = sum(

@@ -6,6 +6,14 @@ class Breed(Enum):
 
     HO = "Holstein"
     JE = "Jersey"
+    # Beef breeds (NRC 2016 Table 19-1)
+    AN = "Angus"
+    HE = "Hereford"
+    SI = "Simmental"
+    CH = "Charolais"
+    LM = "Limousin"
+    BR = "Brahman"
+    XB = "Crossbred"
 
 
 class Sex(Enum):
@@ -13,6 +21,7 @@ class Sex(Enum):
 
     MALE = "male"
     FEMALE = "female"
+    STEER = "steer"
 
 
 class AnimalStatus(Enum):

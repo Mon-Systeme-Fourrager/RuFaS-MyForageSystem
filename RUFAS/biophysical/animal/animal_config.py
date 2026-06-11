@@ -381,6 +381,15 @@ class AnimalConfig:
     top_listing_semen: dict[str, dict[str, float]] = {}
     simulate_genetics: bool = False
 
+    # ── FEEDLOT PARAMETERS (defaults; overridden by initialize_animal_config) ─
+    feedlot_entry_weight: float = 320.0
+    feedlot_slaughter_weight: float = 580.0
+    feedlot_max_days_on_feed: int = 220
+    feedlot_target_adg: float = 1.5
+    feedlot_implant_adg_factor: float = 1.0
+    feedlot_mud_condition: str = "none"
+    feedlot_ndf_minimum_pct: float = 10.0
+
     @classmethod
     def initialize_animal_config(cls) -> None:
         """Initialize the animal config from the input manager user input data."""
@@ -550,3 +559,13 @@ class AnimalConfig:
             if trait != "year_month"
         }
         cls.simulate_genetics = animal_data["herd_information"]["simulate_genetics"]
+
+        # ── FEEDLOT PARAMETERS ───────────────────────────────────────────────
+        feedlot_cfg: dict[str, Any] = animal_config_data.get("feedlot", {})
+        cls.feedlot_entry_weight = float(feedlot_cfg.get("entry_weight", 320.0))
+        cls.feedlot_slaughter_weight = float(feedlot_cfg.get("slaughter_weight", 580.0))
+        cls.feedlot_max_days_on_feed = int(feedlot_cfg.get("max_days_on_feed", 220))
+        cls.feedlot_target_adg = float(feedlot_cfg.get("target_adg", 1.5))
+        cls.feedlot_implant_adg_factor = float(feedlot_cfg.get("implant_adg_factor", 1.0))
+        cls.feedlot_mud_condition = str(feedlot_cfg.get("mud_condition", "none"))
+        cls.feedlot_ndf_minimum_pct = float(feedlot_cfg.get("ndf_minimum_pct", 10.0))

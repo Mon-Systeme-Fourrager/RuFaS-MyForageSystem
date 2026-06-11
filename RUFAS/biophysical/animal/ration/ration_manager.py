@@ -38,6 +38,9 @@ class RationManager:
     user_defined_rations: dict[AnimalCombination, dict[RUFAS_ID, float]] | None
     tolerance: float | None = 0.0
     maximum_ration_reformulation_attempts: int
+    feedlot_starter_ration: dict[RUFAS_ID, float]
+    feedlot_transition_ration: dict[RUFAS_ID, float]
+    feedlot_finisher_ration: dict[RUFAS_ID, float]
 
     @classmethod
     def set_ration_feeds(cls, ration_config: dict[str, Any]) -> None:
@@ -79,6 +82,48 @@ class RationManager:
             if ration["animal_combination"] == "lac_cow"
             for feed in ration["feeds"]
         ]
+
+        cls.ration_feeds[AnimalCombination.FEEDLOT_FINISHING] = [int(f) for f in ration_config.get("feedlot_feeds", [])]
+        cls.feedlot_starter_ration = {
+            int(k): float(v) for k, v in ration_config.get("feedlot_starter_ration", {}).items()
+        }
+        cls.feedlot_transition_ration = {
+            int(k): float(v) for k, v in ration_config.get("feedlot_transition_ration", {}).items()
+        }
+        cls.feedlot_finisher_ration = {
+            int(k): float(v) for k, v in ration_config.get("feedlot_finisher_ration", {}).items()
+        }
+
+    @classmethod
+    def get_feedlot_phase_ration(
+        cls,
+        step_up_phase: str,
+        requirements: NutritionRequirements,
+    ) -> dict[RUFAS_ID, float]:
+        """
+        Return feed quantities (kg DM) for the current step-up diet phase.
+
+        Parameters
+        ----------
+        step_up_phase : str
+            'starter', 'transition', or 'finisher'.  Unknown values fall back
+            to the finisher ration.
+        requirements : NutritionRequirements
+            Current nutrition requirements; ``dry_matter`` provides the DMI target.
+
+        Returns
+        -------
+        dict[RUFAS_ID, float]
+            Mapping of feed RUFAS ID to kg DM allocation for this day.
+
+        """
+        phase_ration_map: dict[str, dict[RUFAS_ID, float]] = {
+            "starter": cls.feedlot_starter_ration,
+            "transition": cls.feedlot_transition_ration,
+            "finisher": cls.feedlot_finisher_ration,
+        }
+        ration_pct = phase_ration_map.get(step_up_phase, cls.feedlot_finisher_ration)
+        return {feed_id: requirements.dry_matter * pct / 100.0 for feed_id, pct in ration_pct.items()}
 
     @classmethod
     def get_ration_feeds(cls, animal_combination: AnimalCombination) -> list[RUFAS_ID]:

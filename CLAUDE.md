@@ -195,3 +195,11 @@ changelog, protected inputs), and opens a PR into `dev-msf` via `gh`. The
 `code-reviewer` agent (`.claude/agents/`) gives a Python/scientific-integrity
 review on demand. `/graphify` queries the dependency graph; `/sync-claude-md`
 audits the layered `CLAUDE.md` files against the code.
+
+## Beef Module Reference Documents
+All NRC 2016 beef module reference data lives in `docs/beef_module/`:
+- `NRC2016_Beef_Requirements_Calculator_Inventory_Final.xlsx` — NRC 2016 equations,
+  coefficients, breed multipliers, Box 12-1 benchmark (MP = 691 g/d)
+- `NRC2016_BeefCattle_FeedLibrary_Complete.xlsx` — Feed compositions
+  (Table 18-1), Feed IDs 301–305
+- `RuFaS_Feedlot_Implementation_Plan.docx` — 8-step implementation plan

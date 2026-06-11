@@ -1,0 +1,87 @@
+"""Tests for feedlot ration step-up protocol and optimizer constraints."""
+
+import pytest
+from unittest.mock import MagicMock
+from RUFAS.biophysical.animal.data_types.animal_combination import AnimalCombination
+
+_FEEDLOT_RATION_CONFIG = {
+    "rations": [],  # required so existing dairy list comprehensions don't KeyError
+    "feedlot_feeds": [301, 302, 303],
+    "feedlot_starter_ration": {"301": 50, "303": 50},
+    "feedlot_transition_ration": {"301": 65, "302": 20, "303": 15},
+    "feedlot_finisher_ration": {"301": 70, "302": 20, "303": 10},
+}
+
+
+@pytest.mark.unit
+def test_set_ration_feeds_registers_feedlot_combination() -> None:
+    """set_ration_feeds must populate ration_feeds[FEEDLOT_FINISHING]."""
+    from RUFAS.biophysical.animal.ration.ration_manager import RationManager
+
+    RationManager.set_ration_feeds(_FEEDLOT_RATION_CONFIG)
+    assert AnimalCombination.FEEDLOT_FINISHING in RationManager.ration_feeds
+
+
+@pytest.mark.unit
+def test_set_ration_feeds_feedlot_feed_ids() -> None:
+    """set_ration_feeds must store the feedlot feed IDs as RUFAS_IDs (ints)."""
+    from RUFAS.biophysical.animal.ration.ration_manager import RationManager
+
+    RationManager.set_ration_feeds(_FEEDLOT_RATION_CONFIG)
+    assert RationManager.ration_feeds[AnimalCombination.FEEDLOT_FINISHING] == [301, 302, 303]
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("phase", ["starter", "transition", "finisher"])
+def test_get_feedlot_phase_ration_returns_nonempty_dict(phase: str) -> None:
+    """get_feedlot_phase_ration must return a non-empty dict for all three phases."""
+    from RUFAS.biophysical.animal.ration.ration_manager import RationManager
+    from RUFAS.biophysical.animal.data_types.nutrition_data_structures import NutritionRequirements
+
+    RationManager.set_ration_feeds(_FEEDLOT_RATION_CONFIG)
+    mock_req = MagicMock(spec=NutritionRequirements)
+    mock_req.dry_matter = 10.0
+
+    result = RationManager.get_feedlot_phase_ration(phase, mock_req)
+    assert isinstance(result, dict)
+    assert len(result) > 0
+
+
+@pytest.mark.unit
+def test_get_feedlot_phase_ration_scales_to_dmi() -> None:
+    """Feed amounts must sum to dry_matter when phase ration percentages sum to 100."""
+    from RUFAS.biophysical.animal.ration.ration_manager import RationManager
+    from RUFAS.biophysical.animal.data_types.nutrition_data_structures import NutritionRequirements
+
+    RationManager.set_ration_feeds(_FEEDLOT_RATION_CONFIG)
+    mock_req = MagicMock(spec=NutritionRequirements)
+    mock_req.dry_matter = 8.0
+
+    result = RationManager.get_feedlot_phase_ration("finisher", mock_req)
+    total_kg = sum(result.values())
+    assert total_kg == pytest.approx(8.0)
+
+
+@pytest.mark.unit
+def test_get_feedlot_phase_ration_unknown_phase_falls_back() -> None:
+    """An unrecognised phase string must fall back to the finisher ration."""
+    from RUFAS.biophysical.animal.ration.ration_manager import RationManager
+    from RUFAS.biophysical.animal.data_types.nutrition_data_structures import NutritionRequirements
+
+    RationManager.set_ration_feeds(_FEEDLOT_RATION_CONFIG)
+    mock_req = MagicMock(spec=NutritionRequirements)
+    mock_req.dry_matter = 8.0
+
+    finisher = RationManager.get_feedlot_phase_ration("finisher", mock_req)
+    unknown = RationManager.get_feedlot_phase_ration("unknown_phase", mock_req)
+    assert unknown == finisher
+
+
+@pytest.mark.unit
+def test_feedlot_optimizer_select_constraints_does_not_raise() -> None:
+    """_select_constraints must return without raising for FEEDLOT_FINISHING."""
+    from RUFAS.biophysical.animal.ration.ration_optimizer import RationOptimizer
+
+    optimizer = RationOptimizer()
+    result = optimizer._select_constraints(AnimalCombination.FEEDLOT_FINISHING)
+    assert result is not None

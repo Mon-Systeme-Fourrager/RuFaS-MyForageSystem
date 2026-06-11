@@ -129,6 +129,7 @@ class RationOptimizer:
         self.constraint_functions: list[Callable[[Any, Any], float]] = []
         self.cow_constraints: list[dict[str, Callable[[Any, Any], float] | tuple[RationConfig] | str] | str] = []
         self.heifer_constraints: list[dict[str, Callable[[Any, Any], float] | tuple[RationConfig] | str] | str] = []
+        self.feedlot_constraints: list[dict[str, Callable[[Any, Any], float] | tuple[RationConfig] | str] | str] = []
 
     def set_constraints(self, ration_config: RationConfig) -> None:
         """
@@ -186,6 +187,10 @@ class RationOptimizer:
                 {"type": "ineq", "fun": func, "args": (ration_config,)} for func in self.NASEM_constraint_functions
             ]
             self.heifer_constraints = self.cow_constraints
+
+        self.feedlot_constraints = [
+            c for c in self.heifer_constraints if isinstance(c, dict) and c.get("fun") is not self.forage_NDF_constraint
+        ]
 
     @staticmethod
     def convert_decision_vec_to_feeds(
@@ -991,6 +996,8 @@ class RationOptimizer:
             AnimalCombination.GROWING_AND_CLOSE_UP,
         ):
             return self.heifer_constraints
+        if animal_combination is AnimalCombination.FEEDLOT_FINISHING:
+            return self.feedlot_constraints  # type: ignore[return-value]
         OutputManager().add_error(
             "Ration Optimization Error",
             f"Invalid animal combination: {animal_combination}",

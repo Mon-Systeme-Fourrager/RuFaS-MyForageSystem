@@ -73,3 +73,13 @@ follow_imports = "silent"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "unit: Unit test — single isolated function",
+    "component: Component test — single class/module",
+    "integration: Integration test — 2-3 modules together",
+    "regression: Regression test — existing dairy suite",
+    "validation: NRC 2016 validation against published benchmarks",
+    "nrc2016: Specifically validates against NRC 2016 Chapter 20",
+    "smoke: Import/instantiation smoke test",
+    "slow: Takes > 5 seconds to run",
+]

@@ -139,6 +139,7 @@ class Pen:
         self.first_parlor_processor = first_parlor_processor
         self.parlor_stream_name = parlor_stream_name
         self.manure_streams = manure_streams
+        self.mud_condition: str = "none"
 
         self.beddings: dict[str, Bedding] = {}
         self._initialize_beddings()

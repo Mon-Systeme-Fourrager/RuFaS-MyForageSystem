@@ -127,3 +127,12 @@ MITS_PARAMETER_B = 0
 """
 The parameter 'b' in the Mitscherlich Model 3 (Mills et al., 2003).
 """
+
+# ── FEEDLOT EVENTS ────────────────────────────────────────────────────────────
+FEEDLOT_ARRIVAL = "feedlot arrival"
+RECEIVING_STRESS_END = "receiving stress period ended"
+SLAUGHTER_WEIGHT_REACHED = "slaughter weight reached"
+MAX_DAYS_ON_FEED_REACHED = "max days on feed reached"
+STEP_UP_STARTER = "diet phase: starter"
+STEP_UP_TRANSITION = "diet phase: transition"
+STEP_UP_FINISHER = "diet phase: finisher"

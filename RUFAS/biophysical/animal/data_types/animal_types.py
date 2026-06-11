@@ -19,6 +19,10 @@ class AnimalType(Enum):
         A cow in the stage of their lactation cycle where milk production ceases prior to calving.
     LAC_COW : str
         A lactating cow.
+    FEEDLOT_STEER : str
+        A castrated male beef animal on a feedlot finishing programme.
+    FEEDLOT_HEIFER : str
+        A female beef animal on a feedlot finishing programme that has not calved.
 
     """
 
@@ -28,13 +32,20 @@ class AnimalType(Enum):
     HEIFER_III = "HeiferIII"
     DRY_COW = "DryCow"
     LAC_COW = "LacCow"
+    FEEDLOT_STEER = "FeedlotSteer"
+    FEEDLOT_HEIFER = "FeedlotHeifer"
 
     @property
     def is_heifer(self) -> bool:
-        """True if the animal is a heifer, False otherwise"""
+        """True if the animal is a dairy heifer, False otherwise."""
         return self in (AnimalType.HEIFER_I, AnimalType.HEIFER_II, AnimalType.HEIFER_III)
 
     @property
     def is_cow(self) -> bool:
-        """True if the animal is a cow, False otherwise"""
+        """True if the animal is a dairy cow, False otherwise."""
         return self in (AnimalType.DRY_COW, AnimalType.LAC_COW)
+
+    @property
+    def is_feedlot(self) -> bool:
+        """True if the animal is a feedlot beef animal, False otherwise."""
+        return self in (AnimalType.FEEDLOT_STEER, AnimalType.FEEDLOT_HEIFER)
