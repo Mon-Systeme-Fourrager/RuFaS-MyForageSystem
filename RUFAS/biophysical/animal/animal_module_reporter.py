@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 from dataclasses import asdict
 from typing import TYPE_CHECKING, Any
@@ -6,6 +8,7 @@ if TYPE_CHECKING:
     from RUFAS.biophysical.animal.animal import Animal
 
 from RUFAS.biophysical.animal.animal_config import AnimalConfig
+from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
 from RUFAS.biophysical.animal.animal_genetics.animal_genetics import UNITS as genetics_units
 from RUFAS.biophysical.animal.data_types.animal_events import AnimalEvents
 from RUFAS.biophysical.animal.data_types.animal_population import AnimalPopulationStatistics
@@ -1443,7 +1446,7 @@ class AnimalModuleReporter:
     @classmethod
     def report_feedlot_performance(
         cls,
-        animal: "Animal",
+        animal: Animal,
         simulation_day: int,
     ) -> None:
         """
@@ -1466,7 +1469,7 @@ class AnimalModuleReporter:
         total_gain: float = animal.body_weight - animal.entry_weight
         adg: float = total_gain / dof if dof > 0 else 0.0
         fcr: float = animal.cumulative_dmi / total_gain if total_gain > 0.0 else 0.0
-        hcw: float = animal.body_weight * 0.62
+        hcw: float = animal.body_weight * AnimalModuleConstants.FEEDLOT_HCW_DRESSING_PERCENTAGE
 
         om.add_variable("feedlot_days_on_feed", dof, dict(info_map, units=MeasurementUnits.DAYS))
         om.add_variable("feedlot_total_gain_kg", total_gain, dict(info_map, units=MeasurementUnits.KILOGRAMS))

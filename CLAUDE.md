@@ -197,6 +197,7 @@ review on demand. `/graphify` queries the dependency graph; `/sync-claude-md`
 audits the layered `CLAUDE.md` files against the code.
 
 ## Beef Module Reference Documents
+
 All NRC 2016 beef module reference data lives in `docs/beef_module/`:
 - `NRC2016_Beef_Requirements_Calculator_Inventory_Final.xlsx` — NRC 2016 equations,
   coefficients, breed multipliers, Box 12-1 benchmark (MP = 691 g/d)

@@ -94,6 +94,18 @@ class RationManager:
             int(k): float(v) for k, v in ration_config.get("feedlot_finisher_ration", {}).items()
         }
 
+        for name, ration in (
+            ("starter", cls.feedlot_starter_ration),
+            ("transition", cls.feedlot_transition_ration),
+            ("finisher", cls.feedlot_finisher_ration),
+        ):
+            if ration:
+                total_pct = sum(ration.values())
+                if abs(total_pct - 100.0) > 1e-2:
+                    raise ValueError(
+                        f"Feedlot {name} ration percentages must sum to 100.0%, got {total_pct}%"
+                    )
+
     @classmethod
     def get_feedlot_phase_ration(
         cls,

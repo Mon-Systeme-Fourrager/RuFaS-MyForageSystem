@@ -1,11 +1,13 @@
 """Unit tests for BeefNRCRequirementsCalculator — NRC 2016 equations."""
 
+from typing import Any
+
 import pytest
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 
 
 @pytest.fixture(scope="module")
-def calc():  # type: ignore
+def calc() -> Any:
     """BeefNRCRequirementsCalculator class."""
     from RUFAS.biophysical.animal.nutrients.beef_nrc_requirements_calculator import (
         BeefNRCRequirementsCalculator,
@@ -15,19 +17,19 @@ def calc():  # type: ignore
 
 
 @pytest.mark.unit
-def test_calculate_sbw(calc) -> None:  # type: ignore
+def test_calculate_sbw(calc: Any) -> None:
     """SBW must be 0.96 × BW."""
     assert calc._calculate_sbw(400.0) == pytest.approx(384.0)
 
 
 @pytest.mark.unit
-def test_calculate_ebw(calc) -> None:  # type: ignore
+def test_calculate_ebw(calc: Any) -> None:
     """EBW must be 0.891 × SBW (NRC 2016 Ch. 12)."""
     assert calc._calculate_ebw(384.0) == pytest.approx(384.0 * 0.891)
 
 
 @pytest.mark.unit
-def test_calculate_eqsbw(calc) -> None:  # type: ignore
+def test_calculate_eqsbw(calc: Any) -> None:
     """EQSBW = SBW × (SRW/MSBW) normalises across frame sizes.
 
     320 kg steer, mature_BW=600 → MSBW=576, SBW=307.2, SRW=478 → EQSBW≈255.
@@ -39,13 +41,13 @@ def test_calculate_eqsbw(calc) -> None:  # type: ignore
 
 
 @pytest.mark.unit
-def test_calculate_eqebw(calc) -> None:  # type: ignore
+def test_calculate_eqebw(calc: Any) -> None:
     """EQEBW = 0.891 × EQSBW — the weight basis used in the NEg equation."""
     assert calc._calculate_eqebw(255.0) == pytest.approx(255.0 * 0.891)
 
 
 @pytest.mark.unit
-def test_maintenance_energy_angus_steer_thermoneutral(calc) -> None:  # type: ignore
+def test_maintenance_energy_angus_steer_thermoneutral(calc: Any) -> None:
     """NEm at 20 °C (a2=0): NEm = SBW^0.75 × (0.077 × BE × SEX)."""
     sbw = 384.0
     # a2 = max(0, 0.0007 × (20-20)) = 0; BE=1.0 (Angus), SEX=1.0 (steer)
@@ -62,7 +64,7 @@ def test_maintenance_energy_angus_steer_thermoneutral(calc) -> None:  # type: ig
 
 
 @pytest.mark.unit
-def test_maintenance_energy_cold_adds_a2(calc) -> None:  # type: ignore
+def test_maintenance_energy_cold_adds_a2(calc: Any) -> None:
     """NEm at 10 °C must add a2 = 0.0007 × (20-10) = 0.007 per SBW^0.75."""
     sbw = 384.0
     a2 = 0.0007 * (20.0 - 10.0)  # = 0.007
@@ -79,7 +81,7 @@ def test_maintenance_energy_cold_adds_a2(calc) -> None:  # type: ignore
 
 
 @pytest.mark.unit
-def test_maintenance_energy_mud_mild(calc) -> None:  # type: ignore
+def test_maintenance_energy_mud_mild(calc: Any) -> None:
     """NEm with mild mud must be 1.08× the no-mud value."""
     sbw = 384.0
     base = calc._calculate_maintenance_energy(
@@ -102,7 +104,7 @@ def test_maintenance_energy_mud_mild(calc) -> None:  # type: ignore
 
 
 @pytest.mark.unit
-def test_maintenance_energy_cold_stress(calc) -> None:  # type: ignore
+def test_maintenance_energy_cold_stress(calc: Any) -> None:
     """NEm at -10 °C must be greater than at thermoneutral."""
     sbw = 384.0
     base = calc._calculate_maintenance_energy(
@@ -125,13 +127,13 @@ def test_maintenance_energy_cold_stress(calc) -> None:  # type: ignore
 
 
 @pytest.mark.unit
-def test_growth_energy_zero_ebg(calc) -> None:  # type: ignore
+def test_growth_energy_zero_ebg(calc: Any) -> None:
     """NEg must be 0 when EBG <= 0."""
     assert calc._calculate_growth_energy(eqebw=300.0, ebg=0.0) == pytest.approx(0.0)
 
 
 @pytest.mark.unit
-def test_growth_energy_positive(calc) -> None:  # type: ignore
+def test_growth_energy_positive(calc: Any) -> None:
     """NEg = RE = 0.0635 × EQEBW^0.75 × EBG^1.097.
 
     EBG = 0.956 × ADG (NOT 0.891 × ADG — that's the EBW/SBW conversion, not EBG).
@@ -146,13 +148,13 @@ def test_growth_energy_positive(calc) -> None:  # type: ignore
 
 
 @pytest.mark.unit
-def test_np_growth_zero_when_adg_zero(calc) -> None:  # type: ignore
+def test_np_growth_zero_when_adg_zero(calc: Any) -> None:
     """NPg must be 0 when ADG = 0."""
     assert calc._calculate_np_growth(adg=0.0, ne_growth=3.0) == pytest.approx(0.0)
 
 
 @pytest.mark.unit
-def test_np_growth_box12_1(calc) -> None:  # type: ignore
+def test_np_growth_box12_1(calc: Any) -> None:
     """NPg must match NRC 2016 Box 12-1: ADG=1.365, RE=4.97 → NPg ≈ 219 g/d."""
     adg = 1.365
     ne_growth = 4.97
@@ -162,7 +164,7 @@ def test_np_growth_box12_1(calc) -> None:  # type: ignore
 
 
 @pytest.mark.unit
-def test_dmi_receiving_period(calc) -> None:  # type: ignore
+def test_dmi_receiving_period(calc: Any) -> None:
     """DMI during receiving period must be <= full DMI and above minimum floor."""
     full = calc._calculate_dmi(body_weight=400.0, ne_diet_concentration=2.0, days_on_feed=22)
     receiving = calc._calculate_dmi(body_weight=400.0, ne_diet_concentration=2.0, days_on_feed=10)
@@ -171,14 +173,14 @@ def test_dmi_receiving_period(calc) -> None:  # type: ignore
 
 
 @pytest.mark.unit
-def test_dmi_minimum_floor(calc) -> None:  # type: ignore
+def test_dmi_minimum_floor(calc: Any) -> None:
     """DMI must not fall below 1.5 % BW regardless of diet energy."""
     result = calc._calculate_dmi(body_weight=400.0, ne_diet_concentration=5.0, days_on_feed=30)
     assert result >= 400.0 * 0.015 - 1e-9
 
 
 @pytest.mark.unit
-def test_metabolizable_protein_zero_growth(calc) -> None:  # type: ignore
+def test_metabolizable_protein_zero_growth(calc: Any) -> None:
     """MP maintenance = 3.8 × BW^0.75 (live weight basis) when NPg = 0."""
     body_weight = 400.0
     mp_maint = 3.8 * (body_weight**0.75)
@@ -187,7 +189,7 @@ def test_metabolizable_protein_zero_growth(calc) -> None:  # type: ignore
 
 
 @pytest.mark.unit
-def test_metabolizable_protein_box12_1(calc) -> None:  # type: ignore
+def test_metabolizable_protein_box12_1(calc: Any) -> None:
     """MP must match NRC 2016 Box 12-1 anchor: 320 kg Angus steer → MP = 691 g/d.
 
     Box 12-1 exact values: BW=320, EQSBW=255, NPg=219.1, eff_g=0.543,
@@ -201,7 +203,7 @@ def test_metabolizable_protein_box12_1(calc) -> None:  # type: ignore
 
 
 @pytest.mark.unit
-def test_calculate_requirements_returns_nutrition_requirements(calc) -> None:  # type: ignore
+def test_calculate_requirements_returns_nutrition_requirements(calc: Any) -> None:
     """calculate_requirements must return NutritionRequirements; pregnancy/lactation/activity = 0."""
     from RUFAS.biophysical.animal.data_types.nutrition_data_structures import NutritionRequirements
 
@@ -230,7 +232,7 @@ def test_calculate_requirements_returns_nutrition_requirements(calc) -> None:  #
 
 
 @pytest.mark.unit
-def test_calculate_requirements_rejects_dairy_type(calc) -> None:  # type: ignore
+def test_calculate_requirements_rejects_dairy_type(calc: Any) -> None:
     """calculate_requirements must raise ValueError for non-feedlot animal types."""
     with pytest.raises(ValueError):
         calc.calculate_requirements(
@@ -296,7 +298,7 @@ def _expected_dmi(bw: float, ne_conc: float = 2.27) -> float:
 
 @pytest.mark.validation
 @pytest.mark.nrc2016
-def test_box12_1_mp_anchor(calc) -> None:  # type: ignore
+def test_box12_1_mp_anchor(calc: Any) -> None:
     """PRIMARY ANCHOR: NRC 2016 Box 12-1 — 320 kg Angus steer, ADG=1.365 → MP=691 g/d.
 
     Formula chain verified against published values:
@@ -334,7 +336,7 @@ def test_box12_1_mp_anchor(calc) -> None:  # type: ignore
     ],
 )
 def test_nem_matches_formula_thermoneutral(
-    calc,  # type: ignore
+    calc: Any,
     bw: float,
     mbw: float,
     breed: str,
@@ -373,7 +375,7 @@ def test_nem_matches_formula_thermoneutral(
     ],
 )
 def test_neg_matches_formula(
-    calc,  # type: ignore
+    calc: Any,
     bw: float,
     mbw: float,
     target_adg: float,
@@ -401,7 +403,7 @@ def test_neg_matches_formula(
 @pytest.mark.validation
 @pytest.mark.nrc2016
 @pytest.mark.parametrize("bw", [300.0, 400.0, 500.0])
-def test_dmi_matches_eq10_1(calc, bw: float) -> None:  # type: ignore
+def test_dmi_matches_eq10_1(calc: Any, bw: float) -> None:
     """DMI must match NRC 2016 Eq. 10-1 within 0.5 % outside the receiving period."""
     ne_conc = 2.27
     result = calc.calculate_requirements(

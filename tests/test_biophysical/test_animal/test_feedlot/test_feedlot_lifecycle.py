@@ -3,6 +3,7 @@
 import pytest
 from unittest.mock import MagicMock
 from pytest_mock import MockerFixture
+from RUFAS.biophysical.animal.animal import Animal
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 from RUFAS.biophysical.animal.data_types.animal_enums import AnimalStatus
 from RUFAS.biophysical.animal.data_types.animal_events import AnimalEvents
@@ -13,9 +14,8 @@ def _make_feedlot_animal(
     animal_type: AnimalType = AnimalType.FEEDLOT_STEER,
     body_weight: float = 320.0,
     days_on_feed: int = 0,
-) -> "Animal":  # type: ignore[name-defined]  # noqa: F821
+) -> Animal:
     """Construct a minimal feedlot animal via __new__ with required attributes set."""
-    from RUFAS.biophysical.animal.animal import Animal
 
     animal: Animal = Animal.__new__(Animal)
     animal.animal_type = animal_type

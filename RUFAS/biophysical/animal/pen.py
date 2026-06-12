@@ -27,6 +27,7 @@ from RUFAS.biophysical.animal.nutrients.nutrition_evaluator import NutritionEval
 from RUFAS.biophysical.animal.nutrients.nutrition_supply_calculator import NutritionSupplyCalculator
 from RUFAS.biophysical.animal.ration.ration_manager import RationManager
 from RUFAS.data_structures.feed_storage_to_animal_connection import RUFAS_ID, Feed
+from RUFAS.biophysical.animal.animal_config import AnimalConfig
 from RUFAS.biophysical.animal.data_types.animal_combination import AnimalCombination
 from RUFAS.general_constants import GeneralConstants
 from RUFAS.input_manager import InputManager
@@ -139,7 +140,11 @@ class Pen:
         self.first_parlor_processor = first_parlor_processor
         self.parlor_stream_name = parlor_stream_name
         self.manure_streams = manure_streams
-        self.mud_condition: str = "none"
+        self.mud_condition: str = (
+            AnimalConfig.feedlot_mud_condition
+            if self.animal_combination is AnimalCombination.FEEDLOT_FINISHING
+            else "none"
+        )
 
         self.beddings: dict[str, Bedding] = {}
         self._initialize_beddings()

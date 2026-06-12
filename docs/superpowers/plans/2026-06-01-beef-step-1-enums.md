@@ -6,7 +6,7 @@
 
 **Architecture:** Extends the existing `AnimalType` enum in `RUFAS/biophysical/animal/data_types/animal_types.py` with two new members and one boolean property, following the exact same pattern as the existing `is_heifer` and `is_cow` properties. Also extends the `Sex` enum in `animal_enums.py` with `STEER`, needed because feedlot nutrition equations distinguish steers from intact males and females. All changes are validated by tests written first (TDD, per RuFaS policy).
 
-**Tech Stack:** Python 3.12+, pytest 7.4.4, Black, mypy (strict), Flake8
+**Tech Stack:** Python 3.12+, pytest >= 9.0.3, Black, mypy (strict), Flake8
 
 ---
 

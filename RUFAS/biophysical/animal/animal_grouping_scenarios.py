@@ -152,7 +152,7 @@ class AnimalGroupingScenario(Enum):
         }
         return cow_subtype_by_scenario[self]
 
-    def _get_feedlot_type(self, feedlot_animal: "Animal") -> AnimalType:
+    def _get_feedlot_type(self, feedlot_animal: Animal) -> AnimalType:
         """
         Get the animal type of a feedlot finishing animal.
 

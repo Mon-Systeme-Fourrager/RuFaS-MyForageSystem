@@ -216,3 +216,6 @@ class AnimalModuleConstants:
 
     DEFAULT_NUM_STALLS_FOR_FEEDLOT_PEN: int = 100
     """The default number of stalls to be created in a feedlot finishing pen."""
+
+    FEEDLOT_HCW_DRESSING_PERCENTAGE: float = 0.62
+    """NRC 2016 typical Choice-grade dressing percentage for hot carcass weight calculation."""

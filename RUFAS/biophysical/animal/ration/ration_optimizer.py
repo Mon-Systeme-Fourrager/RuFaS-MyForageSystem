@@ -127,9 +127,9 @@ class RationOptimizer:
         """Initializes RationOptimizer object"""
 
         self.constraint_functions: list[Callable[[Any, Any], float]] = []
-        self.cow_constraints: list[dict[str, Callable[[Any, Any], float] | tuple[RationConfig] | str] | str] = []
-        self.heifer_constraints: list[dict[str, Callable[[Any, Any], float] | tuple[RationConfig] | str] | str] = []
-        self.feedlot_constraints: list[dict[str, Callable[[Any, Any], float] | tuple[RationConfig] | str] | str] = []
+        self.cow_constraints: list[dict[str, Any]] = []
+        self.heifer_constraints: list[dict[str, Any]] = []
+        self.feedlot_constraints: list[dict[str, Any]] = []
 
     def set_constraints(self, ration_config: RationConfig) -> None:
         """
@@ -997,7 +997,7 @@ class RationOptimizer:
         ):
             return self.heifer_constraints
         if animal_combination is AnimalCombination.FEEDLOT_FINISHING:
-            return self.feedlot_constraints  # type: ignore[return-value]
+            return self.feedlot_constraints
         OutputManager().add_error(
             "Ration Optimization Error",
             f"Invalid animal combination: {animal_combination}",
@@ -1128,6 +1128,10 @@ class RationOptimizer:
         if animal_combination == AnimalCombination.LAC_COW:
             failed_constraints = RationOptimizer.find_failed_constraints(
                 solution.x, self.cow_constraints, ration_config
+            )
+        elif animal_combination is AnimalCombination.FEEDLOT_FINISHING:
+            failed_constraints = RationOptimizer.find_failed_constraints(
+                solution.x, self.feedlot_constraints, ration_config
             )
         else:
             failed_constraints = RationOptimizer.find_failed_constraints(
