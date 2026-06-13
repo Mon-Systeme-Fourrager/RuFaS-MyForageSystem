@@ -83,21 +83,20 @@ class RationManager:
             for feed in ration["feeds"]
         ]
 
-        cls.ration_feeds[AnimalCombination.FEEDLOT_FINISHING] = [int(f) for f in ration_config.get("feedlot_feeds", [])]
-        cls.feedlot_starter_ration = {
+        feedlot_starter = {
             int(k): float(v) for k, v in ration_config.get("feedlot_starter_ration", {}).items()
         }
-        cls.feedlot_transition_ration = {
+        feedlot_transition = {
             int(k): float(v) for k, v in ration_config.get("feedlot_transition_ration", {}).items()
         }
-        cls.feedlot_finisher_ration = {
+        feedlot_finisher = {
             int(k): float(v) for k, v in ration_config.get("feedlot_finisher_ration", {}).items()
         }
 
         for name, ration in (
-            ("starter", cls.feedlot_starter_ration),
-            ("transition", cls.feedlot_transition_ration),
-            ("finisher", cls.feedlot_finisher_ration),
+            ("starter", feedlot_starter),
+            ("transition", feedlot_transition),
+            ("finisher", feedlot_finisher),
         ):
             if ration:
                 total_pct = sum(ration.values())
@@ -105,6 +104,11 @@ class RationManager:
                     raise ValueError(
                         f"Feedlot {name} ration percentages must sum to 100.0%, got {total_pct}%"
                     )
+
+        cls.ration_feeds[AnimalCombination.FEEDLOT_FINISHING] = [int(f) for f in ration_config.get("feedlot_feeds", [])]
+        cls.feedlot_starter_ration = feedlot_starter
+        cls.feedlot_transition_ration = feedlot_transition
+        cls.feedlot_finisher_ration = feedlot_finisher
 
     @classmethod
     def get_feedlot_phase_ration(
