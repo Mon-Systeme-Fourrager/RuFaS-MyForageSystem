@@ -53,30 +53,32 @@ class RationManager:
             Collection of animal requirements and feed supply information for ration formulation.
 
         """
-        cls.ration_feeds = {animal_combination: [] for animal_combination in AnimalCombination}
+        next_ration_feeds: dict[AnimalCombination, list[RUFAS_ID]] = {
+            animal_combination: [] for animal_combination in AnimalCombination
+        }
 
-        cls.ration_feeds[AnimalCombination.CALF] = [
+        next_ration_feeds[AnimalCombination.CALF] = [
             feed["feed_type"]
             for ration in ration_config["rations"]
             if ration["animal_combination"] == "calf"
             for feed in ration["feeds"]
         ]
 
-        cls.ration_feeds[AnimalCombination.GROWING] = [
+        next_ration_feeds[AnimalCombination.GROWING] = [
             feed["feed_type"]
             for ration in ration_config["rations"]
             if ration["animal_combination"] == "growing"
             for feed in ration["feeds"]
         ]
 
-        cls.ration_feeds[AnimalCombination.CLOSE_UP] = [
+        next_ration_feeds[AnimalCombination.CLOSE_UP] = [
             feed["feed_type"]
             for ration in ration_config["rations"]
             if ration["animal_combination"] == "close_up"
             for feed in ration["feeds"]
         ]
 
-        cls.ration_feeds[AnimalCombination.LAC_COW] = [
+        next_ration_feeds[AnimalCombination.LAC_COW] = [
             feed["feed_type"]
             for ration in ration_config["rations"]
             if ration["animal_combination"] == "lac_cow"
@@ -110,7 +112,10 @@ class RationManager:
                         f"Feedlot {name} ration percentages must sum to 100.0%, got {total_pct}%"
                     )
 
-        cls.ration_feeds[AnimalCombination.FEEDLOT_FINISHING] = [int(f) for f in ration_config.get("feedlot_feeds", [])]
+        next_ration_feeds[AnimalCombination.FEEDLOT_FINISHING] = [
+            int(f) for f in ration_config.get("feedlot_feeds", [])
+        ]
+        cls.ration_feeds = next_ration_feeds
         cls.feedlot_starter_ration = feedlot_starter
         cls.feedlot_transition_ration = feedlot_transition
         cls.feedlot_finisher_ration = feedlot_finisher

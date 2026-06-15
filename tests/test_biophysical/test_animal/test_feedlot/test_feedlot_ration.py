@@ -105,3 +105,40 @@ def test_set_ration_feeds_raises_on_bad_percentages(phase: str) -> None:
     bad_config[f"feedlot_{phase}_ration"] = {"301": 40, "302": 40}  # sums to 80, not 100
     with pytest.raises(ValueError, match=f"Feedlot {phase} ration percentages must sum to 100.0%"):
         RationManager.set_ration_feeds(bad_config)
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("bad_config,match", [
+    (
+        {
+            "rations": [],
+            "feedlot_feeds": [301, 302],
+            "feedlot_starter_ration": {"301": 40, "302": 40},  # sums to 80
+            "feedlot_transition_ration": {"301": 65, "302": 20, "303": 15},
+            "feedlot_finisher_ration": {"301": 70, "302": 20, "303": 10},
+        },
+        "must sum to 100.0%",
+    ),
+    (
+        {
+            "rations": [],
+            "feedlot_feeds": [301, 302],
+            "feedlot_starter_ration": {"301": 110, "302": -10},  # negative
+            "feedlot_transition_ration": {"301": 65, "302": 20, "303": 15},
+            "feedlot_finisher_ration": {"301": 70, "302": 20, "303": 10},
+        },
+        "must be non-negative",
+    ),
+])
+def test_set_ration_feeds_does_not_mutate_cls_on_validation_failure(
+    bad_config: dict[str, object], match: str
+) -> None:
+    """cls.ration_feeds must remain unchanged when set_ration_feeds raises ValueError."""
+    RationManager.set_ration_feeds(_FEEDLOT_RATION_CONFIG)
+    assert RationManager.ration_feeds is not None
+    feeds_before = dict(RationManager.ration_feeds)
+
+    with pytest.raises(ValueError, match=match):
+        RationManager.set_ration_feeds(bad_config)
+
+    assert RationManager.ration_feeds == feeds_before

@@ -193,7 +193,7 @@ class Animal:
         self.animal_type = AnimalType(args.get("animal_type"))
         self.days_born = int(args.get("days_born"))
         # birth_weight is unused for feedlot animals that enter at pen placement weight
-        self.birth_weight = 0.0 if self.animal_type.is_feedlot else float(args["birth_weight"])
+        self.birth_weight = 0.0 if self.animal_type.is_feedlot else float(args.get("birth_weight"))
         self.body_condition_score_5 = AnimalModuleConstants.DEFAULT_BODY_CONDITION_SCORE_5
 
         self.cull_reason = ""
