@@ -77,6 +77,22 @@ def test_feedlot_optimizer_select_constraints_does_not_raise() -> None:
 
 @pytest.mark.unit
 @pytest.mark.parametrize("phase", ["starter", "transition", "finisher"])
+def test_set_ration_feeds_raises_on_negative_percentage(phase: str) -> None:
+    """set_ration_feeds must raise ValueError when any ration percentage is negative."""
+    bad_config = {
+        "rations": [],
+        "feedlot_feeds": [301, 302],
+        "feedlot_starter_ration": {"301": 50, "302": 50},
+        "feedlot_transition_ration": {"301": 65, "302": 20, "303": 15},
+        "feedlot_finisher_ration": {"301": 70, "302": 20, "303": 10},
+    }
+    bad_config[f"feedlot_{phase}_ration"] = {"301": 110, "302": -10}
+    with pytest.raises(ValueError, match=f"Feedlot {phase} ration percentages must be non-negative"):
+        RationManager.set_ration_feeds(bad_config)
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("phase", ["starter", "transition", "finisher"])
 def test_set_ration_feeds_raises_on_bad_percentages(phase: str) -> None:
     """set_ration_feeds must raise ValueError when a ration's percentages do not sum to 100."""
     bad_config = {

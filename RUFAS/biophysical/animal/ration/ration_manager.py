@@ -99,6 +99,11 @@ class RationManager:
             ("finisher", feedlot_finisher),
         ):
             if ration:
+                negative = [pct for pct in ration.values() if pct < 0.0]
+                if negative:
+                    raise ValueError(
+                        f"Feedlot {name} ration percentages must be non-negative, got: {negative}"
+                    )
                 total_pct = sum(ration.values())
                 if abs(total_pct - 100.0) > 1e-2:
                     raise ValueError(
