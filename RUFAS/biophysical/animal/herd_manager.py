@@ -242,6 +242,7 @@ class HerdManager:
             herd_population.cows,
             herd_population.replacement,
         )
+        self.feedlot_animals = list(HerdFactory.feedlot_animals)
 
         self.allocate_animals_to_pens(time.simulation_day)
         self.initialize_nutrient_requirements(weather, time, available_feeds)

@@ -2,7 +2,7 @@ import copy
 import datetime
 import random
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from tqdm import tqdm
 
@@ -65,6 +65,7 @@ class HerdFactory:
     """
 
     post_animal_population: AnimalPopulation | None = None
+    feedlot_animals: list[Animal] = []
 
     def __init__(
         self,
@@ -663,6 +664,60 @@ class HerdFactory:
                 )
         return post_animals
 
+    def _initialize_feedlot_herd(self) -> list[Animal]:
+        """
+        Create the initial feedlot animal population from user config.
+
+        Returns
+        -------
+        list[Animal]
+            Feedlot steer and heifer animals. Returns an empty list when the
+            'animal.herd_initialization.feedlot' key is absent from the input.
+
+        """
+        try:
+            feedlot_cfg: dict[str, Any] = self.im.get_data("animal.herd_initialization.feedlot")
+        except (KeyError, TypeError):
+            return []
+
+        if not feedlot_cfg:
+            return []
+
+        n_steers = int(feedlot_cfg.get("num_steers", 0))
+        n_heifers = int(feedlot_cfg.get("num_heifers", 0))
+        entry_bw = float(feedlot_cfg.get("entry_weight", AnimalConfig.feedlot_entry_weight))
+        mature_bw = float(feedlot_cfg.get("mature_body_weight", 600.0))
+        breed_str = str(feedlot_cfg.get("breed", "XB"))
+        days_already = int(feedlot_cfg.get("days_on_feed", 0))
+
+        animals: list[Animal] = []
+
+        for _ in range(n_steers):
+            steer_data: dict[str, Any] = {
+                "id": AnimalPopulation.next_id(),
+                "breed": breed_str,
+                "animal_type": AnimalType.FEEDLOT_STEER.value,
+                "days_born": 365 + days_already,
+                "body_weight": entry_bw,
+                "mature_body_weight": mature_bw,
+                "days_on_feed": days_already,
+            }
+            animals.append(Animal(cast(Any, steer_data), self.time))
+
+        for _ in range(n_heifers):
+            heifer_data: dict[str, Any] = {
+                "id": AnimalPopulation.next_id(),
+                "breed": breed_str,
+                "animal_type": AnimalType.FEEDLOT_HEIFER.value,
+                "days_born": 365 + days_already,
+                "body_weight": entry_bw,
+                "mature_body_weight": mature_bw,
+                "days_on_feed": days_already,
+            }
+            animals.append(Animal(cast(Any, heifer_data), self.time))
+
+        return animals
+
     def initialize_herd(self) -> None:
         """
         Initialize an AnimalPopulation object for simulation, either from input data or generate from simulation.
@@ -700,6 +755,7 @@ class HerdFactory:
             self.pre_animal_population = self._initialize_herd_from_data()
         post_animal_population = self._random_sample_with_replacement()
         HerdFactory.set_post_animal_population(post_animal_population)
+        HerdFactory.feedlot_animals = self._initialize_feedlot_herd()
         AnimalModuleReporter.report_animal_population_statistics(
             "population", self.pre_animal_population.get_herd_summary()
         )

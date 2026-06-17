@@ -192,3 +192,34 @@ def test_calculate_nutrition_requirements_routes_to_beef_calculator(mocker: Mock
     assert result.maintenance_energy > 0.0
     assert result.growth_energy > 0.0
     assert result.dry_matter > 0.0
+
+
+@pytest.mark.unit
+def test_daily_nutrients_update_sets_phosphorus_for_feedlot() -> None:
+    """_daily_nutrients_update must copy nutrition_requirements.phosphorus into nutrients.phosphorus_requirement."""
+    from RUFAS.biophysical.animal.data_types.nutrition_data_structures import NutritionRequirements
+    from RUFAS.biophysical.animal.nutrients.nutrients import Nutrients
+
+    animal = _make_feedlot_animal()
+    animal.nutrients = Nutrients()
+    nr = NutritionRequirements.make_empty_nutrition_requirements()
+    nr.phosphorus = 18.5
+    animal.nutrition_requirements = nr
+
+    animal._daily_nutrients_update()
+
+    assert animal.nutrients.phosphorus_requirement == pytest.approx(18.5)
+
+
+@pytest.mark.unit
+def test_daily_nutrients_update_noop_when_no_nutrition_requirements() -> None:
+    """_daily_nutrients_update must not raise when nutrition_requirements is None."""
+    from RUFAS.biophysical.animal.nutrients.nutrients import Nutrients
+
+    animal = _make_feedlot_animal()
+    animal.nutrients = Nutrients()
+    animal.nutrition_requirements = None  # type: ignore[assignment]
+
+    animal._daily_nutrients_update()
+
+    assert animal.nutrients.phosphorus_requirement == pytest.approx(0.0)

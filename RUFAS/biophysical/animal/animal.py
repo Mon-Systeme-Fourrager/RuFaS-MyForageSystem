@@ -1543,6 +1543,8 @@ class Animal:
 
         """
         if self.animal_type.is_feedlot:
+            if self.nutrition_requirements is not None:
+                self.nutrients.phosphorus_requirement = self.nutrition_requirements.phosphorus
             return
 
         nutrients_inputs = NutrientsInputs(

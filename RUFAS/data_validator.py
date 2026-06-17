@@ -1755,6 +1755,46 @@ class DataValidator:
 
         return data
 
+    @staticmethod
+    def validate_feedlot_config(feedlot_config: dict[str, Any]) -> None:
+        """
+        Validate feedlot configuration business rules.
+
+        Parameters
+        ----------
+        feedlot_config : dict[str, Any]
+            The feedlot config block from the animal input file.
+
+        Raises
+        ------
+        ValueError
+            If any of the following rules are violated:
+
+            - ``entry_weight`` must be > 0.
+            - ``slaughter_weight`` must be > ``entry_weight``.
+            - ``max_days_on_feed`` must be > 0.
+            - ``mud_condition`` must be one of ``'none'``, ``'mild'``, or ``'severe'``.
+
+        """
+        entry_weight = float(feedlot_config.get("entry_weight", 0))
+        if entry_weight <= 0:
+            raise ValueError(f"feedlot entry_weight must be > 0, got {entry_weight}")
+
+        slaughter_weight = float(feedlot_config.get("slaughter_weight", 0))
+        if slaughter_weight <= entry_weight:
+            raise ValueError(f"feedlot slaughter_weight ({slaughter_weight}) must be > entry_weight ({entry_weight})")
+
+        max_days_on_feed = int(feedlot_config.get("max_days_on_feed", 0))
+        if max_days_on_feed <= 0:
+            raise ValueError(f"feedlot max_days_on_feed must be > 0, got {max_days_on_feed}")
+
+        mud_condition = str(feedlot_config.get("mud_condition", "none"))
+        valid_mud_conditions = {"none", "mild", "severe"}
+        if mud_condition not in valid_mud_conditions:
+            raise ValueError(
+                f"feedlot mud_condition must be one of {sorted(valid_mud_conditions)}, " f"got '{mud_condition}'"
+            )
+
 
 class CrossValidator:
     """

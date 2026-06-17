@@ -85,3 +85,54 @@ def test_reporter_report_feedlot_performance_is_callable() -> None:
 
     assert hasattr(AnimalModuleReporter, "report_feedlot_performance")
     assert callable(AnimalModuleReporter.report_feedlot_performance)
+
+
+@pytest.mark.unit
+def test_herd_factory_has_feedlot_animals_class_attr() -> None:
+    """HerdFactory must expose a feedlot_animals class-level list attribute."""
+    from RUFAS.biophysical.animal.herd_factory import HerdFactory
+
+    assert hasattr(HerdFactory, "feedlot_animals")
+    assert isinstance(HerdFactory.feedlot_animals, list)
+
+
+@pytest.mark.unit
+def test_herd_factory_initialize_feedlot_herd_creates_correct_count(mocker: MockerFixture) -> None:
+    """_initialize_feedlot_herd must create num_steers + num_heifers Animal objects."""
+    from RUFAS.biophysical.animal.herd_factory import HerdFactory
+
+    factory: HerdFactory = HerdFactory.__new__(HerdFactory)
+    factory.im = mocker.MagicMock()
+    factory.im.get_data.return_value = {  # type: ignore[attr-defined]
+        "num_steers": 2,
+        "num_heifers": 1,
+        "entry_weight": 320.0,
+        "mature_body_weight": 600.0,
+        "breed": "AN",
+        "days_on_feed": 0,
+    }
+    factory.time = mocker.MagicMock()
+    factory.time.simulation_day = 0  # type: ignore[misc]
+
+    mock_animal_cls = mocker.patch("RUFAS.biophysical.animal.herd_factory.Animal")
+    mock_animal_cls.side_effect = [mocker.MagicMock() for _ in range(3)]
+
+    result = factory._initialize_feedlot_herd()
+
+    assert len(result) == 3
+    assert mock_animal_cls.call_count == 3
+
+
+@pytest.mark.unit
+def test_herd_factory_initialize_feedlot_herd_empty_on_missing_config(mocker: MockerFixture) -> None:
+    """_initialize_feedlot_herd must return [] when feedlot config key is absent."""
+    from RUFAS.biophysical.animal.herd_factory import HerdFactory
+
+    factory: HerdFactory = HerdFactory.__new__(HerdFactory)
+    factory.im = mocker.MagicMock()
+    factory.im.get_data.side_effect = KeyError("no feedlot key")  # type: ignore[attr-defined]
+    factory.time = mocker.MagicMock()
+
+    result = factory._initialize_feedlot_herd()
+
+    assert result == []
