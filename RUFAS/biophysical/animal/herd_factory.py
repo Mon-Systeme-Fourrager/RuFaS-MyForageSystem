@@ -680,13 +680,13 @@ class HerdFactory:
         except (KeyError, TypeError):
             return []
 
-        if not feedlot_cfg:
+        if not isinstance(feedlot_cfg, dict) or not feedlot_cfg:
             return []
 
         n_steers = int(feedlot_cfg.get("num_steers", 0))
         n_heifers = int(feedlot_cfg.get("num_heifers", 0))
         entry_bw = float(feedlot_cfg.get("entry_weight", AnimalConfig.feedlot_entry_weight))
-        mature_bw = float(feedlot_cfg.get("mature_body_weight", 600.0))
+        mature_bw = float(feedlot_cfg.get("mature_body_weight", animal_constants.DEFAULT_MATURE_BODY_WEIGHT_KG))
         breed_str = str(feedlot_cfg.get("breed", "XB"))
         days_already = int(feedlot_cfg.get("days_on_feed", 0))
 
@@ -697,7 +697,7 @@ class HerdFactory:
                 "id": AnimalPopulation.next_id(),
                 "breed": breed_str,
                 "animal_type": AnimalType.FEEDLOT_STEER.value,
-                "days_born": 365 + days_already,
+                "days_born": animal_constants.DAYS_PER_YEAR + days_already,
                 "body_weight": entry_bw,
                 "mature_body_weight": mature_bw,
                 "days_on_feed": days_already,
@@ -709,7 +709,7 @@ class HerdFactory:
                 "id": AnimalPopulation.next_id(),
                 "breed": breed_str,
                 "animal_type": AnimalType.FEEDLOT_HEIFER.value,
-                "days_born": 365 + days_already,
+                "days_born": animal_constants.DAYS_PER_YEAR + days_already,
                 "body_weight": entry_bw,
                 "mature_body_weight": mature_bw,
                 "days_on_feed": days_already,

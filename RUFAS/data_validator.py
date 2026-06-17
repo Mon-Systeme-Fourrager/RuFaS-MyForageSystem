@@ -1,3 +1,4 @@
+import math
 import os
 from pathlib import Path
 import re
@@ -1777,11 +1778,11 @@ class DataValidator:
 
         """
         entry_weight = float(feedlot_config.get("entry_weight", 0))
-        if entry_weight <= 0:
+        if not math.isfinite(entry_weight) or entry_weight <= 0:
             raise ValueError(f"feedlot entry_weight must be > 0, got {entry_weight}")
 
         slaughter_weight = float(feedlot_config.get("slaughter_weight", 0))
-        if slaughter_weight <= entry_weight:
+        if not math.isfinite(slaughter_weight) or slaughter_weight <= entry_weight:
             raise ValueError(f"feedlot slaughter_weight ({slaughter_weight}) must be > entry_weight ({entry_weight})")
 
         max_days_on_feed = int(feedlot_config.get("max_days_on_feed", 0))

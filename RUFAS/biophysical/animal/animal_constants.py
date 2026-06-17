@@ -1,3 +1,10 @@
+# ── GENERAL ANIMAL CONSTANTS ─────────────────────────────────────────────────
+DAYS_PER_YEAR: int = 365
+"""Number of days in a year used when computing age from birth year offsets."""
+
+DEFAULT_MATURE_BODY_WEIGHT_KG: float = 600.0
+"""Default mature body weight (kg) used when no breed-specific value is supplied."""
+
 # EVENTS
 # calf
 WEAN_DAY = "wean day"

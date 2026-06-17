@@ -61,8 +61,13 @@ def test_herd_manager_feedlot_animals_in_animals_by_type() -> None:
 
 
 @pytest.mark.unit
-def test_herd_manager_feedlot_animals_maps_to_same_list() -> None:
-    """FEEDLOT_STEER and FEEDLOT_HEIFER must both map to the same feedlot_animals list."""
+def test_herd_manager_animals_by_type_steer_heifer_filtered_separately() -> None:
+    """animals_by_type must filter steers and heifers into separate cohort lists.
+
+    FEEDLOT_STEER must contain only steer animals; FEEDLOT_HEIFER only heifers.
+    The two lists must not be identical (i.e. they are separate filtered views).
+    """
+    from unittest.mock import MagicMock
     from RUFAS.biophysical.animal.herd_manager import HerdManager
 
     hm: HerdManager = HerdManager.__new__(HerdManager)
@@ -71,11 +76,17 @@ def test_herd_manager_feedlot_animals_maps_to_same_list() -> None:
     hm.heiferIIs = []
     hm.heiferIIIs = []
     hm.cows = []
-    hm.feedlot_animals = []
+
+    steer = MagicMock()
+    steer.animal_type = AnimalType.FEEDLOT_STEER
+    heifer = MagicMock()
+    heifer.animal_type = AnimalType.FEEDLOT_HEIFER
+    hm.feedlot_animals = [steer, heifer]
 
     result = hm.animals_by_type
-    assert result[AnimalType.FEEDLOT_STEER] is hm.feedlot_animals
-    assert result[AnimalType.FEEDLOT_HEIFER] is hm.feedlot_animals
+    assert result[AnimalType.FEEDLOT_STEER] == [steer]
+    assert result[AnimalType.FEEDLOT_HEIFER] == [heifer]
+    assert result[AnimalType.FEEDLOT_STEER] is not result[AnimalType.FEEDLOT_HEIFER]
 
 
 @pytest.mark.unit
@@ -131,6 +142,25 @@ def test_herd_factory_initialize_feedlot_herd_empty_on_missing_config(mocker: Mo
     factory: HerdFactory = HerdFactory.__new__(HerdFactory)
     factory.im = mocker.MagicMock()
     factory.im.get_data.side_effect = KeyError("no feedlot key")  # type: ignore[attr-defined]
+    factory.time = mocker.MagicMock()
+
+    result = factory._initialize_feedlot_herd()
+
+    assert result == []
+
+
+@pytest.mark.unit
+def test_herd_factory_initialize_feedlot_herd_empty_on_non_dict_config(mocker: MockerFixture) -> None:
+    """_initialize_feedlot_herd must return [] when feedlot config is not a dict.
+
+    Verifies the isinstance guard: a truthy non-dict value (e.g. a list) must
+    not propagate to feedlot_cfg.get() and must instead return an empty list.
+    """
+    from RUFAS.biophysical.animal.herd_factory import HerdFactory
+
+    factory: HerdFactory = HerdFactory.__new__(HerdFactory)
+    factory.im = mocker.MagicMock()
+    factory.im.get_data.return_value = ["not", "a", "dict"]  # type: ignore[attr-defined]
     factory.time = mocker.MagicMock()
 
     result = factory._initialize_feedlot_herd()

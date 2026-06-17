@@ -266,8 +266,8 @@ class HerdManager:
             AnimalType.HEIFER_III: self.heiferIIIs,
             AnimalType.LAC_COW: [cow for cow in self.cows if cow.is_milking],
             AnimalType.DRY_COW: [cow for cow in self.cows if not cow.is_milking],
-            AnimalType.FEEDLOT_STEER: self.feedlot_animals,
-            AnimalType.FEEDLOT_HEIFER: self.feedlot_animals,
+            AnimalType.FEEDLOT_STEER: [a for a in self.feedlot_animals if a.animal_type == AnimalType.FEEDLOT_STEER],
+            AnimalType.FEEDLOT_HEIFER: [a for a in self.feedlot_animals if a.animal_type == AnimalType.FEEDLOT_HEIFER],
         }
 
     @property
