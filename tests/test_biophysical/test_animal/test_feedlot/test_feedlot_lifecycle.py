@@ -12,7 +12,6 @@ from RUFAS.biophysical.animal.data_types.nutrition_data_structures import Nutrit
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
 from RUFAS.biophysical.animal.nutrients.beef_nrc_requirements_calculator import BeefNRCRequirementsCalculator
 from RUFAS.biophysical.animal.nutrients.nutrients import Nutrients
-from RUFAS.biophysical.animal.animal_module_reporter import AnimalModuleReporter
 
 
 def _make_feedlot_animal(
@@ -192,6 +191,9 @@ def test_feedlot_life_stage_remain_below_slaughter(mocker: MockerFixture) -> Non
 def test_feedlot_life_stage_sold_at_slaughter_weight(mocker: MockerFixture) -> None:
     """_feedlot_life_stage_update must return SOLD when body_weight >= slaughter_weight.
 
+    Reporter wiring (AnimalModuleReporter.report_feedlot_performance) is deferred
+    to a future _feedlot_update method in herd_factory.py — see TODO in the method.
+
     Parameters
     ----------
     mocker : MockerFixture
@@ -202,17 +204,18 @@ def test_feedlot_life_stage_sold_at_slaughter_weight(mocker: MockerFixture) -> N
     animal = _make_feedlot_animal(body_weight=580.0, days_on_feed=180)
     mock_time = MagicMock()
     mock_time.simulation_day = 180
-    spy = mocker.spy(AnimalModuleReporter, "report_feedlot_performance")
     status, newborn = animal._feedlot_life_stage_update(mock_time)  # type: ignore[attr-defined]
     assert status == AnimalStatus.SOLD
     assert newborn is None
     assert animal.sold_at_day == 180
-    spy.assert_called_once()
 
 
 @pytest.mark.unit
 def test_feedlot_life_stage_sold_at_max_days_on_feed(mocker: MockerFixture) -> None:
     """_feedlot_life_stage_update must return SOLD when days_on_feed >= max_days_on_feed.
+
+    Reporter wiring (AnimalModuleReporter.report_feedlot_performance) is deferred
+    to a future _feedlot_update method in herd_factory.py — see TODO in the method.
 
     Parameters
     ----------
@@ -224,12 +227,10 @@ def test_feedlot_life_stage_sold_at_max_days_on_feed(mocker: MockerFixture) -> N
     animal = _make_feedlot_animal(body_weight=400.0, days_on_feed=100)
     mock_time = MagicMock()
     mock_time.simulation_day = 100
-    spy = mocker.spy(AnimalModuleReporter, "report_feedlot_performance")
     status, newborn = animal._feedlot_life_stage_update(mock_time)  # type: ignore[attr-defined]
     assert status == AnimalStatus.SOLD
     assert newborn is None
     assert animal.sold_at_day == 100
-    spy.assert_called_once()
 
 
 @pytest.mark.unit

@@ -2089,20 +2089,22 @@ class Animal:
             (SOLD, None) if an exit condition is met, (REMAIN, None) otherwise.
 
         """
-        # AnimalModuleReporter is imported locally: animal_module_reporter → animal_population → animal.py
-        # creates a genuine runtime circular import if placed at module level.
-        from RUFAS.biophysical.animal.animal_module_reporter import AnimalModuleReporter
-
+        # TODO(beef-integration): report_feedlot_performance should be called
+        # here when AnimalStatus.SOLD is returned, but AnimalModuleReporter
+        # cannot be imported at this layer (animal.py is below the reporter
+        # in the dependency hierarchy). This call belongs in a future
+        # _feedlot_update method in herd_factory.py, once feedlot animals are
+        # wired into herd_manager._process_daily_herd_updates — a known gap
+        # documented in the PR #32 implementation report (HerdFactory wiring,
+        # known limitation #1). Tracked for the next beef integration PR.
         if self.body_weight >= AnimalConfig.feedlot_slaughter_weight:
             self.cull_reason = animal_constants.SLAUGHTER_WEIGHT_REACHED
             self.sold_at_day = time.simulation_day
-            AnimalModuleReporter.report_feedlot_performance(self, time.simulation_day)
             return AnimalStatus.SOLD, None
 
         if self.days_on_feed >= AnimalConfig.feedlot_max_days_on_feed:
             self.cull_reason = animal_constants.MAX_DAYS_ON_FEED_REACHED
             self.sold_at_day = time.simulation_day
-            AnimalModuleReporter.report_feedlot_performance(self, time.simulation_day)
             return AnimalStatus.SOLD, None
 
         return AnimalStatus.REMAIN, None
