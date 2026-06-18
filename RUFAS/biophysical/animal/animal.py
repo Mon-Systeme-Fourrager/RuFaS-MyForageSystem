@@ -2088,14 +2088,18 @@ class Animal:
             (SOLD, None) if an exit condition is met, (REMAIN, None) otherwise.
 
         """
+        from RUFAS.biophysical.animal.animal_module_reporter import AnimalModuleReporter
+
         if self.body_weight >= AnimalConfig.feedlot_slaughter_weight:
             self.cull_reason = animal_constants.SLAUGHTER_WEIGHT_REACHED
             self.sold_at_day = time.simulation_day
+            AnimalModuleReporter.report_feedlot_performance(self, time.simulation_day)
             return AnimalStatus.SOLD, None
 
         if self.days_on_feed >= AnimalConfig.feedlot_max_days_on_feed:
             self.cull_reason = animal_constants.MAX_DAYS_ON_FEED_REACHED
             self.sold_at_day = time.simulation_day
+            AnimalModuleReporter.report_feedlot_performance(self, time.simulation_day)
             return AnimalStatus.SOLD, None
 
         return AnimalStatus.REMAIN, None

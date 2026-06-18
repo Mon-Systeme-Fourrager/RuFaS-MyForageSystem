@@ -4,10 +4,14 @@ import pytest
 from unittest.mock import MagicMock
 from pytest_mock import MockerFixture
 from RUFAS.biophysical.animal.animal import Animal
+from RUFAS.biophysical.animal.animal_config import AnimalConfig
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
-from RUFAS.biophysical.animal.data_types.animal_enums import AnimalStatus
+from RUFAS.biophysical.animal.data_types.animal_enums import AnimalStatus, Breed, Sex
 from RUFAS.biophysical.animal.data_types.animal_events import AnimalEvents
+from RUFAS.biophysical.animal.data_types.nutrition_data_structures import NutritionRequirements
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
+from RUFAS.biophysical.animal.nutrients.beef_nrc_requirements_calculator import BeefNRCRequirementsCalculator
+from RUFAS.biophysical.animal.animal_module_reporter import AnimalModuleReporter
 
 
 def _make_feedlot_animal(
@@ -173,8 +177,6 @@ def test_feedlot_life_stage_remain_below_slaughter(mocker: MockerFixture) -> Non
     mocker : MockerFixture
         pytest-mock fixture used to patch AnimalConfig class attributes.
     """
-    from RUFAS.biophysical.animal.animal_config import AnimalConfig
-
     mocker.patch.object(AnimalConfig, "feedlot_slaughter_weight", 580.0)
     mocker.patch.object(AnimalConfig, "feedlot_max_days_on_feed", 220)
     animal = _make_feedlot_animal(body_weight=400.0, days_on_feed=50)
@@ -194,17 +196,17 @@ def test_feedlot_life_stage_sold_at_slaughter_weight(mocker: MockerFixture) -> N
     mocker : MockerFixture
         pytest-mock fixture used to patch AnimalConfig class attributes.
     """
-    from RUFAS.biophysical.animal.animal_config import AnimalConfig
-
     mocker.patch.object(AnimalConfig, "feedlot_slaughter_weight", 580.0)
     mocker.patch.object(AnimalConfig, "feedlot_max_days_on_feed", 220)
     animal = _make_feedlot_animal(body_weight=580.0, days_on_feed=180)
     mock_time = MagicMock()
     mock_time.simulation_day = 180
+    spy = mocker.spy(AnimalModuleReporter, "report_feedlot_performance")
     status, newborn = animal._feedlot_life_stage_update(mock_time)  # type: ignore[attr-defined]
     assert status == AnimalStatus.SOLD
     assert newborn is None
     assert animal.sold_at_day == 180
+    spy.assert_called_once()
 
 
 @pytest.mark.unit
@@ -216,17 +218,17 @@ def test_feedlot_life_stage_sold_at_max_days_on_feed(mocker: MockerFixture) -> N
     mocker : MockerFixture
         pytest-mock fixture used to patch AnimalConfig class attributes.
     """
-    from RUFAS.biophysical.animal.animal_config import AnimalConfig
-
     mocker.patch.object(AnimalConfig, "feedlot_slaughter_weight", 580.0)
     mocker.patch.object(AnimalConfig, "feedlot_max_days_on_feed", 100)
     animal = _make_feedlot_animal(body_weight=400.0, days_on_feed=100)
     mock_time = MagicMock()
     mock_time.simulation_day = 100
+    spy = mocker.spy(AnimalModuleReporter, "report_feedlot_performance")
     status, newborn = animal._feedlot_life_stage_update(mock_time)  # type: ignore[attr-defined]
     assert status == AnimalStatus.SOLD
     assert newborn is None
     assert animal.sold_at_day == 100
+    spy.assert_called_once()
 
 
 @pytest.mark.unit
@@ -243,14 +245,6 @@ def test_calculate_nutrition_requirements_routes_to_beef_calculator(mocker: Mock
         pytest-mock fixture used to patch AnimalConfig attributes and spy on
         BeefNRCRequirementsCalculator.
     """
-    from RUFAS.biophysical.animal.animal import Animal
-    from RUFAS.biophysical.animal.data_types.animal_enums import Breed, Sex
-    from RUFAS.biophysical.animal.data_types.nutrition_data_structures import NutritionRequirements
-    from RUFAS.biophysical.animal.animal_config import AnimalConfig
-    from RUFAS.biophysical.animal.nutrients.beef_nrc_requirements_calculator import (
-        BeefNRCRequirementsCalculator,
-    )
-
     mocker.patch.object(AnimalConfig, "feedlot_target_adg", 1.4)
     mocker.patch.object(AnimalConfig, "feedlot_implant_adg_factor", 1.0)
     mocker.patch.object(AnimalConfig, "feedlot_mud_condition", "none")

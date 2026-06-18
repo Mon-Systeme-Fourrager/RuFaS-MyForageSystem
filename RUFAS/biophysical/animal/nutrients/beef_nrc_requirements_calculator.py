@@ -297,7 +297,7 @@ class BeefNRCRequirementsCalculator(NutritionRequirementsCalculator):
         """
         if adg <= 0.0 or ne_growth <= 0.0:
             return 0.0
-        return adg * (268.0 - 29.4 * ne_growth / adg)
+        return max(0.0, adg * (268.0 - 29.4 * ne_growth / adg))
 
     @staticmethod
     def _calculate_metabolizable_protein(

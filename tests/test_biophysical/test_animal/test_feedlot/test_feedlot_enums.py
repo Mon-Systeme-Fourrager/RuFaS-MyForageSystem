@@ -177,6 +177,19 @@ def test_feedlot_only_scenario_maps_feedlot_types() -> None:
     assert AnimalType.FEEDLOT_HEIFER in feedlot_types
 
 
+class _AnimalStub:
+    """Minimal stub exposing only animal_type for find_animal_combination tests.
+
+    Parameters
+    ----------
+    animal_type : AnimalType
+        The animal type to expose on the stub.
+    """
+
+    def __init__(self, animal_type: AnimalType) -> None:
+        self.animal_type = animal_type
+
+
 @pytest.mark.unit
 @pytest.mark.parametrize(
     "animal_type",
@@ -187,9 +200,6 @@ def test_feedlot_only_scenario_maps_feedlot_types() -> None:
 )
 def test_feedlot_combination_lookup(animal_type: AnimalType) -> None:
     """find_animal_combination must resolve feedlot types to FEEDLOT_FINISHING."""
-    from unittest.mock import MagicMock
-
-    mock_animal = MagicMock()
-    mock_animal.animal_type = animal_type
-    result = AnimalGroupingScenario.FEEDLOT_ONLY.find_animal_combination(mock_animal)
+    stub = _AnimalStub(animal_type)
+    result = AnimalGroupingScenario.FEEDLOT_ONLY.find_animal_combination(stub)  # type: ignore[arg-type]
     assert result == AnimalCombination.FEEDLOT_FINISHING

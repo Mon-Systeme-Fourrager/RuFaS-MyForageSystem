@@ -423,3 +423,16 @@ def test_dmi_matches_eq10_1(calc: Any, bw: float) -> None:
     )
     expected = _expected_dmi(bw, ne_conc)
     assert result.dry_matter == pytest.approx(expected, rel=0.005)
+
+
+@pytest.mark.unit
+def test_np_growth_clamped_to_zero_when_formula_goes_negative() -> None:
+    """_calculate_np_growth must return 0.0, not negative, when ne_growth is large relative to ADG.
+
+    When ADG is small and ne_growth is large, the formula ADG × (268 - 29.4 × RE/ADG)
+    can go negative, corrupting downstream Ca/P calculations. The guard must clamp to 0.
+    """
+    from RUFAS.biophysical.animal.nutrients.beef_nrc_requirements_calculator import BeefNRCRequirementsCalculator
+
+    result = BeefNRCRequirementsCalculator._calculate_np_growth(adg=0.1, ne_growth=10.0)
+    assert result == pytest.approx(0.0)
