@@ -11,6 +11,7 @@ from RUFAS.biophysical.animal.data_types.animal_events import AnimalEvents
 from RUFAS.biophysical.animal.data_types.nutrition_data_structures import NutritionRequirements
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
 from RUFAS.biophysical.animal.nutrients.beef_nrc_requirements_calculator import BeefNRCRequirementsCalculator
+from RUFAS.biophysical.animal.nutrients.nutrients import Nutrients
 from RUFAS.biophysical.animal.animal_module_reporter import AnimalModuleReporter
 
 
@@ -283,9 +284,6 @@ def test_daily_nutrients_update_sets_phosphorus_for_feedlot() -> None:
     Verifies that the feedlot early-return path correctly routes the
     NRC 2016 phosphorus requirement into the Nutrients pool.
     """
-    from RUFAS.biophysical.animal.data_types.nutrition_data_structures import NutritionRequirements
-    from RUFAS.biophysical.animal.nutrients.nutrients import Nutrients
-
     animal = _make_feedlot_animal()
     animal.nutrients = Nutrients()
     nr = NutritionRequirements.make_empty_nutrition_requirements()
@@ -304,8 +302,6 @@ def test_daily_nutrients_update_noop_when_no_nutrition_requirements() -> None:
     Verifies that a feedlot animal with no computed nutrition requirements
     leaves phosphorus_requirement at its default of 0.0.
     """
-    from RUFAS.biophysical.animal.nutrients.nutrients import Nutrients
-
     animal = _make_feedlot_animal()
     animal.nutrients = Nutrients()
     animal.nutrition_requirements = None  # type: ignore[assignment]

@@ -1,15 +1,18 @@
 """Tests for feedlot herd and pen infrastructure."""
 
 import pytest
+from unittest.mock import MagicMock
 from pytest_mock import MockerFixture
+from RUFAS.biophysical.animal.animal_module_reporter import AnimalModuleReporter
 from RUFAS.biophysical.animal.data_types.animal_combination import AnimalCombination
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
+from RUFAS.biophysical.animal.herd_factory import HerdFactory
+from RUFAS.biophysical.animal.herd_manager import HerdManager
+from RUFAS.biophysical.animal.pen import Pen
 
 
-def _make_minimal_pen(mocker: MockerFixture) -> "Pen":  # type: ignore[name-defined]  # noqa: F821
+def _make_minimal_pen(mocker: MockerFixture) -> Pen:
     """Build a minimal feedlot Pen, patching bedding init to avoid InputManager dependency."""
-    from RUFAS.biophysical.animal.pen import Pen
-
     mocker.patch.object(Pen, "_initialize_beddings")
     return Pen(
         pen_id=10,
@@ -45,8 +48,6 @@ def test_pen_mud_condition_defaults_to_none(mocker: MockerFixture) -> None:
 @pytest.mark.unit
 def test_herd_manager_feedlot_animals_in_animals_by_type() -> None:
     """animals_by_type must include FEEDLOT_STEER and FEEDLOT_HEIFER keys."""
-    from RUFAS.biophysical.animal.herd_manager import HerdManager
-
     hm: HerdManager = HerdManager.__new__(HerdManager)
     hm.calves = []
     hm.heiferIs = []
@@ -67,9 +68,6 @@ def test_herd_manager_animals_by_type_steer_heifer_filtered_separately() -> None
     FEEDLOT_STEER must contain only steer animals; FEEDLOT_HEIFER only heifers.
     The two lists must not be identical (i.e. they are separate filtered views).
     """
-    from unittest.mock import MagicMock
-    from RUFAS.biophysical.animal.herd_manager import HerdManager
-
     hm: HerdManager = HerdManager.__new__(HerdManager)
     hm.calves = []
     hm.heiferIs = []
@@ -92,8 +90,6 @@ def test_herd_manager_animals_by_type_steer_heifer_filtered_separately() -> None
 @pytest.mark.unit
 def test_reporter_report_feedlot_performance_is_callable() -> None:
     """AnimalModuleReporter must expose a callable report_feedlot_performance classmethod."""
-    from RUFAS.biophysical.animal.animal_module_reporter import AnimalModuleReporter
-
     assert hasattr(AnimalModuleReporter, "report_feedlot_performance")
     assert callable(AnimalModuleReporter.report_feedlot_performance)
 
@@ -101,8 +97,6 @@ def test_reporter_report_feedlot_performance_is_callable() -> None:
 @pytest.mark.unit
 def test_herd_factory_has_feedlot_animals_class_attr() -> None:
     """HerdFactory must expose a feedlot_animals class-level list attribute."""
-    from RUFAS.biophysical.animal.herd_factory import HerdFactory
-
     assert hasattr(HerdFactory, "feedlot_animals")
     assert isinstance(HerdFactory.feedlot_animals, list)
 
@@ -110,8 +104,6 @@ def test_herd_factory_has_feedlot_animals_class_attr() -> None:
 @pytest.mark.unit
 def test_herd_factory_initialize_feedlot_herd_creates_correct_count(mocker: MockerFixture) -> None:
     """_initialize_feedlot_herd must create num_steers + num_heifers Animal objects."""
-    from RUFAS.biophysical.animal.herd_factory import HerdFactory
-
     factory: HerdFactory = HerdFactory.__new__(HerdFactory)
     factory.im = mocker.MagicMock()
     factory.im.get_data.return_value = {  # type: ignore[attr-defined]
@@ -137,8 +129,6 @@ def test_herd_factory_initialize_feedlot_herd_creates_correct_count(mocker: Mock
 @pytest.mark.unit
 def test_herd_factory_initialize_feedlot_herd_empty_on_missing_config(mocker: MockerFixture) -> None:
     """_initialize_feedlot_herd must return [] when feedlot config key is absent."""
-    from RUFAS.biophysical.animal.herd_factory import HerdFactory
-
     factory: HerdFactory = HerdFactory.__new__(HerdFactory)
     factory.im = mocker.MagicMock()
     factory.im.get_data.side_effect = KeyError("no feedlot key")  # type: ignore[attr-defined]
@@ -156,8 +146,6 @@ def test_herd_factory_initialize_feedlot_herd_empty_on_non_dict_config(mocker: M
     Verifies the isinstance guard: a truthy non-dict value (e.g. a list) must
     not propagate to feedlot_cfg.get() and must instead return an empty list.
     """
-    from RUFAS.biophysical.animal.herd_factory import HerdFactory
-
     factory: HerdFactory = HerdFactory.__new__(HerdFactory)
     factory.im = mocker.MagicMock()
     factory.im.get_data.return_value = ["not", "a", "dict"]  # type: ignore[attr-defined]

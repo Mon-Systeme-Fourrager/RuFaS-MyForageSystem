@@ -36,6 +36,7 @@ from RUFAS.biophysical.animal.growth.growth import Growth
 from RUFAS.biophysical.animal.nutrients.nutrients import Nutrients
 from RUFAS.biophysical.animal.nutrients.nasem_requirements_calculator import NASEMRequirementsCalculator
 from RUFAS.biophysical.animal.nutrients.nrc_requirements_calculator import NRCRequirementsCalculator
+from RUFAS.biophysical.animal.nutrients.beef_nrc_requirements_calculator import BeefNRCRequirementsCalculator
 from RUFAS.biophysical.animal.data_types.animal_typed_dicts import (
     NewBornCalfValuesTypedDict,
     CalfValuesTypedDict,
@@ -2088,6 +2089,8 @@ class Animal:
             (SOLD, None) if an exit condition is met, (REMAIN, None) otherwise.
 
         """
+        # AnimalModuleReporter is imported locally: animal_module_reporter → animal_population → animal.py
+        # creates a genuine runtime circular import if placed at module level.
         from RUFAS.biophysical.animal.animal_module_reporter import AnimalModuleReporter
 
         if self.body_weight >= AnimalConfig.feedlot_slaughter_weight:
@@ -2654,10 +2657,6 @@ class Animal:
 
         """
         if self.animal_type.is_feedlot:
-            from RUFAS.biophysical.animal.nutrients.beef_nrc_requirements_calculator import (
-                BeefNRCRequirementsCalculator,
-            )
-
             if self.previous_nutrition_supply is None or self.previous_nutrition_supply.dry_matter <= 0:
                 ne_conc: float = AnimalModuleConstants.DEFAULT_NET_ENERGY_DIET_CONCENTRATION
             else:

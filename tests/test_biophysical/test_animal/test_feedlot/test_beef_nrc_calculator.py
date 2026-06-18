@@ -4,15 +4,14 @@ from typing import Any
 
 import pytest
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
+from RUFAS.biophysical.animal.data_types.nutrition_data_structures import NutritionRequirements
+from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
+from RUFAS.biophysical.animal.nutrients.beef_nrc_requirements_calculator import BeefNRCRequirementsCalculator
 
 
 @pytest.fixture(scope="module")
 def calc() -> Any:
     """BeefNRCRequirementsCalculator class."""
-    from RUFAS.biophysical.animal.nutrients.beef_nrc_requirements_calculator import (
-        BeefNRCRequirementsCalculator,
-    )
-
     return BeefNRCRequirementsCalculator
 
 
@@ -205,8 +204,6 @@ def test_metabolizable_protein_box12_1(calc: Any) -> None:
 @pytest.mark.unit
 def test_calculate_requirements_returns_nutrition_requirements(calc: Any) -> None:
     """calculate_requirements must return NutritionRequirements; pregnancy/lactation/activity = 0."""
-    from RUFAS.biophysical.animal.data_types.nutrition_data_structures import NutritionRequirements
-
     result = calc.calculate_requirements(
         body_weight=400.0,
         mature_body_weight=600.0,
@@ -265,8 +262,6 @@ def _expected_nem(
     temp: float = 20.0,
 ) -> float:
     """Expected NEm using NRC 2016 Eq. 11-1 + cold-stress a2 term (Eq. 11-2)."""
-    from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
-
     sbw: float = bw * 0.96
     be: float = AnimalModuleConstants.BREED_NEm_MULTIPLIER[breed]
     sx: float = AnimalModuleConstants.SEX_NEm_MULTIPLIER[sex]
@@ -288,8 +283,6 @@ def _expected_neg(bw: float, mbw: float, target_adg: float) -> float:
 
 def _expected_dmi(bw: float, ne_conc: float = 2.27) -> float:
     """Expected DMI from NRC 2016 Eq. 10-1 (outside receiving period)."""
-    from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
-
     ne_c: float = max(ne_conc, 0.95)
     ne_m_intake: float = (bw**0.75) * (0.2435 * ne_c - 0.0466 * ne_c**2 - 0.0869)
     dmi: float = ne_m_intake / ne_c if ne_m_intake > 0.0 else 0.0
@@ -432,7 +425,5 @@ def test_np_growth_clamped_to_zero_when_formula_goes_negative() -> None:
     When ADG is small and ne_growth is large, the formula ADG × (268 - 29.4 × RE/ADG)
     can go negative, corrupting downstream Ca/P calculations. The guard must clamp to 0.
     """
-    from RUFAS.biophysical.animal.nutrients.beef_nrc_requirements_calculator import BeefNRCRequirementsCalculator
-
     result = BeefNRCRequirementsCalculator._calculate_np_growth(adg=0.1, ne_growth=10.0)
     assert result == pytest.approx(0.0)
