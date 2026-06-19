@@ -38,6 +38,9 @@ class RationManager:
     user_defined_rations: dict[AnimalCombination, dict[RUFAS_ID, float]] | None
     tolerance: float | None = 0.0
     maximum_ration_reformulation_attempts: int
+    feedlot_starter_ration: dict[RUFAS_ID, float]
+    feedlot_transition_ration: dict[RUFAS_ID, float]
+    feedlot_finisher_ration: dict[RUFAS_ID, float]
 
     @classmethod
     def set_ration_feeds(cls, ration_config: dict[str, Any]) -> None:
@@ -50,35 +53,103 @@ class RationManager:
             Collection of animal requirements and feed supply information for ration formulation.
 
         """
-        cls.ration_feeds = {animal_combination: [] for animal_combination in AnimalCombination}
+        next_ration_feeds: dict[AnimalCombination, list[RUFAS_ID]] = {
+            animal_combination: [] for animal_combination in AnimalCombination
+        }
 
-        cls.ration_feeds[AnimalCombination.CALF] = [
+        next_ration_feeds[AnimalCombination.CALF] = [
             feed["feed_type"]
             for ration in ration_config["rations"]
             if ration["animal_combination"] == "calf"
             for feed in ration["feeds"]
         ]
 
-        cls.ration_feeds[AnimalCombination.GROWING] = [
+        next_ration_feeds[AnimalCombination.GROWING] = [
             feed["feed_type"]
             for ration in ration_config["rations"]
             if ration["animal_combination"] == "growing"
             for feed in ration["feeds"]
         ]
 
-        cls.ration_feeds[AnimalCombination.CLOSE_UP] = [
+        next_ration_feeds[AnimalCombination.CLOSE_UP] = [
             feed["feed_type"]
             for ration in ration_config["rations"]
             if ration["animal_combination"] == "close_up"
             for feed in ration["feeds"]
         ]
 
-        cls.ration_feeds[AnimalCombination.LAC_COW] = [
+        next_ration_feeds[AnimalCombination.LAC_COW] = [
             feed["feed_type"]
             for ration in ration_config["rations"]
             if ration["animal_combination"] == "lac_cow"
             for feed in ration["feeds"]
         ]
+
+        feedlot_starter = {
+            int(k): float(v) for k, v in ration_config.get("feedlot_starter_ration", {}).items()
+        }
+        feedlot_transition = {
+            int(k): float(v) for k, v in ration_config.get("feedlot_transition_ration", {}).items()
+        }
+        feedlot_finisher = {
+            int(k): float(v) for k, v in ration_config.get("feedlot_finisher_ration", {}).items()
+        }
+
+        for name, ration in (
+            ("starter", feedlot_starter),
+            ("transition", feedlot_transition),
+            ("finisher", feedlot_finisher),
+        ):
+            if ration:
+                negative = [pct for pct in ration.values() if pct < 0.0]
+                if negative:
+                    raise ValueError(
+                        f"Feedlot {name} ration percentages must be non-negative, got: {negative}"
+                    )
+                total_pct = sum(ration.values())
+                if abs(total_pct - 100.0) > 1e-2:
+                    raise ValueError(
+                        f"Feedlot {name} ration percentages must sum to 100.0%, got {total_pct}%"
+                    )
+
+        next_ration_feeds[AnimalCombination.FEEDLOT_FINISHING] = [
+            int(f) for f in ration_config.get("feedlot_feeds", [])
+        ]
+        cls.ration_feeds = next_ration_feeds
+        cls.feedlot_starter_ration = feedlot_starter
+        cls.feedlot_transition_ration = feedlot_transition
+        cls.feedlot_finisher_ration = feedlot_finisher
+
+    @classmethod
+    def get_feedlot_phase_ration(
+        cls,
+        step_up_phase: str,
+        requirements: NutritionRequirements,
+    ) -> dict[RUFAS_ID, float]:
+        """
+        Return feed quantities (kg DM) for the current step-up diet phase.
+
+        Parameters
+        ----------
+        step_up_phase : str
+            'starter', 'transition', or 'finisher'.  Unknown values fall back
+            to the finisher ration.
+        requirements : NutritionRequirements
+            Current nutrition requirements; ``dry_matter`` provides the DMI target.
+
+        Returns
+        -------
+        dict[RUFAS_ID, float]
+            Mapping of feed RUFAS ID to kg DM allocation for this day.
+
+        """
+        phase_ration_map: dict[str, dict[RUFAS_ID, float]] = {
+            "starter": cls.feedlot_starter_ration,
+            "transition": cls.feedlot_transition_ration,
+            "finisher": cls.feedlot_finisher_ration,
+        }
+        ration_pct = phase_ration_map.get(step_up_phase, cls.feedlot_finisher_ration)
+        return {feed_id: requirements.dry_matter * pct / 100.0 for feed_id, pct in ration_pct.items()}
 
     @classmethod
     def get_ration_feeds(cls, animal_combination: AnimalCombination) -> list[RUFAS_ID]:

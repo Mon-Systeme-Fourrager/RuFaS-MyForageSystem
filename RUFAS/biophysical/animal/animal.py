@@ -1,7 +1,7 @@
 import sys
 from datetime import timedelta
 from random import random
-from typing import Callable, cast
+from typing import Any, Callable, cast
 
 from scipy.stats import truncnorm
 from numpy import sqrt
@@ -36,6 +36,7 @@ from RUFAS.biophysical.animal.growth.growth import Growth
 from RUFAS.biophysical.animal.nutrients.nutrients import Nutrients
 from RUFAS.biophysical.animal.nutrients.nasem_requirements_calculator import NASEMRequirementsCalculator
 from RUFAS.biophysical.animal.nutrients.nrc_requirements_calculator import NRCRequirementsCalculator
+from RUFAS.biophysical.animal.nutrients.beef_nrc_requirements_calculator import BeefNRCRequirementsCalculator
 from RUFAS.biophysical.animal.data_types.animal_typed_dicts import (
     NewBornCalfValuesTypedDict,
     CalfValuesTypedDict,
@@ -185,12 +186,15 @@ class Animal:
             AnimalType.HEIFER_III: self._initialize_heiferII_or_heiferIII,
             AnimalType.LAC_COW: self._initialize_cow,
             AnimalType.DRY_COW: self._initialize_cow,
+            AnimalType.FEEDLOT_STEER: self._initialize_feedlot_animal,
+            AnimalType.FEEDLOT_HEIFER: self._initialize_feedlot_animal,
         }
         self.id = args.get("id", 0)
         self.breed: Breed = Breed(Breed[args.get("breed")])
         self.animal_type = AnimalType(args.get("animal_type"))
         self.days_born = int(args.get("days_born"))
-        self.birth_weight = float(args.get("birth_weight"))
+        # birth_weight is unused for feedlot animals that enter at pen placement weight
+        self.birth_weight = 0.0 if self.animal_type.is_feedlot else float(args.get("birth_weight"))
         self.body_condition_score_5 = AnimalModuleConstants.DEFAULT_BODY_CONDITION_SCORE_5
 
         self.cull_reason = ""
@@ -220,6 +224,13 @@ class Animal:
         self._daily_horizontal_distance: float = 0.0
         self._daily_vertical_distance: float = 0.0
         self._daily_distance: float = 0.0
+
+        # Feedlot tracking attributes (default to safe values for all animal types)
+        self.days_on_feed: int = 0
+        self.entry_weight: float = 0.0
+        self.cumulative_dmi: float = 0.0
+        self.receiving_stress: bool = False
+        self.step_up_phase: str = ""
 
         is_newborn_calf = self.animal_type == AnimalType.CALF and "body_weight" not in args.keys()
         if is_newborn_calf:
@@ -1363,6 +1374,25 @@ class Animal:
         )
         self.nutrients.total_phosphorus_in_animal = args.get("initial_phosphorus")
 
+    def _initialize_feedlot_animal(self, args: Any) -> None:
+        """
+        Initialize a feedlot steer or heifer from a configuration dict.
+
+        Parameters
+        ----------
+        args : Any
+            Dict with keys: body_weight, mature_body_weight, days_on_feed (all optional).
+
+        """
+        self.sex = Sex.STEER if self.animal_type == AnimalType.FEEDLOT_STEER else Sex.FEMALE
+        self.body_weight = float(args.get("body_weight", AnimalConfig.feedlot_entry_weight))
+        self.mature_body_weight = float(args.get("mature_body_weight", 600.0))
+        self.wean_weight = 0.0
+        self.entry_weight = self.body_weight
+        self.days_on_feed = int(args.get("days_on_feed", 0))
+        self.receiving_stress = self.days_on_feed <= AnimalModuleConstants.RECEIVING_PERIOD_DAYS
+        self._update_step_up_phase()
+
     def _initialize_calf_or_heiferI(self, args: CalfValuesTypedDict | HeiferIValuesTypedDict) -> None:
         """
         Initializes the attributes of a calf or heifer.
@@ -1513,6 +1543,11 @@ class Animal:
         phosphorus requirements.
 
         """
+        if self.animal_type.is_feedlot:
+            if self.nutrition_requirements is not None:
+                self.nutrients.phosphorus_requirement = self.nutrition_requirements.phosphorus
+            return
+
         nutrients_inputs = NutrientsInputs(
             animal_type=self.animal_type,
             body_weight=self.body_weight,
@@ -1791,6 +1826,9 @@ class Animal:
             An object containing the updated animal status and any newborn calf configuration.
 
         """
+        if self.animal_type.is_feedlot:
+            return self._feedlot_daily_routines(time)
+
         self.days_born += 1
         daily_routines_output: DailyRoutinesOutput = DailyRoutinesOutput(
             animal_status=AnimalStatus.REMAIN,
@@ -1819,6 +1857,46 @@ class Animal:
             self.days_in_pregnancy += 1
 
         return daily_routines_output
+
+    def _feedlot_daily_routines(self, time: RufasTime) -> DailyRoutinesOutput:
+        """
+        Streamlined daily routine for feedlot finishing animals.
+
+        Parameters
+        ----------
+        time : RufasTime
+            Current simulation time.
+
+        Returns
+        -------
+        DailyRoutinesOutput
+            Daily output with animal status and empty reproduction statistics.
+
+        """
+        self.days_born += 1
+        self.days_on_feed += 1
+
+        if self.receiving_stress and self.days_on_feed > AnimalModuleConstants.RECEIVING_PERIOD_DAYS:
+            self.receiving_stress = False
+            self.events.add_event(self.days_born, time.simulation_day, animal_constants.RECEIVING_STRESS_END)
+
+        self._update_step_up_phase(simulation_day=time.simulation_day)
+
+        # Direct body weight update — Growth.evaluate_body_weight_change does not support feedlot
+        effective_adg: float = AnimalConfig.feedlot_target_adg * AnimalConfig.feedlot_implant_adg_factor
+        self.body_weight += effective_adg
+        self.growth.daily_growth = effective_adg
+
+        if self.nutrition_supply is not None and self.nutrition_supply.dry_matter > 0:
+            self.cumulative_dmi += self.nutrition_supply.dry_matter
+
+        animal_status, _ = self.animal_life_stage_update(time)
+
+        return DailyRoutinesOutput(
+            animal_status=animal_status,
+            newborn_calf_config=None,
+            herd_reproduction_statistics=HerdReproductionStatistics(),
+        )
 
     def _calf_life_stage_update(self, _: RufasTime) -> tuple[AnimalStatus, None]:
         """
@@ -1981,6 +2059,8 @@ class Animal:
             AnimalType.HEIFER_III: self._heiferIII_life_stage_update,
             AnimalType.LAC_COW: self._cow_life_stage_update,
             AnimalType.DRY_COW: self._cow_life_stage_update,
+            AnimalType.FEEDLOT_STEER: self._feedlot_life_stage_update,
+            AnimalType.FEEDLOT_HEIFER: self._feedlot_life_stage_update,
         }
         animal_status, newborn_calf_config = ANIMAL_TYPE_TO_LIFE_STAGE_UPDATE_METHOD_MAP[self.animal_type](time)
 
@@ -1993,6 +2073,63 @@ class Animal:
             animal_status = AnimalStatus.DEAD
 
         return animal_status, newborn_calf_config
+
+    def _feedlot_life_stage_update(self, time: RufasTime) -> tuple[AnimalStatus, NewBornCalfValuesTypedDict | None]:
+        """
+        Check feedlot exit conditions — slaughter weight reached or max days on feed.
+
+        Parameters
+        ----------
+        time : RufasTime
+            Current simulation time.
+
+        Returns
+        -------
+        tuple[AnimalStatus, NewBornCalfValuesTypedDict | None]
+            (SOLD, None) if an exit condition is met, (REMAIN, None) otherwise.
+
+        """
+        # TODO(beef-integration): report_feedlot_performance should be called
+        # here when AnimalStatus.SOLD is returned, but AnimalModuleReporter
+        # cannot be imported at this layer (animal.py is below the reporter
+        # in the dependency hierarchy). This call belongs in a future
+        # _feedlot_update method in herd_factory.py, once feedlot animals are
+        # wired into herd_manager._process_daily_herd_updates — a known gap
+        # documented in the PR #32 implementation report (HerdFactory wiring,
+        # known limitation #1). Tracked for the next beef integration PR.
+        if self.body_weight >= AnimalConfig.feedlot_slaughter_weight:
+            self.cull_reason = animal_constants.SLAUGHTER_WEIGHT_REACHED
+            self.sold_at_day = time.simulation_day
+            return AnimalStatus.SOLD, None
+
+        if self.days_on_feed >= AnimalConfig.feedlot_max_days_on_feed:
+            self.cull_reason = animal_constants.MAX_DAYS_ON_FEED_REACHED
+            self.sold_at_day = time.simulation_day
+            return AnimalStatus.SOLD, None
+
+        return AnimalStatus.REMAIN, None
+
+    def _update_step_up_phase(self, simulation_day: int = 0) -> None:
+        """
+        Track and log feedlot step-up diet phase based on days on feed.
+
+        Parameters
+        ----------
+        simulation_day : int, optional
+            Current simulation day for event logging (default 0 during init).
+
+        """
+        dof = self.days_on_feed
+        if dof <= AnimalModuleConstants.STEP_UP_STARTER_END_DAY:
+            new_phase, event_str = "starter", animal_constants.STEP_UP_STARTER
+        elif dof <= AnimalModuleConstants.STEP_UP_TRANSITION_END_DAY:
+            new_phase, event_str = "transition", animal_constants.STEP_UP_TRANSITION
+        else:
+            new_phase, event_str = "finisher", animal_constants.STEP_UP_FINISHER
+
+        if new_phase != self.step_up_phase:
+            self.step_up_phase = new_phase
+            self.events.add_event(self.days_born, simulation_day, event_str)
 
     def _evaluate_calf_for_heiferI(self) -> bool:
         """
@@ -2521,6 +2658,30 @@ class Animal:
             The nutrition requirements for the animal.
 
         """
+        if self.animal_type.is_feedlot:
+            if self.previous_nutrition_supply is None or self.previous_nutrition_supply.dry_matter <= 0:
+                ne_conc: float = AnimalModuleConstants.DEFAULT_NET_ENERGY_DIET_CONCENTRATION
+            else:
+                ne_conc = (
+                    self.previous_nutrition_supply.metabolizable_energy / self.previous_nutrition_supply.dry_matter
+                )
+
+            return BeefNRCRequirementsCalculator.calculate_requirements(
+                body_weight=self.body_weight,
+                mature_body_weight=self.mature_body_weight,
+                animal_type=self.animal_type,
+                breed=self.breed.value,
+                sex=self.sex.value,
+                days_on_feed=self.days_on_feed,
+                target_adg=AnimalConfig.feedlot_target_adg,
+                implant_adg_factor=AnimalConfig.feedlot_implant_adg_factor,
+                housing=housing,
+                mud_condition=AnimalConfig.feedlot_mud_condition,
+                temperature_c=previous_temperature,
+                ne_diet_concentration=ne_conc,
+                process_based_phosphorus_requirement=0.0,
+            )
+
         if self.animal_type is AnimalType.CALF:
             calf_intake = CalfRationManager.calculate_intake(
                 self.birth_weight,

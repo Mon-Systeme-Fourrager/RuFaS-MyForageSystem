@@ -168,6 +168,7 @@ class HerdManager:
         self.heiferIIIs: list[Animal] = []
         self.cows: list[Animal] = []
         self.replacement_market: list[Animal] = []
+        self.feedlot_animals: list[Animal] = []
 
         self.heifers_sold: list[Animal] = []
         self.cows_culled: list[Animal] = []
@@ -241,6 +242,7 @@ class HerdManager:
             herd_population.cows,
             herd_population.replacement,
         )
+        self.feedlot_animals = list(HerdFactory.feedlot_animals)
 
         self.allocate_animals_to_pens(time.simulation_day)
         self.initialize_nutrient_requirements(weather, time, available_feeds)
@@ -264,6 +266,8 @@ class HerdManager:
             AnimalType.HEIFER_III: self.heiferIIIs,
             AnimalType.LAC_COW: [cow for cow in self.cows if cow.is_milking],
             AnimalType.DRY_COW: [cow for cow in self.cows if not cow.is_milking],
+            AnimalType.FEEDLOT_STEER: [a for a in self.feedlot_animals if a.animal_type == AnimalType.FEEDLOT_STEER],
+            AnimalType.FEEDLOT_HEIFER: [a for a in self.feedlot_animals if a.animal_type == AnimalType.FEEDLOT_HEIFER],
         }
 
     @property
@@ -327,11 +331,10 @@ class HerdManager:
 
         """
         phosphorus_concentration_by_animal_class: dict[AnimalType, float] = {
-            animal_type: 0.0 for animal_type in AnimalType
+            animal_type: 0.0 for animal_type in self.animals_by_type
         }
 
-        for animal_type in AnimalType:
-            animals = self.animals_by_type[animal_type]
+        for animal_type, animals in self.animals_by_type.items():
             total_phosphorus = sum(
                 [animal.nutrients.total_phosphorus_in_animal * GeneralConstants.GRAMS_TO_KG for animal in animals]
             )

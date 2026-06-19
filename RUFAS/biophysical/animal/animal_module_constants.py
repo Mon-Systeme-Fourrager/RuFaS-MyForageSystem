@@ -154,3 +154,68 @@ class AnimalModuleConstants:
 
     EFF_OF_ME_USE: float = 0.66
     """Efficiency of metabolizable energy use, e.g. conversion rate of metabolizable energy to net energy, unitless."""
+
+    # ── FEEDLOT CONSTANTS (NRC 2016 Beef) ────────────────────────────────────
+    FEEDLOT_MIN_DMI_RATIO: float = 0.015
+    """Minimum DMI as a fraction of body weight for yearling feedlot cattle (kg DMI / kg BW)."""
+
+    STEP_UP_STARTER_END_DAY: int = 7
+    """Days on feed at which the starter phase ends (days 1–7)."""
+
+    STEP_UP_TRANSITION_END_DAY: int = 21
+    """Days on feed at which the transition phase ends (days 8–21)."""
+
+    RECEIVING_PERIOD_DAYS: int = 21
+    """Length of the receiving period during which DMI is reduced post-arrival."""
+
+    RECEIVING_DMI_FRACTION: float = 0.60
+    """Fraction of normal DMI consumed during the receiving stress period."""
+
+    MUD_NEm_MULTIPLIER_NONE: float = 1.00
+    """NEm multiplier for no mud condition (NRC 2016 Ch. 11)."""
+
+    MUD_NEm_MULTIPLIER_MILD: float = 1.08
+    """NEm multiplier for mild mud condition — ankle-deep (NRC 2016 Ch. 11)."""
+
+    MUD_NEm_MULTIPLIER_SEVERE: float = 1.30
+    """NEm multiplier for severe mud condition — knee-deep (NRC 2016 Ch. 11)."""
+
+    DEFAULT_IMPLANT_ADG_FACTOR: float = 1.0
+    """ADG multiplier for growth implants (1.0 = no implant)."""
+
+    BREED_NEm_MULTIPLIER: dict[str, float] = {
+        # NRC 2016 Table 19-1 (BE factor). British beef breeds = 1.0.
+        # High-milk dairy/dual-purpose breeds (Holstein, Jersey, Braunvieh, Simmental) = 1.2.
+        # Bos indicus composites (Brahman, Braford, Brangus) = 0.9–0.95.
+        "Angus": 1.0,
+        "Hereford": 1.0,
+        "Simmental": 1.2,
+        "Charolais": 1.0,
+        "Limousin": 1.0,
+        "Brahman": 0.9,
+        "Crossbred": 1.0,
+        "Holstein": 1.2,
+        "Jersey": 1.2,
+        "Nellore": 1.0,
+        "Braunvieh": 1.2,
+        "Gelbvieh": 1.0,
+        "Brangus": 0.95,
+        "Braford": 0.95,
+    }
+    """NRC 2016 Table 19-1 breed maintenance multipliers (BE factor)."""
+
+    SEX_NEm_MULTIPLIER: dict[str, float] = {
+        "steer": 1.00,
+        "female": 1.00,
+        "male": 1.15,
+    }
+    """NRC 2016 Table 19-1 sex maintenance multipliers. Bulls 15% higher; steers/heifers = 1.0."""
+
+    SRW_CHOICE: int = 478
+    """Standard reference weight (SBW, kg) for Small/Choice marbling grade — NRC 2016 Table 12-2 default."""
+
+    DEFAULT_NUM_STALLS_FOR_FEEDLOT_PEN: int = 100
+    """The default number of stalls to be created in a feedlot finishing pen."""
+
+    FEEDLOT_HCW_DRESSING_PERCENTAGE: float = 0.62
+    """NRC 2016 typical Choice-grade dressing percentage for hot carcass weight calculation."""

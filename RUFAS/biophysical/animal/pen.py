@@ -27,6 +27,7 @@ from RUFAS.biophysical.animal.nutrients.nutrition_evaluator import NutritionEval
 from RUFAS.biophysical.animal.nutrients.nutrition_supply_calculator import NutritionSupplyCalculator
 from RUFAS.biophysical.animal.ration.ration_manager import RationManager
 from RUFAS.data_structures.feed_storage_to_animal_connection import RUFAS_ID, Feed
+from RUFAS.biophysical.animal.animal_config import AnimalConfig
 from RUFAS.biophysical.animal.data_types.animal_combination import AnimalCombination
 from RUFAS.general_constants import GeneralConstants
 from RUFAS.input_manager import InputManager
@@ -139,6 +140,11 @@ class Pen:
         self.first_parlor_processor = first_parlor_processor
         self.parlor_stream_name = parlor_stream_name
         self.manure_streams = manure_streams
+        self.mud_condition: str = (
+            AnimalConfig.feedlot_mud_condition
+            if self.animal_combination is AnimalCombination.FEEDLOT_FINISHING
+            else "none"
+        )
 
         self.beddings: dict[str, Bedding] = {}
         self._initialize_beddings()
@@ -552,7 +558,8 @@ class Pen:
 
     def update_animal_combination(self, animal_combination: AnimalCombination) -> None:
         """
-        Sets the pen's animal combination to animal_combination
+        Sets the pen's animal combination to animal_combination and refreshes
+        mud_condition so a reused pen does not retain stale mud state.
 
         Parameters
         ----------
@@ -561,6 +568,9 @@ class Pen:
 
         """
         self.animal_combination = animal_combination
+        self.mud_condition = (
+            AnimalConfig.feedlot_mud_condition if animal_combination is AnimalCombination.FEEDLOT_FINISHING else "none"
+        )
 
     def update_daily_walking_distance(self) -> None:
         """

@@ -17,6 +17,8 @@ class AnimalCombination(Enum):
         Represents a pen with lactating cows only.
     GROWING_AND_CLOSE_UP : str
         Represents a pen with heifer Is, IIs, IIIs and dry cows.
+    FEEDLOT_FINISHING : str
+        Represents a feedlot finishing pen with steers and/or heifers.
 
     """
 
@@ -25,3 +27,5 @@ class AnimalCombination(Enum):
     CLOSE_UP = "close_up"
     LAC_COW = "lac_cow"
     GROWING_AND_CLOSE_UP = "growing and close_up"
+    FEEDLOT_FINISHING = "feedlot_finishing"
+    """Represents a feedlot finishing pen with steers and/or heifers."""

@@ -1,7 +1,14 @@
+from __future__ import annotations
+
 import sys
 from dataclasses import asdict
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from RUFAS.biophysical.animal.animal import Animal
 
 from RUFAS.biophysical.animal.animal_config import AnimalConfig
+from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
 from RUFAS.biophysical.animal.animal_genetics.animal_genetics import UNITS as genetics_units
 from RUFAS.biophysical.animal.data_types.animal_events import AnimalEvents
 from RUFAS.biophysical.animal.data_types.animal_population import AnimalPopulationStatistics
@@ -1435,3 +1442,37 @@ class AnimalModuleReporter:
     def report_income_losses(cls) -> None:
         """Reports losses in income due to disease to Output Manager."""
         pass
+
+    @classmethod
+    def report_feedlot_performance(
+        cls,
+        animal: Animal,
+        simulation_day: int,
+    ) -> None:
+        """
+        Log key feedlot performance metrics to OutputManager when an animal exits the pen.
+
+        Parameters
+        ----------
+        animal : Animal
+            A feedlot animal that has reached slaughter weight or max days on feed.
+        simulation_day : int
+            Current simulation day.
+
+        """
+        info_map: dict[str, Any] = {
+            "class": cls.__name__,
+            "function": cls.report_feedlot_performance.__name__,
+            "simulation_day": simulation_day,
+        }
+        dof: int = animal.days_on_feed
+        total_gain: float = animal.body_weight - animal.entry_weight
+        adg: float = total_gain / dof if dof > 0 else 0.0
+        fcr: float = animal.cumulative_dmi / total_gain if total_gain > 0.0 else 0.0
+        hcw: float = animal.body_weight * AnimalModuleConstants.FEEDLOT_HCW_DRESSING_PERCENTAGE
+
+        om.add_variable("feedlot_days_on_feed", dof, dict(info_map, units=MeasurementUnits.DAYS))
+        om.add_variable("feedlot_total_gain_kg", total_gain, dict(info_map, units=MeasurementUnits.KILOGRAMS))
+        om.add_variable("feedlot_adg_kg_d", adg, dict(info_map, units=MeasurementUnits.KILOGRAMS_PER_DAY))
+        om.add_variable("feedlot_fcr", fcr, dict(info_map, units=MeasurementUnits.FRACTION))
+        om.add_variable("feedlot_hot_carcass_weight_kg", hcw, dict(info_map, units=MeasurementUnits.KILOGRAMS))

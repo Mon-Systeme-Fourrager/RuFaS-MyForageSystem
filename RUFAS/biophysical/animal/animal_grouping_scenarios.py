@@ -29,6 +29,13 @@ class AnimalGroupingScenario(Enum):
         AnimalCombination.LAC_COW: [AnimalType.LAC_COW],
     }
 
+    FEEDLOT_ONLY = {
+        AnimalCombination.FEEDLOT_FINISHING: [
+            AnimalType.FEEDLOT_STEER,
+            AnimalType.FEEDLOT_HEIFER,
+        ]
+    }
+
     def __init__(self, value: dict[AnimalCombination, list[str]]):
         """
         Initialize the AnimalGroupingScenario.
@@ -144,6 +151,23 @@ class AnimalGroupingScenario(Enum):
             ),
         }
         return cow_subtype_by_scenario[self]
+
+    def _get_feedlot_type(self, feedlot_animal: Animal) -> AnimalType:
+        """
+        Get the animal type of a feedlot finishing animal.
+
+        Parameters
+        ----------
+        feedlot_animal : Animal
+            The feedlot animal to get the type of.
+
+        Returns
+        -------
+        AnimalType
+            The animal type of the feedlot animal.
+
+        """
+        return feedlot_animal.animal_type
 
     def get_animal_type(self, animal: Animal) -> AnimalType:
         """
