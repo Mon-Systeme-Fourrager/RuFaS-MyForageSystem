@@ -74,6 +74,11 @@ class BeefNRCRequirementsCalculator(NutritionRequirementsCalculator):
             All nutritional requirements; pregnancy/lactation/activity fields = 0.
 
         """
+        if animal_type.is_beef_cow_calf:
+            raise NotImplementedError(
+                f"BeefNRCRequirementsCalculator is feedlot-only. "
+                f"Use BeefCowCalfRequirementsCalculator for {animal_type.value}."
+            )
         if not animal_type.is_feedlot:
             raise ValueError(
                 f"BeefNRCRequirementsCalculator only handles feedlot animal types, " f"got {animal_type.value}."

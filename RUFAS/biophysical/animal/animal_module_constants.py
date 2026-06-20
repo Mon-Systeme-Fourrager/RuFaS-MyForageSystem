@@ -184,23 +184,43 @@ class AnimalModuleConstants:
     """ADG multiplier for growth implants (1.0 = no implant)."""
 
     BREED_NEm_MULTIPLIER: dict[str, float] = {
-        # NRC 2016 Table 19-1 (BE factor). British beef breeds = 1.0.
-        # High-milk dairy/dual-purpose breeds (Holstein, Jersey, Braunvieh, Simmental) = 1.2.
-        # Bos indicus composites (Brahman, Braford, Brangus) = 0.9–0.95.
+        # NRC 2016 Table 19-1 (BE factor) — all 31 breeds, plus "Crossbred" fallback.
+        # British beef breeds = 1.0. High-milk dairy/dual-purpose = 1.2.
+        # Bos indicus and composites (Brahman, Canchim, Gir, Guzerat, Sahiwal) = 0.9.
+        # Bos indicus composites (Braford, Brangus, Santa Gertrudis) = 0.95.
+        # Note: NRC 2016 changed Nellore from 0.9 (NRC 2000) to 1.0 — do NOT use 0.9.
         "Angus": 1.0,
-        "Hereford": 1.0,
-        "Simmental": 1.2,
-        "Charolais": 1.0,
-        "Limousin": 1.0,
+        "Braford": 0.95,
         "Brahman": 0.9,
+        "Brangus": 0.95,
+        "Braunvieh": 1.2,
+        "Canchim": 0.9,
+        "Charolais": 1.0,
+        "Chianina": 1.0,
         "Crossbred": 1.0,
+        "Devon": 1.0,
+        "Galloway": 1.0,
+        "Gelbvieh": 1.0,
+        "Gir": 0.9,
+        "Guzerat": 0.9,
+        "Hereford": 1.0,
         "Holstein": 1.2,
         "Jersey": 1.2,
+        "Limousin": 1.0,
+        "Longhorn": 1.0,
+        "Maine Anjou": 1.0,
         "Nellore": 1.0,
-        "Braunvieh": 1.2,
-        "Gelbvieh": 1.0,
-        "Brangus": 0.95,
-        "Braford": 0.95,
+        "Piedmontese": 1.0,
+        "Pinzgauer": 1.0,
+        "Polled Hereford": 1.0,
+        "Red Poll": 1.0,
+        "Sahiwal": 0.9,
+        "Salers": 1.0,
+        "Santa Gertrudis": 0.95,
+        "Shorthorn": 1.0,
+        "Simmental": 1.2,
+        "South Devon": 1.0,
+        "Tarentaise": 1.0,
     }
     """NRC 2016 Table 19-1 breed maintenance multipliers (BE factor)."""
 
@@ -219,3 +239,339 @@ class AnimalModuleConstants:
 
     FEEDLOT_HCW_DRESSING_PERCENTAGE: float = 0.62
     """NRC 2016 typical Choice-grade dressing percentage for hot carcass weight calculation."""
+
+    # ── COW-CALF CONSTANTS (NRC 2016 Beef Ch.13, USDA surveys) ───────────────
+
+    BEEF_GESTATION_LENGTH_DAYS: int = 283
+    """NRC 2016 average beef gestation length (days)."""
+
+    BEEF_CALF_CROP_WEANED_RATE: float = 0.855
+    """USDA NASS average calf crop weaned per cow exposed (unitless)."""
+
+    BEEF_STILLBIRTH_RATE: float = 0.035
+    """3.5% stillbirth rate; 96.5% of calves born alive (USDA 2009a)."""
+
+    BEEF_PREWEANING_SURVIVAL_RATE: float = 0.968
+    """96.8% of live calves survive to weaning (USDA 2009a)."""
+
+    BEEF_DEFAULT_WEANING_AGE_DAYS: int = 207
+    """USDA NASS average weaning age for beef calves (days)."""
+
+    BEEF_DEFAULT_WEANING_WEIGHT_KG: float = 240.0
+    """USDA NASS average weaning weight for beef calves (kg)."""
+
+    BEEF_PREWEANING_ADG_KG_D: float = 1.0
+    """NRC 2016 reference average daily gain for nursing beef calves (kg/d)."""
+
+    BEEF_CALF_BIRTH_WEIGHT_KG: float = 35.0
+    """NRC 2016 reference average birth weight for beef calves (kg)."""
+
+    BEEF_DEFAULT_MATURE_COW_WEIGHT_KG: float = 520.0
+    """USDA NASS average mature beef cow weight at weaning (kg)."""
+
+    BEEF_COW_FORAGE_DMI_PCT_BW: float = 0.0225
+    """NRC 2016 Ch.10: forage DMI as fraction of BW for a cow in moderate condition (2.25%)."""
+
+    BEEF_PREWEANING_CALF_DMI_PCT_BW: float = 0.0125
+    """NRC 2016 approximate preweaning forage intake as fraction of BW (1.25%)."""
+
+    BEEF_HEIFER_TARGET_BREEDING_PCT_MATURE: float = 0.60
+    """NRC 2016: replacement heifers should reach 55–65% of mature weight by first breeding (midpoint 60%)."""
+
+    BEEF_HEIFER_TARGET_CALVING_PCT_MATURE: float = 0.80
+    """NRC 2016: replacement heifers should reach ~80% of mature weight by first calving."""
+
+    BEEF_HEIFER_TARGET_ADG_KG_D: float = 0.675
+    """NRC 2016: target ADG for replacement heifer development (midpoint of 0.45–0.90 kg/d range)."""
+
+    BEEF_HEIFER_FIRST_CALVING_AGE_DAYS: int = 690
+    """NRC 2016: target first calving age of 22–24 months; midpoint ~23 months = 690 days."""
+
+    BEEF_ANNUAL_CULL_RATE: float = 0.175
+    """USDA national average annual beef cow cull rate (midpoint of 15–20% range)."""
+
+    BEEF_COW_MAX_AGE_DAYS: int = 5475
+    """Conservative longevity ceiling of 15 years = 5475 days."""
+
+    BEEF_DEFAULT_BREEDING_SEASON_LENGTH_DAYS: int = 63
+    """Standard 9-week (63-day) breeding season per NRC 2016 management reference."""
+
+    BEEF_DEFAULT_BCS_9: float = 5.0
+    """Default moderate body condition score on the NRC 2016 beef 1–9 scale (not the dairy 1–5 scale)."""
+
+    # ── COW-CALF BREED TABLE (NRC 2016 Table 19-1 — all 31 breeds) ───────────
+
+    BREED_L_FACTOR: dict[str, float] = {
+        # Lactation factor (L) used in NEm = SBW^0.75 × (a1 × BE × L × COMP × SEX + a2).
+        # L = 1.0 for non-lactating animals and for high-milk dairy/dual-purpose breeds.
+        # L = 1.2 for British and Bos indicus beef breeds during lactation.
+        # NRC 2016 Table 19-1.
+        "Angus": 1.2,
+        "Braford": 1.2,
+        "Brahman": 1.2,
+        "Brangus": 1.2,
+        "Braunvieh": 1.0,
+        "Canchim": 1.2,
+        "Charolais": 1.2,
+        "Chianina": 1.2,
+        "Devon": 1.0,
+        "Galloway": 1.2,
+        "Gelbvieh": 1.0,
+        "Gir": 1.2,
+        "Guzerat": 1.2,
+        "Hereford": 1.0,
+        "Holstein": 1.0,
+        "Jersey": 1.0,
+        "Limousin": 1.2,
+        "Longhorn": 1.2,
+        "Maine Anjou": 1.2,
+        "Nellore": 1.2,
+        "Piedmontese": 1.2,
+        "Pinzgauer": 1.2,
+        "Polled Hereford": 1.2,
+        "Red Poll": 1.2,
+        "Sahiwal": 1.2,
+        "Salers": 1.2,
+        "Santa Gertrudis": 1.2,
+        "Shorthorn": 1.2,
+        "Simmental": 1.0,
+        "South Devon": 1.2,
+        "Tarentaise": 1.2,
+    }
+    """NRC 2016 Table 19-1 lactation adjustment factor (L) for NEm. L=1.0 for non-lactating animals."""
+
+    BREED_CBW_KG: dict[str, float] = {
+        # Calf birth weight (kg) by breed — NRC 2016 Table 19-1.
+        # Used in gestation energy (Eq.19-37) and gravid uterus weight (Eq.19-69).
+        "Angus": 31.0,
+        "Braford": 36.0,
+        "Brahman": 31.0,
+        "Brangus": 33.0,
+        "Braunvieh": 39.0,
+        "Canchim": 32.0,
+        "Charolais": 39.0,
+        "Chianina": 41.0,
+        "Devon": 32.0,
+        "Galloway": 36.0,
+        "Gelbvieh": 39.0,
+        "Gir": 32.0,
+        "Guzerat": 32.0,
+        "Hereford": 36.0,
+        "Holstein": 43.0,
+        "Jersey": 32.0,
+        "Limousin": 37.0,
+        "Longhorn": 33.0,
+        "Maine Anjou": 40.0,
+        "Nellore": 32.0,
+        "Piedmontese": 38.0,
+        "Pinzgauer": 38.0,
+        "Polled Hereford": 33.0,
+        "Red Poll": 36.0,
+        "Sahiwal": 38.0,
+        "Salers": 35.0,
+        "Santa Gertrudis": 33.0,
+        "Shorthorn": 37.0,
+        "Simmental": 39.0,
+        "South Devon": 33.0,
+        "Tarentaise": 33.0,
+    }
+    """NRC 2016 Table 19-1 calf birth weight (kg) by breed. Fallback: BEEF_CALF_BIRTH_WEIGHT_KG."""
+
+    BREED_PEAK_MILK_YIELD_KG_D: dict[str, float] = {
+        # Peak milk yield (kg/d) for the Wood lactation curve — NRC 2016 Table 19-1.
+        "Angus": 8.0,
+        "Braford": 7.0,
+        "Brahman": 8.0,
+        "Brangus": 8.0,
+        "Braunvieh": 12.0,
+        "Canchim": 6.0,
+        "Charolais": 9.0,
+        "Chianina": 6.0,
+        "Devon": 8.0,
+        "Galloway": 8.0,
+        "Gelbvieh": 11.5,
+        "Gir": 10.0,
+        "Guzerat": 5.0,
+        "Hereford": 7.0,
+        "Holstein": 43.0,
+        "Jersey": 34.0,
+        "Limousin": 9.0,
+        "Longhorn": 5.0,
+        "Maine Anjou": 9.0,
+        "Nellore": 7.0,
+        "Piedmontese": 7.0,
+        "Pinzgauer": 11.0,
+        "Polled Hereford": 7.0,
+        "Red Poll": 10.0,
+        "Sahiwal": 8.0,
+        "Salers": 9.0,
+        "Santa Gertrudis": 8.0,
+        "Shorthorn": 8.5,
+        "Simmental": 12.0,
+        "South Devon": 8.0,
+        "Tarentaise": 9.0,
+    }
+    """NRC 2016 Table 19-1 breed peak milk yield (PKYD, kg/d) for Wood lactation curve."""
+
+    BREED_MILK_FAT_PCT: dict[str, float] = {
+        # Milk fat percentage by breed — NRC 2016 Table 19-1.
+        "Angus": 4.0,
+        "Braford": 4.0,
+        "Brahman": 4.0,
+        "Brangus": 4.0,
+        "Braunvieh": 4.0,
+        "Canchim": 4.0,
+        "Charolais": 4.0,
+        "Chianina": 4.0,
+        "Devon": 3.5,
+        "Galloway": 4.0,
+        "Gelbvieh": 4.0,
+        "Gir": 4.0,
+        "Guzerat": 4.0,
+        "Hereford": 4.0,
+        "Holstein": 3.5,
+        "Jersey": 5.2,
+        "Limousin": 4.0,
+        "Longhorn": 4.0,
+        "Maine Anjou": 4.0,
+        "Nellore": 4.0,
+        "Piedmontese": 4.0,
+        "Pinzgauer": 4.0,
+        "Polled Hereford": 4.0,
+        "Red Poll": 4.0,
+        "Sahiwal": 4.0,
+        "Salers": 4.0,
+        "Santa Gertrudis": 4.0,
+        "Shorthorn": 4.0,
+        "Simmental": 4.0,
+        "South Devon": 4.0,
+        "Tarentaise": 4.0,
+    }
+    """NRC 2016 Table 19-1 milk fat percentage by breed."""
+
+    BREED_MILK_PROTEIN_PCT: dict[str, float] = {
+        # Milk protein percentage by breed — NRC 2016 Table 19-1.
+        "Angus": 3.8,
+        "Braford": 3.8,
+        "Brahman": 3.8,
+        "Brangus": 3.8,
+        "Braunvieh": 3.8,
+        "Canchim": 3.8,
+        "Charolais": 3.8,
+        "Chianina": 3.8,
+        "Devon": 3.3,
+        "Galloway": 3.8,
+        "Gelbvieh": 3.8,
+        "Gir": 3.8,
+        "Guzerat": 3.8,
+        "Hereford": 3.8,
+        "Holstein": 3.3,
+        "Jersey": 3.9,
+        "Limousin": 3.8,
+        "Longhorn": 3.8,
+        "Maine Anjou": 3.8,
+        "Nellore": 3.8,
+        "Piedmontese": 3.8,
+        "Pinzgauer": 3.8,
+        "Polled Hereford": 3.8,
+        "Red Poll": 3.8,
+        "Sahiwal": 3.8,
+        "Salers": 3.8,
+        "Santa Gertrudis": 3.8,
+        "Shorthorn": 3.8,
+        "Simmental": 3.8,
+        "South Devon": 3.8,
+        "Tarentaise": 3.8,
+    }
+    """NRC 2016 Table 19-1 milk protein percentage by breed."""
+
+    BREED_MILK_SNF_PCT: dict[str, float] = {
+        # Milk solids-not-fat (SNF) percentage by breed — NRC 2016 Table 19-1.
+        # All breeds report 8.3% SNF in Table 19-1.
+        "Angus": 8.3,
+        "Braford": 8.3,
+        "Brahman": 8.3,
+        "Brangus": 8.3,
+        "Braunvieh": 8.3,
+        "Canchim": 8.3,
+        "Charolais": 8.3,
+        "Chianina": 8.3,
+        "Devon": 8.3,
+        "Galloway": 8.3,
+        "Gelbvieh": 8.3,
+        "Gir": 8.3,
+        "Guzerat": 8.3,
+        "Hereford": 8.3,
+        "Holstein": 8.3,
+        "Jersey": 8.3,
+        "Limousin": 8.3,
+        "Longhorn": 8.3,
+        "Maine Anjou": 8.3,
+        "Nellore": 8.3,
+        "Piedmontese": 8.3,
+        "Pinzgauer": 8.3,
+        "Polled Hereford": 8.3,
+        "Red Poll": 8.3,
+        "Sahiwal": 8.3,
+        "Salers": 8.3,
+        "Santa Gertrudis": 8.3,
+        "Shorthorn": 8.3,
+        "Simmental": 8.3,
+        "South Devon": 8.3,
+        "Tarentaise": 8.3,
+    }
+    """NRC 2016 Table 19-1 milk solids-not-fat (SNF) percentage by breed. All breeds: 8.3%."""
+
+    WOOD_PEAK_WEEK: int = 8
+    """Default week of peak milk yield (T) in the Wood lactation curve — NRC 2016 Ch.19."""
+
+    WOOD_FIRST_CALF_AGE_FACTOR: float = 0.85
+    """Wood curve age factor for first-calf heifers (parity == 1) — NRC 2016 Ch.19 Eq.19-22."""
+
+    WOOD_MATURE_AGE_FACTOR: float = 1.0
+    """Wood curve age factor for mature cows (parity >= 2) — NRC 2016 Ch.19 Eq.19-22."""
+
+    BEEF_LACTATION_MP_EFFICIENCY: float = 0.65
+    """Efficiency of MP use for lactation (and pregnancy) — NRC 2016 Ch.19 Eq.19-28, 19-41."""
+
+    BEEF_PREGNANCY_NE_EFFICIENCY: float = 0.13
+    """Efficiency of ME→NE for pregnancy (ky) — NRC 2016 Ch.19 Eq.19-38. Fixed constant."""
+
+    BEEF_DMI_COW_NE_QUAD: float = 0.04997
+    """Quadratic NEm coefficient for Eq.10-5 beef cow DMI — NRC 2016 Ch.10."""
+
+    BEEF_DMI_COW_NE_LINEAR: float = 0.04631
+    """Linear NEm coefficient for Eq.10-5 beef cow DMI (pregnant/all-cow term) — NRC 2016 Ch.10."""
+
+    BEEF_DMI_COW_INTERCEPT_NP: float = 0.03840
+    """Intercept addition to Eq.10-5 for NON-PREGNANT cows only — NRC 2016 Ch.10."""
+
+    BEEF_DMI_COW_LACT_ADJUST: float = 0.2
+    """Lactation DMI adjustment factor: +0.2 × Yn (kg milk/d) added to cow DMI — NRC 2016 Ch.10."""
+
+    BEEF_CA_MAINT_COEFF: float = 0.0308
+    """Dietary Ca for maintenance: 0.0308 × SBW g/d (= 0.0154/0.50) — NRC 2016 Table 19-3."""
+
+    BEEF_CA_GROWTH_COEFF: float = 0.142
+    """Dietary Ca for growth: 0.142 × NPg g/d (= 0.071/0.50) — NRC 2016 Table 19-3."""
+
+    BEEF_CA_LACT_COEFF: float = 2.46
+    """Dietary Ca for lactation: 2.46 × Yn g/d (= 1.23/0.50) — NRC 2016 Table 19-3."""
+
+    BEEF_CA_PREG_COEFF: float = 0.3044
+    """Dietary Ca for pregnancy: 0.3044 × CBW g/d (= 13.7/90/0.50, last 90d) — NRC 2016 Table 19-3."""
+
+    BEEF_P_MAINT_COEFF: float = 0.02353
+    """Dietary P for maintenance: 0.02353 × SBW g/d (= 0.016/0.68) — NRC 2016 Table 19-3."""
+
+    BEEF_P_GROWTH_COEFF: float = 0.05735
+    """Dietary P for growth: 0.05735 × NPg g/d (= 0.039/0.68) — NRC 2016 Table 19-3."""
+
+    BEEF_P_LACT_COEFF: float = 1.397
+    """Dietary P for lactation: 1.397 × Yn g/d (= 0.95/0.68) — NRC 2016 Table 19-3."""
+
+    BEEF_P_PREG_COEFF: float = 0.1242
+    """Dietary P for pregnancy: 0.1242 × CBW g/d (= 7.6/90/0.68, last 90d) — NRC 2016 Table 19-3."""
+
+    BEEF_PREG_LAST_DAYS: int = 90
+    """Number of final gestation days during which mineral deposition for pregnancy is active — NRC 2016 Table 19-3."""
