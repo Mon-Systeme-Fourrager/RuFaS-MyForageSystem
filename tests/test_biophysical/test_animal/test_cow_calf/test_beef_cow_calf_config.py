@@ -372,3 +372,25 @@ def _mock_im(mocker: pytest_mock.MockerFixture, beef_overrides: dict[str, Any] |
     mocker.patch("RUFAS.biophysical.animal.animal_config.OutputManager")
     mock_im = mock_im_cls.return_value
     mock_im.get_data.side_effect = _make_get_data_side_effect(animal_data)
+
+
+# ---------------------------------------------------------------------------
+# beef_post_weaning_destination validation (FIX 2 — CodeRabbit)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("dest", ["replacement_heifer", "direct_to_feedlot", "sell"])
+def test_initialize_valid_post_weaning_destinations_accepted(
+    dest: str, mocker: pytest_mock.MockerFixture
+) -> None:
+    """All three valid post_weaning_destination values must be accepted without error."""
+    _mock_im(mocker, beef_overrides={"post_weaning_destination": dest})
+    AnimalConfig.initialize_animal_config()
+    assert AnimalConfig.beef_post_weaning_destination == dest
+
+
+def test_initialize_invalid_post_weaning_destination_raises(mocker: pytest_mock.MockerFixture) -> None:
+    """initialize_animal_config must raise ValueError for an unrecognised destination."""
+    _mock_im(mocker, beef_overrides={"post_weaning_destination": "auction"})
+    with pytest.raises(ValueError, match="Invalid beef post-weaning destination"):
+        AnimalConfig.initialize_animal_config()

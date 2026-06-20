@@ -612,10 +612,17 @@ class AnimalConfig:
         cls.beef_weaning_age_days = int(
             beef_cfg.get("weaning_age_days", AnimalModuleConstants.BEEF_DEFAULT_WEANING_AGE_DAYS)
         )
-        raw_weaning_weight = beef_cfg.get("weaning_weight_kg", None)
+        raw_weaning_weight = beef_cfg.get("weaning_weight_kg")
         cls.beef_weaning_weight_kg = float(raw_weaning_weight) if raw_weaning_weight is not None else None
         cls.beef_creep_feeding_enabled = bool(beef_cfg.get("creep_feeding_enabled", False))
-        cls.beef_post_weaning_destination = str(beef_cfg.get("post_weaning_destination", "sell"))
+        destination = str(beef_cfg.get("post_weaning_destination", "sell"))
+        _valid_destinations = {"replacement_heifer", "direct_to_feedlot", "sell"}
+        if destination not in _valid_destinations:
+            raise ValueError(
+                f"Invalid beef post-weaning destination '{destination}'. "
+                f"Expected one of: {sorted(_valid_destinations)}."
+            )
+        cls.beef_post_weaning_destination = destination
         cls.beef_mature_cow_weight_kg = float(
             beef_cfg.get("mature_cow_weight_kg", AnimalModuleConstants.BEEF_DEFAULT_MATURE_COW_WEIGHT_KG)
         )

@@ -192,3 +192,26 @@ def test_event_strings_are_unique() -> None:
     assert len(cow_calf_values) == len(set(cow_calf_values)), "Cow-calf event strings are not unique"
     for cc_val in cow_calf_values:
         assert cc_val not in feedlot_values, f"Cow-calf event '{cc_val}' collides with a feedlot event string"
+
+
+# ---------------------------------------------------------------------------
+# MappingProxyType immutability — breed lookup dicts (FIX 4 — CodeRabbit)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "attr",
+    [
+        "BREED_L_FACTOR",
+        "BREED_CBW_KG",
+        "BREED_PEAK_MILK_YIELD_KG_D",
+        "BREED_MILK_FAT_PCT",
+        "BREED_MILK_PROTEIN_PCT",
+        "BREED_MILK_SNF_PCT",
+    ],
+)
+def test_breed_lookup_dicts_are_immutable(attr: str) -> None:
+    """Breed lookup dicts must be MappingProxyType and raise TypeError on mutation attempt."""
+    mapping = getattr(AnimalModuleConstants, attr)
+    with pytest.raises(TypeError):
+        mapping["__test_sentinel__"] = 0.0  # type: ignore[index]

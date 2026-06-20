@@ -20,15 +20,6 @@ from RUFAS.biophysical.animal.nutrients.beef_nrc_requirements_calculator import 
 from RUFAS.biophysical.animal.nutrients.nutrition_requirements_calculator import NutritionRequirementsCalculator
 from RUFAS.biophysical.animal.ration.amino_acid import EssentialAminoAcidRequirements
 
-_BEEF_COW_CALF_TYPES: frozenset[AnimalType] = frozenset(
-    {
-        AnimalType.BEEF_COW,
-        AnimalType.BEEF_HEIFER_REPLACEMENT,
-        AnimalType.BEEF_CALF,
-        AnimalType.BEEF_BULL,
-    }
-)
-
 
 @dataclass
 class CowCalfRequirementsInputs:
@@ -105,13 +96,26 @@ class BeefCowCalfRequirementsCalculator(NutritionRequirementsCalculator):
         Raises
         ------
         ValueError
-            If inputs.animal_type is not a beef cow-calf type.
+            If inputs.animal_type is not a beef cow-calf type, or if
+            physiological invariants are violated (bull with days_pregnant,
+            days_pregnant out of 1–283 range, negative days_in_milk).
 
         """
-        if inputs.animal_type not in _BEEF_COW_CALF_TYPES:
+        if not inputs.animal_type.is_beef_cow_calf:
             raise ValueError(
                 f"BeefCowCalfRequirementsCalculator only handles cow-calf types; " f"got {inputs.animal_type.value}."
             )
+        if inputs.animal_type is AnimalType.BEEF_BULL and inputs.days_pregnant is not None:
+            raise ValueError("BEEF_BULL cannot have days_pregnant set; bulls do not gestate.")
+        if inputs.days_pregnant is not None and not (
+            1 <= inputs.days_pregnant <= AnimalModuleConstants.BEEF_GESTATION_LENGTH_DAYS
+        ):
+            raise ValueError(
+                f"days_pregnant must be 1–{AnimalModuleConstants.BEEF_GESTATION_LENGTH_DAYS}; "
+                f"got {inputs.days_pregnant}."
+            )
+        if inputs.days_in_milk is not None and inputs.days_in_milk < 0:
+            raise ValueError(f"days_in_milk must be non-negative; got {inputs.days_in_milk}.")
 
         cbw: float = AnimalModuleConstants.BREED_CBW_KG.get(
             inputs.breed, AnimalModuleConstants.BEEF_CALF_BIRTH_WEIGHT_KG
@@ -465,7 +469,7 @@ class BeefCowCalfRequirementsCalculator(NutritionRequirementsCalculator):
         intercept: float = 0.0 if is_pregnant else AnimalModuleConstants.BEEF_DMI_COW_INTERCEPT_NP
         ne_m_intake = bw075 * (
             AnimalModuleConstants.BEEF_DMI_COW_NE_QUAD * ne_c**2
-            + AnimalModuleConstants.BEEF_DMI_COW_NE_LINEAR
+            + AnimalModuleConstants.BEEF_DMI_COW_NE_LINEAR * ne_c
             + intercept
         )
         dmi: float = ne_m_intake / ne_c if ne_m_intake > 0.0 else 0.0

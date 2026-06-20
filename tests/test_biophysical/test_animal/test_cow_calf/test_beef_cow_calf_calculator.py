@@ -446,16 +446,19 @@ class TestCalculateGestationEnergy:
         assert late.pregnancy_energy > mid.pregnancy_energy
 
     def test_i4_eqsbw_subtracts_conceptus_weight_for_pregnant_cow(self) -> None:
-        """I4: EQSBW for pregnant cow (DP=200) must be lower than for non-pregnant same BW.
+        """I4: EQSBW = (SBW - CW) × (SRW/MSBW); CW > 0 → lower EQSBW → lower growth NEg.
 
-        EQSBW = (SBW - CW) × (SRW/MSBW); CW > 0 → EQSBW_preg < EQSBW_nonpreg.
+        NutritionRequirements has no eqsbw field, so we verify the CW subtraction through
+        observable growth_energy: same BW/ADG, pregnant cow has lower NEg than non-pregnant.
+        CW at DP=200 is ~17.5 kg → measurable EQSBW reduction → measurable NEg reduction.
         """
-        result_preg = BeefCowCalfRequirementsCalculator.calculate_requirements(_ANGUS_COW_GEST)
-        result_np = BeefCowCalfRequirementsCalculator.calculate_requirements(_ANGUS_COW_NONLACT)
-        # Pregnant cow needs more total energy but not necessarily more maintenance;
-        # the key assertion is that pregnancy_energy > 0 and the calculator ran without error.
-        assert result_preg.pregnancy_energy > 0.0
-        assert result_np.pregnancy_energy == 0.0
+        growing_preg = dataclasses.replace(_ANGUS_COW_GEST, target_adg=0.5)
+        growing_nonpreg = dataclasses.replace(_ANGUS_COW_NONLACT, target_adg=0.5)
+        result_preg = BeefCowCalfRequirementsCalculator.calculate_requirements(growing_preg)
+        result_np = BeefCowCalfRequirementsCalculator.calculate_requirements(growing_nonpreg)
+        assert result_preg.growth_energy < result_np.growth_energy
+        cw = BeefCowCalfRequirementsCalculator._calculate_conceptus_weight(31.0, 200)
+        assert cw == pytest.approx(17.462, rel=0.01)
 
     def test_conceptus_weight_at_term_is_nonzero(self) -> None:
         """CW at DP=283 (term) must be positive (> 0 kg)."""
@@ -575,17 +578,17 @@ class TestDryMatterIntake:
     """CC-DMI — Eq.10-5 for beef cows, Eq.10-1 yearling for growing animals. ±3%."""
 
     # Non-pregnant Angus cow, BW=520, NEm_diet=1.1:
-    # BW^0.75=108.894, NEm_intake=108.894×(0.04997×1.21+0.04631+0.03840)=15.808
-    # DMI=15.808/1.1=14.371 kg/d
-    _DMI_NONPREG = 14.371357
+    # BW^0.75≈108.892, NEm_intake=108.892×(0.04997×1.21+0.04631×1.1+0.03840)=16.313
+    # DMI=16.313/1.1=14.830 kg/d  (0.04631 is the LINEAR coefficient → multiplied by ne_c)
+    _DMI_NONPREG = 14.829558
 
     # Pregnant Angus cow (no nonpregnant intercept):
-    # NEm_intake=108.894×(0.04997×1.21+0.04631)=11.659
-    # DMI=11.659/1.1=10.599 ≈ 10.570 (slight variation since BW same)
-    _DMI_PREG = 10.569979
+    # NEm_intake=108.892×(0.04997×1.21+0.04631×1.1)=12.131
+    # DMI=12.131/1.1=11.028 kg/d
+    _DMI_PREG = 11.028255
 
     # Lactating non-pregnant cow: DMI_np + 0.2 × Yn(=3.990)
-    _DMI_LACT = 15.169410
+    _DMI_LACT = 15.627612
 
     def test_cc_dmi_1_nonpregnant_cow(self) -> None:
         """CC-DMI-1: Non-pregnant Angus cow DMI via Eq.10-5 (nonpreg intercept). ±3%."""
@@ -798,5 +801,38 @@ class TestTypeGuard:
             ne_diet_concentration=1.1,
             process_based_phosphorus_requirement=0.0,
         )
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="cow-calf types"):
             BeefCowCalfRequirementsCalculator.calculate_requirements(bad)
+
+
+# ---------------------------------------------------------------------------
+# Physiological invariant guards (FIX 6 — CodeRabbit)
+# ---------------------------------------------------------------------------
+
+
+class TestPhysiologicalInvariants:
+    """Calculate_requirements must reject biologically impossible input combinations."""
+
+    def test_bull_with_days_pregnant_raises(self) -> None:
+        """BEEF_BULL with days_pregnant set must raise ValueError (bulls do not gestate)."""
+        bull_preg = dataclasses.replace(_ANGUS_BULL, days_pregnant=100)
+        with pytest.raises(ValueError, match="BEEF_BULL cannot have days_pregnant"):
+            BeefCowCalfRequirementsCalculator.calculate_requirements(bull_preg)
+
+    def test_days_pregnant_above_gestation_length_raises(self) -> None:
+        """days_pregnant > 283 (gestation length) must raise ValueError."""
+        over_term = dataclasses.replace(_ANGUS_COW_GEST, days_pregnant=284)
+        with pytest.raises(ValueError, match="days_pregnant must be"):
+            BeefCowCalfRequirementsCalculator.calculate_requirements(over_term)
+
+    def test_days_pregnant_zero_raises(self) -> None:
+        """days_pregnant = 0 (below minimum of 1) must raise ValueError."""
+        day_zero = dataclasses.replace(_ANGUS_COW_GEST, days_pregnant=0)
+        with pytest.raises(ValueError, match="days_pregnant must be"):
+            BeefCowCalfRequirementsCalculator.calculate_requirements(day_zero)
+
+    def test_negative_days_in_milk_raises(self) -> None:
+        """Negative days_in_milk must raise ValueError."""
+        neg_dim = dataclasses.replace(_ANGUS_COW_LACT, days_in_milk=-1)
+        with pytest.raises(ValueError, match="days_in_milk must be non-negative"):
+            BeefCowCalfRequirementsCalculator.calculate_requirements(neg_dim)
