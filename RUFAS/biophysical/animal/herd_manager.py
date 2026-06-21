@@ -1033,6 +1033,10 @@ class HerdManager:
         self.heiferIIs = [heiferII for heiferII in self.heiferIIs if heiferII != animal]
         self.heiferIIIs = [heiferIII for heiferIII in self.heiferIIIs if heiferIII != animal]
         self.cows = [cow for cow in self.cows if cow != animal]
+        self.beef_cows = [a for a in self.beef_cows if a != animal]
+        self.beef_replacement_heifers = [a for a in self.beef_replacement_heifers if a != animal]
+        self.beef_calves = [a for a in self.beef_calves if a != animal]
+        self.beef_bulls = [a for a in self.beef_bulls if a != animal]
 
     def _add_animal_to_new_array(self, animal: Animal) -> None:
         """
@@ -1051,6 +1055,12 @@ class HerdManager:
             AnimalType.HEIFER_III: self.heiferIIIs,
             AnimalType.LAC_COW: self.cows,
             AnimalType.DRY_COW: self.cows,
+            AnimalType.BEEF_COW: self.beef_cows,
+            AnimalType.BEEF_HEIFER_REPLACEMENT: self.beef_replacement_heifers,
+            AnimalType.BEEF_CALF: self.beef_calves,
+            AnimalType.BEEF_BULL: self.beef_bulls,
+            AnimalType.FEEDLOT_STEER: self.feedlot_animals,
+            AnimalType.FEEDLOT_HEIFER: self.feedlot_animals,
         }
         new_array = animal_type_to_array_map[animal.animal_type]
         new_array.append(animal)
