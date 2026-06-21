@@ -448,3 +448,69 @@ def test_validate_beef_cow_calf_config_accepts_valid_config() -> None:
             "natural_service_bull_ratio": 25,
         }
     )
+
+
+# ---------------------------------------------------------------------------
+# Task 7.6 — None-guards and required metric fields in report_cow_calf_performance
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_report_cow_calf_performance_does_not_raise_with_none_attrs(mocker: MockerFixture) -> None:
+    """report_cow_calf_performance must handle None-valued animal attributes gracefully.
+
+    Exercises the None-guards for wean_weight and any other Optional attributes
+    that may be None on non-cow beef animals (e.g. BEEF_HEIFER_REPLACEMENT) at
+    initialization time. The call must not raise and must emit at least the five
+    required metric variables: days_in_pregnancy, lactation_day,
+    body_condition_score_9, times_calved (parity), and wean_weight.
+    """
+    animal: MagicMock = MagicMock()
+    animal.id = 42
+    animal.animal_type = MagicMock()
+    animal.animal_type.value = AnimalType.BEEF_COW.value
+    animal.days_in_pregnancy = 0
+    animal.lactation_day = 0
+    animal.body_condition_score_9 = 5.0
+    animal.calves = 1
+    animal.wean_weight = None  # None triggers the guard being tested
+
+    add_variable_spy = mocker.patch("RUFAS.biophysical.animal.animal_module_reporter.om.add_variable")
+
+    AnimalModuleReporter.report_cow_calf_performance(animal, simulation_day=100)
+
+    reported_names = [call.args[0] for call in add_variable_spy.call_args_list]
+    assert "beef_days_in_pregnancy" in reported_names
+    assert "beef_lactation_day" in reported_names
+    assert "beef_body_condition_score_9" in reported_names
+    assert "beef_times_calved" in reported_names
+    assert "beef_wean_weight_kg" in reported_names
+
+
+@pytest.mark.unit
+def test_report_cow_calf_performance_wean_weight_none_maps_to_zero(mocker: MockerFixture) -> None:
+    """report_cow_calf_performance must pass 0.0 for beef_wean_weight_kg when wean_weight is None.
+
+    Verifies the exact None-fallback value so that OutputManager receives a
+    valid float, not None, when the attribute has not been set on initialization.
+    """
+    animal: MagicMock = MagicMock()
+    animal.id = 7
+    animal.animal_type = MagicMock()
+    animal.animal_type.value = AnimalType.BEEF_HEIFER_REPLACEMENT.value
+    animal.days_in_pregnancy = 0
+    animal.lactation_day = 0
+    animal.body_condition_score_9 = 4.5
+    animal.calves = 0
+    animal.wean_weight = None
+
+    add_variable_spy = mocker.patch("RUFAS.biophysical.animal.animal_module_reporter.om.add_variable")
+
+    AnimalModuleReporter.report_cow_calf_performance(animal, simulation_day=50)
+
+    wean_call = next(
+        (c for c in add_variable_spy.call_args_list if c.args[0] == "beef_wean_weight_kg"),
+        None,
+    )
+    assert wean_call is not None, "beef_wean_weight_kg must be reported"
+    assert wean_call.args[1] == 0.0, "None wean_weight must fall back to 0.0"

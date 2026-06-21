@@ -1507,6 +1507,11 @@ class AnimalModuleReporter:
             dict(info_map, units=MeasurementUnits.DAYS),
         )
         om.add_variable(
+            "beef_lactation_day",
+            animal.lactation_day,
+            dict(info_map, units=MeasurementUnits.DAYS),
+        )
+        om.add_variable(
             "beef_body_condition_score_9",
             animal.body_condition_score_9,
             dict(info_map, units=MeasurementUnits.UNITLESS),
@@ -1515,4 +1520,10 @@ class AnimalModuleReporter:
             "beef_times_calved",
             animal.calves,
             dict(info_map, units=MeasurementUnits.ANIMALS),
+        )
+        wean_weight: float = animal.wean_weight if animal.wean_weight is not None else 0.0
+        om.add_variable(
+            "beef_wean_weight_kg",
+            wean_weight,
+            dict(info_map, units=MeasurementUnits.KILOGRAMS),
         )
