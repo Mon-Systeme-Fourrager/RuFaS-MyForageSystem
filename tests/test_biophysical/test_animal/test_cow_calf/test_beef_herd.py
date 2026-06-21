@@ -6,6 +6,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 from RUFAS.biophysical.animal.animal_module_reporter import AnimalModuleReporter
+from RUFAS.biophysical.animal.data_types.animal_combination import AnimalCombination
 from RUFAS.biophysical.animal.data_types.animal_enums import AnimalStatus
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 from RUFAS.biophysical.animal.data_types.daily_herd_updates import DailyHerdUpdates
@@ -13,6 +14,8 @@ from RUFAS.biophysical.animal.data_types.daily_routines_output import DailyRouti
 from RUFAS.biophysical.animal.data_types.reproduction import HerdReproductionStatistics
 from RUFAS.biophysical.animal.herd_factory import HerdFactory
 from RUFAS.biophysical.animal.herd_manager import HerdManager
+from RUFAS.biophysical.animal.pen import Pen
+from RUFAS.input_manager import InputManager
 from RUFAS.rufas_time import RufasTime
 
 
@@ -319,3 +322,52 @@ def test_beef_cow_calf_update_calls_reporter_on_sold(mocker: MockerFixture) -> N
 
     assert result.animal_status == AnimalStatus.SOLD
     reporter_spy.assert_called_once_with(animal, time.simulation_day)
+
+
+def _make_minimal_pen(mocker: MockerFixture, forage_quality_factor: float | None = None) -> Pen:
+    """Construct a minimal Pen with bedding mocked out via InputManager."""
+    im = InputManager()
+    mocker.patch.object(
+        im,
+        "get_data",
+        return_value=[
+            {
+                "name": "bedding_1",
+                "bedding_type": "sawdust",
+                "bedding_mass_per_day": 1.97,
+                "bedding_density": 250.0,
+                "bedding_dry_matter_content": 0.9,
+                "bedding_carbon_fraction": 0.0,
+                "bedding_phosphorus_content": 0.0,
+                "sand_removal_efficiency": 0.0,
+            }
+        ],
+    )
+    kwargs: dict[str, object] = dict(
+        pen_id=1,
+        pen_name="Test Pen",
+        vertical_dist_to_milking_parlor=0.0,
+        horizontal_dist_to_milking_parlor=0.0,
+        number_of_stalls=10,
+        housing_type="freestall",
+        pen_type="freestall",
+        animal_combination=AnimalCombination.LAC_COW,
+        max_stocking_density=1.0,
+        minutes_away_for_milking=0,
+        first_parlor_processor=None,
+        parlor_stream_name=None,
+        manure_streams=[{"stream_name": "s1", "stream_proportion": 1.0, "bedding_name": "bedding_1"}],
+    )
+    if forage_quality_factor is not None:
+        kwargs["forage_quality_factor"] = forage_quality_factor
+    return Pen(**kwargs)  # type: ignore[arg-type]
+
+
+@pytest.mark.unit
+def test_pen_forage_quality_factor_defaults_to_one(mocker: MockerFixture) -> None:
+    """Pen must have forage_quality_factor defaulting to 1.0 when not in config."""
+    pen_default = _make_minimal_pen(mocker)
+    assert pen_default.forage_quality_factor == 1.0
+
+    pen_custom = _make_minimal_pen(mocker, forage_quality_factor=0.8)
+    assert pen_custom.forage_quality_factor == 0.8
