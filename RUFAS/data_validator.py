@@ -1830,7 +1830,7 @@ class DataValidator:
         if not math.isfinite(breeding_season_raw) or breeding_season_raw <= 0:
             raise ValueError(f"breeding_season_length must be > 0, got {breeding_season_raw}")
 
-        bull_ratio_raw = float(config.get("natural_service_bull_ratio", 0))
+        bull_ratio_raw = float(config.get("natural_service_bull_ratio", 25))
         if not math.isfinite(bull_ratio_raw):
             raise ValueError(f"natural_service_bull_ratio is non-finite, got {bull_ratio_raw}")
         bull_ratio = int(bull_ratio_raw)

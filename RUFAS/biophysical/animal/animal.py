@@ -2278,8 +2278,6 @@ class Animal:
         AI protocols (AI_SEASONAL, AI_CONTROLLED_BREEDING) are declared in
         BeefReproductionProtocol but raise NotImplementedError in PR-B; only
         NATURAL_SERVICE_SEASONAL is implemented here.
-        # TODO(beef-integration): report_cow_calf_performance belongs in
-        # herd_factory.py _beef_cow_calf_update (Step 7).
 
         """
         if self.animal_type == AnimalType.BEEF_BULL:
@@ -2439,7 +2437,6 @@ class Animal:
         -----
         Actual removal of open cows from the herd is deferred to Step 7 (PR-C); this method
         only sets cull_reason so the higher layer (herd_factory) can act.
-        # TODO(beef-integration): report_cow_calf_performance belongs in herd_factory.py (Step 7).
 
         """
         if self.days_born >= AnimalModuleConstants.BEEF_COW_MAX_AGE_DAYS:

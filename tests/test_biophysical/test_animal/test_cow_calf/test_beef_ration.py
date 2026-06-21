@@ -12,10 +12,12 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
+from RUFAS.biophysical.animal.animal_config import AnimalConfig
 from RUFAS.biophysical.animal.data_types.animal_combination import AnimalCombination
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 from RUFAS.biophysical.animal.ration.ration_manager import RationManager
 from RUFAS.biophysical.animal.ration.ration_optimizer import RationOptimizer
+from RUFAS.data_structures.feed_storage_to_animal_connection import NutrientStandard
 
 # ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -67,8 +69,6 @@ def _make_minimal_ration_optimizer() -> RationOptimizer:
     mock_ration_config = MagicMock()
     mock_ration_config.nutrient_standard.__eq__ = lambda self, other: False
     mock_ration_config.nutrient_standard.__is__ = lambda self, other: False
-    from RUFAS.data_structures.feed_storage_to_animal_connection import NutrientStandard
-
     mock_ration_config.nutrient_standard = NutrientStandard.NRC
     optimizer.set_constraints(mock_ration_config)
     return optimizer
@@ -251,8 +251,6 @@ def test_get_beef_seasonal_ration_bull(mock_animal_bull: MagicMock) -> None:
 
 def test_get_beef_creep_feed_supplement_disabled(mock_animal_lactating_cow: MagicMock) -> None:
     """Returns {} when beef_creep_feeding_enabled is False."""
-    from RUFAS.biophysical.animal.animal_config import AnimalConfig
-
     AnimalConfig.beef_creep_feeding_enabled = False
     RationManager.beef_creep_feed_ration = SENTINEL_CREEP
 
@@ -263,8 +261,6 @@ def test_get_beef_creep_feed_supplement_disabled(mock_animal_lactating_cow: Magi
 
 def test_get_beef_creep_feed_supplement_enabled(mock_animal_lactating_cow: MagicMock) -> None:
     """Returns beef_creep_feed_ration when beef_creep_feeding_enabled is True."""
-    from RUFAS.biophysical.animal.animal_config import AnimalConfig
-
     AnimalConfig.beef_creep_feeding_enabled = True
     RationManager.beef_creep_feed_ration = SENTINEL_CREEP
 

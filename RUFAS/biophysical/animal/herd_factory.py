@@ -794,28 +794,6 @@ class HerdFactory:
 
         return animals
 
-    def _beef_cow_calf_update(self, animal: Animal, time: RufasTime) -> DailyRoutinesOutput:
-        """
-        Daily routines for a single beef cow-calf animal. Reports on SOLD disposition.
-
-        Parameters
-        ----------
-        animal : Animal
-            The beef cow-calf animal to update.
-        time : RufasTime
-            The current simulation time.
-
-        Returns
-        -------
-        DailyRoutinesOutput
-            Daily routines output containing animal status and any newborn calf config.
-
-        """
-        output = animal.daily_routines(time)
-        if output.animal_status == AnimalStatus.SOLD:
-            AnimalModuleReporter.report_cow_calf_performance(animal, time.simulation_day)
-        return output
-
     def initialize_herd(self) -> None:
         """
         Initialize an AnimalPopulation object for simulation, either from input data or generate from simulation.

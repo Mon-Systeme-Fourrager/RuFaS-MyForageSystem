@@ -306,26 +306,53 @@ def test_initialize_beef_cow_calf_herd_non_dict_config_returns_empty(mocker: Moc
 
 
 @pytest.mark.unit
-def test_beef_cow_calf_update_calls_reporter_on_sold(mocker: MockerFixture) -> None:
-    """_beef_cow_calf_update must call report_cow_calf_performance when animal status is SOLD.
+def test_first_calving_heifer_newborn_captured_in_herd_updates(mocker: MockerFixture) -> None:
+    """LIFE_STAGE_CHANGED from beef_replacement_heifers with non-None newborn_calf_config must populate newborn_calves.
 
-    Verifies Lesson 4: the reporter call at SOLD disposition is tested explicitly.
+    Verifies Fix B-1: beef_replacement_heifers is included in collect_birth_results so that
+    first-calving heifers do not silently drop their newborn.
     """
-    hf: HerdFactory = HerdFactory.__new__(HerdFactory)
-    hf.time = _make_time_mock(simulation_day=3)
-
-    animal = MagicMock()
+    heifer = MagicMock()
+    heifer.animal_type = AnimalType.BEEF_HEIFER_REPLACEMENT
+    newborn_cfg: MagicMock = MagicMock()
     output = DailyRoutinesOutput(herd_reproduction_statistics=HerdReproductionStatistics())
-    output.animal_status = AnimalStatus.SOLD
-    animal.daily_routines.return_value = output
+    output.animal_status = AnimalStatus.LIFE_STAGE_CHANGED
+    output.newborn_calf_config = newborn_cfg
+    heifer.daily_routines.return_value = output
 
-    reporter_spy = mocker.patch.object(AnimalModuleReporter, "report_cow_calf_performance", return_value=None)
-    time = _make_time_mock(simulation_day=3)
+    hm = _make_herd_manager_stub(mocker, beef_replacement_heifers=[heifer])
 
-    result = hf._beef_cow_calf_update(animal, time)
+    newborn_animal = MagicMock()
+    newborn_animal.stillborn = False
+    newborn_animal.sold = False
+    mocker.patch.object(hm, "_create_newborn_calf", return_value=newborn_animal)
+    mocker.patch.object(hm, "_update_genetic_values_at_lactation_start", return_value=None)
+    mocker.patch.object(AnimalModuleReporter, "report_cow_calf_performance", return_value=None)
 
-    assert result.animal_status == AnimalStatus.SOLD
-    reporter_spy.assert_called_once_with(animal, time.simulation_day)
+    time = _make_time_mock()
+    daily_herd_updates: DailyHerdUpdates = hm._process_daily_herd_updates(time)
+
+    assert (
+        newborn_animal in daily_herd_updates.newborn_calves
+    ), "Newborn from first-calving heifer (LIFE_STAGE_CHANGED) must appear in daily_herd_updates.newborn_calves"
+
+
+@pytest.mark.unit
+def test_herd_statistics_deaths_by_stage_includes_beef_types() -> None:
+    """HerdStatistics() must initialise animals_deaths_by_stage with all four beef types at 0."""
+    from RUFAS.biophysical.animal.data_types.herd_statistics import HerdStatistics
+
+    stats = HerdStatistics()
+
+    assert AnimalType.BEEF_COW in stats.animals_deaths_by_stage
+    assert AnimalType.BEEF_HEIFER_REPLACEMENT in stats.animals_deaths_by_stage
+    assert AnimalType.BEEF_CALF in stats.animals_deaths_by_stage
+    assert AnimalType.BEEF_BULL in stats.animals_deaths_by_stage
+
+    assert stats.animals_deaths_by_stage[AnimalType.BEEF_COW] == 0
+    assert stats.animals_deaths_by_stage[AnimalType.BEEF_HEIFER_REPLACEMENT] == 0
+    assert stats.animals_deaths_by_stage[AnimalType.BEEF_CALF] == 0
+    assert stats.animals_deaths_by_stage[AnimalType.BEEF_BULL] == 0
 
 
 def _make_minimal_pen(mocker: MockerFixture, forage_quality_factor: float | None = None) -> Pen:
@@ -439,13 +466,12 @@ def test_validate_beef_cow_calf_config_rejects_excessive_bull_ratio() -> None:
 
 @pytest.mark.unit
 def test_validate_beef_cow_calf_config_accepts_valid_config() -> None:
-    """A valid config must not raise."""
+    """A valid config that omits natural_service_bull_ratio must not raise (default=25)."""
     DataValidator.validate_beef_cow_calf_config(
         {
             "mature_cow_weight_kg": 500.0,
             "weaning_age_days": 180,
             "breeding_season_length": 63,
-            "natural_service_bull_ratio": 25,
         }
     )
 

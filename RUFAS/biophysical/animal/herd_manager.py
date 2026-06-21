@@ -84,6 +84,14 @@ class HerdManager:
         Animals currently classified as heifer III.
     cows : list[Animal]
         Animals currently classified as lactating or dry cows.
+    beef_cows : list[Animal]
+        Animals currently classified as beef cows.
+    beef_replacement_heifers : list[Animal]
+        Animals currently classified as beef replacement heifers.
+    beef_calves : list[Animal]
+        Animals currently classified as beef calves.
+    beef_bulls : list[Animal]
+        Animals currently classified as beef bulls.
     replacement_market : list[Animal]
         Replacement animals available for purchase into the herd.
     heifers_sold : list[Animal]
@@ -662,7 +670,7 @@ class HerdManager:
                 group_newborn_calves,
                 group_sold_newborn_calves,
             ) = self._perform_daily_routines_for_animals(time, animals)
-            collect_birth_results = animal_group_name in ["heiferIIIs", "cows", "beef_cows"]
+            collect_birth_results = animal_group_name in ["heiferIIIs", "cows", "beef_cows", "beef_replacement_heifers"]
             daily_herd_updates.graduated_animals += group_graduated_animals
             daily_herd_updates.removed_animals += sold_animals
             if collect_birth_results:
