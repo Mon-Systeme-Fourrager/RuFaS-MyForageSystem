@@ -243,6 +243,13 @@ class HerdManager:
             herd_population.replacement,
         )
         self.feedlot_animals = list(HerdFactory.feedlot_animals)
+        beef_all = list(HerdFactory.beef_cow_calf_animals)
+        self.beef_cows: list[Animal] = [a for a in beef_all if a.animal_type == AnimalType.BEEF_COW]
+        self.beef_replacement_heifers: list[Animal] = [
+            a for a in beef_all if a.animal_type == AnimalType.BEEF_HEIFER_REPLACEMENT
+        ]
+        self.beef_calves: list[Animal] = [a for a in beef_all if a.animal_type == AnimalType.BEEF_CALF]
+        self.beef_bulls: list[Animal] = [a for a in beef_all if a.animal_type == AnimalType.BEEF_BULL]
 
         self.allocate_animals_to_pens(time.simulation_day)
         self.initialize_nutrient_requirements(weather, time, available_feeds)
@@ -268,6 +275,10 @@ class HerdManager:
             AnimalType.DRY_COW: [cow for cow in self.cows if not cow.is_milking],
             AnimalType.FEEDLOT_STEER: [a for a in self.feedlot_animals if a.animal_type == AnimalType.FEEDLOT_STEER],
             AnimalType.FEEDLOT_HEIFER: [a for a in self.feedlot_animals if a.animal_type == AnimalType.FEEDLOT_HEIFER],
+            AnimalType.BEEF_COW: self.beef_cows,
+            AnimalType.BEEF_HEIFER_REPLACEMENT: self.beef_replacement_heifers,
+            AnimalType.BEEF_CALF: self.beef_calves,
+            AnimalType.BEEF_BULL: self.beef_bulls,
         }
 
     @property

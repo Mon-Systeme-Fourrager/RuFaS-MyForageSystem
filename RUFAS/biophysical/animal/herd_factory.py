@@ -66,6 +66,7 @@ class HerdFactory:
 
     post_animal_population: AnimalPopulation | None = None
     feedlot_animals: list[Animal] = []
+    beef_cow_calf_animals: list[Animal] = []  # populated by initialize_herd via _initialize_beef_cow_calf_herd
 
     def __init__(
         self,
