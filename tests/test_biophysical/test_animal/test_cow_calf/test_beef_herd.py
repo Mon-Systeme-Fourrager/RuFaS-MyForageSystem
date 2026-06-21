@@ -18,6 +18,7 @@ from RUFAS.biophysical.animal.herd_factory import HerdFactory
 from RUFAS.biophysical.animal.herd_manager import HerdManager
 from RUFAS.biophysical.animal.nutrients.nutrients import Nutrients
 from RUFAS.biophysical.animal.pen import Pen
+from RUFAS.data_validator import DataValidator
 from RUFAS.input_manager import InputManager
 from RUFAS.rufas_time import RufasTime
 
@@ -406,3 +407,44 @@ def test_nutrients_phosphorus_requirement_set_for_beef() -> None:
 
     assert math.isfinite(nutrients.phosphorus_requirement), "phosphorus_requirement must be finite for BEEF_COW"
     assert nutrients.phosphorus_requirement > 0, "phosphorus_requirement must be positive for BEEF_COW"
+
+
+@pytest.mark.unit
+def test_validate_beef_cow_calf_config_rejects_nan_weight() -> None:
+    """mature_cow_weight_kg of NaN must raise ValueError."""
+    with pytest.raises(ValueError, match="mature_cow_weight_kg"):
+        DataValidator.validate_beef_cow_calf_config({"mature_cow_weight_kg": float("nan")})
+
+
+@pytest.mark.unit
+def test_validate_beef_cow_calf_config_rejects_zero_weaning_age() -> None:
+    """weaning_age_days of 0 must raise ValueError."""
+    with pytest.raises(ValueError, match="weaning_age_days"):
+        DataValidator.validate_beef_cow_calf_config({"mature_cow_weight_kg": 500.0, "weaning_age_days": 0})
+
+
+@pytest.mark.unit
+def test_validate_beef_cow_calf_config_rejects_excessive_bull_ratio() -> None:
+    """natural_service_bull_ratio above MAX_BULL_TO_COW_RATIO must raise ValueError."""
+    with pytest.raises(ValueError, match="natural_service_bull_ratio"):
+        DataValidator.validate_beef_cow_calf_config(
+            {
+                "mature_cow_weight_kg": 500.0,
+                "weaning_age_days": 180,
+                "breeding_season_length": 63,
+                "natural_service_bull_ratio": 999,
+            }
+        )
+
+
+@pytest.mark.unit
+def test_validate_beef_cow_calf_config_accepts_valid_config() -> None:
+    """A valid config must not raise."""
+    DataValidator.validate_beef_cow_calf_config(
+        {
+            "mature_cow_weight_kg": 500.0,
+            "weaning_age_days": 180,
+            "breeding_season_length": 63,
+            "natural_service_bull_ratio": 25,
+        }
+    )

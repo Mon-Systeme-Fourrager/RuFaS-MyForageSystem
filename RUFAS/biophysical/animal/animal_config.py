@@ -12,6 +12,7 @@ from RUFAS.biophysical.animal.data_types.repro_protocol_enums import (
     HeiferSynchEDSubProtocol,
     BeefReproductionProtocol,
 )
+from RUFAS.data_validator import DataValidator
 from RUFAS.input_manager import InputManager
 from RUFAS.output_manager import OutputManager
 
@@ -608,6 +609,8 @@ class AnimalConfig:
 
         # ── COW-CALF PARAMETERS ──────────────────────────────────────────────
         beef_cfg: dict[str, Any] = animal_config_data.get("beef_cow_calf", {})
+        if beef_cfg:
+            DataValidator.validate_beef_cow_calf_config(beef_cfg)
         cls.beef_breeding_season_start_day = int(beef_cfg.get("breeding_season_start_day", 90))
         cls.beef_breeding_season_length = int(
             beef_cfg.get("breeding_season_length", AnimalModuleConstants.BEEF_DEFAULT_BREEDING_SEASON_LENGTH_DAYS)

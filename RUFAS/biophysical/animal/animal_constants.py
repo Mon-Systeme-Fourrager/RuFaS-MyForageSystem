@@ -155,3 +155,7 @@ REPLACEMENT_HEIFER_REACHED_BREEDING_WEIGHT = "replacement_heifer_reached_breedin
 REPLACEMENT_HEIFER_PROMOTED_TO_COW = "replacement_heifer_promoted_to_cow"
 STILLBIRTH = "stillbirth"
 BEEF_CALVING = "beef_calving"
+
+# ── COW-CALF LIMITS ───────────────────────────────────────────────────────────
+MAX_BULL_TO_COW_RATIO: int = 50
+"""Maximum allowable bulls-per-cow ratio for natural service breeding."""

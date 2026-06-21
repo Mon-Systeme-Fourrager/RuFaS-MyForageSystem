@@ -5,6 +5,7 @@ import re
 from enum import Enum
 from typing import Any, Callable, Sequence, cast
 
+from RUFAS.biophysical.animal import animal_constants
 from RUFAS.util import Aggregator
 
 AGGREGATION_FUNCTIONS: dict[
@@ -1794,6 +1795,48 @@ class DataValidator:
         if mud_condition not in valid_mud_conditions:
             raise ValueError(
                 f"feedlot mud_condition must be one of {sorted(valid_mud_conditions)}, " f"got '{mud_condition}'"
+            )
+
+    @staticmethod
+    def validate_beef_cow_calf_config(config: dict[str, Any]) -> None:
+        """
+        Validate beef cow-calf configuration business rules.
+
+        Parameters
+        ----------
+        config : dict[str, Any]
+            The beef_cow_calf config block from the animal input file.
+
+        Raises
+        ------
+        ValueError
+            If any of the following rules are violated:
+
+            - ``mature_cow_weight_kg`` must be > 0 and finite.
+            - ``weaning_age_days`` must be > 0 and finite.
+            - ``breeding_season_length`` must be > 0 and finite.
+            - ``natural_service_bull_ratio`` must be between 1 and ``MAX_BULL_TO_COW_RATIO``.
+
+        """
+        mature_cow_weight = float(config.get("mature_cow_weight_kg", 0))
+        if not math.isfinite(mature_cow_weight) or mature_cow_weight <= 0:
+            raise ValueError(f"mature_cow_weight_kg must be > 0, got {mature_cow_weight}")
+
+        weaning_age_raw = float(config.get("weaning_age_days", 0))
+        if not math.isfinite(weaning_age_raw) or weaning_age_raw <= 0:
+            raise ValueError(f"weaning_age_days must be > 0, got {weaning_age_raw}")
+
+        breeding_season_raw = float(config.get("breeding_season_length", 0))
+        if not math.isfinite(breeding_season_raw) or breeding_season_raw <= 0:
+            raise ValueError(f"breeding_season_length must be > 0, got {breeding_season_raw}")
+
+        bull_ratio_raw = float(config.get("natural_service_bull_ratio", 0))
+        if not math.isfinite(bull_ratio_raw):
+            raise ValueError(f"natural_service_bull_ratio is non-finite, got {bull_ratio_raw}")
+        bull_ratio = int(bull_ratio_raw)
+        if bull_ratio <= 0 or bull_ratio > animal_constants.MAX_BULL_TO_COW_RATIO:
+            raise ValueError(
+                f"natural_service_bull_ratio must be 1–{animal_constants.MAX_BULL_TO_COW_RATIO}, got {bull_ratio}"
             )
 
 
