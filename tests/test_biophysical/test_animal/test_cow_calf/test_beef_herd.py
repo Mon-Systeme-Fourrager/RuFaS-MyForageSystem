@@ -1,5 +1,6 @@
 """Tests for beef cow-calf herd cohort lists in HerdFactory and HerdManager (Tasks 7.1 + 7.2)."""
 
+import math
 from unittest.mock import MagicMock
 
 import pytest
@@ -11,9 +12,11 @@ from RUFAS.biophysical.animal.data_types.animal_enums import AnimalStatus
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 from RUFAS.biophysical.animal.data_types.daily_herd_updates import DailyHerdUpdates
 from RUFAS.biophysical.animal.data_types.daily_routines_output import DailyRoutinesOutput
+from RUFAS.biophysical.animal.data_types.nutrients import NutrientsInputs
 from RUFAS.biophysical.animal.data_types.reproduction import HerdReproductionStatistics
 from RUFAS.biophysical.animal.herd_factory import HerdFactory
 from RUFAS.biophysical.animal.herd_manager import HerdManager
+from RUFAS.biophysical.animal.nutrients.nutrients import Nutrients
 from RUFAS.biophysical.animal.pen import Pen
 from RUFAS.input_manager import InputManager
 from RUFAS.rufas_time import RufasTime
@@ -371,3 +374,35 @@ def test_pen_forage_quality_factor_defaults_to_one(mocker: MockerFixture) -> Non
 
     pen_custom = _make_minimal_pen(mocker, forage_quality_factor=0.8)
     assert pen_custom.forage_quality_factor == 0.8
+
+
+# ---------------------------------------------------------------------------
+# Task 7.4 — nutrients.py phosphorus guard verification
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_nutrients_phosphorus_requirement_set_for_beef() -> None:
+    """_calculate_phosphorus_requirements sets a finite positive value for beef animals.
+
+    Verifies Task 7.4: the void method modifies self.phosphorus_requirement in-place
+    and produces a valid (finite, > 0) result for BEEF_COW without raising an error.
+    No guard is needed because the existing code already produces a valid finite positive
+    value via the non-cow fallback paths in the sub-calculations.
+    """
+    nutrients = Nutrients()
+    nutrients_inputs = NutrientsInputs(
+        animal_type=AnimalType.BEEF_COW,
+        body_weight=550.0,
+        mature_body_weight=550.0,
+        daily_growth=0.0,
+        days_in_pregnancy=0,
+        days_in_milk=0,
+        daily_milk_produced=0.0,
+    )
+    nutrients.set_dry_matter_intake(10.0)
+
+    nutrients._calculate_phosphorus_requirements(nutrients_inputs)
+
+    assert math.isfinite(nutrients.phosphorus_requirement), "phosphorus_requirement must be finite for BEEF_COW"
+    assert nutrients.phosphorus_requirement > 0, "phosphorus_requirement must be positive for BEEF_COW"
