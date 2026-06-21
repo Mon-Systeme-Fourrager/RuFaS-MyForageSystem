@@ -17,7 +17,6 @@ from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 from RUFAS.biophysical.animal.ration.ration_manager import RationManager
 from RUFAS.biophysical.animal.ration.ration_optimizer import RationOptimizer
 
-
 # ── helpers ──────────────────────────────────────────────────────────────────
 
 
@@ -44,8 +43,7 @@ def restore_ration_manager_beef_state() -> Generator[None, None, None]:
     original_attrs = {
         name: value
         for name, value in RationManager.__dict__.items()
-        if not name.startswith("__")
-        and not isinstance(value, (types.FunctionType, classmethod, staticmethod))
+        if not name.startswith("__") and not isinstance(value, (types.FunctionType, classmethod, staticmethod))
     }
     original_names = set(original_attrs.keys())
     yield
