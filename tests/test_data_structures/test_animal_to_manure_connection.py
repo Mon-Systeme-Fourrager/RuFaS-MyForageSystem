@@ -8,8 +8,9 @@ from RUFAS.data_structures.animal_to_manure_connection import ManureStream, Stre
 
 @pytest.fixture
 def manure_stream(mocker: MockerFixture) -> ManureStream:
-    return ManureStream(1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 8.8, 7.7, 10, 9.9, 10, 0.24,
-                        mocker.MagicMock(autospec=PenManureData))
+    return ManureStream(
+        1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 8.8, 7.7, 10, 9.9, 10, 0.24, mocker.MagicMock(autospec=PenManureData)
+    )
 
 
 def test_total_volatile_solids(manure_stream: ManureStream) -> None:
@@ -52,7 +53,7 @@ def manure_stream_1() -> ManureStream:
         volume=1.0,
         methane_production_potential=0.24,
         pen_manure_data=pen_data,
-        bedding_non_degradable_volatile_solids=10
+        bedding_non_degradable_volatile_solids=10,
     )
 
 
@@ -82,7 +83,7 @@ def manure_stream_1() -> ManureStream:
                     manure_urine_nitrogen=3.0,
                     stream_type=StreamType.PARLOR,
                 ),
-                bedding_non_degradable_volatile_solids=2
+                bedding_non_degradable_volatile_solids=2,
             ),
             None,
             {
@@ -113,7 +114,7 @@ def manure_stream_1() -> ManureStream:
                 volume=0.5,
                 methane_production_potential=0.17,
                 pen_manure_data=None,
-                bedding_non_degradable_volatile_solids=2
+                bedding_non_degradable_volatile_solids=2,
             ),
             None,
             {
@@ -336,7 +337,7 @@ def sample_manure_stream(pen_data_2: PenManureData) -> ManureStream:
         volume=1.0,
         methane_production_potential=0.24,
         pen_manure_data=pen_data_2,
-        bedding_non_degradable_volatile_solids=10
+        bedding_non_degradable_volatile_solids=10,
     )
 
 
@@ -380,7 +381,7 @@ def test_split_stream_without_pen_manure_data() -> None:
         volume=0.5,
         methane_production_potential=0.24,
         pen_manure_data=None,
-        bedding_non_degradable_volatile_solids=10
+        bedding_non_degradable_volatile_solids=10,
     )
 
     split = stream.split_stream(0.5, stream_type=StreamType.GENERAL)

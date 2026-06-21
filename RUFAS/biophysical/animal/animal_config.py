@@ -10,6 +10,7 @@ from RUFAS.biophysical.animal.data_types.repro_protocol_enums import (
     CowReSynchSubProtocol,
     HeiferTAISubProtocol,
     HeiferSynchEDSubProtocol,
+    BeefReproductionProtocol,
 )
 from RUFAS.input_manager import InputManager
 from RUFAS.output_manager import OutputManager
@@ -423,6 +424,7 @@ class AnimalConfig:
     beef_mature_cow_weight_kg: float = AnimalModuleConstants.BEEF_DEFAULT_MATURE_COW_WEIGHT_KG
     beef_natural_service_bull_ratio: int = 25
     beef_cow_cull_rate_annual: float = AnimalModuleConstants.BEEF_ANNUAL_CULL_RATE
+    beef_reproduction_program: BeefReproductionProtocol = BeefReproductionProtocol.NATURAL_SERVICE_SEASONAL
 
     @classmethod
     def initialize_animal_config(cls) -> None:

@@ -60,6 +60,11 @@ class RufasTime:
         return int(self.current_date.strftime("%j"))
 
     @property
+    def day_of_year(self) -> int:
+        """Alias for current_julian_day — day of the calendar year (1–365)."""
+        return self.current_julian_day
+
+    @property
     def current_month(self) -> int:
         """
         Returns the current month in integer.
