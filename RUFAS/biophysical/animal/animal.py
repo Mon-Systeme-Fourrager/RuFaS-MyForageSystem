@@ -2195,7 +2195,12 @@ class Animal:
         """
         season_start = AnimalConfig.beef_breeding_season_start_day
         season_end = season_start + AnimalConfig.beef_breeding_season_length
-        if not (season_start <= time.day_of_year < season_end):
+        day = time.day_of_year
+        if season_end <= 365:
+            in_season = season_start <= day < season_end
+        else:
+            in_season = day >= season_start or day < (season_end % 365)
+        if not in_season:
             return
         if self.days_since_calving < 45:
             return
@@ -2358,6 +2363,8 @@ class Animal:
             self.sold_at_day = time.simulation_day
             return AnimalStatus.SOLD, None
         if destination == "replacement_heifer":
+            if self.sex != Sex.FEMALE:
+                raise ValueError(f"Calf with sex {self.sex} cannot be transitioned to a replacement heifer.")
             self.animal_type = AnimalType.BEEF_HEIFER_REPLACEMENT
             return AnimalStatus.LIFE_STAGE_CHANGED, None
         if destination == "direct_to_feedlot":
@@ -2441,7 +2448,11 @@ class Animal:
             return AnimalStatus.SOLD, None
 
         season_close = AnimalConfig.beef_breeding_season_start_day + AnimalConfig.beef_breeding_season_length
-        if self.is_open and time.day_of_year > season_close:
+        if (
+            self.is_open
+            and time.day_of_year > season_close
+            and self.cull_reason != animal_constants.COW_OPEN_AT_PREGNANCY_CHECK
+        ):
             self.events.add_event(self.days_born, time.simulation_day, animal_constants.COW_OPEN_AT_PREGNANCY_CHECK)
             self.cull_reason = animal_constants.COW_OPEN_AT_PREGNANCY_CHECK
 

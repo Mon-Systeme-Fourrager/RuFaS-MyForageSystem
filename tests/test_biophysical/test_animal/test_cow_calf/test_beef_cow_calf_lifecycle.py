@@ -690,3 +690,106 @@ def test_B3_all_animal_types_in_life_stage_map(animal_type: AnimalType) -> None:
     # animal_life_stage_update builds the map internally and dispatches;
     # a KeyError before implementation is the expected RED failure
     animal.animal_life_stage_update(t)
+
+
+# ── Gemini PR #34 review fixes ───────────────────────────────────────────────
+
+
+@pytest.mark.unit
+def test_GA_male_calf_replacement_heifer_destination_raises_value_error() -> None:
+    """GA: Male BEEF_CALF with destination='replacement_heifer' must raise ValueError.
+
+    Verifies the sex guard added in Fix A prevents males from being incorrectly
+    transitioned to BEEF_HEIFER_REPLACEMENT.
+    """
+    weaning_age = AnimalConfig.beef_weaning_age_days
+    animal = _make_beef_animal(
+        animal_type=AnimalType.BEEF_CALF,
+        days_born=weaning_age,
+        sex=Sex.MALE,
+    )
+    AnimalConfig.beef_post_weaning_destination = "replacement_heifer"
+    t = _mock_time(simulation_day=weaning_age)
+
+    with pytest.raises(ValueError, match="replacement heifer"):
+        animal._beef_calf_life_stage_update(t)
+
+
+@pytest.mark.unit
+def test_GA_female_calf_replacement_heifer_destination_transitions() -> None:
+    """GA: Female BEEF_CALF with destination='replacement_heifer' must transition correctly.
+
+    Regression guard: the sex guard must not block valid female transitions.
+    """
+    weaning_age = AnimalConfig.beef_weaning_age_days
+    animal = _make_beef_animal(
+        animal_type=AnimalType.BEEF_CALF,
+        days_born=weaning_age,
+        sex=Sex.FEMALE,
+    )
+    AnimalConfig.beef_post_weaning_destination = "replacement_heifer"
+    t = _mock_time(simulation_day=weaning_age)
+
+    status, newborn = animal._beef_calf_life_stage_update(t)
+
+    assert status == AnimalStatus.LIFE_STAGE_CHANGED
+    assert animal.animal_type == AnimalType.BEEF_HEIFER_REPLACEMENT
+    assert newborn is None
+
+
+@pytest.mark.unit
+def test_GB_open_cow_generates_exactly_one_event_across_multiple_days() -> None:
+    """GB: Open cow past breeding-season-close must fire COW_OPEN_AT_PREGNANCY_CHECK exactly once.
+
+    Verifies the dedup guard in Fix B prevents duplicate event entries when
+    _beef_cow_life_stage_update is called on consecutive simulation days.
+    """
+    season_start = AnimalConfig.beef_breeding_season_start_day
+    season_length = AnimalConfig.beef_breeding_season_length
+    past_close = season_start + season_length + 1
+
+    animal = _make_beef_animal(
+        animal_type=AnimalType.BEEF_COW,
+        is_open=True,
+        days_born=730,
+    )
+
+    for day_offset in range(3):
+        t = _mock_time(simulation_day=past_close + day_offset, day_of_year=past_close + day_offset)
+        animal._beef_cow_life_stage_update(t)
+
+    event_count = sum(
+        descriptions.count(animal_constants.COW_OPEN_AT_PREGNANCY_CHECK)
+        for descriptions in animal.events.events.values()
+    )
+    assert event_count == 1, f"Expected exactly 1 event, got {event_count}"
+
+
+@pytest.mark.unit
+def test_GC_breeding_season_year_boundary_wrap(mocker: MockerFixture) -> None:
+    """GC: Breeding season starting day 330 with length 63 must wrap across the year boundary.
+
+    Season spans days 330-365 (36 days) + days 1-27 (27 days) = 63 days total.
+    Day 15 (inside wrapped portion) must be IN season; day 100 must be OUT.
+    Verifies Fix C's year-boundary wrap in _beef_daily_reproduction_update.
+    """
+    AnimalConfig.beef_breeding_season_start_day = 330
+    AnimalConfig.beef_breeding_season_length = 63  # season_end = 393; 393 % 365 = 28 → days 1-27 in wrapped portion
+
+    animal = _make_beef_animal(
+        animal_type=AnimalType.BEEF_COW,
+        is_open=True,
+        days_since_calving=60,
+        body_condition_score_9=6.0,
+    )
+
+    # day 100 — outside the wrapped season; is_open must stay True
+    t_out = _mock_time(day_of_year=100)
+    animal._beef_daily_reproduction_update(t_out)
+    assert animal.is_open is True, "Day 100 should be outside the wrapped breeding season"
+
+    # day 15 — clearly inside the wrapped portion (days 1-27); patch random to guarantee conception
+    mocker.patch("RUFAS.biophysical.animal.animal.random", return_value=0.0)
+    t_in = _mock_time(day_of_year=15)
+    animal._beef_daily_reproduction_update(t_in)
+    assert animal.is_open is False, "Day 15 should be inside the wrapped breeding season"
