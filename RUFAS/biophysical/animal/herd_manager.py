@@ -526,6 +526,23 @@ class HerdManager:
         self._update_sold_heiferII_statistics(sold_heiferIIs)
         self._update_sold_newborn_calf_statistics(sold_newborn_calves)
 
+    def _collect_newborn_calf(
+        self,
+        newborn_calf_config: NewBornCalfValuesTypedDict,
+        time: RufasTime,
+        stillborn_newborn_calves: list[Animal],
+        sold_newborn_calves: list[Animal],
+        newborn_calves: list[Animal],
+    ) -> None:
+        """Create a newborn calf from config and route it to the appropriate output list."""
+        newborn_calf = self._create_newborn_calf(newborn_calf_config, time=time)
+        if newborn_calf.stillborn:
+            stillborn_newborn_calves.append(newborn_calf)
+        elif newborn_calf.sold:
+            sold_newborn_calves.append(newborn_calf)
+        else:
+            newborn_calves.append(newborn_calf)
+
     def _perform_daily_routines_for_animals(
         self, time: RufasTime, animals: list[Animal]
     ) -> tuple[list[Animal], list[Animal], list[Animal], list[Animal], list[Animal]]:
@@ -544,16 +561,26 @@ class HerdManager:
             if animal_daily_routines_output.animal_status == AnimalStatus.LIFE_STAGE_CHANGED:
                 graduated_animals.append(animal)
                 if animal_daily_routines_output.newborn_calf_config is not None:
-                    newborn_calf = self._create_newborn_calf(
-                        animal_daily_routines_output.newborn_calf_config, time=time
+                    self._collect_newborn_calf(
+                        animal_daily_routines_output.newborn_calf_config,
+                        time,
+                        stillborn_newborn_calves,
+                        sold_newborn_calves,
+                        newborn_calves,
                     )
-                    if newborn_calf.stillborn:
-                        stillborn_newborn_calves.append(newborn_calf)
-                    elif newborn_calf.sold:
-                        sold_newborn_calves.append(newborn_calf)
-                    else:
-                        newborn_calves.append(newborn_calf)
                     self._update_genetic_values_at_lactation_start(animal, time)
+            elif (
+                animal_daily_routines_output.animal_status == AnimalStatus.REMAIN
+                and animal.animal_type == AnimalType.BEEF_COW
+                and animal_daily_routines_output.newborn_calf_config is not None
+            ):
+                self._collect_newborn_calf(
+                    animal_daily_routines_output.newborn_calf_config,
+                    time,
+                    stillborn_newborn_calves,
+                    sold_newborn_calves,
+                    newborn_calves,
+                )
             elif animal_daily_routines_output.animal_status in [AnimalStatus.DEAD, AnimalStatus.SOLD]:
                 sold_animals.append(animal)
             animal.update_genetic_history(simulation_day=time.simulation_day)
@@ -621,6 +648,10 @@ class HerdManager:
             # TODO: Rank heifers to enter the herd or sold # GitHub Issue 1214
             ("heiferIIIs", self.heiferIIIs),
             ("cows", self.cows),
+            ("beef_cows", self.beef_cows),
+            ("beef_replacement_heifers", self.beef_replacement_heifers),
+            ("beef_calves", self.beef_calves),
+            ("beef_bulls", self.beef_bulls),
         ]
 
         for animal_group_name, animals in animal_groups:
@@ -631,7 +662,7 @@ class HerdManager:
                 group_newborn_calves,
                 group_sold_newborn_calves,
             ) = self._perform_daily_routines_for_animals(time, animals)
-            collect_birth_results = animal_group_name in ["heiferIIIs", "cows"]
+            collect_birth_results = animal_group_name in ["heiferIIIs", "cows", "beef_cows"]
             daily_herd_updates.graduated_animals += group_graduated_animals
             daily_herd_updates.removed_animals += sold_animals
             if collect_birth_results:
@@ -643,6 +674,8 @@ class HerdManager:
             elif animal_group_name == "cows":
                 daily_herd_updates.sold_and_died_cows = sold_animals
 
+        for animal in [*self.beef_cows, *self.beef_replacement_heifers, *self.beef_calves, *self.beef_bulls]:
+            AnimalModuleReporter.report_cow_calf_performance(animal, time.simulation_day)
         return daily_herd_updates
 
     def _apply_daily_herd_structure_updates(

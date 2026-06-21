@@ -1,13 +1,19 @@
-"""Tests for beef cow-calf herd cohort lists in HerdFactory and HerdManager (Task 7.1)."""
+"""Tests for beef cow-calf herd cohort lists in HerdFactory and HerdManager (Tasks 7.1 + 7.2)."""
 
 from unittest.mock import MagicMock
 
 import pytest
 from pytest_mock import MockerFixture
 
+from RUFAS.biophysical.animal.animal_module_reporter import AnimalModuleReporter
+from RUFAS.biophysical.animal.data_types.animal_enums import AnimalStatus
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
+from RUFAS.biophysical.animal.data_types.daily_herd_updates import DailyHerdUpdates
+from RUFAS.biophysical.animal.data_types.daily_routines_output import DailyRoutinesOutput
+from RUFAS.biophysical.animal.data_types.reproduction import HerdReproductionStatistics
 from RUFAS.biophysical.animal.herd_factory import HerdFactory
 from RUFAS.biophysical.animal.herd_manager import HerdManager
+from RUFAS.rufas_time import RufasTime
 
 
 @pytest.mark.unit
@@ -118,3 +124,198 @@ def test_herd_manager_beef_lists_populated_from_factory(mocker: MockerFixture) -
     assert hm.beef_cows is not hm.beef_replacement_heifers
     assert hm.beef_cows is not hm.beef_calves
     assert hm.beef_cows is not hm.beef_bulls
+
+
+# ---------------------------------------------------------------------------
+# Task 7.2 — RED tests
+# ---------------------------------------------------------------------------
+
+
+def _make_herd_manager_stub(
+    mocker: MockerFixture,
+    beef_cows: list[MagicMock] | None = None,
+    beef_replacement_heifers: list[MagicMock] | None = None,
+    beef_calves: list[MagicMock] | None = None,
+    beef_bulls: list[MagicMock] | None = None,
+) -> HerdManager:
+    """Return a HerdManager instance with all list attrs pre-set (no __init__)."""
+    hm: HerdManager = HerdManager.__new__(HerdManager)
+    hm.calves = []
+    hm.heiferIs = []
+    hm.heiferIIs = []
+    hm.heiferIIIs = []
+    hm.cows = []
+    hm.feedlot_animals = []
+    hm.beef_cows = beef_cows if beef_cows is not None else []
+    hm.beef_replacement_heifers = beef_replacement_heifers if beef_replacement_heifers is not None else []
+    hm.beef_calves = beef_calves if beef_calves is not None else []
+    hm.beef_bulls = beef_bulls if beef_bulls is not None else []
+    hm.herd_reproduction_statistics = HerdReproductionStatistics()
+    hm.herd_statistics = MagicMock()
+    hm.herd_statistics.animals_deaths_by_stage = {}
+    return hm
+
+
+def _make_time_mock(simulation_day: int = 1) -> MagicMock:
+    """Return a RufasTime mock with simulation_day set."""
+    t: MagicMock = MagicMock(spec=RufasTime)
+    t.simulation_day = simulation_day
+    return t
+
+
+def _make_animal_mock(animal_type: AnimalType, status: AnimalStatus = AnimalStatus.REMAIN) -> MagicMock:
+    """Return an Animal mock whose daily_routines returns the given status."""
+    animal: MagicMock = MagicMock()
+    animal.animal_type = animal_type
+    output = DailyRoutinesOutput(herd_reproduction_statistics=HerdReproductionStatistics())
+    output.animal_status = status
+    animal.daily_routines.return_value = output
+    return animal
+
+
+@pytest.mark.unit
+def test_process_daily_herd_updates_includes_beef_groups(mocker: MockerFixture) -> None:
+    """_process_daily_herd_updates must call _perform_daily_routines_for_animals for all four beef lists.
+
+    Verifies Lesson 10: beef_cows, beef_replacement_heifers, beef_calves, and beef_bulls
+    are each passed as the ``animals`` argument in a separate call.
+    """
+    cow = _make_animal_mock(AnimalType.BEEF_COW)
+    heifer = _make_animal_mock(AnimalType.BEEF_HEIFER_REPLACEMENT)
+    calf = _make_animal_mock(AnimalType.BEEF_CALF)
+    bull = _make_animal_mock(AnimalType.BEEF_BULL)
+
+    hm = _make_herd_manager_stub(
+        mocker,
+        beef_cows=[cow],
+        beef_replacement_heifers=[heifer],
+        beef_calves=[calf],
+        beef_bulls=[bull],
+    )
+
+    empty_result: tuple[list[MagicMock], list[MagicMock], list[MagicMock], list[MagicMock], list[MagicMock]] = (
+        [],
+        [],
+        [],
+        [],
+        [],
+    )
+    spy = mocker.patch.object(hm, "_perform_daily_routines_for_animals", return_value=empty_result)
+    mocker.patch.object(AnimalModuleReporter, "report_cow_calf_performance", return_value=None)
+
+    time = _make_time_mock()
+    hm._process_daily_herd_updates(time)
+
+    called_animals_args = [c.args[1] for c in spy.call_args_list]
+    assert any(
+        a is hm.beef_cows for a in called_animals_args
+    ), "beef_cows not passed to _perform_daily_routines_for_animals"
+    assert any(a is hm.beef_replacement_heifers for a in called_animals_args), "beef_replacement_heifers not passed"
+    assert any(a is hm.beef_calves for a in called_animals_args), "beef_calves not passed"
+    assert any(a is hm.beef_bulls for a in called_animals_args), "beef_bulls not passed"
+
+
+@pytest.mark.unit
+def test_beef_cow_calving_propagates_to_newborn_calves(mocker: MockerFixture) -> None:
+    """REMAIN + BEEF_COW + non-None newborn_calf_config must populate daily_herd_updates.newborn_calves.
+
+    Verifies that the beef-calving branch in _perform_daily_routines_for_animals
+    captures newborns even though the cow stays REMAIN (not LIFE_STAGE_CHANGED).
+    """
+    cow = MagicMock()
+    cow.animal_type = AnimalType.BEEF_COW
+    newborn_cfg: MagicMock = MagicMock()
+    output = DailyRoutinesOutput(herd_reproduction_statistics=HerdReproductionStatistics())
+    output.animal_status = AnimalStatus.REMAIN
+    output.newborn_calf_config = newborn_cfg
+    cow.daily_routines.return_value = output
+
+    hm = _make_herd_manager_stub(mocker, beef_cows=[cow])
+
+    newborn_animal = MagicMock()
+    newborn_animal.stillborn = False
+    newborn_animal.sold = False
+    mocker.patch.object(hm, "_create_newborn_calf", return_value=newborn_animal)
+    mocker.patch.object(AnimalModuleReporter, "report_cow_calf_performance", return_value=None)
+
+    time = _make_time_mock()
+    daily_herd_updates: DailyHerdUpdates = hm._process_daily_herd_updates(time)
+
+    assert (
+        newborn_animal in daily_herd_updates.newborn_calves
+    ), "Newborn calf from BEEF_COW REMAIN calving must appear in daily_herd_updates.newborn_calves"
+
+
+@pytest.mark.unit
+def test_process_daily_herd_updates_calls_reporter_for_beef(mocker: MockerFixture) -> None:
+    """_process_daily_herd_updates must call report_cow_calf_performance once per beef animal.
+
+    Verifies Lessons 4 and 9: the reporter is called from HerdManager (not animal.py),
+    once for each animal in the four beef lists combined.
+    """
+    cow = _make_animal_mock(AnimalType.BEEF_COW)
+    heifer = _make_animal_mock(AnimalType.BEEF_HEIFER_REPLACEMENT)
+    calf = _make_animal_mock(AnimalType.BEEF_CALF)
+    bull = _make_animal_mock(AnimalType.BEEF_BULL)
+
+    hm = _make_herd_manager_stub(
+        mocker,
+        beef_cows=[cow],
+        beef_replacement_heifers=[heifer],
+        beef_calves=[calf],
+        beef_bulls=[bull],
+    )
+
+    reporter_spy = mocker.patch.object(AnimalModuleReporter, "report_cow_calf_performance", return_value=None)
+    time = _make_time_mock(simulation_day=5)
+
+    hm._process_daily_herd_updates(time)
+
+    assert (
+        reporter_spy.call_count == 4
+    ), f"Expected 4 reporter calls (one per beef animal), got {reporter_spy.call_count}"
+    called_animals = [c.args[0] for c in reporter_spy.call_args_list]
+    assert cow in called_animals
+    assert heifer in called_animals
+    assert calf in called_animals
+    assert bull in called_animals
+
+
+@pytest.mark.unit
+def test_initialize_beef_cow_calf_herd_non_dict_config_returns_empty(mocker: MockerFixture) -> None:
+    """_initialize_beef_cow_calf_herd must return [] when config value is not a dict.
+
+    Verifies Lesson 2: the isinstance(cfg, dict) guard prevents attempts to call
+    .get() on a non-dict value such as a list, int, or None.
+    """
+    hf: HerdFactory = HerdFactory.__new__(HerdFactory)
+    hf.im = MagicMock()
+    hf.time = _make_time_mock()
+
+    for bad_value in [None, [], "string", 42]:
+        hf.im.get_data.return_value = bad_value
+        result = hf._initialize_beef_cow_calf_herd()
+        assert result == [], f"Expected [] for config value {bad_value!r}, got {result}"
+
+
+@pytest.mark.unit
+def test_beef_cow_calf_update_calls_reporter_on_sold(mocker: MockerFixture) -> None:
+    """_beef_cow_calf_update must call report_cow_calf_performance when animal status is SOLD.
+
+    Verifies Lesson 4: the reporter call at SOLD disposition is tested explicitly.
+    """
+    hf: HerdFactory = HerdFactory.__new__(HerdFactory)
+    hf.time = _make_time_mock(simulation_day=3)
+
+    animal = MagicMock()
+    output = DailyRoutinesOutput(herd_reproduction_statistics=HerdReproductionStatistics())
+    output.animal_status = AnimalStatus.SOLD
+    animal.daily_routines.return_value = output
+
+    reporter_spy = mocker.patch.object(AnimalModuleReporter, "report_cow_calf_performance", return_value=None)
+    time = _make_time_mock(simulation_day=3)
+
+    result = hf._beef_cow_calf_update(animal, time)
+
+    assert result.animal_status == AnimalStatus.SOLD
+    reporter_spy.assert_called_once_with(animal, time.simulation_day)

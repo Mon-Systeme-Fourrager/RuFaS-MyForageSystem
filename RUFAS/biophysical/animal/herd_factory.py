@@ -719,6 +719,103 @@ class HerdFactory:
 
         return animals
 
+    def _initialize_beef_cow_calf_herd(self) -> list[Animal]:
+        """
+        Create the initial beef cow-calf animal population from user config.
+
+        Returns
+        -------
+        list[Animal]
+            Beef cow-calf animals. Returns an empty list when the
+            'animal.herd_initialization.beef_cow_calf' key is absent from the input.
+
+        """
+        try:
+            cow_calf_cfg: Any = self.im.get_data("animal.herd_initialization.beef_cow_calf")
+        except (KeyError, TypeError):
+            return []
+
+        if not isinstance(cow_calf_cfg, dict) or not cow_calf_cfg:  # Lesson 2 guard
+            return []
+
+        n_cows = int(cow_calf_cfg.get("num_cows", 0))
+        n_heifers = int(cow_calf_cfg.get("num_replacement_heifers", 0))
+        n_calves = int(cow_calf_cfg.get("num_calves", 0))
+        n_bulls = int(cow_calf_cfg.get("num_bulls", 0))
+        mature_bw = float(cow_calf_cfg.get("mature_cow_weight_kg", animal_constants.DEFAULT_MATURE_BODY_WEIGHT_KG))
+        breed_str = str(cow_calf_cfg.get("breed", "XB"))
+
+        animals: list[Animal] = []
+
+        for _ in range(n_cows):
+            cow_data: dict[str, Any] = {
+                "id": AnimalPopulation.next_id(),
+                "breed": breed_str,
+                "animal_type": AnimalType.BEEF_COW.value,
+                "days_born": animal_constants.DAYS_PER_YEAR * 3,
+                "body_weight": mature_bw,
+                "mature_body_weight": mature_bw,
+            }
+            animals.append(Animal(cast(Any, cow_data), self.time))
+
+        for _ in range(n_heifers):
+            heifer_data: dict[str, Any] = {
+                "id": AnimalPopulation.next_id(),
+                "breed": breed_str,
+                "animal_type": AnimalType.BEEF_HEIFER_REPLACEMENT.value,
+                "days_born": animal_constants.DAYS_PER_YEAR,
+                "body_weight": mature_bw * 0.6,
+                "mature_body_weight": mature_bw,
+            }
+            animals.append(Animal(cast(Any, heifer_data), self.time))
+
+        calf_birth_weight_kg = float(cow_calf_cfg.get("calf_birth_weight_kg", 40.0))
+        for _ in range(n_calves):
+            calf_data: dict[str, Any] = {
+                "id": AnimalPopulation.next_id(),
+                "breed": breed_str,
+                "animal_type": AnimalType.BEEF_CALF.value,
+                "days_born": 1,
+                "body_weight": calf_birth_weight_kg,
+                "mature_body_weight": mature_bw,
+            }
+            animals.append(Animal(cast(Any, calf_data), self.time))
+
+        for _ in range(n_bulls):
+            bull_data: dict[str, Any] = {
+                "id": AnimalPopulation.next_id(),
+                "breed": breed_str,
+                "animal_type": AnimalType.BEEF_BULL.value,
+                "days_born": animal_constants.DAYS_PER_YEAR * 2,
+                "body_weight": mature_bw * 1.1,
+                "mature_body_weight": mature_bw * 1.1,
+            }
+            animals.append(Animal(cast(Any, bull_data), self.time))
+
+        return animals
+
+    def _beef_cow_calf_update(self, animal: Animal, time: RufasTime) -> DailyRoutinesOutput:
+        """
+        Daily routines for a single beef cow-calf animal. Reports on SOLD disposition.
+
+        Parameters
+        ----------
+        animal : Animal
+            The beef cow-calf animal to update.
+        time : RufasTime
+            The current simulation time.
+
+        Returns
+        -------
+        DailyRoutinesOutput
+            Daily routines output containing animal status and any newborn calf config.
+
+        """
+        output = animal.daily_routines(time)
+        if output.animal_status == AnimalStatus.SOLD:
+            AnimalModuleReporter.report_cow_calf_performance(animal, time.simulation_day)
+        return output
+
     def initialize_herd(self) -> None:
         """
         Initialize an AnimalPopulation object for simulation, either from input data or generate from simulation.
@@ -757,6 +854,7 @@ class HerdFactory:
         post_animal_population = self._random_sample_with_replacement()
         HerdFactory.set_post_animal_population(post_animal_population)
         HerdFactory.feedlot_animals = self._initialize_feedlot_herd()
+        HerdFactory.beef_cow_calf_animals = self._initialize_beef_cow_calf_herd()
         AnimalModuleReporter.report_animal_population_statistics(
             "population", self.pre_animal_population.get_herd_summary()
         )

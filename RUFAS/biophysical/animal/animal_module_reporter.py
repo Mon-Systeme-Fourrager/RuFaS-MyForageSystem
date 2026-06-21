@@ -1476,3 +1476,43 @@ class AnimalModuleReporter:
         om.add_variable("feedlot_adg_kg_d", adg, dict(info_map, units=MeasurementUnits.KILOGRAMS_PER_DAY))
         om.add_variable("feedlot_fcr", fcr, dict(info_map, units=MeasurementUnits.FRACTION))
         om.add_variable("feedlot_hot_carcass_weight_kg", hcw, dict(info_map, units=MeasurementUnits.KILOGRAMS))
+
+    @classmethod
+    def report_cow_calf_performance(cls, animal: "Animal", simulation_day: int) -> None:
+        """
+        Report beef cow-calf herd performance metrics for a single animal.
+
+        Parameters
+        ----------
+        animal : Animal
+            The beef cow-calf animal whose metrics are reported.
+        simulation_day : int
+            The current simulation day.
+
+        Notes
+        -----
+        Reported metrics: days_in_pregnancy, lactation_day, body_condition_score_9,
+        times_calved (parity), and calf weaning weight when applicable.
+        Called from HerdManager._process_daily_herd_updates (Lesson 9 — NOT from animal.py).
+
+        """
+        info_map: dict[str, Any] = {
+            "id": animal.id,
+            "animal_type": animal.animal_type.value,
+            "simulation_day": simulation_day,
+        }
+        om.add_variable(
+            "beef_days_in_pregnancy",
+            animal.days_in_pregnancy,
+            dict(info_map, units=MeasurementUnits.DAYS),
+        )
+        om.add_variable(
+            "beef_body_condition_score_9",
+            animal.body_condition_score_9,
+            dict(info_map, units=MeasurementUnits.UNITLESS),
+        )
+        om.add_variable(
+            "beef_times_calved",
+            animal.calves,
+            dict(info_map, units=MeasurementUnits.ANIMALS),
+        )
