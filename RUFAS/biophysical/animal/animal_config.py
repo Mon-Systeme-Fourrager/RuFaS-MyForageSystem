@@ -608,22 +608,35 @@ class AnimalConfig:
         cls.feedlot_ndf_minimum_pct = float(feedlot_cfg.get("ndf_minimum_pct", 10.0))
 
         # ── COW-CALF PARAMETERS ──────────────────────────────────────────────
-        beef_cfg: dict[str, Any] = animal_config_data.get("beef_cow_calf", {})
+        beef_cfg_raw: Any = animal_config_data.get("beef_cow_calf", {})
+        if beef_cfg_raw is None:
+            beef_cfg: dict[str, Any] = {}
+        elif not isinstance(beef_cfg_raw, dict):
+            raise ValueError("animal_config.beef_cow_calf must be a dictionary when provided")
+        else:
+            beef_cfg = beef_cfg_raw
         if beef_cfg:
             merged_beef_cfg: dict[str, Any] = {
-                "mature_cow_weight_kg": beef_cfg.get(
-                    "mature_cow_weight_kg",
-                    AnimalModuleConstants.BEEF_DEFAULT_MATURE_COW_WEIGHT_KG,
+                "mature_cow_weight_kg": (
+                    beef_cfg["mature_cow_weight_kg"]
+                    if beef_cfg.get("mature_cow_weight_kg") is not None
+                    else AnimalModuleConstants.BEEF_DEFAULT_MATURE_COW_WEIGHT_KG
                 ),
-                "weaning_age_days": beef_cfg.get(
-                    "weaning_age_days",
-                    AnimalModuleConstants.BEEF_DEFAULT_WEANING_AGE_DAYS,
+                "weaning_age_days": (
+                    beef_cfg["weaning_age_days"]
+                    if beef_cfg.get("weaning_age_days") is not None
+                    else AnimalModuleConstants.BEEF_DEFAULT_WEANING_AGE_DAYS
                 ),
-                "breeding_season_length": beef_cfg.get(
-                    "breeding_season_length",
-                    AnimalModuleConstants.BEEF_DEFAULT_BREEDING_SEASON_LENGTH_DAYS,
+                "breeding_season_length": (
+                    beef_cfg["breeding_season_length"]
+                    if beef_cfg.get("breeding_season_length") is not None
+                    else AnimalModuleConstants.BEEF_DEFAULT_BREEDING_SEASON_LENGTH_DAYS
                 ),
-                "natural_service_bull_ratio": beef_cfg.get("natural_service_bull_ratio", 25),
+                "natural_service_bull_ratio": (
+                    beef_cfg["natural_service_bull_ratio"]
+                    if beef_cfg.get("natural_service_bull_ratio") is not None
+                    else 25
+                ),
             }
             DataValidator.validate_beef_cow_calf_config(merged_beef_cfg)
         cls.beef_breeding_season_start_day = int(beef_cfg.get("breeding_season_start_day", 90))

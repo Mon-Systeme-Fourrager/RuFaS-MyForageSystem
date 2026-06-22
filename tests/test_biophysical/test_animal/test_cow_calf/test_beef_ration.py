@@ -146,6 +146,31 @@ def test_set_ration_feeds_rejects_negative_percentage(ration_key: str) -> None:
         RationManager.set_ration_feeds(config)  # type: ignore[arg-type]
 
 
+@pytest.mark.parametrize("invalid_pct", [float("nan"), float("inf")])
+def test_set_ration_feeds_rejects_non_finite_values(invalid_pct: float) -> None:
+    """set_ration_feeds raises ValueError when a ration percentage is non-finite.
+
+    Parametrized over nan and +inf (the two non-finite values that bypass the
+    non-negative guard).  -inf is caught earlier by the non-negative check and
+    therefore raises a different error message.
+
+    Parameters
+    ----------
+    invalid_pct : float
+        A non-finite percentage value (nan or +inf).
+    """
+    config: dict[str, object] = {
+        "rations": [],
+        "beef_lactating_pasture_ration": {"301": invalid_pct, "302": 50.0},
+        "beef_dry_gestating_ration": {"302": 100.0},
+        "beef_creep_feed_ration": {"303": 100.0},
+        "beef_replacement_heifer_ration": {"304": 100.0},
+    }
+
+    with pytest.raises(ValueError, match="non-finite"):
+        RationManager.set_ration_feeds(config)  # type: ignore[arg-type]
+
+
 @pytest.mark.parametrize(
     "ration_key",
     [

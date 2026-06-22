@@ -8,6 +8,7 @@ from pytest_mock import MockerFixture
 
 from RUFAS.biophysical.animal.animal import Animal
 from RUFAS.biophysical.animal.animal_config import AnimalConfig
+from RUFAS.biophysical.animal.animal_module_reporter import AnimalModuleReporter
 from RUFAS.biophysical.animal.animal_genetics.animal_genetics import Genetics
 from RUFAS.biophysical.animal.bedding.bedding import Bedding
 from RUFAS.biophysical.animal.data_types.animal_enums import AnimalStatus, Breed
@@ -380,7 +381,7 @@ def test_collect_daily_herd_updates(
     cow_newborns = [mock_animal(AnimalType.CALF)]
     cow_sold_newborns = [mock_animal(AnimalType.CALF, sold=True)]
 
-    mocker.patch("RUFAS.biophysical.animal.animal_module_reporter.AnimalModuleReporter.report_cow_calf_performance")
+    mock_report_cow_calf = mocker.patch.object(AnimalModuleReporter, "report_cow_calf_performance")
     mock_perform_daily_routines_for_animals = mocker.patch.object(
         herd_manager,
         "_perform_daily_routines_for_animals",
@@ -405,6 +406,12 @@ def test_collect_daily_herd_updates(
 
     actual_daily_herd_updates = herd_manager._process_daily_herd_updates(mock_time)
 
+    assert mock_report_cow_calf.call_count == (
+        len(herd_manager.beef_cows)
+        + len(herd_manager.beef_replacement_heifers)
+        + len(herd_manager.beef_calves)
+        + len(herd_manager.beef_bulls)
+    )
     assert mock_perform_daily_routines_for_animals.call_args_list == [
         call(mock_time, herd_manager.calves),
         call(mock_time, herd_manager.heiferIs),

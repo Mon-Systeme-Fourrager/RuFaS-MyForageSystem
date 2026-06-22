@@ -309,15 +309,15 @@ class HerdManager:
             *self.heiferIIs,
             *self.heiferIIIs,
             *self.cows,
-            # Beef cohorts included so pen allocation can be extended in a future PR.
-            # BEEF_COW raises NotImplementedError from find_animal_combination until
-            # runtime reproduction-state dispatch replaces the Step 1 guard.
             *self.beef_cows,
             *self.beef_replacement_heifers,
             *self.beef_calves,
             *self.beef_bulls,
         ]:
-            animal_combination = self.ANIMAL_GROUPING_SCENARIO.find_animal_combination(animal)
+            try:
+                animal_combination = self.ANIMAL_GROUPING_SCENARIO.find_animal_combination(animal)
+            except NotImplementedError:
+                continue  # BEEF_COW pending runtime reproduction-state dispatch (Step 7)
             animals_by_combination[animal_combination].append(animal)
         return animals_by_combination
 

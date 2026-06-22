@@ -1,6 +1,8 @@
 """Tests for beef cow-calf herd cohort lists in HerdFactory and HerdManager (Tasks 7.1 + 7.2)."""
 
 import math
+from collections.abc import Mapping
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -21,6 +23,18 @@ from RUFAS.biophysical.animal.pen import Pen
 from RUFAS.data_validator import DataValidator
 from RUFAS.input_manager import InputManager
 from RUFAS.rufas_time import RufasTime
+from tests.test_biophysical.test_animal.test_herd_manager.pytest_fixtures import (
+    animal_json,
+    config_json,
+    feed_json,
+    mock_get_data_side_effect,
+    mock_herd_manager as _make_herd_manager,
+)
+
+assert animal_json is not None
+assert config_json is not None
+assert feed_json is not None
+assert mock_get_data_side_effect is not None
 
 
 @pytest.mark.unit
@@ -92,40 +106,46 @@ def test_animals_by_type_returns_distinct_lists() -> None:
 
 
 @pytest.mark.unit
-def test_herd_manager_beef_lists_populated_from_factory(mocker: MockerFixture) -> None:
-    """HerdManager init must split HerdFactory.beef_cow_calf_animals into four typed lists.
+def test_herd_manager_beef_lists_populated_from_factory(
+    mocker: MockerFixture, mock_get_data_side_effect: dict[str, Any]
+) -> None:
+    """HerdManager.__init__ must split HerdFactory.beef_cow_calf_animals into four typed lists.
 
-    Each list must contain only animals of the matching AnimalType, derived from
-    the class attribute via per-type list comprehensions.
+    Uses the real constructor so that changes to the split logic in __init__ are caught
+    rather than testing a manually replicated copy of the logic.
+
+    Parameters
+    ----------
+    mocker : MockerFixture
+        pytest-mock fixture for patching HerdFactory class attributes and post-split steps.
+    mock_get_data_side_effect : dict[str, Any]
+        Mapping from InputManager.get_data key to its return value.
     """
     cow = MagicMock()
     cow.animal_type = AnimalType.BEEF_COW
-
     heifer = MagicMock()
     heifer.animal_type = AnimalType.BEEF_HEIFER_REPLACEMENT
-
     calf = MagicMock()
     calf.animal_type = AnimalType.BEEF_CALF
-
     bull = MagicMock()
     bull.animal_type = AnimalType.BEEF_BULL
 
     mocker.patch.object(HerdFactory, "beef_cow_calf_animals", [cow, heifer, calf, bull])
-    mocker.patch.object(HerdFactory, "feedlot_animals", [])
+    # Patch post-split steps: real constructor calls these after splitting, but
+    # MagicMock animals and a dairy-scenario herd would crash inside them.
+    mocker.patch.object(HerdManager, "allocate_animals_to_pens")
+    mocker.patch.object(HerdManager, "initialize_nutrient_requirements")
 
-    hm: HerdManager = HerdManager.__new__(HerdManager)
-    hm.calves = []
-    hm.heiferIs = []
-    hm.heiferIIs = []
-    hm.heiferIIIs = []
-    hm.cows = []
-    hm.feedlot_animals = list(HerdFactory.feedlot_animals)
-
-    beef_all = list(HerdFactory.beef_cow_calf_animals)
-    hm.beef_cows = [a for a in beef_all if a.animal_type == AnimalType.BEEF_COW]
-    hm.beef_replacement_heifers = [a for a in beef_all if a.animal_type == AnimalType.BEEF_HEIFER_REPLACEMENT]
-    hm.beef_calves = [a for a in beef_all if a.animal_type == AnimalType.BEEF_CALF]
-    hm.beef_bulls = [a for a in beef_all if a.animal_type == AnimalType.BEEF_BULL]
+    hm, _ = _make_herd_manager(
+        calves=[],
+        heiferIs=[],
+        heiferIIs=[],
+        heiferIIIs=[],
+        cows=[],
+        replacement=[],
+        mocker=mocker,
+        mock_get_data_side_effect=mock_get_data_side_effect,
+    )
 
     assert hm.beef_cows == [cow]
     assert hm.beef_replacement_heifers == [heifer]
@@ -669,8 +689,6 @@ def test_beef_factory_passes_sex_field_for_cows_heifers_and_bulls(mocker: Mocker
     for a production herd. The factory must pass the sex key explicitly so Animal.__init__
     initialises each animal with the correct sex.
     """
-    from typing import Any
-
     hf: HerdFactory = HerdFactory.__new__(HerdFactory)
     hf.im = MagicMock()
     hf.time = _make_time_mock()
@@ -683,9 +701,9 @@ def test_beef_factory_passes_sex_field_for_cows_heifers_and_bulls(mocker: Mocker
         "breed": "AN",
     }
 
-    captured_args: list[dict[str, Any]] = []
+    captured_args: list[dict[str, object]] = []
 
-    def _capture(args: Any, time: Any) -> MagicMock:
+    def _capture(args: Mapping[str, object], _time: RufasTime) -> MagicMock:
         captured_args.append(dict(args))
         return MagicMock()
 
@@ -703,15 +721,21 @@ def test_beef_factory_passes_sex_field_for_cows_heifers_and_bulls(mocker: Mocker
 
 
 @pytest.mark.unit
-def test_animals_by_combination_raises_for_beef_cow_in_beef_cow_calf_herd(mocker: MockerFixture) -> None:
-    """animals_by_combination must raise NotImplementedError for BEEF_COW under BEEF_COW_CALF_HERD.
+def test_animals_by_combination_skips_beef_cow_in_beef_cow_calf_herd(mocker: MockerFixture) -> None:
+    """animals_by_combination must skip BEEF_COW gracefully under BEEF_COW_CALF_HERD.
 
-    Verifies FIX 11 contract: all four beef cohort lists are included in the
-    animals_by_combination loop so pen allocation can be extended in a future PR.
-    Until runtime reproduction-state dispatch replaces the Step 1 guard (Step 7),
-    find_animal_combination raises NotImplementedError for BEEF_COW in
-    BEEF_COW_CALF_HERD.  This test pins that contract so a future refactor cannot
-    silently drop beef_cows from the loop without a test failure.
+    Verifies FIX A + FIX 11 contract: beef cohort lists are included in the loop so
+    pen allocation can be extended in a future PR.  Until runtime reproduction-state
+    dispatch replaces the Step 1 guard (Step 7), find_animal_combination raises
+    NotImplementedError for BEEF_COW — the guard catches it and skips the cow.
+    Other beef types (BEEF_HEIFER_REPLACEMENT, BEEF_CALF, BEEF_BULL) must still
+    appear in the output so this test also pins that beef_cows is included in the
+    loop (a silent removal would cause heifer/calf/bull to vanish too).
+
+    Parameters
+    ----------
+    mocker : MockerFixture
+        pytest-mock fixture for patching HerdManager class attributes.
     """
     from RUFAS.biophysical.animal.animal_grouping_scenarios import AnimalGroupingScenario
 
@@ -724,8 +748,26 @@ def test_animals_by_combination_raises_for_beef_cow_in_beef_cow_calf_herd(mocker
 
     cow = MagicMock()
     cow.animal_type = AnimalType.BEEF_COW
+    heifer = MagicMock()
+    heifer.animal_type = AnimalType.BEEF_HEIFER_REPLACEMENT
+    calf = MagicMock()
+    calf.animal_type = AnimalType.BEEF_CALF
+    bull = MagicMock()
+    bull.animal_type = AnimalType.BEEF_BULL
 
-    hm = _make_herd_manager_stub(mocker, beef_cows=[cow])
+    hm = _make_herd_manager_stub(
+        mocker,
+        beef_cows=[cow],
+        beef_replacement_heifers=[heifer],
+        beef_calves=[calf],
+        beef_bulls=[bull],
+    )
 
-    with pytest.raises(NotImplementedError, match="BEEF_COW combination requires runtime reproduction-state"):
-        _ = hm.animals_by_combination
+    # Must not raise — NotImplementedError for BEEF_COW is caught by the FIX A guard
+    result = hm.animals_by_combination
+
+    all_result_animals = [a for animals in result.values() for a in animals]
+    assert cow not in all_result_animals, "BEEF_COW must be skipped (Step 7 dispatch not yet wired)"
+    assert heifer in all_result_animals, "BEEF_HEIFER_REPLACEMENT must appear in animals_by_combination"
+    assert calf in all_result_animals, "BEEF_CALF must appear in animals_by_combination"
+    assert bull in all_result_animals, "BEEF_BULL must appear in animals_by_combination"

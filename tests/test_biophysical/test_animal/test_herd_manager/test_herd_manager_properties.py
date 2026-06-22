@@ -100,19 +100,13 @@ def test_phosphorus_concentration_by_animal_class(
         AnimalType.LAC_COW: mock_herd["lac_cows"],
         AnimalType.FEEDLOT_STEER: [],
         AnimalType.FEEDLOT_HEIFER: [],
+        AnimalType.BEEF_COW: herd_manager.beef_cows,
+        AnimalType.BEEF_HEIFER_REPLACEMENT: herd_manager.beef_replacement_heifers,
+        AnimalType.BEEF_CALF: herd_manager.beef_calves,
+        AnimalType.BEEF_BULL: herd_manager.beef_bulls,
     }
 
-    for animal_type in [
-        AnimalType.CALF,
-        AnimalType.HEIFER_I,
-        AnimalType.HEIFER_II,
-        AnimalType.HEIFER_III,
-        AnimalType.LAC_COW,
-        AnimalType.DRY_COW,
-        AnimalType.FEEDLOT_STEER,
-        AnimalType.FEEDLOT_HEIFER,
-    ]:
-        animals = animals_by_type_mapping[animal_type]
+    for animal_type, animals in animals_by_type_mapping.items():
         total_phosphorus = sum(
             [animal.nutrients.total_phosphorus_in_animal * GeneralConstants.GRAMS_TO_KG for animal in animals]
         )
