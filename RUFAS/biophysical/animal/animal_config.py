@@ -615,41 +615,39 @@ class AnimalConfig:
             raise ValueError("animal_config.beef_cow_calf must be a dictionary when provided")
         else:
             beef_cfg = beef_cfg_raw
-        if beef_cfg:
-            merged_beef_cfg: dict[str, Any] = {
-                "mature_cow_weight_kg": (
-                    beef_cfg["mature_cow_weight_kg"]
-                    if beef_cfg.get("mature_cow_weight_kg") is not None
-                    else AnimalModuleConstants.BEEF_DEFAULT_MATURE_COW_WEIGHT_KG
-                ),
-                "weaning_age_days": (
-                    beef_cfg["weaning_age_days"]
-                    if beef_cfg.get("weaning_age_days") is not None
-                    else AnimalModuleConstants.BEEF_DEFAULT_WEANING_AGE_DAYS
-                ),
-                "breeding_season_length": (
-                    beef_cfg["breeding_season_length"]
-                    if beef_cfg.get("breeding_season_length") is not None
-                    else AnimalModuleConstants.BEEF_DEFAULT_BREEDING_SEASON_LENGTH_DAYS
-                ),
-                "natural_service_bull_ratio": (
-                    beef_cfg["natural_service_bull_ratio"]
-                    if beef_cfg.get("natural_service_bull_ratio") is not None
-                    else 25
-                ),
-            }
-            DataValidator.validate_beef_cow_calf_config(merged_beef_cfg)
-        cls.beef_breeding_season_start_day = int(beef_cfg.get("breeding_season_start_day", 90))
-        cls.beef_breeding_season_length = int(
-            beef_cfg.get("breeding_season_length", AnimalModuleConstants.BEEF_DEFAULT_BREEDING_SEASON_LENGTH_DAYS)
-        )
-        cls.beef_weaning_age_days = int(
-            beef_cfg.get("weaning_age_days", AnimalModuleConstants.BEEF_DEFAULT_WEANING_AGE_DAYS)
-        )
+        # Always build merged_beef_cfg with defaults so the assignment block
+        # is None-safe even when beef_cfg has explicit None values.
+        merged_beef_cfg: dict[str, Any] = {
+            "mature_cow_weight_kg": (
+                beef_cfg["mature_cow_weight_kg"]
+                if beef_cfg.get("mature_cow_weight_kg") is not None
+                else AnimalModuleConstants.BEEF_DEFAULT_MATURE_COW_WEIGHT_KG
+            ),
+            "weaning_age_days": (
+                beef_cfg["weaning_age_days"]
+                if beef_cfg.get("weaning_age_days") is not None
+                else AnimalModuleConstants.BEEF_DEFAULT_WEANING_AGE_DAYS
+            ),
+            "breeding_season_length": (
+                beef_cfg["breeding_season_length"]
+                if beef_cfg.get("breeding_season_length") is not None
+                else AnimalModuleConstants.BEEF_DEFAULT_BREEDING_SEASON_LENGTH_DAYS
+            ),
+            "natural_service_bull_ratio": (
+                beef_cfg["natural_service_bull_ratio"] if beef_cfg.get("natural_service_bull_ratio") is not None else 25
+            ),
+        }
+        DataValidator.validate_beef_cow_calf_config(merged_beef_cfg)
+        cls.beef_breeding_season_length = int(merged_beef_cfg["breeding_season_length"])
+        cls.beef_weaning_age_days = int(merged_beef_cfg["weaning_age_days"])
+        cls.beef_mature_cow_weight_kg = float(merged_beef_cfg["mature_cow_weight_kg"])
+        cls.beef_natural_service_bull_ratio = int(merged_beef_cfg["natural_service_bull_ratio"])
+        breeding_start_raw = beef_cfg.get("breeding_season_start_day")
+        cls.beef_breeding_season_start_day = int(90 if breeding_start_raw is None else breeding_start_raw)
         raw_weaning_weight = beef_cfg.get("weaning_weight_kg")
         cls.beef_weaning_weight_kg = float(raw_weaning_weight) if raw_weaning_weight is not None else None
-        cls.beef_creep_feeding_enabled = bool(beef_cfg.get("creep_feeding_enabled", False))
-        destination_str = str(beef_cfg.get("post_weaning_destination", BeefPostWeaningDestination.SELL.value))
+        cls.beef_creep_feeding_enabled = bool(beef_cfg.get("creep_feeding_enabled") or False)
+        destination_str = str(beef_cfg.get("post_weaning_destination") or BeefPostWeaningDestination.SELL.value)
         try:
             cls.beef_post_weaning_destination = BeefPostWeaningDestination(destination_str)
         except ValueError:
@@ -663,12 +661,9 @@ class AnimalConfig:
                 "module (Segment 3) which is not yet implemented. "
                 "Use SELL, REPLACEMENT_HEIFER, or DIRECT_TO_FEEDLOT."
             )
-        cls.beef_mature_cow_weight_kg = float(
-            beef_cfg.get("mature_cow_weight_kg", AnimalModuleConstants.BEEF_DEFAULT_MATURE_COW_WEIGHT_KG)
-        )
-        cls.beef_natural_service_bull_ratio = int(beef_cfg.get("natural_service_bull_ratio", 25))
+        cow_cull_rate_raw = beef_cfg.get("cow_cull_rate_annual")
         cls.beef_cow_cull_rate_annual = float(
-            beef_cfg.get("cow_cull_rate_annual", AnimalModuleConstants.BEEF_ANNUAL_CULL_RATE)
+            AnimalModuleConstants.BEEF_ANNUAL_CULL_RATE if cow_cull_rate_raw is None else cow_cull_rate_raw
         )
         reproduction_program_str = str(
             beef_cfg.get(

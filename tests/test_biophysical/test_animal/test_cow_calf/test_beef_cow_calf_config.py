@@ -424,3 +424,40 @@ def test_initialize_invalid_reproduction_program_raises(mocker: pytest_mock.Mock
     _mock_im(mocker, beef_overrides={"reproduction_program": "synchronized_timed_ai"})
     with pytest.raises(ValueError, match="Invalid beef reproduction program"):
         AnimalConfig.initialize_animal_config()
+
+
+# ---------------------------------------------------------------------------
+# None-safe assignment block (FIX 1 — CodeRabbit Round 3)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        "mature_cow_weight_kg",
+        "weaning_age_days",
+        "breeding_season_length",
+        "natural_service_bull_ratio",
+    ],
+)
+def test_initialize_explicit_none_for_validated_key_uses_default(key: str, mocker: pytest_mock.MockerFixture) -> None:
+    """An explicit None in the beef_cow_calf section must not raise TypeError.
+
+    Each of the four keys covered by merged_beef_cfg must fall back to its default
+    when present but set to None, rather than propagating None to int()/float().
+
+    Parameters
+    ----------
+    key : str
+        The beef_cow_calf config key to set to None.
+    mocker : pytest_mock.MockerFixture
+        pytest-mock fixture for patching InputManager.
+    """
+    _mock_im(mocker, beef_overrides={key: None})
+    AnimalConfig.initialize_animal_config()
+    assert AnimalConfig.beef_mature_cow_weight_kg == pytest.approx(
+        AnimalModuleConstants.BEEF_DEFAULT_MATURE_COW_WEIGHT_KG
+    )
+    assert AnimalConfig.beef_weaning_age_days == AnimalModuleConstants.BEEF_DEFAULT_WEANING_AGE_DAYS
+    assert AnimalConfig.beef_breeding_season_length == AnimalModuleConstants.BEEF_DEFAULT_BREEDING_SEASON_LENGTH_DAYS
+    assert AnimalConfig.beef_natural_service_bull_ratio == 25

@@ -2,7 +2,6 @@
 
 import math
 from collections.abc import Mapping
-from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -107,7 +106,7 @@ def test_animals_by_type_returns_distinct_lists() -> None:
 
 @pytest.mark.unit
 def test_herd_manager_beef_lists_populated_from_factory(
-    mocker: MockerFixture, mock_get_data_side_effect: dict[str, Any]
+    mocker: MockerFixture, mock_get_data_side_effect: dict[str, object]
 ) -> None:
     """HerdManager.__init__ must split HerdFactory.beef_cow_calf_animals into four typed lists.
 
@@ -118,7 +117,7 @@ def test_herd_manager_beef_lists_populated_from_factory(
     ----------
     mocker : MockerFixture
         pytest-mock fixture for patching HerdFactory class attributes and post-split steps.
-    mock_get_data_side_effect : dict[str, Any]
+    mock_get_data_side_effect : dict[str, object]
         Mapping from InputManager.get_data key to its return value.
     """
     cow = MagicMock()
