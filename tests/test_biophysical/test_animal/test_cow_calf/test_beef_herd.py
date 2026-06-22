@@ -700,3 +700,32 @@ def test_beef_factory_passes_sex_field_for_cows_heifers_and_bulls(mocker: Mocker
     assert cow_args.get("sex") == "FEMALE", "BEEF_COW must be initialised with sex='FEMALE'"
     assert heifer_args.get("sex") == "FEMALE", "BEEF_HEIFER_REPLACEMENT must be initialised with sex='FEMALE'"
     assert bull_args.get("sex") == "MALE", "BEEF_BULL must be initialised with sex='MALE'"
+
+
+@pytest.mark.unit
+def test_animals_by_combination_raises_for_beef_cow_in_beef_cow_calf_herd(mocker: MockerFixture) -> None:
+    """animals_by_combination must raise NotImplementedError for BEEF_COW under BEEF_COW_CALF_HERD.
+
+    Verifies FIX 11 contract: all four beef cohort lists are included in the
+    animals_by_combination loop so pen allocation can be extended in a future PR.
+    Until runtime reproduction-state dispatch replaces the Step 1 guard (Step 7),
+    find_animal_combination raises NotImplementedError for BEEF_COW in
+    BEEF_COW_CALF_HERD.  This test pins that contract so a future refactor cannot
+    silently drop beef_cows from the loop without a test failure.
+    """
+    from RUFAS.biophysical.animal.animal_grouping_scenarios import AnimalGroupingScenario
+
+    mocker.patch.object(
+        HerdManager,
+        "ANIMAL_GROUPING_SCENARIO",
+        new=AnimalGroupingScenario.BEEF_COW_CALF_HERD,
+        create=True,
+    )
+
+    cow = MagicMock()
+    cow.animal_type = AnimalType.BEEF_COW
+
+    hm = _make_herd_manager_stub(mocker, beef_cows=[cow])
+
+    with pytest.raises(NotImplementedError, match="BEEF_COW combination requires runtime reproduction-state"):
+        _ = hm.animals_by_combination
