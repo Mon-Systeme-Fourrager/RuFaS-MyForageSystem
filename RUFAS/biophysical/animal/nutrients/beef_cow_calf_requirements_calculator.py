@@ -116,6 +116,10 @@ class BeefCowCalfRequirementsCalculator(NutritionRequirementsCalculator):
             )
         if inputs.days_in_milk is not None and inputs.days_in_milk < 0:
             raise ValueError(f"days_in_milk must be non-negative; got {inputs.days_in_milk}.")
+        if inputs.body_weight <= 0.0:
+            raise ValueError(f"body_weight must be positive, got {inputs.body_weight}")
+        if inputs.mature_body_weight <= 0.0:
+            raise ValueError(f"mature_body_weight must be positive, got {inputs.mature_body_weight}")
 
         cbw: float = AnimalModuleConstants.BREED_CBW_KG.get(
             inputs.breed, AnimalModuleConstants.BEEF_CALF_BIRTH_WEIGHT_KG
@@ -317,7 +321,7 @@ class BeefCowCalfRequirementsCalculator(NutritionRequirementsCalculator):
         ney: float = cbw * (0.05855 - 0.0000996 * dp) * math.exp(0.0323 * dp - 0.0000275 * dp**2) / 1000.0
         ypn: float = cbw * (0.001669 - 0.00000211 * dp) * math.exp(0.0278 * dp - 0.0000176 * dp**2) * 6.25
         mpy: float = ypn / AnimalModuleConstants.BEEF_LACTATION_MP_EFFICIENCY
-        cw: float = cbw * 0.01828 * math.exp(0.02 * dp - 0.0000143 * dp**2)
+        cw: float = BeefCowCalfRequirementsCalculator._calculate_conceptus_weight(cbw, days_pregnant)
         return ney, mpy, cw
 
     @staticmethod
@@ -359,6 +363,8 @@ class BeefCowCalfRequirementsCalculator(NutritionRequirementsCalculator):
         """
         n: float = days_in_milk / 7.0
         k: float = 1.0 / AnimalModuleConstants.WOOD_PEAK_WEEK
+        if pkyd <= 0.0:
+            return 0.0, 0.0, 0.0
         apkyd: float = (0.125 * rmy + 0.375) * pkyd
         a: float = 1.0 / (apkyd * k * math.e)
         age_factor: float = (

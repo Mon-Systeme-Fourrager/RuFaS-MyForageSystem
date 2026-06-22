@@ -387,6 +387,13 @@ class TestBeefMilkYieldAndLactation:
         result = BeefCowCalfRequirementsCalculator.calculate_requirements(_ANGUS_COW_NONLACT)
         assert result.lactation_energy == 0.0
 
+    def test_pkyd_zero_returns_zero_tuple(self) -> None:
+        """pkyd = 0.0 must return (0.0, 0.0, 0.0) without raising ZeroDivisionError."""
+        result = BeefCowCalfRequirementsCalculator._calculate_beef_milk_yield_and_lactation_requirement(
+            days_in_milk=60, pkyd=0.0, mkfat=4.0, mksnf=8.3, mkprot=3.8, parity=2
+        )
+        assert result == (0.0, 0.0, 0.0)
+
     def test_i6_e1_confirmation_wood_curve_uses_euler_constant(self) -> None:
         """I6: e^1 in Wood curve formula is math.e (Euler's number); verify Yn formula shape."""
         # At exactly n=T weeks (DIM=56), Yn = aPKYD for the chosen breed.
@@ -836,3 +843,21 @@ class TestPhysiologicalInvariants:
         neg_dim = dataclasses.replace(_ANGUS_COW_LACT, days_in_milk=-1)
         with pytest.raises(ValueError, match="days_in_milk must be non-negative"):
             BeefCowCalfRequirementsCalculator.calculate_requirements(neg_dim)
+
+    def test_body_weight_zero_raises(self) -> None:
+        """body_weight = 0.0 must raise ValueError."""
+        bad = dataclasses.replace(_ANGUS_COW_NONLACT, body_weight=0.0)
+        with pytest.raises(ValueError, match="body_weight must be positive"):
+            BeefCowCalfRequirementsCalculator.calculate_requirements(bad)
+
+    def test_body_weight_negative_raises(self) -> None:
+        """body_weight = -1.0 must raise ValueError."""
+        bad = dataclasses.replace(_ANGUS_COW_NONLACT, body_weight=-1.0)
+        with pytest.raises(ValueError, match="body_weight must be positive"):
+            BeefCowCalfRequirementsCalculator.calculate_requirements(bad)
+
+    def test_mature_body_weight_zero_raises(self) -> None:
+        """mature_body_weight = 0.0 must raise ValueError."""
+        bad = dataclasses.replace(_ANGUS_COW_NONLACT, mature_body_weight=0.0)
+        with pytest.raises(ValueError, match="mature_body_weight must be positive"):
+            BeefCowCalfRequirementsCalculator.calculate_requirements(bad)
