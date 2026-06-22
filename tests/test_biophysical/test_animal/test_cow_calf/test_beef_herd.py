@@ -25,7 +25,11 @@ from RUFAS.rufas_time import RufasTime
 
 @pytest.mark.unit
 def test_herd_factory_has_beef_cow_calf_animals_class_attr() -> None:
-    """HerdFactory must expose a beef_cow_calf_animals class-level list attribute."""
+    """HerdFactory must expose a beef_cow_calf_animals class-level list attribute.
+
+    Verifies Task 7.1: the factory uses the same class-attr staging pattern as
+    feedlot_animals so HerdManager can iterate the list at init time.
+    """
     assert hasattr(HerdFactory, "beef_cow_calf_animals")
     assert isinstance(HerdFactory.beef_cow_calf_animals, list)
 
@@ -145,7 +149,26 @@ def _make_herd_manager_stub(
     beef_calves: list[MagicMock] | None = None,
     beef_bulls: list[MagicMock] | None = None,
 ) -> HerdManager:
-    """Return a HerdManager instance with all list attrs pre-set (no __init__)."""
+    """Return a HerdManager instance with all list attrs pre-set (no __init__).
+
+    Parameters
+    ----------
+    mocker : MockerFixture
+        pytest-mock fixture used to patch HerdFactory class attributes.
+    beef_cows : list[MagicMock] | None, optional
+        Initial BEEF_COW list; defaults to empty.
+    beef_replacement_heifers : list[MagicMock] | None, optional
+        Initial BEEF_HEIFER_REPLACEMENT list; defaults to empty.
+    beef_calves : list[MagicMock] | None, optional
+        Initial BEEF_CALF list; defaults to empty.
+    beef_bulls : list[MagicMock] | None, optional
+        Initial BEEF_BULL list; defaults to empty.
+
+    Returns
+    -------
+    HerdManager
+        A minimally constructed HerdManager with all dairy and beef list attributes initialised.
+    """
     hm: HerdManager = HerdManager.__new__(HerdManager)
     hm.calves = []
     hm.heiferIs = []
@@ -164,14 +187,38 @@ def _make_herd_manager_stub(
 
 
 def _make_time_mock(simulation_day: int = 1) -> MagicMock:
-    """Return a RufasTime mock with simulation_day set."""
+    """Return a RufasTime mock with simulation_day set.
+
+    Parameters
+    ----------
+    simulation_day : int, optional
+        Day counter to assign to the mock.  Default 1.
+
+    Returns
+    -------
+    MagicMock
+        RufasTime mock with ``simulation_day`` set to the given value.
+    """
     t: MagicMock = MagicMock(spec=RufasTime)
     t.simulation_day = simulation_day
     return t
 
 
 def _make_animal_mock(animal_type: AnimalType, status: AnimalStatus = AnimalStatus.REMAIN) -> MagicMock:
-    """Return an Animal mock whose daily_routines returns the given status."""
+    """Return an Animal mock whose daily_routines returns the given status.
+
+    Parameters
+    ----------
+    animal_type : AnimalType
+        The animal_type to assign to the mock.
+    status : AnimalStatus, optional
+        The ``animal_status`` to embed in the returned DailyRoutinesOutput.  Default REMAIN.
+
+    Returns
+    -------
+    MagicMock
+        Animal mock with ``daily_routines`` returning a DailyRoutinesOutput set to ``status``.
+    """
     animal: MagicMock = MagicMock()
     animal.animal_type = animal_type
     output = DailyRoutinesOutput(herd_reproduction_statistics=HerdReproductionStatistics())
@@ -339,7 +386,11 @@ def test_first_calving_heifer_newborn_captured_in_herd_updates(mocker: MockerFix
 
 @pytest.mark.unit
 def test_herd_statistics_deaths_by_stage_includes_beef_types() -> None:
-    """HerdStatistics() must initialise animals_deaths_by_stage with all four beef types at 0."""
+    """HerdStatistics() must initialise animals_deaths_by_stage with all four beef types at 0.
+
+    Verifies Task 7.3: BEEF_COW, BEEF_HEIFER_REPLACEMENT, BEEF_CALF, and BEEF_BULL must
+    each appear as keys so that death-count updates never KeyError.
+    """
     from RUFAS.biophysical.animal.data_types.herd_statistics import HerdStatistics
 
     stats = HerdStatistics()
@@ -356,7 +407,21 @@ def test_herd_statistics_deaths_by_stage_includes_beef_types() -> None:
 
 
 def _make_minimal_pen(mocker: MockerFixture, forage_quality_factor: float | None = None) -> Pen:
-    """Construct a minimal Pen with bedding mocked out via InputManager."""
+    """Construct a minimal Pen with bedding mocked out via InputManager.
+
+    Parameters
+    ----------
+    mocker : MockerFixture
+        pytest-mock fixture used to stub InputManager.get_data for bedding lookup.
+    forage_quality_factor : float | None, optional
+        If provided, passed as a constructor kwarg; omitted otherwise to exercise
+        the default-1.0 path.
+
+    Returns
+    -------
+    Pen
+        A Pen instance built with minimal required parameters and a single bedding stream.
+    """
     im = InputManager()
     mocker.patch.object(
         im,
@@ -396,7 +461,11 @@ def _make_minimal_pen(mocker: MockerFixture, forage_quality_factor: float | None
 
 @pytest.mark.unit
 def test_pen_forage_quality_factor_defaults_to_one(mocker: MockerFixture) -> None:
-    """Pen must have forage_quality_factor defaulting to 1.0 when not in config."""
+    """Pen must have forage_quality_factor defaulting to 1.0 when not in config.
+
+    Verifies FIX 12: forage_quality_factor from pen_data is forwarded to Pen() so
+    beef simulations that set it get the correct value, while dairy runs default to 1.0.
+    """
     pen_default = _make_minimal_pen(mocker)
     assert pen_default.forage_quality_factor == 1.0
 
@@ -438,21 +507,33 @@ def test_nutrients_phosphorus_requirement_set_for_beef() -> None:
 
 @pytest.mark.unit
 def test_validate_beef_cow_calf_config_rejects_nan_weight() -> None:
-    """mature_cow_weight_kg of NaN must raise ValueError."""
+    """mature_cow_weight_kg of NaN must raise ValueError.
+
+    NaN propagates silently through NRC equations; the validator must catch it
+    at config-load time rather than producing nonsensical requirements at runtime.
+    """
     with pytest.raises(ValueError, match="mature_cow_weight_kg"):
         DataValidator.validate_beef_cow_calf_config({"mature_cow_weight_kg": float("nan")})
 
 
 @pytest.mark.unit
 def test_validate_beef_cow_calf_config_rejects_zero_weaning_age() -> None:
-    """weaning_age_days of 0 must raise ValueError."""
+    """weaning_age_days of 0 must raise ValueError.
+
+    A zero weaning age would trigger weaning on day 0 before the calf is born;
+    the validator guards this boundary condition.
+    """
     with pytest.raises(ValueError, match="weaning_age_days"):
         DataValidator.validate_beef_cow_calf_config({"mature_cow_weight_kg": 500.0, "weaning_age_days": 0})
 
 
 @pytest.mark.unit
 def test_validate_beef_cow_calf_config_rejects_excessive_bull_ratio() -> None:
-    """natural_service_bull_ratio above MAX_BULL_TO_COW_RATIO must raise ValueError."""
+    """natural_service_bull_ratio above MAX_BULL_TO_COW_RATIO must raise ValueError.
+
+    Ratios beyond the physiological maximum (defined in animal_constants) indicate
+    a data-entry error; the validator surfaces this before the simulation starts.
+    """
     with pytest.raises(ValueError, match="natural_service_bull_ratio"):
         DataValidator.validate_beef_cow_calf_config(
             {
@@ -466,7 +547,11 @@ def test_validate_beef_cow_calf_config_rejects_excessive_bull_ratio() -> None:
 
 @pytest.mark.unit
 def test_validate_beef_cow_calf_config_accepts_valid_config() -> None:
-    """A valid config that omits natural_service_bull_ratio must not raise (default=25)."""
+    """A valid config that omits natural_service_bull_ratio must not raise (default=25).
+
+    Verifies FIX 3: the validator must operate on the merged config (defaults filled in),
+    not the raw user config, so omitted optional keys pass validation.
+    """
     DataValidator.validate_beef_cow_calf_config(
         {
             "mature_cow_weight_kg": 500.0,
@@ -498,7 +583,7 @@ def test_report_cow_calf_performance_does_not_raise_with_none_attrs(mocker: Mock
     animal.days_in_pregnancy = 0
     animal.lactation_day = 0
     animal.body_condition_score_9 = 5.0
-    animal.calves = 1
+    animal.times_calved = 1
     animal.wean_weight = None  # None triggers the guard being tested
 
     add_variable_spy = mocker.patch("RUFAS.biophysical.animal.animal_module_reporter.om.add_variable")
@@ -527,7 +612,7 @@ def test_report_cow_calf_performance_wean_weight_none_maps_to_zero(mocker: Mocke
     animal.days_in_pregnancy = 0
     animal.lactation_day = 0
     animal.body_condition_score_9 = 4.5
-    animal.calves = 0
+    animal.times_calved = 0
     animal.wean_weight = None
 
     add_variable_spy = mocker.patch("RUFAS.biophysical.animal.animal_module_reporter.om.add_variable")
@@ -540,3 +625,78 @@ def test_report_cow_calf_performance_wean_weight_none_maps_to_zero(mocker: Mocke
     )
     assert wean_call is not None, "beef_wean_weight_kg must be reported"
     assert wean_call.args[1] == 0.0, "None wean_weight must fall back to 0.0"
+
+
+@pytest.mark.unit
+def test_report_cow_calf_performance_uses_times_calved_not_calves(mocker: MockerFixture) -> None:
+    """report_cow_calf_performance must log animal.times_calved (parity int), not animal.calves.
+
+    Verifies FIX 1: beef cows track parity via times_calved (set in
+    _initialize_beef_cow_calf_animal). The dairy calves property reads from
+    reproduction.calves which is not initialised for beef types, causing a crash.
+    This test sets animal.times_calved = 3 and asserts that the reported value is 3.
+    """
+    animal: MagicMock = MagicMock()
+    animal.id = 10
+    animal.animal_type = MagicMock()
+    animal.animal_type.value = AnimalType.BEEF_COW.value
+    animal.days_in_pregnancy = 150
+    animal.lactation_day = 60
+    animal.body_condition_score_9 = 5.5
+    animal.times_calved = 3
+    animal.wean_weight = None
+
+    add_variable_spy = mocker.patch("RUFAS.biophysical.animal.animal_module_reporter.om.add_variable")
+
+    AnimalModuleReporter.report_cow_calf_performance(animal, simulation_day=200)
+
+    times_calved_call = next(
+        (c for c in add_variable_spy.call_args_list if c.args[0] == "beef_times_calved"),
+        None,
+    )
+    assert times_calved_call is not None, "beef_times_calved must be reported"
+    assert times_calved_call.args[1] == 3, (
+        "beef_times_calved must use animal.times_calved, not animal.calves — "
+        "the calves property reads from the dairy reproduction object"
+    )
+
+
+@pytest.mark.unit
+def test_beef_factory_passes_sex_field_for_cows_heifers_and_bulls(mocker: MockerFixture) -> None:
+    """HerdFactory._initialize_beef_cow_calf_herd must pass sex='FEMALE' for cows/heifers and sex='MALE' for bulls.
+
+    Verifies FIX 5: absent sex field causes random sex assignment which is biologically incorrect
+    for a production herd. The factory must pass the sex key explicitly so Animal.__init__
+    initialises each animal with the correct sex.
+    """
+    from typing import Any
+
+    hf: HerdFactory = HerdFactory.__new__(HerdFactory)
+    hf.im = MagicMock()
+    hf.time = _make_time_mock()
+    hf.im.get_data.return_value = {
+        "num_cows": 1,
+        "num_replacement_heifers": 1,
+        "num_calves": 0,
+        "num_bulls": 1,
+        "mature_cow_weight_kg": 520.0,
+        "breed": "AN",
+    }
+
+    captured_args: list[dict[str, Any]] = []
+
+    def _capture(args: Any, time: Any) -> MagicMock:
+        captured_args.append(dict(args))
+        return MagicMock()
+
+    mocker.patch("RUFAS.biophysical.animal.herd_factory.Animal", side_effect=_capture)
+    hf._initialize_beef_cow_calf_herd()
+
+    assert len(captured_args) == 3, f"Expected 3 animals (1 cow + 1 heifer + 1 bull), got {len(captured_args)}"
+    cow_args = next(a for a in captured_args if a["animal_type"] == AnimalType.BEEF_COW.value)
+    heifer_args = next(a for a in captured_args if a["animal_type"] == AnimalType.BEEF_HEIFER_REPLACEMENT.value)
+    bull_args = next(a for a in captured_args if a["animal_type"] == AnimalType.BEEF_BULL.value)
+
+    assert cow_args.get("sex") == "FEMALE", "BEEF_COW must be initialised with sex='FEMALE'"
+    assert heifer_args.get("sex") == "FEMALE", "BEEF_HEIFER_REPLACEMENT must be initialised with sex='FEMALE'"
+    assert bull_args.get("sex") == "MALE", "BEEF_BULL must be initialised with sex='MALE'"

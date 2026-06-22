@@ -120,14 +120,16 @@ class RationManager:
 
         # Stage beef rations in local variables first (Lesson 3 — atomic commit)
         beef_lactating_pasture_ration = {
-            int(k): float(v) for k, v in ration_config.get("beef_lactating_pasture_ration", {}).items()
+            int(k): float(v) for k, v in (ration_config.get("beef_lactating_pasture_ration") or {}).items()
         }
         beef_dry_gestating_ration = {
-            int(k): float(v) for k, v in ration_config.get("beef_dry_gestating_ration", {}).items()
+            int(k): float(v) for k, v in (ration_config.get("beef_dry_gestating_ration") or {}).items()
         }
-        beef_creep_feed_ration = {int(k): float(v) for k, v in ration_config.get("beef_creep_feed_ration", {}).items()}
+        beef_creep_feed_ration = {
+            int(k): float(v) for k, v in (ration_config.get("beef_creep_feed_ration") or {}).items()
+        }
         beef_replacement_heifer_ration = {
-            int(k): float(v) for k, v in ration_config.get("beef_replacement_heifer_ration", {}).items()
+            int(k): float(v) for k, v in (ration_config.get("beef_replacement_heifer_ration") or {}).items()
         }
         for name, ration in [
             ("beef_lactating_pasture", beef_lactating_pasture_ration),
@@ -210,10 +212,12 @@ class RationManager:
             return cls.beef_lactating_pasture_ration
         if animal.animal_type in (AnimalType.BEEF_COW, AnimalType.BEEF_BULL):
             return cls.beef_dry_gestating_ration
+        if animal.animal_type == AnimalType.BEEF_CALF:
+            return {}
         raise ValueError(f"No beef seasonal ration for animal_type {animal.animal_type}")
 
     @classmethod
-    def get_beef_creep_feed_supplement(cls, animal: "Animal") -> dict[RUFAS_ID, float]:
+    def get_beef_creep_feed_supplement(cls, animal: Animal) -> dict[RUFAS_ID, float]:
         """Returns creep feed dict for a nursing calf if creep feeding is enabled, else empty dict.
 
         Parameters
@@ -227,6 +231,8 @@ class RationManager:
             Mapping of feed RUFAS ID to percentage, or empty dict if creep feeding disabled.
 
         """
+        if animal.animal_type is not AnimalType.BEEF_CALF:
+            return {}
         if not AnimalConfig.beef_creep_feeding_enabled:
             return {}
         return cls.beef_creep_feed_ration

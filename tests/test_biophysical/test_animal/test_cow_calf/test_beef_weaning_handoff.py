@@ -20,7 +20,13 @@ from RUFAS.biophysical.animal.herd_manager import HerdManager
 
 @pytest.fixture(autouse=True)
 def reset_animal_config_state() -> Generator[None, None, None]:
-    """Snapshot and restore AnimalConfig class state after each test."""
+    """Snapshot and restore AnimalConfig class state after each test.
+
+    Returns
+    -------
+    Generator[None, None, None]
+        Yields once; restores original class-level attributes on teardown.
+    """
     original_attrs = {
         name: value
         for name, value in AnimalConfig.__dict__.items()

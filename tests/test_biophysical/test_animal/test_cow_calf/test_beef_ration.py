@@ -40,8 +40,30 @@ SENTINEL_HEIFER: dict[int, float] = {995: 100.0}
 
 
 @pytest.fixture(autouse=True)
+def _restore_animal_config_creep() -> Generator[None, None, None]:
+    """Save and restore AnimalConfig.beef_creep_feeding_enabled after each test.
+
+    Returns
+    -------
+    Generator[None, None, None]
+        Yields once; restores the original boolean value on teardown.
+    """
+    saved = AnimalConfig.beef_creep_feeding_enabled
+    yield
+    AnimalConfig.beef_creep_feeding_enabled = saved
+
+
+@pytest.fixture(autouse=True)
 def restore_ration_manager_beef_state() -> Generator[None, None, None]:
-    """Snapshot and restore all four beef ration ClassVars after each test (Lesson 5)."""
+    """Snapshot and restore all four beef ration ClassVars after each test.
+
+    Prevents ration state leaking between tests (Lesson 5 isolation requirement).
+
+    Returns
+    -------
+    Generator[None, None, None]
+        Yields once; restores all original RationManager class attributes on teardown.
+    """
     original_attrs = {
         name: value
         for name, value in RationManager.__dict__.items()
@@ -64,7 +86,13 @@ def restore_ration_manager_beef_state() -> Generator[None, None, None]:
 
 
 def _make_minimal_ration_optimizer() -> RationOptimizer:
-    """Build a RationOptimizer with stub constraints set."""
+    """Build a RationOptimizer with stub constraints set.
+
+    Returns
+    -------
+    RationOptimizer
+        A RationOptimizer instance with NRC-standard constraints initialised via a mock ration config.
+    """
     optimizer = RationOptimizer()
     mock_ration_config = MagicMock()
     mock_ration_config.nutrient_standard.__eq__ = lambda self, other: False
@@ -78,7 +106,11 @@ def _make_minimal_ration_optimizer() -> RationOptimizer:
 
 
 def test_set_ration_feeds_registers_beef_rations() -> None:
-    """Happy path: all four beef rations are stored on the class after set_ration_feeds."""
+    """Happy path: all four beef rations are stored on the class after set_ration_feeds.
+
+    Verifies Task 6.1: lactating-pasture, dry-gestating, creep-feed, and replacement-heifer
+    rations are committed to RationManager ClassVars when all four are valid.
+    """
     RationManager.set_ration_feeds(VALID_RATION_CONFIG)  # type: ignore[arg-type]
 
     assert RationManager.beef_lactating_pasture_ration == {301: 60.0, 302: 40.0}
@@ -97,7 +129,10 @@ def test_set_ration_feeds_registers_beef_rations() -> None:
     ],
 )
 def test_set_ration_feeds_rejects_negative_percentage(ration_key: str) -> None:
-    """set_ration_feeds raises ValueError when any beef ration percentage is negative."""
+    """set_ration_feeds raises ValueError when any beef ration percentage is negative.
+
+    Parametrized over all four beef ration keys to confirm the guard applies uniformly.
+    """
     config: dict[str, object] = {
         "rations": [],
         "beef_lactating_pasture_ration": {"301": 100.0},
@@ -121,7 +156,11 @@ def test_set_ration_feeds_rejects_negative_percentage(ration_key: str) -> None:
     ],
 )
 def test_set_ration_feeds_rejects_bad_sum(ration_key: str) -> None:
-    """set_ration_feeds raises ValueError when a beef ration does not sum to 100%."""
+    """set_ration_feeds raises ValueError when a beef ration does not sum to 100%.
+
+    Parametrized over all four beef ration keys so that each ration is tested as the
+    lone offender while the other three remain valid.
+    """
     config: dict[str, object] = {
         "rations": [],
         "beef_lactating_pasture_ration": {"301": 100.0},
@@ -136,7 +175,11 @@ def test_set_ration_feeds_rejects_bad_sum(ration_key: str) -> None:
 
 
 def test_set_ration_feeds_allows_empty_creep_feed() -> None:
-    """An empty creep feed ration ({}) is valid and skips validation."""
+    """An empty creep feed ration ({}) is valid and skips validation.
+
+    Creep feed is optional (farms without it pass an empty dict). The validation loop
+    must treat an empty ration as a no-op rather than raising a sum-to-100 error.
+    """
     config: dict[str, object] = {
         "rations": [],
         "beef_lactating_pasture_ration": {"301": 100.0},
@@ -149,7 +192,11 @@ def test_set_ration_feeds_allows_empty_creep_feed() -> None:
 
 
 def test_set_ration_feeds_is_atomic() -> None:
-    """If any beef ration is invalid, no class attribute is modified (atomic commit)."""
+    """If any beef ration is invalid, no class attribute is modified (atomic commit).
+
+    Verifies Lesson 3: all four ClassVars must remain unchanged when set_ration_feeds
+    raises; partial updates would leave RationManager in an inconsistent state.
+    """
     RationManager.beef_lactating_pasture_ration = SENTINEL_LACTATING
     RationManager.beef_dry_gestating_ration = SENTINEL_DRY
     RationManager.beef_creep_feed_ration = SENTINEL_CREEP
@@ -163,7 +210,7 @@ def test_set_ration_feeds_is_atomic() -> None:
         "beef_replacement_heifer_ration": {"304": 100.0},
     }
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="non-negative|sum to 100"):
         RationManager.set_ration_feeds(bad_config)  # type: ignore[arg-type]
 
     assert RationManager.beef_lactating_pasture_ration is SENTINEL_LACTATING
@@ -177,7 +224,13 @@ def test_set_ration_feeds_is_atomic() -> None:
 
 @pytest.fixture()
 def mock_animal_lactating_cow() -> MagicMock:
-    """Mock Animal: BEEF_COW with calf at side (lactating)."""
+    """Mock Animal: BEEF_COW with calf at side (lactating).
+
+    Returns
+    -------
+    MagicMock
+        Animal mock with ``animal_type=BEEF_COW`` and a non-None ``calf_at_side``.
+    """
     animal = MagicMock()
     animal.animal_type = AnimalType.BEEF_COW
     animal.calf_at_side = MagicMock()
@@ -186,7 +239,13 @@ def mock_animal_lactating_cow() -> MagicMock:
 
 @pytest.fixture()
 def mock_animal_dry_cow() -> MagicMock:
-    """Mock Animal: BEEF_COW without calf at side (dry/gestating)."""
+    """Mock Animal: BEEF_COW without calf at side (dry/gestating).
+
+    Returns
+    -------
+    MagicMock
+        Animal mock with ``animal_type=BEEF_COW`` and ``calf_at_side=None``.
+    """
     animal = MagicMock()
     animal.animal_type = AnimalType.BEEF_COW
     animal.calf_at_side = None
@@ -195,7 +254,13 @@ def mock_animal_dry_cow() -> MagicMock:
 
 @pytest.fixture()
 def mock_animal_replacement_heifer() -> MagicMock:
-    """Mock Animal: BEEF_HEIFER_REPLACEMENT."""
+    """Mock Animal: BEEF_HEIFER_REPLACEMENT.
+
+    Returns
+    -------
+    MagicMock
+        Animal mock with ``animal_type=BEEF_HEIFER_REPLACEMENT`` and ``calf_at_side=None``.
+    """
     animal = MagicMock()
     animal.animal_type = AnimalType.BEEF_HEIFER_REPLACEMENT
     animal.calf_at_side = None
@@ -204,15 +269,40 @@ def mock_animal_replacement_heifer() -> MagicMock:
 
 @pytest.fixture()
 def mock_animal_bull() -> MagicMock:
-    """Mock Animal: BEEF_BULL."""
+    """Mock Animal: BEEF_BULL.
+
+    Returns
+    -------
+    MagicMock
+        Animal mock with ``animal_type=BEEF_BULL`` and ``calf_at_side=None``.
+    """
     animal = MagicMock()
     animal.animal_type = AnimalType.BEEF_BULL
     animal.calf_at_side = None
     return animal
 
 
+@pytest.fixture()
+def mock_animal_calf() -> MagicMock:
+    """Mock Animal: BEEF_CALF (nursing).
+
+    Returns
+    -------
+    MagicMock
+        Animal mock with ``animal_type=BEEF_CALF`` and ``calf_at_side=None``.
+    """
+    animal = MagicMock()
+    animal.animal_type = AnimalType.BEEF_CALF
+    animal.calf_at_side = None
+    return animal
+
+
 def test_get_beef_seasonal_ration_lactating_cow(mock_animal_lactating_cow: MagicMock) -> None:
-    """A BEEF_COW with calf_at_side returns the beef_lactating_pasture_ration."""
+    """A BEEF_COW with calf_at_side returns the beef_lactating_pasture_ration.
+
+    Verifies the lactating branch: a nursing cow needs pasture-quality feed to
+    support milk production, distinct from the dry/gestating ration.
+    """
     RationManager.beef_lactating_pasture_ration = SENTINEL_LACTATING
     RationManager.beef_dry_gestating_ration = SENTINEL_DRY
 
@@ -222,7 +312,11 @@ def test_get_beef_seasonal_ration_lactating_cow(mock_animal_lactating_cow: Magic
 
 
 def test_get_beef_seasonal_ration_dry_cow(mock_animal_dry_cow: MagicMock) -> None:
-    """A BEEF_COW without calf_at_side returns the beef_dry_gestating_ration."""
+    """A BEEF_COW without calf_at_side returns the beef_dry_gestating_ration.
+
+    Verifies the dry/gestating branch: once weaned, the cow transitions to a
+    maintenance ration rather than the lactation-support ration.
+    """
     RationManager.beef_lactating_pasture_ration = SENTINEL_LACTATING
     RationManager.beef_dry_gestating_ration = SENTINEL_DRY
 
@@ -232,7 +326,11 @@ def test_get_beef_seasonal_ration_dry_cow(mock_animal_dry_cow: MagicMock) -> Non
 
 
 def test_get_beef_seasonal_ration_replacement_heifer(mock_animal_replacement_heifer: MagicMock) -> None:
-    """A BEEF_HEIFER_REPLACEMENT returns the beef_replacement_heifer_ration."""
+    """A BEEF_HEIFER_REPLACEMENT returns the beef_replacement_heifer_ration.
+
+    Replacement heifers are on a growing plane and need a distinct ration from
+    mature cows; verifies the heifer branch routes to the correct ClassVar.
+    """
     RationManager.beef_replacement_heifer_ration = SENTINEL_HEIFER
 
     result = RationManager.get_beef_seasonal_ration(mock_animal_replacement_heifer)
@@ -241,7 +339,11 @@ def test_get_beef_seasonal_ration_replacement_heifer(mock_animal_replacement_hei
 
 
 def test_get_beef_seasonal_ration_bull(mock_animal_bull: MagicMock) -> None:
-    """A BEEF_BULL returns the beef_dry_gestating_ration (same as non-lactating cows)."""
+    """A BEEF_BULL returns the beef_dry_gestating_ration (same as non-lactating cows).
+
+    Bulls share the maintenance ration with dry cows; this verifies the shared
+    branch rather than accidentally falling through to an unsupported-type error.
+    """
     RationManager.beef_dry_gestating_ration = SENTINEL_DRY
 
     result = RationManager.get_beef_seasonal_ration(mock_animal_bull)
@@ -249,9 +351,41 @@ def test_get_beef_seasonal_ration_bull(mock_animal_bull: MagicMock) -> None:
     assert result is SENTINEL_DRY
 
 
-def test_get_beef_creep_feed_supplement_disabled(mock_animal_lactating_cow: MagicMock) -> None:
-    """Returns {} when beef_creep_feeding_enabled is False."""
+def test_get_beef_creep_feed_supplement_disabled(mock_animal_calf: MagicMock) -> None:
+    """Returns {} when beef_creep_feeding_enabled is False even for a BEEF_CALF.
+
+    Creep feeding is opt-in; confirms that setting the flag False skips the ration
+    even when a valid creep feed dict is loaded on the class.
+    """
     AnimalConfig.beef_creep_feeding_enabled = False
+    RationManager.beef_creep_feed_ration = SENTINEL_CREEP
+
+    result = RationManager.get_beef_creep_feed_supplement(mock_animal_calf)
+
+    assert result == {}
+
+
+def test_get_beef_creep_feed_supplement_enabled(mock_animal_calf: MagicMock) -> None:
+    """Returns beef_creep_feed_ration when beef_creep_feeding_enabled is True for a BEEF_CALF.
+
+    Verifies the enabled path returns the exact ClassVar dict, not a copy, so
+    callers consume the same shared reference set by set_ration_feeds.
+    """
+    AnimalConfig.beef_creep_feeding_enabled = True
+    RationManager.beef_creep_feed_ration = SENTINEL_CREEP
+
+    result = RationManager.get_beef_creep_feed_supplement(mock_animal_calf)
+
+    assert result is SENTINEL_CREEP
+
+
+def test_get_beef_creep_feed_supplement_non_calf_returns_empty(mock_animal_lactating_cow: MagicMock) -> None:
+    """Returns {} for non-BEEF_CALF animals regardless of creep feeding config.
+
+    Creep feed is only for nursing calves. Cows, bulls, and heifers must never
+    receive creep feed supplement via this path.
+    """
+    AnimalConfig.beef_creep_feeding_enabled = True
     RationManager.beef_creep_feed_ration = SENTINEL_CREEP
 
     result = RationManager.get_beef_creep_feed_supplement(mock_animal_lactating_cow)
@@ -259,33 +393,37 @@ def test_get_beef_creep_feed_supplement_disabled(mock_animal_lactating_cow: Magi
     assert result == {}
 
 
-def test_get_beef_creep_feed_supplement_enabled(mock_animal_lactating_cow: MagicMock) -> None:
-    """Returns beef_creep_feed_ration when beef_creep_feeding_enabled is True."""
-    AnimalConfig.beef_creep_feeding_enabled = True
-    RationManager.beef_creep_feed_ration = SENTINEL_CREEP
-
-    result = RationManager.get_beef_creep_feed_supplement(mock_animal_lactating_cow)
-
-    assert result is SENTINEL_CREEP
-
-
 # ── Task 6.3: RationOptimizer beef constraint branches ────────────────────────
 
 
 @pytest.fixture()
 def optimizer() -> RationOptimizer:
-    """Provide a RationOptimizer with constraints initialized for NRC standard."""
+    """Provide a RationOptimizer with constraints initialized for NRC standard.
+
+    Returns
+    -------
+    RationOptimizer
+        A RationOptimizer built by ``_make_minimal_ration_optimizer`` with NRC constraints set.
+    """
     return _make_minimal_ration_optimizer()
 
 
 def test_select_constraints_beef_cow_calf_pair(optimizer: RationOptimizer) -> None:
-    """_select_constraints returns beef_cow_constraints for BEEF_COW_CALF_PAIR."""
+    """_select_constraints returns beef_cow_constraints for BEEF_COW_CALF_PAIR.
+
+    Verifies Task 6.3: the optimizer dispatches the cow-calf-specific constraint set
+    rather than falling back to the default dairy constraints.
+    """
     result = optimizer._select_constraints(AnimalCombination.BEEF_COW_CALF_PAIR)
     assert result is optimizer.beef_cow_constraints
 
 
 def test_select_constraints_beef_replacement(optimizer: RationOptimizer) -> None:
-    """_select_constraints returns beef_replacement_constraints for BEEF_REPLACEMENT."""
+    """_select_constraints returns beef_replacement_constraints for BEEF_REPLACEMENT.
+
+    Verifies Task 6.3: growing replacement heifers use a separate constraint set
+    calibrated for weight gain rather than mature maintenance.
+    """
     result = optimizer._select_constraints(AnimalCombination.BEEF_REPLACEMENT)
     assert result is optimizer.beef_replacement_constraints
 
@@ -304,7 +442,11 @@ def test_handle_failed_constraints_agrees_with_select_constraints(
     combination: AnimalCombination,
     mocker: MockerFixture,
 ) -> None:
-    """handle_failed_constraints uses the same constraint set as _select_constraints for beef combinations."""
+    """handle_failed_constraints uses the same constraint set as _select_constraints for beef combinations.
+
+    Verifies consistency between the two dispatch paths: a failed-constraint retry
+    must evaluate against the same constraint object that was used for the initial solve.
+    """
     expected_constraints = optimizer._select_constraints(combination)
 
     mock_find = mocker.patch.object(RationOptimizer, "find_failed_constraints", return_value=[])

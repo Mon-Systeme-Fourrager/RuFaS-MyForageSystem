@@ -610,7 +610,22 @@ class AnimalConfig:
         # ── COW-CALF PARAMETERS ──────────────────────────────────────────────
         beef_cfg: dict[str, Any] = animal_config_data.get("beef_cow_calf", {})
         if beef_cfg:
-            DataValidator.validate_beef_cow_calf_config(beef_cfg)
+            merged_beef_cfg: dict[str, Any] = {
+                "mature_cow_weight_kg": beef_cfg.get(
+                    "mature_cow_weight_kg",
+                    AnimalModuleConstants.BEEF_DEFAULT_MATURE_COW_WEIGHT_KG,
+                ),
+                "weaning_age_days": beef_cfg.get(
+                    "weaning_age_days",
+                    AnimalModuleConstants.BEEF_DEFAULT_WEANING_AGE_DAYS,
+                ),
+                "breeding_season_length": beef_cfg.get(
+                    "breeding_season_length",
+                    AnimalModuleConstants.BEEF_DEFAULT_BREEDING_SEASON_LENGTH_DAYS,
+                ),
+                "natural_service_bull_ratio": beef_cfg.get("natural_service_bull_ratio", 25),
+            }
+            DataValidator.validate_beef_cow_calf_config(merged_beef_cfg)
         cls.beef_breeding_season_start_day = int(beef_cfg.get("breeding_season_start_day", 90))
         cls.beef_breeding_season_length = int(
             beef_cfg.get("breeding_season_length", AnimalModuleConstants.BEEF_DEFAULT_BREEDING_SEASON_LENGTH_DAYS)

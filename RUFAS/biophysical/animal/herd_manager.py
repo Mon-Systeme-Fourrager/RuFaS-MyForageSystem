@@ -309,6 +309,13 @@ class HerdManager:
             *self.heiferIIs,
             *self.heiferIIIs,
             *self.cows,
+            # Beef cohorts included so pen allocation can be extended in a future PR.
+            # BEEF_COW raises NotImplementedError from find_animal_combination until
+            # runtime reproduction-state dispatch replaces the Step 1 guard.
+            *self.beef_cows,
+            *self.beef_replacement_heifers,
+            *self.beef_calves,
+            *self.beef_bulls,
         ]:
             animal_combination = self.ANIMAL_GROUPING_SCENARIO.find_animal_combination(animal)
             animals_by_combination[animal_combination].append(animal)
@@ -542,7 +549,27 @@ class HerdManager:
         sold_newborn_calves: list[Animal],
         newborn_calves: list[Animal],
     ) -> None:
-        """Create a newborn calf from config and route it to the appropriate output list."""
+        """Create a newborn calf from config and route it to the appropriate output list.
+
+        Parameters
+        ----------
+        newborn_calf_config : NewBornCalfValuesTypedDict
+            Config dict produced by the calving event, passed to _create_newborn_calf.
+        time : RufasTime
+            Current simulation time.
+        stillborn_newborn_calves : list[Animal]
+            Accumulator for stillborn calves.
+        sold_newborn_calves : list[Animal]
+            Accumulator for calves sold at birth.
+        newborn_calves : list[Animal]
+            Accumulator for live calves to add to the herd.
+
+        Returns
+        -------
+        None
+            Appends the newborn to exactly one of the three output lists.
+
+        """
         newborn_calf = self._create_newborn_calf(newborn_calf_config, time=time)
         if newborn_calf.stillborn:
             stillborn_newborn_calves.append(newborn_calf)
@@ -1246,6 +1273,7 @@ class HerdManager:
                 first_parlor_processor=first_parlor_processor,
                 parlor_stream_name=parlor_stream_name,
                 manure_streams=manure_streams,
+                forage_quality_factor=float(pen_data.get("forage_quality_factor", 1.0)),
             )
 
             self.all_pens.append(pen)

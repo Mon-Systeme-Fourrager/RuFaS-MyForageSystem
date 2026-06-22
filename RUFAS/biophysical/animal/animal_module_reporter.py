@@ -1478,7 +1478,7 @@ class AnimalModuleReporter:
         om.add_variable("feedlot_hot_carcass_weight_kg", hcw, dict(info_map, units=MeasurementUnits.KILOGRAMS))
 
     @classmethod
-    def report_cow_calf_performance(cls, animal: "Animal", simulation_day: int) -> None:
+    def report_cow_calf_performance(cls, animal: Animal, simulation_day: int) -> None:
         """
         Report beef cow-calf herd performance metrics for a single animal.
 
@@ -1497,6 +1497,8 @@ class AnimalModuleReporter:
 
         """
         info_map: dict[str, Any] = {
+            "class": cls.__name__,
+            "function": cls.report_cow_calf_performance.__name__,
             "id": animal.id,
             "animal_type": animal.animal_type.value,
             "simulation_day": simulation_day,
@@ -1518,7 +1520,7 @@ class AnimalModuleReporter:
         )
         om.add_variable(
             "beef_times_calved",
-            animal.calves,
+            animal.times_calved,
             dict(info_map, units=MeasurementUnits.ANIMALS),
         )
         wean_weight: float = animal.wean_weight if animal.wean_weight is not None else 0.0

@@ -738,12 +738,12 @@ class HerdFactory:
         if not isinstance(cow_calf_cfg, dict) or not cow_calf_cfg:  # Lesson 2 guard
             return []
 
-        n_cows = int(cow_calf_cfg.get("num_cows", 0))
-        n_heifers = int(cow_calf_cfg.get("num_replacement_heifers", 0))
-        n_calves = int(cow_calf_cfg.get("num_calves", 0))
-        n_bulls = int(cow_calf_cfg.get("num_bulls", 0))
-        mature_bw = float(cow_calf_cfg.get("mature_cow_weight_kg", animal_constants.DEFAULT_MATURE_BODY_WEIGHT_KG))
-        breed_str = str(cow_calf_cfg.get("breed", "XB"))
+        n_cows = int(cow_calf_cfg.get("num_cows") or 0)
+        n_heifers = int(cow_calf_cfg.get("num_replacement_heifers") or 0)
+        n_calves = int(cow_calf_cfg.get("num_calves") or 0)
+        n_bulls = int(cow_calf_cfg.get("num_bulls") or 0)
+        mature_bw = float(cow_calf_cfg.get("mature_cow_weight_kg") or animal_constants.DEFAULT_MATURE_BODY_WEIGHT_KG)
+        breed_str = str(cow_calf_cfg.get("breed") or "XB")
 
         animals: list[Animal] = []
 
@@ -752,6 +752,7 @@ class HerdFactory:
                 "id": AnimalPopulation.next_id(),
                 "breed": breed_str,
                 "animal_type": AnimalType.BEEF_COW.value,
+                "sex": "FEMALE",
                 "days_born": animal_constants.DAYS_PER_YEAR * 3,
                 "body_weight": mature_bw,
                 "mature_body_weight": mature_bw,
@@ -763,13 +764,16 @@ class HerdFactory:
                 "id": AnimalPopulation.next_id(),
                 "breed": breed_str,
                 "animal_type": AnimalType.BEEF_HEIFER_REPLACEMENT.value,
+                "sex": "FEMALE",
                 "days_born": animal_constants.DAYS_PER_YEAR,
                 "body_weight": mature_bw * 0.6,
                 "mature_body_weight": mature_bw,
             }
             animals.append(Animal(cast(Any, heifer_data), self.time))
 
-        calf_birth_weight_kg = float(cow_calf_cfg.get("calf_birth_weight_kg", 40.0))
+        calf_birth_weight_kg = float(
+            cow_calf_cfg.get("calf_birth_weight_kg") or AnimalModuleConstants.BEEF_CALF_BIRTH_WEIGHT_KG
+        )
         for _ in range(n_calves):
             calf_data: dict[str, Any] = {
                 "id": AnimalPopulation.next_id(),
@@ -786,6 +790,7 @@ class HerdFactory:
                 "id": AnimalPopulation.next_id(),
                 "breed": breed_str,
                 "animal_type": AnimalType.BEEF_BULL.value,
+                "sex": "MALE",
                 "days_born": animal_constants.DAYS_PER_YEAR * 2,
                 "body_weight": mature_bw * 1.1,
                 "mature_body_weight": mature_bw * 1.1,
