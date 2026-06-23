@@ -927,3 +927,9 @@ class TestPhysiologicalInvariants:
         bad = dataclasses.replace(_ANGUS_HEIFER, sex="male")
         with pytest.raises(ValueError, match="must have sex='female'"):
             BeefCowCalfRequirementsCalculator.calculate_requirements(bad)
+
+    def test_beef_calf_with_unknown_sex_raises(self) -> None:
+        """An unrecognised sex string must raise ValueError naming the valid options."""
+        bad = dataclasses.replace(_ANGUS_CALF, sex="bull")
+        with pytest.raises(ValueError, match="sex must be one of"):
+            BeefCowCalfRequirementsCalculator.calculate_requirements(bad)

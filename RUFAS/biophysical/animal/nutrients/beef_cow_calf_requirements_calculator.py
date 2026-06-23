@@ -206,8 +206,9 @@ class BeefCowCalfRequirementsCalculator(NutritionRequirementsCalculator):
         Raises
         ------
         ValueError
-            If animal_type is not a beef cow-calf type; if animal_type and sex
-            are inconsistent; if a calf, bull, or non-female has days_pregnant;
+            If animal_type is not a beef cow-calf type; if sex is not a
+            recognised value; if animal_type and sex are inconsistent; if a
+            calf, bull, or non-female has days_pregnant;
             if days_pregnant is out of range; if days_in_milk is negative or set
             on a non-lactating animal; or if body_weight / mature_body_weight are
             not positive and finite.
@@ -227,10 +228,7 @@ class BeefCowCalfRequirementsCalculator(NutritionRequirementsCalculator):
                 f"{AnimalModuleConstants.BEEF_GESTATION_LENGTH_DAYS}; "
                 f"got {inputs.days_pregnant}."
             )
-        if inputs.animal_type is AnimalType.BEEF_BULL and inputs.sex != "male":
-            raise ValueError("BEEF_BULL must have sex='male'.")
-        if inputs.animal_type in (AnimalType.BEEF_COW, AnimalType.BEEF_HEIFER_REPLACEMENT) and inputs.sex != "female":
-            raise ValueError(f"{inputs.animal_type.value} must have sex='female'.")
+        BeefCowCalfRequirementsCalculator._validate_sex_constraints(inputs)
         if inputs.days_in_milk is not None and inputs.days_in_milk < 0:
             raise ValueError(f"days_in_milk must be non-negative; got {inputs.days_in_milk}.")
         if (
@@ -267,6 +265,31 @@ class BeefCowCalfRequirementsCalculator(NutritionRequirementsCalculator):
             raise ValueError("BEEF_BULL cannot have days_pregnant set; bulls do not gestate.")
         if inputs.sex != "female":
             raise ValueError("days_pregnant is only valid for female animals.")
+
+    @staticmethod
+    def _validate_sex_constraints(inputs: CowCalfRequirementsInputs) -> None:
+        """
+        Validate that sex is a recognised value and is consistent with animal_type.
+
+        Parameters
+        ----------
+        inputs : CowCalfRequirementsInputs
+            Fully populated input dataclass.
+
+        Raises
+        ------
+        ValueError
+            If sex is not in SEX_NEm_MULTIPLIER, or if sex is inconsistent with
+            animal_type (BEEF_BULL must be 'male'; BEEF_COW/HEIFER must be 'female').
+
+        """
+        if inputs.sex not in AnimalModuleConstants.SEX_NEm_MULTIPLIER:
+            valid_sexes = ", ".join(sorted(AnimalModuleConstants.SEX_NEm_MULTIPLIER))
+            raise ValueError(f"sex must be one of {valid_sexes}; got {inputs.sex}.")
+        if inputs.animal_type is AnimalType.BEEF_BULL and inputs.sex != "male":
+            raise ValueError("BEEF_BULL must have sex='male'.")
+        if inputs.animal_type in (AnimalType.BEEF_COW, AnimalType.BEEF_HEIFER_REPLACEMENT) and inputs.sex != "female":
+            raise ValueError(f"{inputs.animal_type.value} must have sex='female'.")
 
     @staticmethod
     def _calculate_comp(bcs: float) -> float:
