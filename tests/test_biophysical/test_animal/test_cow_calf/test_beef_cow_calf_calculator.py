@@ -861,3 +861,45 @@ class TestPhysiologicalInvariants:
         bad = dataclasses.replace(_ANGUS_COW_NONLACT, mature_body_weight=0.0)
         with pytest.raises(ValueError, match="mature_body_weight must be positive"):
             BeefCowCalfRequirementsCalculator.calculate_requirements(bad)
+
+    def test_body_weight_nan_raises(self) -> None:
+        """body_weight = NaN must raise ValueError (not finite)."""
+        bad = dataclasses.replace(_ANGUS_COW_NONLACT, body_weight=float("nan"))
+        with pytest.raises(ValueError, match="body_weight must be positive and finite"):
+            BeefCowCalfRequirementsCalculator.calculate_requirements(bad)
+
+    def test_body_weight_inf_raises(self) -> None:
+        """body_weight = inf must raise ValueError (not finite)."""
+        bad = dataclasses.replace(_ANGUS_COW_NONLACT, body_weight=float("inf"))
+        with pytest.raises(ValueError, match="body_weight must be positive and finite"):
+            BeefCowCalfRequirementsCalculator.calculate_requirements(bad)
+
+    def test_mature_body_weight_nan_raises(self) -> None:
+        """mature_body_weight = NaN must raise ValueError (not finite)."""
+        bad = dataclasses.replace(_ANGUS_COW_NONLACT, mature_body_weight=float("nan"))
+        with pytest.raises(ValueError, match="mature_body_weight must be positive and finite"):
+            BeefCowCalfRequirementsCalculator.calculate_requirements(bad)
+
+    def test_non_female_with_days_pregnant_raises(self) -> None:
+        """Non-female (non-bull) animal with days_pregnant set must raise ValueError."""
+        bad = dataclasses.replace(_ANGUS_HEIFER, sex="male", days_pregnant=100)
+        with pytest.raises(ValueError, match="days_pregnant is only valid for female animals"):
+            BeefCowCalfRequirementsCalculator.calculate_requirements(bad)
+
+    def test_bull_with_days_in_milk_raises(self) -> None:
+        """BEEF_BULL with days_in_milk > 0 must raise ValueError."""
+        bad = dataclasses.replace(_ANGUS_BULL, days_in_milk=60)
+        with pytest.raises(ValueError, match="days_in_milk is only valid for lactating female animals"):
+            BeefCowCalfRequirementsCalculator.calculate_requirements(bad)
+
+    def test_non_female_with_days_in_milk_raises(self) -> None:
+        """Non-female (non-bull) with days_in_milk > 0 must raise ValueError."""
+        bad = dataclasses.replace(_ANGUS_CALF, days_in_milk=60)
+        with pytest.raises(ValueError, match="days_in_milk is only valid for lactating female animals"):
+            BeefCowCalfRequirementsCalculator.calculate_requirements(bad)
+
+    def test_body_weight_below_conceptus_weight_raises(self) -> None:
+        """body_weight so small that conceptus weight exceeds SBW must raise ValueError."""
+        tiny_bw = dataclasses.replace(_ANGUS_COW_GEST, body_weight=5.0, days_pregnant=283)
+        with pytest.raises(ValueError, match="body_weight must exceed conceptus weight"):
+            BeefCowCalfRequirementsCalculator.calculate_requirements(tiny_bw)

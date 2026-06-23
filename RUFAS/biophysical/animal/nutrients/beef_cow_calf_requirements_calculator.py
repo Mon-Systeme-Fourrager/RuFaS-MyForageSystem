@@ -96,30 +96,11 @@ class BeefCowCalfRequirementsCalculator(NutritionRequirementsCalculator):
         Raises
         ------
         ValueError
-            If inputs.animal_type is not a beef cow-calf type, or if
-            physiological invariants are violated (bull with days_pregnant,
-            days_pregnant out of 1–283 range, negative days_in_milk).
+            If any physiological invariant is violated (see _validate_inputs),
+            or if conceptus weight exceeds shrunk body weight for a pregnant animal.
 
         """
-        if not inputs.animal_type.is_beef_cow_calf:
-            raise ValueError(
-                f"BeefCowCalfRequirementsCalculator only handles cow-calf types; " f"got {inputs.animal_type.value}."
-            )
-        if inputs.animal_type is AnimalType.BEEF_BULL and inputs.days_pregnant is not None:
-            raise ValueError("BEEF_BULL cannot have days_pregnant set; bulls do not gestate.")
-        if inputs.days_pregnant is not None and not (
-            1 <= inputs.days_pregnant <= AnimalModuleConstants.BEEF_GESTATION_LENGTH_DAYS
-        ):
-            raise ValueError(
-                f"days_pregnant must be 1–{AnimalModuleConstants.BEEF_GESTATION_LENGTH_DAYS}; "
-                f"got {inputs.days_pregnant}."
-            )
-        if inputs.days_in_milk is not None and inputs.days_in_milk < 0:
-            raise ValueError(f"days_in_milk must be non-negative; got {inputs.days_in_milk}.")
-        if inputs.body_weight <= 0.0:
-            raise ValueError(f"body_weight must be positive, got {inputs.body_weight}")
-        if inputs.mature_body_weight <= 0.0:
-            raise ValueError(f"mature_body_weight must be positive, got {inputs.mature_body_weight}")
+        cls._validate_inputs(inputs)
 
         cbw: float = AnimalModuleConstants.BREED_CBW_KG.get(
             inputs.breed, AnimalModuleConstants.BEEF_CALF_BIRTH_WEIGHT_KG
@@ -137,6 +118,11 @@ class BeefCowCalfRequirementsCalculator(NutritionRequirementsCalculator):
         cw: float = 0.0
         if inputs.days_pregnant is not None:
             ne_preg, mp_preg, cw = cls._calculate_gestation_energy(cbw, inputs.days_pregnant)
+            if cw >= sbw:
+                raise ValueError(
+                    f"body_weight must exceed conceptus weight for pregnant animals; "
+                    f"shrunk body weight={sbw:.3f}, conceptus weight={cw:.3f}."
+                )
 
         eqsbw: float = BeefNRCRequirementsCalculator._calculate_eqsbw(sbw - cw, msbw)
 
@@ -206,6 +192,54 @@ class BeefCowCalfRequirementsCalculator(NutritionRequirementsCalculator):
             activity_energy=0.0,
             essential_amino_acids=empty_aa,
         )
+
+    @staticmethod
+    def _validate_inputs(inputs: CowCalfRequirementsInputs) -> None:
+        """
+        Validate CowCalfRequirementsInputs and raise ValueError on any violation.
+
+        Parameters
+        ----------
+        inputs : CowCalfRequirementsInputs
+            Fully populated input dataclass.
+
+        Raises
+        ------
+        ValueError
+            If animal_type is not a beef cow-calf type; if a non-female or bull
+            has days_pregnant set; if days_pregnant is out of 1–283 range; if
+            days_in_milk is negative; if a bull or non-female has days_in_milk > 0;
+            or if body_weight / mature_body_weight are not positive and finite.
+
+        """
+        if not inputs.animal_type.is_beef_cow_calf:
+            raise ValueError(
+                f"BeefCowCalfRequirementsCalculator only handles cow-calf types; " f"got {inputs.animal_type.value}."
+            )
+        if inputs.days_pregnant is not None:
+            if inputs.animal_type is AnimalType.BEEF_BULL:
+                raise ValueError("BEEF_BULL cannot have days_pregnant set; bulls do not gestate.")
+            if inputs.sex != "female":
+                raise ValueError("days_pregnant is only valid for female animals.")
+        if inputs.days_pregnant is not None and not (
+            1 <= inputs.days_pregnant <= AnimalModuleConstants.BEEF_GESTATION_LENGTH_DAYS
+        ):
+            raise ValueError(
+                f"days_pregnant must be 1–{AnimalModuleConstants.BEEF_GESTATION_LENGTH_DAYS}; "
+                f"got {inputs.days_pregnant}."
+            )
+        if inputs.days_in_milk is not None and inputs.days_in_milk < 0:
+            raise ValueError(f"days_in_milk must be non-negative; got {inputs.days_in_milk}.")
+        if (
+            inputs.days_in_milk is not None
+            and inputs.days_in_milk > 0
+            and (inputs.animal_type is AnimalType.BEEF_BULL or inputs.sex != "female")
+        ):
+            raise ValueError("days_in_milk is only valid for lactating female animals.")
+        if not math.isfinite(inputs.body_weight) or inputs.body_weight <= 0.0:
+            raise ValueError(f"body_weight must be positive and finite, got {inputs.body_weight}")
+        if not math.isfinite(inputs.mature_body_weight) or inputs.mature_body_weight <= 0.0:
+            raise ValueError(f"mature_body_weight must be positive and finite, got {inputs.mature_body_weight}")
 
     @staticmethod
     def _calculate_comp(bcs: float) -> float:
