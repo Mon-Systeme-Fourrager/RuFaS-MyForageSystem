@@ -903,3 +903,27 @@ class TestPhysiologicalInvariants:
         tiny_bw = dataclasses.replace(_ANGUS_COW_GEST, body_weight=5.0, days_pregnant=283)
         with pytest.raises(ValueError, match="body_weight must exceed conceptus weight"):
             BeefCowCalfRequirementsCalculator.calculate_requirements(tiny_bw)
+
+    def test_calf_with_days_pregnant_raises(self) -> None:
+        """BEEF_CALF with days_pregnant set must raise ValueError mentioning calves."""
+        bad = dataclasses.replace(_ANGUS_CALF, days_pregnant=100)
+        with pytest.raises(ValueError, match="calves do not gestate"):
+            BeefCowCalfRequirementsCalculator.calculate_requirements(bad)
+
+    def test_bull_with_female_sex_raises(self) -> None:
+        """BEEF_BULL with sex='female' must raise ValueError."""
+        bad = dataclasses.replace(_ANGUS_BULL, sex="female")
+        with pytest.raises(ValueError, match="BEEF_BULL must have sex='male'"):
+            BeefCowCalfRequirementsCalculator.calculate_requirements(bad)
+
+    def test_beef_cow_with_male_sex_raises(self) -> None:
+        """BEEF_COW with sex='male' must raise ValueError."""
+        bad = dataclasses.replace(_ANGUS_COW_NONLACT, sex="male")
+        with pytest.raises(ValueError, match="must have sex='female'"):
+            BeefCowCalfRequirementsCalculator.calculate_requirements(bad)
+
+    def test_beef_heifer_replacement_with_male_sex_raises(self) -> None:
+        """BEEF_HEIFER_REPLACEMENT with sex='male' must raise ValueError."""
+        bad = dataclasses.replace(_ANGUS_HEIFER, sex="male")
+        with pytest.raises(ValueError, match="must have sex='female'"):
+            BeefCowCalfRequirementsCalculator.calculate_requirements(bad)
