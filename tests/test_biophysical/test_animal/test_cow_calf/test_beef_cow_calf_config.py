@@ -133,7 +133,7 @@ def _make_mock_animal_config_data(beef_overrides: dict[str, Any] | None = None) 
         "weaning_age_days": 207,
         "weaning_weight_kg": None,
         "creep_feeding_enabled": False,
-        "post_weaning_destination": "sell",
+        "post_weaning_destination": BeefPostWeaningDestination.SELL.value,
         "mature_cow_weight_kg": 520.0,
         "natural_service_bull_ratio": 25,
         "cow_cull_rate_annual": 0.175,
@@ -298,7 +298,7 @@ def test_initialize_sets_beef_creep_feeding_enabled(mocker: pytest_mock.MockerFi
 
 def test_initialize_sets_beef_post_weaning_destination(mocker: pytest_mock.MockerFixture) -> None:
     """initialize_animal_config stores beef_post_weaning_destination from the input JSON."""
-    _mock_im(mocker, beef_overrides={"post_weaning_destination": "direct_to_feedlot"})
+    _mock_im(mocker, beef_overrides={"post_weaning_destination": BeefPostWeaningDestination.DIRECT_TO_FEEDLOT.value})
     AnimalConfig.initialize_animal_config()
     assert AnimalConfig.beef_post_weaning_destination is BeefPostWeaningDestination.DIRECT_TO_FEEDLOT
 
