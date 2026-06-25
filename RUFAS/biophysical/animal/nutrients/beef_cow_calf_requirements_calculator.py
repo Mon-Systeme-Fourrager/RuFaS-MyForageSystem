@@ -14,6 +14,7 @@ import math
 from dataclasses import dataclass
 
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
+from RUFAS.biophysical.animal.data_types.animal_enums import Sex
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 from RUFAS.biophysical.animal.data_types.nutrition_data_structures import NutritionRequirements
 from RUFAS.biophysical.animal.nutrients.beef_nrc_requirements_calculator import BeefNRCRequirementsCalculator
@@ -36,8 +37,8 @@ class CowCalfRequirementsInputs:
         Must be BEEF_COW, BEEF_HEIFER_REPLACEMENT, BEEF_CALF, or BEEF_BULL.
     breed : str
         Breed string for NRC 2016 Table 19-1 lookups (BE, L, CBW, PKYD, milk composition).
-    sex : str
-        'male', 'female', or 'steer'; drives SEX multiplier in NEm.
+    sex : Sex
+        Sex enum member; drives SEX multiplier in NEm.
     body_condition_score : float
         Body condition score on the NRC 2016 beef 1–9 scale.
     days_pregnant : int | None
@@ -63,7 +64,7 @@ class CowCalfRequirementsInputs:
     mature_body_weight: float
     animal_type: AnimalType
     breed: str
-    sex: str
+    sex: Sex
     body_condition_score: float
     days_pregnant: int | None
     days_in_milk: int | None
@@ -234,7 +235,7 @@ class BeefCowCalfRequirementsCalculator(NutritionRequirementsCalculator):
         if (
             inputs.days_in_milk is not None
             and inputs.days_in_milk > 0
-            and (inputs.animal_type is not AnimalType.BEEF_COW or inputs.sex != "female")
+            and (inputs.animal_type is not AnimalType.BEEF_COW or inputs.sex != Sex.FEMALE)
         ):
             raise ValueError("days_in_milk is only valid for lactating female animals.")
         if not math.isfinite(inputs.body_weight) or inputs.body_weight <= 0.0:
@@ -263,7 +264,7 @@ class BeefCowCalfRequirementsCalculator(NutritionRequirementsCalculator):
             raise ValueError("BEEF_CALF cannot have days_pregnant set; calves do not gestate.")
         if inputs.animal_type is AnimalType.BEEF_BULL:
             raise ValueError("BEEF_BULL cannot have days_pregnant set; bulls do not gestate.")
-        if inputs.sex != "female":
+        if inputs.sex != Sex.FEMALE:
             raise ValueError("days_pregnant is only valid for female animals.")
 
     @staticmethod
@@ -284,11 +285,11 @@ class BeefCowCalfRequirementsCalculator(NutritionRequirementsCalculator):
 
         """
         if inputs.sex not in AnimalModuleConstants.SEX_NEm_MULTIPLIER:
-            valid_sexes = ", ".join(sorted(AnimalModuleConstants.SEX_NEm_MULTIPLIER))
+            valid_sexes = ", ".join(sorted(k.value for k in AnimalModuleConstants.SEX_NEm_MULTIPLIER))
             raise ValueError(f"sex must be one of {valid_sexes}; got {inputs.sex}.")
-        if inputs.animal_type is AnimalType.BEEF_BULL and inputs.sex != "male":
+        if inputs.animal_type is AnimalType.BEEF_BULL and inputs.sex != Sex.MALE:
             raise ValueError("BEEF_BULL must have sex='male'.")
-        if inputs.animal_type in (AnimalType.BEEF_COW, AnimalType.BEEF_HEIFER_REPLACEMENT) and inputs.sex != "female":
+        if inputs.animal_type in (AnimalType.BEEF_COW, AnimalType.BEEF_HEIFER_REPLACEMENT) and inputs.sex != Sex.FEMALE:
             raise ValueError(f"{inputs.animal_type.value} must have sex='female'.")
 
     @staticmethod
@@ -335,7 +336,7 @@ class BeefCowCalfRequirementsCalculator(NutritionRequirementsCalculator):
         cls,
         sbw: float,
         breed: str,
-        sex: str,
+        sex: Sex,
         bcs: float,
         is_lactating: bool,
         temperature_c: float,
@@ -350,8 +351,8 @@ class BeefCowCalfRequirementsCalculator(NutritionRequirementsCalculator):
             Shrunk body weight (kg).
         breed : str
             Breed string for NRC 2016 Table 19-1 BE and L lookups.
-        sex : str
-            Sex string ('male', 'female', 'steer') for SEX multiplier.
+        sex : Sex
+            Sex enum member for NRC 2016 Table 19-1 SEX multiplier.
         bcs : float
             Body condition score (1–9 beef scale) for COMP adjustment.
         is_lactating : bool

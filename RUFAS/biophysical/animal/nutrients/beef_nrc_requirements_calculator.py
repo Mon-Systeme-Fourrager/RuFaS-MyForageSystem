@@ -8,6 +8,7 @@ References: NRC (2016) Nutrient Requirements of Beef Cattle, 8th ed.
 from __future__ import annotations
 
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
+from RUFAS.biophysical.animal.data_types.animal_enums import Sex
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 from RUFAS.biophysical.animal.data_types.nutrition_data_structures import NutritionRequirements
 from RUFAS.biophysical.animal.nutrients.nutrition_requirements_calculator import (
@@ -26,7 +27,7 @@ class BeefNRCRequirementsCalculator(NutritionRequirementsCalculator):
         mature_body_weight: float,
         animal_type: AnimalType,
         breed: str,
-        sex: str,
+        sex: Sex,
         days_on_feed: int,
         target_adg: float,
         implant_adg_factor: float,
@@ -49,8 +50,8 @@ class BeefNRCRequirementsCalculator(NutritionRequirementsCalculator):
             Must be FEEDLOT_STEER or FEEDLOT_HEIFER.
         breed : str
             Breed string (e.g. 'Angus') for NRC 2016 Table 19-1 BE lookup.
-        sex : str
-            'steer', 'female', or 'male' for SEX multiplier.
+        sex : Sex
+            Sex enum member for NRC 2016 Table 19-1 SEX multiplier.
         days_on_feed : int
             Days since pen placement; drives receiving-period DMI adjustment.
         target_adg : float
@@ -211,7 +212,7 @@ class BeefNRCRequirementsCalculator(NutritionRequirementsCalculator):
         cls,
         sbw: float,
         breed: str,
-        sex: str,
+        sex: Sex,
         housing: str,
         mud_condition: str,
         temperature_c: float,
@@ -225,8 +226,8 @@ class BeefNRCRequirementsCalculator(NutritionRequirementsCalculator):
             Shrunk body weight (kg).
         breed : str
             Breed string for NRC 2016 Table 19-1 BE multiplier.
-        sex : str
-            Sex string for NRC 2016 Table 19-1 SEX multiplier.
+        sex : Sex
+            Sex enum member for NRC 2016 Table 19-1 SEX multiplier.
         housing : str
             Housing type (reserved; not used in current implementation).
         mud_condition : str

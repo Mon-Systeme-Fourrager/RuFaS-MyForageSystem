@@ -1,6 +1,7 @@
 from typing import Any
 
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
+from RUFAS.biophysical.animal.data_types.animal_enums import BeefPostWeaningDestination
 from RUFAS.biophysical.animal.data_types.repro_protocol_enums import (
     HeiferReproductionProtocol,
     CowReproductionProtocol,
@@ -195,8 +196,8 @@ class AnimalConfig:
         comes first). None means age is the sole trigger.
     beef_creep_feeding_enabled : bool
         Whether nursing calves receive supplemental creep feed in addition to dam's milk.
-    beef_post_weaning_destination : str
-        Fate of weaned calves: 'replacement_heifer', 'direct_to_feedlot', or 'sell'.
+    beef_post_weaning_destination : BeefPostWeaningDestination
+        Fate of weaned calves: SELL, REPLACEMENT_HEIFER, DIRECT_TO_FEEDLOT, or STOCKER.
     beef_mature_cow_weight_kg : float
         Expected mature body weight for cows in this herd (kg); used to set replacement heifer
         development targets.
@@ -418,7 +419,7 @@ class AnimalConfig:
     beef_weaning_age_days: int = AnimalModuleConstants.BEEF_DEFAULT_WEANING_AGE_DAYS
     beef_weaning_weight_kg: float | None = None
     beef_creep_feeding_enabled: bool = False
-    beef_post_weaning_destination: str = "sell"
+    beef_post_weaning_destination: BeefPostWeaningDestination = BeefPostWeaningDestination.SELL
     beef_mature_cow_weight_kg: float = AnimalModuleConstants.BEEF_DEFAULT_MATURE_COW_WEIGHT_KG
     beef_natural_service_bull_ratio: int = 25
     beef_cow_cull_rate_annual: float = AnimalModuleConstants.BEEF_ANNUAL_CULL_RATE
@@ -615,14 +616,14 @@ class AnimalConfig:
         raw_weaning_weight = beef_cfg.get("weaning_weight_kg")
         cls.beef_weaning_weight_kg = float(raw_weaning_weight) if raw_weaning_weight is not None else None
         cls.beef_creep_feeding_enabled = bool(beef_cfg.get("creep_feeding_enabled", False))
-        destination = str(beef_cfg.get("post_weaning_destination", "sell"))
-        _valid_destinations = {"replacement_heifer", "direct_to_feedlot", "sell"}
-        if destination not in _valid_destinations:
+        destination_str = str(beef_cfg.get("post_weaning_destination", BeefPostWeaningDestination.SELL.value))
+        try:
+            cls.beef_post_weaning_destination = BeefPostWeaningDestination(destination_str)
+        except ValueError:
+            valid = sorted(d.value for d in BeefPostWeaningDestination)
             raise ValueError(
-                f"Invalid beef post-weaning destination '{destination}'. "
-                f"Expected one of: {sorted(_valid_destinations)}."
+                f"Invalid beef post-weaning destination '{destination_str}'. " f"Expected one of: {valid}."
             )
-        cls.beef_post_weaning_destination = destination
         cls.beef_mature_cow_weight_kg = float(
             beef_cfg.get("mature_cow_weight_kg", AnimalModuleConstants.BEEF_DEFAULT_MATURE_COW_WEIGHT_KG)
         )

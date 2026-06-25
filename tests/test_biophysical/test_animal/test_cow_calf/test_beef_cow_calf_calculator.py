@@ -11,9 +11,11 @@ Tolerances follow Section 3.8 of the cow-calf integration plan:
 """
 
 import dataclasses
+from typing import cast
 
 import pytest
 
+from RUFAS.biophysical.animal.data_types.animal_enums import Sex
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 from RUFAS.biophysical.animal.nutrients.beef_cow_calf_requirements_calculator import (
     BeefCowCalfRequirementsCalculator,
@@ -32,7 +34,7 @@ _ANGUS_COW_NONLACT = CowCalfRequirementsInputs(
     mature_body_weight=520.0,
     animal_type=AnimalType.BEEF_COW,
     breed="Angus",
-    sex="female",
+    sex=Sex.FEMALE,
     body_condition_score=5.0,
     days_pregnant=None,
     days_in_milk=None,
@@ -49,7 +51,7 @@ _ANGUS_COW_LACT = CowCalfRequirementsInputs(
     mature_body_weight=520.0,
     animal_type=AnimalType.BEEF_COW,
     breed="Angus",
-    sex="female",
+    sex=Sex.FEMALE,
     body_condition_score=5.0,
     days_pregnant=None,
     days_in_milk=60,
@@ -66,7 +68,7 @@ _ANGUS_COW_LACT_HEIFER = CowCalfRequirementsInputs(
     mature_body_weight=520.0,
     animal_type=AnimalType.BEEF_COW,
     breed="Angus",
-    sex="female",
+    sex=Sex.FEMALE,
     body_condition_score=5.0,
     days_pregnant=None,
     days_in_milk=60,
@@ -83,7 +85,7 @@ _ANGUS_COW_GEST = CowCalfRequirementsInputs(
     mature_body_weight=520.0,
     animal_type=AnimalType.BEEF_COW,
     breed="Angus",
-    sex="female",
+    sex=Sex.FEMALE,
     body_condition_score=5.0,
     days_pregnant=200,
     days_in_milk=None,
@@ -100,7 +102,7 @@ _ANGUS_HEIFER = CowCalfRequirementsInputs(
     mature_body_weight=520.0,
     animal_type=AnimalType.BEEF_HEIFER_REPLACEMENT,
     breed="Angus",
-    sex="female",
+    sex=Sex.FEMALE,
     body_condition_score=5.0,
     days_pregnant=None,
     days_in_milk=None,
@@ -117,7 +119,7 @@ _ANGUS_CALF = CowCalfRequirementsInputs(
     mature_body_weight=520.0,
     animal_type=AnimalType.BEEF_CALF,
     breed="Angus",
-    sex="male",
+    sex=Sex.MALE,
     body_condition_score=5.0,
     days_pregnant=None,
     days_in_milk=None,
@@ -134,7 +136,7 @@ _ANGUS_BULL = CowCalfRequirementsInputs(
     mature_body_weight=700.0,
     animal_type=AnimalType.BEEF_BULL,
     breed="Angus",
-    sex="male",
+    sex=Sex.MALE,
     body_condition_score=5.0,
     days_pregnant=None,
     days_in_milk=None,
@@ -162,7 +164,7 @@ class TestCowCalfRequirementsInputs:
             mature_body_weight=520.0,
             animal_type=AnimalType.BEEF_COW,
             breed="Angus",
-            sex="female",
+            sex=Sex.FEMALE,
             body_condition_score=5.0,
             days_pregnant=None,
             days_in_milk=60,
@@ -193,7 +195,7 @@ class TestCowCalfRequirementsInputs:
             mature_body_weight=520.0,
             animal_type=AnimalType.BEEF_COW,
             breed="Angus",
-            sex="female",
+            sex=Sex.FEMALE,
             body_condition_score=7.0,
             days_pregnant=None,
             days_in_milk=None,
@@ -275,7 +277,7 @@ class TestCalculateMaintenanceEnergy:
             mature_body_weight=520.0,
             animal_type=AnimalType.BEEF_COW,
             breed="Angus",
-            sex="female",
+            sex=Sex.FEMALE,
             body_condition_score=5.0,
             days_pregnant=None,
             days_in_milk=None,
@@ -297,7 +299,7 @@ class TestCalculateMaintenanceEnergy:
             mature_body_weight=520.0,
             animal_type=AnimalType.BEEF_COW,
             breed="Angus",
-            sex="female",
+            sex=Sex.FEMALE,
             body_condition_score=5.0,
             days_pregnant=None,
             days_in_milk=None,
@@ -360,7 +362,7 @@ class TestBeefMilkYieldAndLactation:
             mature_body_weight=520.0,
             animal_type=AnimalType.BEEF_COW,
             breed="Angus",
-            sex="female",
+            sex=Sex.FEMALE,
             body_condition_score=5.0,
             days_pregnant=None,
             days_in_milk=56,
@@ -404,7 +406,7 @@ class TestBeefMilkYieldAndLactation:
             mature_body_weight=520.0,
             animal_type=AnimalType.BEEF_COW,
             breed="Angus",
-            sex="female",
+            sex=Sex.FEMALE,
             body_condition_score=5.0,
             days_pregnant=None,
             days_in_milk=56,
@@ -646,7 +648,7 @@ class TestLactatingAndPregnantOverlap:
             mature_body_weight=520.0,
             animal_type=AnimalType.BEEF_COW,
             breed="Angus",
-            sex="female",
+            sex=Sex.FEMALE,
             body_condition_score=5.0,
             days_pregnant=60,
             days_in_milk=60,
@@ -760,7 +762,7 @@ class TestDairyAndFeedlotGuards:
                 mature_body_weight=520.0,
                 animal_type=animal_type,
                 breed="Angus",
-                sex="female",
+                sex=Sex.FEMALE,
                 days_on_feed=0,
                 target_adg=0.0,
                 implant_adg_factor=1.0,
@@ -797,7 +799,7 @@ class TestTypeGuard:
             mature_body_weight=520.0,
             animal_type=animal_type,
             breed="Angus",
-            sex="female",
+            sex=Sex.FEMALE,
             body_condition_score=5.0,
             days_pregnant=None,
             days_in_milk=None,
@@ -882,7 +884,7 @@ class TestPhysiologicalInvariants:
 
     def test_non_female_with_days_pregnant_raises(self) -> None:
         """Non-female (non-bull) animal with days_pregnant set must raise ValueError."""
-        bad = dataclasses.replace(_ANGUS_HEIFER, sex="male", days_pregnant=100)
+        bad = dataclasses.replace(_ANGUS_HEIFER, sex=Sex.MALE, days_pregnant=100)
         with pytest.raises(ValueError, match="days_pregnant is only valid for female animals"):
             BeefCowCalfRequirementsCalculator.calculate_requirements(bad)
 
@@ -912,24 +914,24 @@ class TestPhysiologicalInvariants:
 
     def test_bull_with_female_sex_raises(self) -> None:
         """BEEF_BULL with sex='female' must raise ValueError."""
-        bad = dataclasses.replace(_ANGUS_BULL, sex="female")
+        bad = dataclasses.replace(_ANGUS_BULL, sex=Sex.FEMALE)
         with pytest.raises(ValueError, match="BEEF_BULL must have sex='male'"):
             BeefCowCalfRequirementsCalculator.calculate_requirements(bad)
 
     def test_beef_cow_with_male_sex_raises(self) -> None:
         """BEEF_COW with sex='male' must raise ValueError."""
-        bad = dataclasses.replace(_ANGUS_COW_NONLACT, sex="male")
+        bad = dataclasses.replace(_ANGUS_COW_NONLACT, sex=Sex.MALE)
         with pytest.raises(ValueError, match="must have sex='female'"):
             BeefCowCalfRequirementsCalculator.calculate_requirements(bad)
 
     def test_beef_heifer_replacement_with_male_sex_raises(self) -> None:
         """BEEF_HEIFER_REPLACEMENT with sex='male' must raise ValueError."""
-        bad = dataclasses.replace(_ANGUS_HEIFER, sex="male")
+        bad = dataclasses.replace(_ANGUS_HEIFER, sex=Sex.MALE)
         with pytest.raises(ValueError, match="must have sex='female'"):
             BeefCowCalfRequirementsCalculator.calculate_requirements(bad)
 
     def test_beef_calf_with_unknown_sex_raises(self) -> None:
         """An unrecognised sex string must raise ValueError naming the valid options."""
-        bad = dataclasses.replace(_ANGUS_CALF, sex="bull")
+        bad = dataclasses.replace(_ANGUS_CALF, sex=cast(Sex, "bull"))
         with pytest.raises(ValueError, match="sex must be one of"):
             BeefCowCalfRequirementsCalculator.calculate_requirements(bad)

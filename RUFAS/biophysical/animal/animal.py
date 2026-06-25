@@ -2671,7 +2671,7 @@ class Animal:
                 mature_body_weight=self.mature_body_weight,
                 animal_type=self.animal_type,
                 breed=self.breed.value,
-                sex=self.sex.value,
+                sex=self.sex,
                 days_on_feed=self.days_on_feed,
                 target_adg=AnimalConfig.feedlot_target_adg,
                 implant_adg_factor=AnimalConfig.feedlot_implant_adg_factor,

@@ -3,6 +3,7 @@
 from typing import Any
 
 import pytest
+from RUFAS.biophysical.animal.data_types.animal_enums import Sex
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 from RUFAS.biophysical.animal.data_types.nutrition_data_structures import NutritionRequirements
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
@@ -54,7 +55,7 @@ def test_maintenance_energy_angus_steer_thermoneutral(calc: Any) -> None:
     result = calc._calculate_maintenance_energy(
         sbw=sbw,
         breed="Angus",
-        sex="steer",
+        sex=Sex.STEER,
         housing="Open_Lot",
         mud_condition="none",
         temperature_c=20.0,
@@ -71,7 +72,7 @@ def test_maintenance_energy_cold_adds_a2(calc: Any) -> None:
     result = calc._calculate_maintenance_energy(
         sbw=sbw,
         breed="Angus",
-        sex="steer",
+        sex=Sex.STEER,
         housing="Open_Lot",
         mud_condition="none",
         temperature_c=10.0,
@@ -86,7 +87,7 @@ def test_maintenance_energy_mud_mild(calc: Any) -> None:
     base = calc._calculate_maintenance_energy(
         sbw=sbw,
         breed="Angus",
-        sex="steer",
+        sex=Sex.STEER,
         housing="Open_Lot",
         mud_condition="none",
         temperature_c=20.0,
@@ -94,7 +95,7 @@ def test_maintenance_energy_mud_mild(calc: Any) -> None:
     result = calc._calculate_maintenance_energy(
         sbw=sbw,
         breed="Angus",
-        sex="steer",
+        sex=Sex.STEER,
         housing="Open_Lot",
         mud_condition="mild",
         temperature_c=20.0,
@@ -109,7 +110,7 @@ def test_maintenance_energy_cold_stress(calc: Any) -> None:
     base = calc._calculate_maintenance_energy(
         sbw=sbw,
         breed="Angus",
-        sex="steer",
+        sex=Sex.STEER,
         housing="Open_Lot",
         mud_condition="none",
         temperature_c=20.0,
@@ -117,7 +118,7 @@ def test_maintenance_energy_cold_stress(calc: Any) -> None:
     cold = calc._calculate_maintenance_energy(
         sbw=sbw,
         breed="Angus",
-        sex="steer",
+        sex=Sex.STEER,
         housing="Open_Lot",
         mud_condition="none",
         temperature_c=-10.0,
@@ -209,7 +210,7 @@ def test_calculate_requirements_returns_nutrition_requirements(calc: Any) -> Non
         mature_body_weight=600.0,
         animal_type=AnimalType.FEEDLOT_STEER,
         breed="Angus",
-        sex="steer",
+        sex=Sex.STEER,
         days_on_feed=30,
         target_adg=1.4,
         implant_adg_factor=1.0,
@@ -237,7 +238,7 @@ def test_calculate_requirements_rejects_dairy_type(calc: Any) -> None:
             mature_body_weight=600.0,
             animal_type=AnimalType.LAC_COW,
             breed="Holstein",
-            sex="female",
+            sex=Sex.FEMALE,
             days_on_feed=0,
             target_adg=0.0,
             implant_adg_factor=1.0,
@@ -258,7 +259,7 @@ def test_calculate_requirements_rejects_dairy_type(calc: Any) -> None:
 def _expected_nem(
     bw: float,
     breed: str = "Angus",
-    sex: str = "steer",
+    sex: Sex = Sex.STEER,
     temp: float = 20.0,
 ) -> float:
     """Expected NEm using NRC 2016 Eq. 11-1 + cold-stress a2 term (Eq. 11-2)."""
@@ -303,7 +304,7 @@ def test_box12_1_mp_anchor(calc: Any) -> None:
         mature_body_weight=600.0,
         animal_type=AnimalType.FEEDLOT_STEER,
         breed="Angus",
-        sex="steer",
+        sex=Sex.STEER,
         days_on_feed=60,
         target_adg=1.365,
         implant_adg_factor=1.0,
@@ -321,11 +322,11 @@ def test_box12_1_mp_anchor(calc: Any) -> None:
 @pytest.mark.parametrize(
     "bw,mbw,breed,sex,animal_type_name",
     [
-        (300.0, 550.0, "Angus", "steer", "FEEDLOT_STEER"),
-        (400.0, 550.0, "Angus", "steer", "FEEDLOT_STEER"),
-        (500.0, 550.0, "Angus", "steer", "FEEDLOT_STEER"),
-        (400.0, 680.0, "Charolais", "steer", "FEEDLOT_STEER"),
-        (350.0, 480.0, "Angus", "female", "FEEDLOT_HEIFER"),
+        (300.0, 550.0, "Angus", Sex.STEER, "FEEDLOT_STEER"),
+        (400.0, 550.0, "Angus", Sex.STEER, "FEEDLOT_STEER"),
+        (500.0, 550.0, "Angus", Sex.STEER, "FEEDLOT_STEER"),
+        (400.0, 680.0, "Charolais", Sex.STEER, "FEEDLOT_STEER"),
+        (350.0, 480.0, "Angus", Sex.FEMALE, "FEEDLOT_HEIFER"),
     ],
 )
 def test_nem_matches_formula_thermoneutral(
@@ -333,7 +334,7 @@ def test_nem_matches_formula_thermoneutral(
     bw: float,
     mbw: float,
     breed: str,
-    sex: str,
+    sex: Sex,
     animal_type_name: str,
 ) -> None:
     """NEm must match the closed-form formula within 0.5 % at thermoneutral (a2=0)."""
@@ -379,7 +380,7 @@ def test_neg_matches_formula(
         mature_body_weight=mbw,
         animal_type=AnimalType.FEEDLOT_STEER,
         breed="Angus",
-        sex="steer",
+        sex=Sex.STEER,
         days_on_feed=30,
         target_adg=target_adg,
         implant_adg_factor=1.0,
@@ -404,7 +405,7 @@ def test_dmi_matches_eq10_1(calc: Any, bw: float) -> None:
         mature_body_weight=550.0,
         animal_type=AnimalType.FEEDLOT_STEER,
         breed="Angus",
-        sex="steer",
+        sex=Sex.STEER,
         days_on_feed=30,
         target_adg=1.4,
         implant_adg_factor=1.0,

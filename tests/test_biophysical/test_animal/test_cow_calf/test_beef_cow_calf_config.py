@@ -14,6 +14,7 @@ import pytest_mock
 
 from RUFAS.biophysical.animal.animal_config import AnimalConfig
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
+from RUFAS.biophysical.animal.data_types.animal_enums import BeefPostWeaningDestination
 
 # ---------------------------------------------------------------------------
 # Autouse fixture: restore AnimalConfig class state after every test
@@ -81,9 +82,8 @@ def test_beef_creep_feeding_enabled_default_is_bool() -> None:
 
 
 def test_beef_post_weaning_destination_default_valid() -> None:
-    """beef_post_weaning_destination default must be one of the valid destination strings."""
-    valid = {"replacement_heifer", "direct_to_feedlot", "sell"}
-    assert AnimalConfig.beef_post_weaning_destination in valid
+    """beef_post_weaning_destination default must be BeefPostWeaningDestination.SELL."""
+    assert AnimalConfig.beef_post_weaning_destination is BeefPostWeaningDestination.SELL
 
 
 def test_beef_mature_cow_weight_kg_default() -> None:
@@ -300,7 +300,7 @@ def test_initialize_sets_beef_post_weaning_destination(mocker: pytest_mock.Mocke
     """initialize_animal_config stores beef_post_weaning_destination from the input JSON."""
     _mock_im(mocker, beef_overrides={"post_weaning_destination": "direct_to_feedlot"})
     AnimalConfig.initialize_animal_config()
-    assert AnimalConfig.beef_post_weaning_destination == "direct_to_feedlot"
+    assert AnimalConfig.beef_post_weaning_destination is BeefPostWeaningDestination.DIRECT_TO_FEEDLOT
 
 
 def test_initialize_sets_beef_mature_cow_weight_kg(mocker: pytest_mock.MockerFixture) -> None:
@@ -379,14 +379,14 @@ def _mock_im(mocker: pytest_mock.MockerFixture, beef_overrides: dict[str, Any] |
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("dest", ["replacement_heifer", "direct_to_feedlot", "sell"])
+@pytest.mark.parametrize("dest", list(BeefPostWeaningDestination))
 def test_initialize_valid_post_weaning_destinations_accepted(
-    dest: str, mocker: pytest_mock.MockerFixture
+    dest: BeefPostWeaningDestination, mocker: pytest_mock.MockerFixture
 ) -> None:
-    """All three valid post_weaning_destination values must be accepted without error."""
-    _mock_im(mocker, beef_overrides={"post_weaning_destination": dest})
+    """All four valid post_weaning_destination values must be accepted without error."""
+    _mock_im(mocker, beef_overrides={"post_weaning_destination": dest.value})
     AnimalConfig.initialize_animal_config()
-    assert AnimalConfig.beef_post_weaning_destination == dest
+    assert AnimalConfig.beef_post_weaning_destination is dest
 
 
 def test_initialize_invalid_post_weaning_destination_raises(mocker: pytest_mock.MockerFixture) -> None:

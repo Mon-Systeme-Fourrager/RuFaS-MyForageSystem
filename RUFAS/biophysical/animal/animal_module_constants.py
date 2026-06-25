@@ -1,5 +1,7 @@
 from types import MappingProxyType
 
+from RUFAS.biophysical.animal.data_types.animal_enums import Sex
+
 
 class AnimalModuleConstants:
     """
@@ -227,10 +229,10 @@ class AnimalModuleConstants:
     }
     """NRC 2016 Table 19-1 breed maintenance multipliers (BE factor)."""
 
-    SEX_NEm_MULTIPLIER: dict[str, float] = {
-        "steer": 1.00,
-        "female": 1.00,
-        "male": 1.15,
+    SEX_NEm_MULTIPLIER: dict[Sex, float] = {
+        Sex.STEER: 1.00,
+        Sex.FEMALE: 1.00,
+        Sex.MALE: 1.15,
     }
     """NRC 2016 Table 19-1 sex maintenance multipliers. Bulls 15% higher; steers/heifers = 1.0."""
 
