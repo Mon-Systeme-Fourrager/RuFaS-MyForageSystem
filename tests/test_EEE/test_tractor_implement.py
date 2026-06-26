@@ -3905,7 +3905,7 @@ def test_determine_implement_parameters(
         tractor_size=tractor_size,
         tillage_implement=tillage_implement,
         application_depth=application_depth,
-        harvest_type=harvest_type,
+        harvest_type=harvest_type
     )
 
     assert mock_get_data.call_args_list == [call("EEE_constants.constants"), call("tractor_dataset")]
@@ -3938,7 +3938,7 @@ def test_determine_implement_parameters(
         (OperationType.MOWING, 0.0, 0.9, 8.0, 0.0, None, None, 0.0),
         # CASE 6: Zero speed should give zero output
         (OperationType.PLANTING, 0.0, 0.75, 0.0, 3.0, None, None, 0.0),
-        (OperationType.LIQUID_MANURE_APPLICATION_BELOW_SURFACE, 10.0, 0.75, 0.0, 0.0, None, 10.0, 0.75),
+        (OperationType.LIQUID_MANURE_APPLICATION_BELOW_SURFACE, 10.0, 0.75, 0.0, 0.0, None, 10.0, 0.75)
     ],
 )
 def test_field_capacity_ha_per_hr(

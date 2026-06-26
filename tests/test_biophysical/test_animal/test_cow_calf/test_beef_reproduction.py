@@ -5,41 +5,16 @@ implementing BeefReproductionProtocol, AnimalConfig.beef_reproduction_program,
 and calculate_seasonal_conception_probability in beef_reproduction.py.
 """
 
-import types
-from collections.abc import Generator
 from random import seed as random_seed
 
 import pytest
+from pytest_mock import MockerFixture
 
 from RUFAS.biophysical.animal.animal_config import AnimalConfig
 from RUFAS.biophysical.animal.data_types.animal_enums import Breed, Sex
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 from RUFAS.biophysical.animal.data_types.repro_protocol_enums import BeefReproductionProtocol
 from RUFAS.biophysical.animal.reproduction.beef_reproduction import calculate_seasonal_conception_probability
-
-# ── fixtures ──────────────────────────────────────────────────────────────────
-
-
-@pytest.fixture(autouse=True)
-def reset_animal_config_state() -> Generator[None, None, None]:
-    """Snapshot and restore AnimalConfig class state after each test."""
-    original_attrs = {
-        name: value
-        for name, value in AnimalConfig.__dict__.items()
-        if not name.startswith("__") and not isinstance(value, (types.FunctionType, classmethod, staticmethod))
-    }
-    original_names = set(original_attrs.keys())
-    yield
-    for name in list(AnimalConfig.__dict__.keys()):
-        if name.startswith("__"):
-            continue
-        if isinstance(AnimalConfig.__dict__[name], (types.FunctionType, classmethod, staticmethod)):
-            continue
-        if name not in original_names:
-            delattr(AnimalConfig, name)
-    for name, value in original_attrs.items():
-        setattr(AnimalConfig, name, value)
-
 
 # ── R1–R2: BeefReproductionProtocol enum ────────────────────────────────────
 
@@ -180,7 +155,7 @@ def test_R8_aggregate_season_pregnancy_rate_near_usda_benchmark() -> None:
 
 
 @pytest.mark.unit
-def test_R9_ai_seasonal_raises_not_implemented() -> None:
+def test_R9_ai_seasonal_raises_not_implemented(mocker: MockerFixture) -> None:
     """R9: AI_SEASONAL protocol dispatch must raise NotImplementedError with a clear message.
 
     PR-B only implements NATURAL_SERVICE_SEASONAL. AI protocols are enum stubs
@@ -190,7 +165,7 @@ def test_R9_ai_seasonal_raises_not_implemented() -> None:
     from RUFAS.biophysical.animal.animal import Animal
     from RUFAS.biophysical.animal.data_types.animal_events import AnimalEvents
 
-    AnimalConfig.beef_reproduction_program = BeefReproductionProtocol.AI_SEASONAL
+    mocker.patch.object(AnimalConfig, "beef_reproduction_program", new=BeefReproductionProtocol.AI_SEASONAL)
 
     animal: Animal = Animal.__new__(Animal)
     animal.animal_type = AnimalType.BEEF_COW
@@ -225,7 +200,7 @@ def test_R9_ai_seasonal_raises_not_implemented() -> None:
 
 
 @pytest.mark.unit
-def test_R10_ai_controlled_breeding_raises_not_implemented() -> None:
+def test_R10_ai_controlled_breeding_raises_not_implemented(mocker: MockerFixture) -> None:
     """R10: AI_CONTROLLED_BREEDING protocol dispatch must raise NotImplementedError.
 
     Symmetric guard to R9 for the second unimplemented protocol.
@@ -234,7 +209,7 @@ def test_R10_ai_controlled_breeding_raises_not_implemented() -> None:
     from RUFAS.biophysical.animal.animal import Animal
     from RUFAS.biophysical.animal.data_types.animal_events import AnimalEvents
 
-    AnimalConfig.beef_reproduction_program = BeefReproductionProtocol.AI_CONTROLLED_BREEDING
+    mocker.patch.object(AnimalConfig, "beef_reproduction_program", new=BeefReproductionProtocol.AI_CONTROLLED_BREEDING)
 
     animal: Animal = Animal.__new__(Animal)
     animal.animal_type = AnimalType.BEEF_COW
