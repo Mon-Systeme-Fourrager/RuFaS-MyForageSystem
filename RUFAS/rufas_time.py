@@ -61,7 +61,7 @@ class RufasTime:
 
     @property
     def day_of_year(self) -> int:
-        """Alias for current_julian_day — day of the calendar year (1–365)."""
+        """Alias for current_julian_day - day of the calendar year (1-366)."""
         return self.current_julian_day
 
     @property

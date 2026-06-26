@@ -186,6 +186,7 @@ class BeefCowCalfValuesTypedDict(TypedDict):
     times_calved: NotRequired[int]
     is_open: NotRequired[bool]
     days_since_calving: NotRequired[int]
+    days_in_pregnancy: NotRequired[int]
     events: NotRequired[str]
 
 

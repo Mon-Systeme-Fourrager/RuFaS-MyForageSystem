@@ -10,7 +10,7 @@ from RUFAS.biophysical.animal import animal_constants
 from RUFAS.biophysical.animal.animal_config import AnimalConfig
 from RUFAS.biophysical.animal.animal_genetics.animal_genetics import Genetics
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
-from RUFAS.biophysical.animal.data_types.animal_enums import Breed, Sex, AnimalStatus
+from RUFAS.biophysical.animal.data_types.animal_enums import BeefPostWeaningDestination, Breed, Sex, AnimalStatus
 from RUFAS.biophysical.animal.data_types.animal_events import AnimalEvents
 from RUFAS.biophysical.animal.data_types.body_weight_history import BodyWeightHistory
 from RUFAS.biophysical.animal.data_types.daily_routines_output import DailyRoutinesOutput
@@ -1431,6 +1431,7 @@ class Animal:
         self.times_calved = int(args.get("times_calved", 0))
         self.is_open = bool(args.get("is_open", True))
         self.days_since_calving = int(args.get("days_since_calving", 0))
+        self._days_in_pregnancy = int(args.get("days_in_pregnancy", 0))
         self.days_in_breeding_season = None
         self.calf_at_side = None
         self.dam = None
@@ -2359,15 +2360,15 @@ class Animal:
             self.dam.calf_at_side = None
 
         destination = AnimalConfig.beef_post_weaning_destination
-        if destination == "sell":
+        if destination is BeefPostWeaningDestination.SELL:
             self.sold_at_day = time.simulation_day
             return AnimalStatus.SOLD, None
-        if destination == "replacement_heifer":
+        if destination is BeefPostWeaningDestination.REPLACEMENT_HEIFER:
             if self.sex != Sex.FEMALE:
                 raise ValueError(f"Calf with sex {self.sex} cannot be transitioned to a replacement heifer.")
             self.animal_type = AnimalType.BEEF_HEIFER_REPLACEMENT
             return AnimalStatus.LIFE_STAGE_CHANGED, None
-        if destination == "direct_to_feedlot":
+        if destination is BeefPostWeaningDestination.DIRECT_TO_FEEDLOT:
             self.animal_type = AnimalType.FEEDLOT_STEER if self.sex == Sex.MALE else AnimalType.FEEDLOT_HEIFER
             self.birth_weight = 0.0
             self._initialize_feedlot_animal(
@@ -2447,12 +2448,14 @@ class Animal:
             self.sold_at_day = time.simulation_day
             return AnimalStatus.SOLD, None
 
-        season_close = AnimalConfig.beef_breeding_season_start_day + AnimalConfig.beef_breeding_season_length
-        if (
-            self.is_open
-            and time.day_of_year > season_close
-            and self.cull_reason != animal_constants.COW_OPEN_AT_PREGNANCY_CHECK
-        ):
+        season_start = AnimalConfig.beef_breeding_season_start_day
+        season_end = season_start + AnimalConfig.beef_breeding_season_length
+        day = time.day_of_year
+        if season_end <= 365:
+            season_closed = day >= season_end
+        else:
+            season_closed = (season_end % 365) <= day < season_start
+        if self.is_open and season_closed and self.cull_reason != animal_constants.COW_OPEN_AT_PREGNANCY_CHECK:
             self.events.add_event(self.days_born, time.simulation_day, animal_constants.COW_OPEN_AT_PREGNANCY_CHECK)
             self.cull_reason = animal_constants.COW_OPEN_AT_PREGNANCY_CHECK
 
@@ -2648,6 +2651,7 @@ class Animal:
         | HeiferIIValuesTypedDict
         | HeiferIIIValuesTypedDict
         | CowValuesTypedDict
+        | BeefCowCalfValuesTypedDict
     ):
         """
         Get the attribute values of the animal.
@@ -2655,7 +2659,7 @@ class Animal:
         Returns
         -------
         (CalfValuesTypedDict | HeiferIValuesTypedDict | HeiferIIValuesTypedDict | HeiferIIIValuesTypedDict |
-         CowValuesTypedDict)
+         CowValuesTypedDict | BeefCowCalfValuesTypedDict)
             A dictionary containing key-value pairs specific to the current animal.
 
         Raises
@@ -2674,6 +2678,7 @@ class Animal:
                     | HeiferIIValuesTypedDict
                     | HeiferIIIValuesTypedDict
                     | CowValuesTypedDict
+                    | BeefCowCalfValuesTypedDict
                 ),
             ],
         ] = {
@@ -2683,6 +2688,10 @@ class Animal:
             AnimalType.HEIFER_III: self._get_heiferIII_values,
             AnimalType.DRY_COW: self._get_cow_values,
             AnimalType.LAC_COW: self._get_cow_values,
+            AnimalType.BEEF_COW: self._get_beef_cow_calf_values,
+            AnimalType.BEEF_CALF: self._get_beef_cow_calf_values,
+            AnimalType.BEEF_HEIFER_REPLACEMENT: self._get_beef_cow_calf_values,
+            AnimalType.BEEF_BULL: self._get_beef_cow_calf_values,
         }
         return mapping[self.animal_type]()
 
@@ -2834,6 +2843,32 @@ class Animal:
             days_in_milk=self.days_in_milk,
             calving_interval=self.calving_interval,
             parity=self.calves,
+        )
+
+    def _get_beef_cow_calf_values(self) -> BeefCowCalfValuesTypedDict:
+        """
+        Get the attribute values for a beef cow-calf animal.
+
+        Returns
+        -------
+        BeefCowCalfValuesTypedDict
+            A dictionary containing key-value pairs specific to the current beef animal.
+
+        """
+        return BeefCowCalfValuesTypedDict(
+            id=self.id,
+            breed=self.breed.name,
+            animal_type=self.animal_type.value,
+            days_born=self.days_born,
+            birth_weight=self.birth_weight,
+            body_weight=self.body_weight,
+            mature_body_weight=self.mature_body_weight,
+            sex=self.sex.name,
+            times_calved=self.times_calved,
+            is_open=self.is_open,
+            days_since_calving=self.days_since_calving,
+            days_in_pregnancy=self.days_in_pregnancy,
+            events=str(self.events),
         )
 
     def determine_future_death_date(self) -> int:

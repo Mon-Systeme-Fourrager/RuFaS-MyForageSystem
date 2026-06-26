@@ -633,3 +633,11 @@ class AnimalConfig:
         cls.beef_cow_cull_rate_annual = float(
             beef_cfg.get("cow_cull_rate_annual", AnimalModuleConstants.BEEF_ANNUAL_CULL_RATE)
         )
+        cls.beef_reproduction_program = BeefReproductionProtocol(
+            str(
+                beef_cfg.get(
+                    "reproduction_program",
+                    BeefReproductionProtocol.NATURAL_SERVICE_SEASONAL.value,
+                )
+            )
+        )

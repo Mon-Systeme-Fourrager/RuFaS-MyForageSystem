@@ -8,6 +8,7 @@ both before and after.
 import types
 from collections.abc import Generator
 from datetime import date
+from typing import cast
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -18,7 +19,7 @@ from RUFAS.biophysical.animal.animal_config import AnimalConfig
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
 from RUFAS.biophysical.animal.data_types.animal_events import AnimalEvents
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
-from RUFAS.biophysical.animal.data_types.animal_enums import AnimalStatus, Breed, Sex
+from RUFAS.biophysical.animal.data_types.animal_enums import AnimalStatus, BeefPostWeaningDestination, Breed, Sex
 from RUFAS.biophysical.animal import animal_constants
 from RUFAS.biophysical.animal.data_types.reproduction import HerdReproductionStatistics
 
@@ -483,7 +484,7 @@ def test_L11_calf_at_weaning_age_sell_destination() -> None:
         days_born=weaning_age,
         sex=Sex.FEMALE,
     )
-    AnimalConfig.beef_post_weaning_destination = "sell"
+    AnimalConfig.beef_post_weaning_destination = BeefPostWeaningDestination.SELL
     t = _mock_time(simulation_day=weaning_age)
 
     status, newborn = animal._beef_calf_life_stage_update(t)
@@ -505,7 +506,7 @@ def test_L12_calf_weaning_replacement_heifer_destination() -> None:
         days_born=weaning_age,
         sex=Sex.FEMALE,
     )
-    AnimalConfig.beef_post_weaning_destination = "replacement_heifer"
+    AnimalConfig.beef_post_weaning_destination = BeefPostWeaningDestination.REPLACEMENT_HEIFER
     t = _mock_time()
 
     status, newborn = animal._beef_calf_life_stage_update(t)
@@ -527,7 +528,7 @@ def test_L13_calf_weaning_feedlot_destination_steer() -> None:
         days_born=weaning_age,
         sex=Sex.MALE,
     )
-    AnimalConfig.beef_post_weaning_destination = "direct_to_feedlot"
+    AnimalConfig.beef_post_weaning_destination = BeefPostWeaningDestination.DIRECT_TO_FEEDLOT
     t = _mock_time()
 
     status, newborn = animal._beef_calf_life_stage_update(t)
@@ -642,7 +643,7 @@ def test_L17_dam_calf_at_side_cleared_at_weaning() -> None:
     )
     calf.dam = dam
     dam.calf_at_side = calf
-    AnimalConfig.beef_post_weaning_destination = "sell"
+    AnimalConfig.beef_post_weaning_destination = BeefPostWeaningDestination.SELL
     t = _mock_time(simulation_day=weaning_age)
 
     calf._beef_calf_life_stage_update(t)
@@ -663,7 +664,7 @@ def test_L18_unknown_weaning_destination_raises_value_error() -> None:
         days_born=weaning_age,
         sex=Sex.FEMALE,
     )
-    AnimalConfig.beef_post_weaning_destination = "not_a_real_destination"
+    AnimalConfig.beef_post_weaning_destination = cast(BeefPostWeaningDestination, "not_a_real_destination")
     t = _mock_time()
 
     with pytest.raises(ValueError, match="beef_post_weaning_destination"):
@@ -708,7 +709,7 @@ def test_GA_male_calf_replacement_heifer_destination_raises_value_error() -> Non
         days_born=weaning_age,
         sex=Sex.MALE,
     )
-    AnimalConfig.beef_post_weaning_destination = "replacement_heifer"
+    AnimalConfig.beef_post_weaning_destination = BeefPostWeaningDestination.REPLACEMENT_HEIFER
     t = _mock_time(simulation_day=weaning_age)
 
     with pytest.raises(ValueError, match="replacement heifer"):
@@ -727,7 +728,7 @@ def test_GA_female_calf_replacement_heifer_destination_transitions() -> None:
         days_born=weaning_age,
         sex=Sex.FEMALE,
     )
-    AnimalConfig.beef_post_weaning_destination = "replacement_heifer"
+    AnimalConfig.beef_post_weaning_destination = BeefPostWeaningDestination.REPLACEMENT_HEIFER
     t = _mock_time(simulation_day=weaning_age)
 
     status, newborn = animal._beef_calf_life_stage_update(t)
