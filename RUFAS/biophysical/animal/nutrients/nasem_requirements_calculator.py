@@ -86,6 +86,11 @@ class NASEMRequirementsCalculator(NutritionRequirementsCalculator):
             NutritionRequirements instance containing all the required amounts of energy and nutrition.
 
         """
+        if animal_type.is_beef_cow_calf:
+            raise NotImplementedError(
+                f"NASEMRequirementsCalculator is dairy-only. "
+                f"Use BeefCowCalfRequirementsCalculator for {animal_type.value}."
+            )
         if animal_type.is_feedlot:
             raise NotImplementedError(
                 f"NASEMRequirementsCalculator is dairy-only. "

@@ -2,6 +2,7 @@
 
 import pytest
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
+from RUFAS.biophysical.animal.data_types.animal_enums import Sex
 from RUFAS.biophysical.animal import animal_constants
 
 
@@ -61,12 +62,12 @@ def test_breed_nem_multiplier(breed: str, expected_mult: float) -> None:
 @pytest.mark.parametrize(
     "sex,expected_mult",
     [
-        ("steer", 1.00),
-        ("female", 1.00),
-        ("male", 1.15),
+        (Sex.STEER, 1.00),
+        (Sex.FEMALE, 1.00),
+        (Sex.MALE, 1.15),
     ],
 )
-def test_sex_nem_multiplier(sex: str, expected_mult: float) -> None:
+def test_sex_nem_multiplier(sex: Sex, expected_mult: float) -> None:
     """SEX_NEm_MULTIPLIER must contain correct NRC 2016 Table 19-1 values."""
     assert sex in AnimalModuleConstants.SEX_NEm_MULTIPLIER
     assert AnimalModuleConstants.SEX_NEm_MULTIPLIER[sex] == pytest.approx(expected_mult)

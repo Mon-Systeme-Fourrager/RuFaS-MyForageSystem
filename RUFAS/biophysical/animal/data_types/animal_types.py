@@ -23,6 +23,14 @@ class AnimalType(Enum):
         A castrated male beef animal on a feedlot finishing programme.
     FEEDLOT_HEIFER : str
         A female beef animal on a feedlot finishing programme that has not calved.
+    BEEF_CALF : str
+        A pre-weaned calf born in the cow-calf breeding herd.
+    BEEF_HEIFER_REPLACEMENT : str
+        A beef heifer retained for herd replacement, from weaning until first calving.
+    BEEF_COW : str
+        A mature beef cow in the breeding herd (gestating, lactating, or both).
+    BEEF_BULL : str
+        A bull in the natural-service breeding herd.
 
     """
 
@@ -34,6 +42,10 @@ class AnimalType(Enum):
     LAC_COW = "LacCow"
     FEEDLOT_STEER = "FeedlotSteer"
     FEEDLOT_HEIFER = "FeedlotHeifer"
+    BEEF_CALF = "BeefCalf"
+    BEEF_HEIFER_REPLACEMENT = "BeefHeiferReplacement"
+    BEEF_COW = "BeefCow"
+    BEEF_BULL = "BeefBull"
 
     @property
     def is_heifer(self) -> bool:
@@ -49,3 +61,13 @@ class AnimalType(Enum):
     def is_feedlot(self) -> bool:
         """True if the animal is a feedlot beef animal, False otherwise."""
         return self in (AnimalType.FEEDLOT_STEER, AnimalType.FEEDLOT_HEIFER)
+
+    @property
+    def is_beef_cow_calf(self) -> bool:
+        """True if the animal belongs to the cow-calf breeding herd system, False otherwise."""
+        return self in (
+            AnimalType.BEEF_CALF,
+            AnimalType.BEEF_HEIFER_REPLACEMENT,
+            AnimalType.BEEF_COW,
+            AnimalType.BEEF_BULL,
+        )

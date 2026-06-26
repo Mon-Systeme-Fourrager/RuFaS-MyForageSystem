@@ -24,6 +24,15 @@ class Sex(Enum):
     STEER = "steer"
 
 
+class BeefPostWeaningDestination(str, Enum):
+    """Valid destinations for a weaned beef calf."""
+
+    SELL = "sell"
+    REPLACEMENT_HEIFER = "replacement_heifer"
+    DIRECT_TO_FEEDLOT = "direct_to_feedlot"
+    STOCKER = "stocker"
+
+
 class AnimalStatus(Enum):
     """Enum indicating the status of the animal after performing daily routines update."""
 

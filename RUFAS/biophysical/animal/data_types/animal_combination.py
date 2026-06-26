@@ -19,6 +19,14 @@ class AnimalCombination(Enum):
         Represents a pen with heifer Is, IIs, IIIs and dry cows.
     FEEDLOT_FINISHING : str
         Represents a feedlot finishing pen with steers and/or heifers.
+    BEEF_COW_CALF_PAIR : str
+        A pen with lactating beef cows and their nursing calves at side.
+    BEEF_GESTATING : str
+        A pen with gestating beef cows that are dry (no calf at side).
+    BEEF_REPLACEMENT : str
+        A pen with beef replacement heifers growing toward first calving.
+    BEEF_BULL_BATTERY : str
+        A pen with bulls outside the breeding season.
 
     """
 
@@ -29,3 +37,7 @@ class AnimalCombination(Enum):
     GROWING_AND_CLOSE_UP = "growing and close_up"
     FEEDLOT_FINISHING = "feedlot_finishing"
     """Represents a feedlot finishing pen with steers and/or heifers."""
+    BEEF_COW_CALF_PAIR = "beef_cow_calf_pair"
+    BEEF_GESTATING = "beef_gestating"
+    BEEF_REPLACEMENT = "beef_replacement"
+    BEEF_BULL_BATTERY = "beef_bull_battery"

@@ -1,5 +1,7 @@
 from typing import Any
 
+from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
+from RUFAS.biophysical.animal.data_types.animal_enums import BeefPostWeaningDestination
 from RUFAS.biophysical.animal.data_types.repro_protocol_enums import (
     HeiferReproductionProtocol,
     CowReproductionProtocol,
@@ -183,6 +185,26 @@ class AnimalConfig:
         Semen sire information used for genetic simulations and breeding selection.
     simulate_genetics : bool
         Whether genetic simulation functionality is enabled.
+    beef_breeding_season_start_day : int
+        Day-of-year on which the beef breeding season opens (1–365).
+    beef_breeding_season_length : int
+        Length of the breeding season in days; default is 63 (standard 9-week season).
+    beef_weaning_age_days : int
+        Target weaning age for beef calves in days; default is the USDA average of 207 days.
+    beef_weaning_weight_kg : float | None
+        Target weaning weight in kg. When set, weaning is triggered by age OR weight (whichever
+        comes first). None means age is the sole trigger.
+    beef_creep_feeding_enabled : bool
+        Whether nursing calves receive supplemental creep feed in addition to dam's milk.
+    beef_post_weaning_destination : BeefPostWeaningDestination
+        Fate of weaned calves: SELL, REPLACEMENT_HEIFER, DIRECT_TO_FEEDLOT, or STOCKER.
+    beef_mature_cow_weight_kg : float
+        Expected mature body weight for cows in this herd (kg); used to set replacement heifer
+        development targets.
+    beef_natural_service_bull_ratio : int
+        Number of cows per bull for natural-service mating; NRC reference range is 20–30:1.
+    beef_cow_cull_rate_annual : float
+        Annual culling rate for mature beef cows (fraction); default is 0.175 (USDA average).
 
     """
 
@@ -383,12 +405,24 @@ class AnimalConfig:
 
     # ── FEEDLOT PARAMETERS (defaults; overridden by initialize_animal_config) ─
     feedlot_entry_weight: float = 320.0
+
     feedlot_slaughter_weight: float = 580.0
     feedlot_max_days_on_feed: int = 220
     feedlot_target_adg: float = 1.5
     feedlot_implant_adg_factor: float = 1.0
     feedlot_mud_condition: str = "none"
     feedlot_ndf_minimum_pct: float = 10.0
+
+    # ── COW-CALF PARAMETERS (defaults; overridden by initialize_animal_config) ─
+    beef_breeding_season_start_day: int = 90
+    beef_breeding_season_length: int = AnimalModuleConstants.BEEF_DEFAULT_BREEDING_SEASON_LENGTH_DAYS
+    beef_weaning_age_days: int = AnimalModuleConstants.BEEF_DEFAULT_WEANING_AGE_DAYS
+    beef_weaning_weight_kg: float | None = None
+    beef_creep_feeding_enabled: bool = False
+    beef_post_weaning_destination: BeefPostWeaningDestination = BeefPostWeaningDestination.SELL
+    beef_mature_cow_weight_kg: float = AnimalModuleConstants.BEEF_DEFAULT_MATURE_COW_WEIGHT_KG
+    beef_natural_service_bull_ratio: int = 25
+    beef_cow_cull_rate_annual: float = AnimalModuleConstants.BEEF_ANNUAL_CULL_RATE
 
     @classmethod
     def initialize_animal_config(cls) -> None:
@@ -569,3 +603,31 @@ class AnimalConfig:
         cls.feedlot_implant_adg_factor = float(feedlot_cfg.get("implant_adg_factor", 1.0))
         cls.feedlot_mud_condition = str(feedlot_cfg.get("mud_condition", "none"))
         cls.feedlot_ndf_minimum_pct = float(feedlot_cfg.get("ndf_minimum_pct", 10.0))
+
+        # ── COW-CALF PARAMETERS ──────────────────────────────────────────────
+        beef_cfg: dict[str, Any] = animal_config_data.get("beef_cow_calf", {})
+        cls.beef_breeding_season_start_day = int(beef_cfg.get("breeding_season_start_day", 90))
+        cls.beef_breeding_season_length = int(
+            beef_cfg.get("breeding_season_length", AnimalModuleConstants.BEEF_DEFAULT_BREEDING_SEASON_LENGTH_DAYS)
+        )
+        cls.beef_weaning_age_days = int(
+            beef_cfg.get("weaning_age_days", AnimalModuleConstants.BEEF_DEFAULT_WEANING_AGE_DAYS)
+        )
+        raw_weaning_weight = beef_cfg.get("weaning_weight_kg")
+        cls.beef_weaning_weight_kg = float(raw_weaning_weight) if raw_weaning_weight is not None else None
+        cls.beef_creep_feeding_enabled = bool(beef_cfg.get("creep_feeding_enabled", False))
+        destination_str = str(beef_cfg.get("post_weaning_destination", BeefPostWeaningDestination.SELL.value))
+        try:
+            cls.beef_post_weaning_destination = BeefPostWeaningDestination(destination_str)
+        except ValueError:
+            valid = sorted(d.value for d in BeefPostWeaningDestination)
+            raise ValueError(
+                f"Invalid beef post-weaning destination '{destination_str}'. " f"Expected one of: {valid}."
+            )
+        cls.beef_mature_cow_weight_kg = float(
+            beef_cfg.get("mature_cow_weight_kg", AnimalModuleConstants.BEEF_DEFAULT_MATURE_COW_WEIGHT_KG)
+        )
+        cls.beef_natural_service_bull_ratio = int(beef_cfg.get("natural_service_bull_ratio", 25))
+        cls.beef_cow_cull_rate_annual = float(
+            beef_cfg.get("cow_cull_rate_annual", AnimalModuleConstants.BEEF_ANNUAL_CULL_RATE)
+        )

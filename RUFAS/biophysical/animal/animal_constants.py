@@ -137,9 +137,20 @@ The parameter 'b' in the Mitscherlich Model 3 (Mills et al., 2003).
 
 # ── FEEDLOT EVENTS ────────────────────────────────────────────────────────────
 FEEDLOT_ARRIVAL = "feedlot arrival"
+
 RECEIVING_STRESS_END = "receiving stress period ended"
 SLAUGHTER_WEIGHT_REACHED = "slaughter weight reached"
 MAX_DAYS_ON_FEED_REACHED = "max days on feed reached"
 STEP_UP_STARTER = "diet phase: starter"
 STEP_UP_TRANSITION = "diet phase: transition"
 STEP_UP_FINISHER = "diet phase: finisher"
+
+# ── COW-CALF EVENTS ───────────────────────────────────────────────────────────
+CALF_WEANED = "calf_weaned"
+COW_REBRED = "cow_rebred"
+COW_OPEN_AT_PREGNANCY_CHECK = "cow_open_at_pregnancy_check"
+COW_CULLED_AGE = "cow_culled_age"
+COW_CULLED_OPEN = "cow_culled_open"
+REPLACEMENT_HEIFER_REACHED_BREEDING_WEIGHT = "replacement_heifer_reached_breeding_weight"
+REPLACEMENT_HEIFER_PROMOTED_TO_COW = "replacement_heifer_promoted_to_cow"
+STILLBIRTH = "stillbirth"
