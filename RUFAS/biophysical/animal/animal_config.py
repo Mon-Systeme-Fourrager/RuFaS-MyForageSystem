@@ -626,6 +626,12 @@ class AnimalConfig:
             raise ValueError(
                 f"Invalid beef post-weaning destination '{destination_str}'. " f"Expected one of: {valid}."
             )
+        if cls.beef_post_weaning_destination is BeefPostWeaningDestination.STOCKER:
+            raise NotImplementedError(
+                "BeefPostWeaningDestination.STOCKER requires the native stocker "
+                "module (Segment 3) which is not yet implemented. "
+                "Use SELL, REPLACEMENT_HEIFER, or DIRECT_TO_FEEDLOT."
+            )
         cls.beef_mature_cow_weight_kg = float(
             beef_cfg.get("mature_cow_weight_kg", AnimalModuleConstants.BEEF_DEFAULT_MATURE_COW_WEIGHT_KG)
         )

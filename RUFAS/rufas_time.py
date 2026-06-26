@@ -61,10 +61,17 @@ class RufasTime:
 
     @property
     def day_of_year(self) -> int:
-        """Day of the calendar year (1-366), derived from strftime('%j').
+        """Get the day of the calendar year.
 
-        Note: current_julian_day in this codebase returns day-of-year
-        (1-366), NOT the astronomical Julian Day Number (~2.4 million).
+        Returns
+        -------
+        int
+            Day of the calendar year (1-366), derived from ``strftime("%j")``.
+
+        Notes
+        -----
+        ``current_julian_day`` in this codebase returns day-of-year (1-366),
+        not the astronomical Julian Day Number (~2.4 million).
         This alias makes the intent explicit at beef season call sites.
         """
         return self.current_julian_day

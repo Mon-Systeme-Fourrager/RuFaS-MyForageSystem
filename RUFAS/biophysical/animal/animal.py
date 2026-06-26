@@ -2304,10 +2304,10 @@ class Animal:
             if self.body_weight < breeding_threshold:
                 return None, HerdReproductionStatistics()
 
+        was_pregnant_at_start = self._days_in_pregnancy > 0
         if self.is_open:
             self._beef_handle_conception_attempt(time)
-
-        if self._days_in_pregnancy > 0:
+        if was_pregnant_at_start and self._days_in_pregnancy > 0:
             self._days_in_pregnancy += 1
 
         if self._days_in_pregnancy >= AnimalModuleConstants.BEEF_GESTATION_LENGTH_DAYS:
@@ -2455,7 +2455,13 @@ class Animal:
             season_closed = day >= season_end
         else:
             season_closed = (season_end % 365) <= day < season_start
-        if self.is_open and season_closed and self.cull_reason != animal_constants.COW_OPEN_AT_PREGNANCY_CHECK:
+        has_had_rebreeding_opportunity = self.days_since_calving >= AnimalModuleConstants.BEEF_POSTPARTUM_ANESTRUS_DAYS
+        if (
+            self.is_open
+            and has_had_rebreeding_opportunity
+            and season_closed
+            and self.cull_reason != animal_constants.COW_OPEN_AT_PREGNANCY_CHECK
+        ):
             self.events.add_event(self.days_born, time.simulation_day, animal_constants.COW_OPEN_AT_PREGNANCY_CHECK)
             self.cull_reason = animal_constants.COW_OPEN_AT_PREGNANCY_CHECK
 

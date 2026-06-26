@@ -1,5 +1,7 @@
 """Beef cow-calf reproduction — natural-service seasonal breeding (NRC 2016 Ch.13)."""
 
+from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
+
 
 def calculate_seasonal_conception_probability(
     body_condition_score: float,
@@ -37,7 +39,7 @@ def calculate_seasonal_conception_probability(
     specific NRC 2016 equation (the NRC gives qualitative guidance, not a precise
     mathematical adjustment function).
     """
-    if days_since_calving < 45:
+    if days_since_calving < AnimalModuleConstants.BEEF_POSTPARTUM_ANESTRUS_DAYS:
         return 0.0
 
     bcs_factor = min(1.0, max(0.5, (body_condition_score - 1) / 4.0))

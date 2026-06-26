@@ -298,6 +298,9 @@ class AnimalModuleConstants:
     BEEF_COW_MAX_AGE_DAYS: int = 5475
     """Conservative longevity ceiling of 15 years = 5475 days."""
 
+    BEEF_POSTPARTUM_ANESTRUS_DAYS: int = 45
+    """Minimum days postpartum before a cow resumes cycling (NRC 2016 Ch.13)."""
+
     BEEF_DEFAULT_BREEDING_SEASON_LENGTH_DAYS: int = 63
     """Standard 9-week (63-day) breeding season per NRC 2016 management reference."""
 

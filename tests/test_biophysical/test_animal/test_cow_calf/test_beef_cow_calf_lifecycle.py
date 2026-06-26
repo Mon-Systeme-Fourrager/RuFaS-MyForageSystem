@@ -794,3 +794,52 @@ def test_GC_breeding_season_year_boundary_wrap(mocker: MockerFixture) -> None:
     t_in = _mock_time(day_of_year=15)
     animal._beef_daily_reproduction_update(t_in)
     assert animal.is_open is False, "Day 15 should be inside the wrapped breeding season"
+
+
+@pytest.mark.unit
+def test_GD_conception_day_days_in_pregnancy_equals_one(mocker: MockerFixture) -> None:
+    """GD: A cow that conceives on day X must have _days_in_pregnancy == 1 (not 2) after that day's update.
+
+    Verifies the FIX 1 guard: was_pregnant_at_start prevents the newly-set
+    _days_in_pregnancy = 1 from being incremented to 2 on the same day.
+    """
+    animal = _make_beef_animal(
+        animal_type=AnimalType.BEEF_COW,
+        is_open=True,
+        days_since_calving=60,
+        days_in_pregnancy=0,
+    )
+    mocker.patch("RUFAS.biophysical.animal.animal.random", return_value=0.0)
+    t = _mock_time(day_of_year=120)  # inside default season (start=90, length=63)
+    animal._beef_daily_reproduction_update(t)
+
+    assert (
+        animal._days_in_pregnancy == 1
+    ), f"Conception day must leave _days_in_pregnancy=1, got {animal._days_in_pregnancy}"
+    assert animal.is_open is False
+
+
+@pytest.mark.unit
+def test_GE_freshly_calved_cow_not_flagged_open_outside_season() -> None:
+    """GE: A cow with days_since_calving=0 must NOT receive COW_OPEN_AT_PREGNANCY_CHECK even after season close.
+
+    Verifies the FIX 2 rebreeding-opportunity guard: a cow that calves on a day
+    that falls outside the breeding season has never had a chance to conceive, so
+    it must not be marked open-and-culled on calving day.
+    """
+    season_start = AnimalConfig.beef_breeding_season_start_day
+    season_length = AnimalConfig.beef_breeding_season_length
+    past_close = season_start + season_length + 5  # clearly after season close
+
+    animal = _make_beef_animal(
+        animal_type=AnimalType.BEEF_COW,
+        is_open=True,
+        days_since_calving=0,
+        days_born=730,
+    )
+    t = _mock_time(simulation_day=past_close, day_of_year=past_close)
+    animal._beef_cow_life_stage_update(t)
+
+    assert (
+        animal.cull_reason != animal_constants.COW_OPEN_AT_PREGNANCY_CHECK
+    ), "Freshly calved cow (days_since_calving=0) must not be flagged open on calving day"
