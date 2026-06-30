@@ -42,8 +42,12 @@ def calculate_seasonal_conception_probability(
     if days_since_calving < AnimalModuleConstants.BEEF_POSTPARTUM_ANESTRUS_DAYS:
         return 0.0
 
-    bcs_factor = min(1.0, max(0.5, (body_condition_score - 1) / 4.0))
-    bull_factor = min(1.0, 30.0 / max(bull_to_cow_ratio, 1))
-    base_daily_prob = 0.0404
-
-    return base_daily_prob * bcs_factor * bull_factor
+    bcs_factor = min(
+        1.0,
+        max(
+            AnimalModuleConstants.BEEF_CONCEPTION_BCS_FLOOR,
+            (body_condition_score - 1) / AnimalModuleConstants.BEEF_CONCEPTION_BCS_DIVISOR,
+        ),
+    )
+    bull_factor = min(1.0, AnimalModuleConstants.BEEF_CONCEPTION_BULL_RATIO_REFERENCE / max(bull_to_cow_ratio, 1))
+    return AnimalModuleConstants.BEEF_CONCEPTION_BASE_DAILY_PROB * bcs_factor * bull_factor

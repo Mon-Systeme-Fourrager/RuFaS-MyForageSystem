@@ -2203,7 +2203,7 @@ class Animal:
             in_season = day >= season_start or day < (season_end % 365)
         if not in_season:
             return
-        if self.days_since_calving < 45:
+        if self.days_since_calving < AnimalModuleConstants.BEEF_POSTPARTUM_ANESTRUS_DAYS:
             return
         prob = calculate_seasonal_conception_probability(
             body_condition_score=self.body_condition_score_9,
@@ -2453,9 +2453,17 @@ class Animal:
         day = time.day_of_year
         if season_end <= 365:
             season_closed = day >= season_end
+            season_close_day = time.simulation_day - day + season_end
         else:
             season_closed = (season_end % 365) <= day < season_start
-        has_had_rebreeding_opportunity = self.days_since_calving >= AnimalModuleConstants.BEEF_POSTPARTUM_ANESTRUS_DAYS
+            season_close_day = time.simulation_day - day + (season_end % 365)
+        postpartum_eligible_day = (
+            time.simulation_day - self.days_since_calving + AnimalModuleConstants.BEEF_POSTPARTUM_ANESTRUS_DAYS
+        )
+        has_had_rebreeding_opportunity = (
+            self.days_since_calving >= AnimalModuleConstants.BEEF_POSTPARTUM_ANESTRUS_DAYS
+            and postpartum_eligible_day < season_close_day
+        )
         if (
             self.is_open
             and has_had_rebreeding_opportunity

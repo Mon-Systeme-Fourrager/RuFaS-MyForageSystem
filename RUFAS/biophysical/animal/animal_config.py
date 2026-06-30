@@ -639,11 +639,16 @@ class AnimalConfig:
         cls.beef_cow_cull_rate_annual = float(
             beef_cfg.get("cow_cull_rate_annual", AnimalModuleConstants.BEEF_ANNUAL_CULL_RATE)
         )
-        cls.beef_reproduction_program = BeefReproductionProtocol(
-            str(
-                beef_cfg.get(
-                    "reproduction_program",
-                    BeefReproductionProtocol.NATURAL_SERVICE_SEASONAL.value,
-                )
+        reproduction_program_str = str(
+            beef_cfg.get(
+                "reproduction_program",
+                BeefReproductionProtocol.NATURAL_SERVICE_SEASONAL.value,
             )
         )
+        try:
+            cls.beef_reproduction_program = BeefReproductionProtocol(reproduction_program_str)
+        except ValueError:
+            valid = sorted(p.value for p in BeefReproductionProtocol)
+            raise ValueError(
+                f"Invalid beef reproduction program '{reproduction_program_str}'. " f"Expected one of: {valid}."
+            )

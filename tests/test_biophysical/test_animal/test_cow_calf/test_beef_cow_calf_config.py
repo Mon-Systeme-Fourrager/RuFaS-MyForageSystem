@@ -379,7 +379,11 @@ def _mock_im(mocker: pytest_mock.MockerFixture, beef_overrides: dict[str, Any] |
 # ---------------------------------------------------------------------------
 
 
-_IMPLEMENTED_DESTINATIONS = [d for d in BeefPostWeaningDestination if d is not BeefPostWeaningDestination.STOCKER]
+_IMPLEMENTED_DESTINATIONS = (
+    BeefPostWeaningDestination.SELL,
+    BeefPostWeaningDestination.REPLACEMENT_HEIFER,
+    BeefPostWeaningDestination.DIRECT_TO_FEEDLOT,
+)
 
 
 @pytest.mark.parametrize("dest", _IMPLEMENTED_DESTINATIONS)
@@ -408,4 +412,15 @@ def test_initialize_invalid_post_weaning_destination_raises(mocker: pytest_mock.
     """initialize_animal_config must raise ValueError for an unrecognised destination."""
     _mock_im(mocker, beef_overrides={"post_weaning_destination": "auction"})
     with pytest.raises(ValueError, match="Invalid beef post-weaning destination"):
+        AnimalConfig.initialize_animal_config()
+
+
+def test_initialize_invalid_reproduction_program_raises(mocker: pytest_mock.MockerFixture) -> None:
+    """initialize_animal_config must raise ValueError for an unrecognised reproduction_program.
+
+    Verifies that a clear, user-facing error message is returned listing valid
+    options (FIX 3 — mirrors the post_weaning_destination validation pattern).
+    """
+    _mock_im(mocker, beef_overrides={"reproduction_program": "synchronized_timed_ai"})
+    with pytest.raises(ValueError, match="Invalid beef reproduction program"):
         AnimalConfig.initialize_animal_config()

@@ -843,3 +843,57 @@ def test_GE_freshly_calved_cow_not_flagged_open_outside_season() -> None:
     assert (
         animal.cull_reason != animal_constants.COW_OPEN_AT_PREGNANCY_CHECK
     ), "Freshly calved cow (days_since_calving=0) must not be flagged open on calving day"
+
+
+@pytest.mark.unit
+def test_GF_cow_calving_day_after_season_close_not_flagged_after_anestrus() -> None:
+    """GF: Cow calving the day after season close must NOT get COW_OPEN_AT_PREGNANCY_CHECK 45 days later.
+
+    Verifies the wrap-aware rebreeding guard (FIX 1): postpartum_eligible_day
+    falls on or after season_close_day so has_had_rebreeding_opportunity is False.
+
+    Setup: default season start=90 length=63 → season_end=153 (close day 153).
+    Cow calves at day_of_year=154 (sim_day=200). Checked at days_since_calving=45
+    → current sim_day=245, day_of_year=199.
+    season_close_day = 245 - 199 + 153 = 199.
+    postpartum_eligible_day = 245 - 45 + 45 = 245 ≥ 199 → no opportunity → not flagged.
+    """
+    animal = _make_beef_animal(
+        animal_type=AnimalType.BEEF_COW,
+        is_open=True,
+        days_since_calving=45,
+        days_born=730,
+    )
+    t = _mock_time(simulation_day=245, day_of_year=199)
+    animal._beef_cow_life_stage_update(t)
+
+    assert (
+        animal.cull_reason != animal_constants.COW_OPEN_AT_PREGNANCY_CHECK
+    ), "Cow calving day after season close must not be flagged open 45 days later"
+
+
+@pytest.mark.unit
+def test_GG_cow_calving_mid_season_flagged_open_after_season_close() -> None:
+    """GG: Cow calving mid-season and still open after season close MUST get COW_OPEN_AT_PREGNANCY_CHECK.
+
+    Verifies the positive case of the wrap-aware guard: postpartum_eligible_day
+    falls before season_close_day, so the cow genuinely had a breeding window.
+
+    Setup: default season start=90 length=63 → close day 153.
+    Cow calves at day_of_year=60 (sim_day=100). Checked 100 days later:
+    sim_day=200, day_of_year=160, days_since_calving=100.
+    season_close_day = 200 - 160 + 153 = 193.
+    postpartum_eligible_day = 200 - 100 + 45 = 145 < 193 → had opportunity → flagged.
+    """
+    animal = _make_beef_animal(
+        animal_type=AnimalType.BEEF_COW,
+        is_open=True,
+        days_since_calving=100,
+        days_born=730,
+    )
+    t = _mock_time(simulation_day=200, day_of_year=160)
+    animal._beef_cow_life_stage_update(t)
+
+    assert (
+        animal.cull_reason == animal_constants.COW_OPEN_AT_PREGNANCY_CHECK
+    ), "Cow that calved before season and stayed open past close must be flagged"
