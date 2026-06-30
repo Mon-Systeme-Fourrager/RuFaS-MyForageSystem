@@ -85,15 +85,9 @@ class RationManager:
             for feed in ration["feeds"]
         ]
 
-        feedlot_starter = {
-            int(k): float(v) for k, v in ration_config.get("feedlot_starter_ration", {}).items()
-        }
-        feedlot_transition = {
-            int(k): float(v) for k, v in ration_config.get("feedlot_transition_ration", {}).items()
-        }
-        feedlot_finisher = {
-            int(k): float(v) for k, v in ration_config.get("feedlot_finisher_ration", {}).items()
-        }
+        feedlot_starter = {int(k): float(v) for k, v in ration_config.get("feedlot_starter_ration", {}).items()}
+        feedlot_transition = {int(k): float(v) for k, v in ration_config.get("feedlot_transition_ration", {}).items()}
+        feedlot_finisher = {int(k): float(v) for k, v in ration_config.get("feedlot_finisher_ration", {}).items()}
 
         for name, ration in (
             ("starter", feedlot_starter),
@@ -103,14 +97,10 @@ class RationManager:
             if ration:
                 negative = [pct for pct in ration.values() if pct < 0.0]
                 if negative:
-                    raise ValueError(
-                        f"Feedlot {name} ration percentages must be non-negative, got: {negative}"
-                    )
+                    raise ValueError(f"Feedlot {name} ration percentages must be non-negative, got: {negative}")
                 total_pct = sum(ration.values())
                 if abs(total_pct - 100.0) > 1e-2:
-                    raise ValueError(
-                        f"Feedlot {name} ration percentages must sum to 100.0%, got {total_pct}%"
-                    )
+                    raise ValueError(f"Feedlot {name} ration percentages must sum to 100.0%, got {total_pct}%")
 
         next_ration_feeds[AnimalCombination.FEEDLOT_FINISHING] = [
             int(f) for f in ration_config.get("feedlot_feeds", [])

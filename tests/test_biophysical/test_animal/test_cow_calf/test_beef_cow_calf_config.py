@@ -379,18 +379,48 @@ def _mock_im(mocker: pytest_mock.MockerFixture, beef_overrides: dict[str, Any] |
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("dest", list(BeefPostWeaningDestination))
+_IMPLEMENTED_DESTINATIONS = (
+    BeefPostWeaningDestination.SELL,
+    BeefPostWeaningDestination.REPLACEMENT_HEIFER,
+    BeefPostWeaningDestination.DIRECT_TO_FEEDLOT,
+)
+
+
+@pytest.mark.parametrize("dest", _IMPLEMENTED_DESTINATIONS)
 def test_initialize_valid_post_weaning_destinations_accepted(
     dest: BeefPostWeaningDestination, mocker: pytest_mock.MockerFixture
 ) -> None:
-    """All four valid post_weaning_destination values must be accepted without error."""
+    """SELL, REPLACEMENT_HEIFER, and DIRECT_TO_FEEDLOT must be accepted without error."""
     _mock_im(mocker, beef_overrides={"post_weaning_destination": dest.value})
     AnimalConfig.initialize_animal_config()
     assert AnimalConfig.beef_post_weaning_destination is dest
+
+
+def test_initialize_stocker_destination_raises_not_implemented(mocker: pytest_mock.MockerFixture) -> None:
+    """'stocker' post_weaning_destination must raise NotImplementedError at config init (not at weaning time).
+
+    STOCKER is a valid enum member but requires the stocker module (Segment 3)
+    which is not yet implemented. Rejecting it early at config time gives a clear
+    error before any animal reaches weaning age.
+    """
+    _mock_im(mocker, beef_overrides={"post_weaning_destination": BeefPostWeaningDestination.STOCKER.value})
+    with pytest.raises(NotImplementedError, match="STOCKER"):
+        AnimalConfig.initialize_animal_config()
 
 
 def test_initialize_invalid_post_weaning_destination_raises(mocker: pytest_mock.MockerFixture) -> None:
     """initialize_animal_config must raise ValueError for an unrecognised destination."""
     _mock_im(mocker, beef_overrides={"post_weaning_destination": "auction"})
     with pytest.raises(ValueError, match="Invalid beef post-weaning destination"):
+        AnimalConfig.initialize_animal_config()
+
+
+def test_initialize_invalid_reproduction_program_raises(mocker: pytest_mock.MockerFixture) -> None:
+    """initialize_animal_config must raise ValueError for an unrecognised reproduction_program.
+
+    Verifies that a clear, user-facing error message is returned listing valid
+    options (FIX 3 — mirrors the post_weaning_destination validation pattern).
+    """
+    _mock_im(mocker, beef_overrides={"reproduction_program": "synchronized_timed_ai"})
+    with pytest.raises(ValueError, match="Invalid beef reproduction program"):
         AnimalConfig.initialize_animal_config()

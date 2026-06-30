@@ -10,7 +10,7 @@ from RUFAS.biophysical.animal import animal_constants
 from RUFAS.biophysical.animal.animal_config import AnimalConfig
 from RUFAS.biophysical.animal.animal_genetics.animal_genetics import Genetics
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
-from RUFAS.biophysical.animal.data_types.animal_enums import Breed, Sex, AnimalStatus
+from RUFAS.biophysical.animal.data_types.animal_enums import BeefPostWeaningDestination, Breed, Sex, AnimalStatus
 from RUFAS.biophysical.animal.data_types.animal_events import AnimalEvents
 from RUFAS.biophysical.animal.data_types.body_weight_history import BodyWeightHistory
 from RUFAS.biophysical.animal.data_types.daily_routines_output import DailyRoutinesOutput
@@ -39,6 +39,7 @@ from RUFAS.biophysical.animal.nutrients.nrc_requirements_calculator import NRCRe
 from RUFAS.biophysical.animal.nutrients.beef_nrc_requirements_calculator import BeefNRCRequirementsCalculator
 from RUFAS.biophysical.animal.data_types.animal_typed_dicts import (
     NewBornCalfValuesTypedDict,
+    BeefCowCalfValuesTypedDict,
     CalfValuesTypedDict,
     HeiferIValuesTypedDict,
     HeiferIIValuesTypedDict,
@@ -55,7 +56,9 @@ from RUFAS.biophysical.animal.data_types.repro_protocol_enums import (
     CowTAISubProtocol,
     CowReSynchSubProtocol,
     ReproStateEnum,
+    BeefReproductionProtocol,
 )
+from RUFAS.biophysical.animal.reproduction.beef_reproduction import calculate_seasonal_conception_probability
 from RUFAS.biophysical.animal.milk.lactation_curve import LactationCurve
 from RUFAS.biophysical.animal.milk.milk_production import MilkProduction
 from RUFAS.biophysical.animal.ration.amino_acid import EssentialAminoAcidRequirements
@@ -167,6 +170,7 @@ class Animal:
         self,
         args: (
             NewBornCalfValuesTypedDict
+            | BeefCowCalfValuesTypedDict
             | CalfValuesTypedDict
             | HeiferIValuesTypedDict
             | HeiferIIValuesTypedDict
@@ -188,6 +192,10 @@ class Animal:
             AnimalType.DRY_COW: self._initialize_cow,
             AnimalType.FEEDLOT_STEER: self._initialize_feedlot_animal,
             AnimalType.FEEDLOT_HEIFER: self._initialize_feedlot_animal,
+            AnimalType.BEEF_CALF: self._initialize_beef_cow_calf_animal,
+            AnimalType.BEEF_HEIFER_REPLACEMENT: self._initialize_beef_cow_calf_animal,
+            AnimalType.BEEF_COW: self._initialize_beef_cow_calf_animal,
+            AnimalType.BEEF_BULL: self._initialize_beef_cow_calf_animal,
         }
         self.id = args.get("id", 0)
         self.breed: Breed = Breed(Breed[args.get("breed")])
@@ -231,6 +239,17 @@ class Animal:
         self.cumulative_dmi: float = 0.0
         self.receiving_stress: bool = False
         self.step_up_phase: str = ""
+
+        # Beef cow-calf attributes (default to safe values for all animal types)
+        self.days_in_breeding_season: int | None = None
+        self.calf_at_side: Animal | None = None
+        self.dam: Animal | None = None
+        self.lactation_day: int = 0
+        self.days_since_calving: int = 0
+        self.body_condition_score_9: float = AnimalModuleConstants.BEEF_DEFAULT_BCS_9
+        self.times_calved: int = 0
+        self.is_open: bool = True
+        self._breeding_weight_event_fired: bool = False
 
         is_newborn_calf = self.animal_type == AnimalType.CALF and "body_weight" not in args.keys()
         if is_newborn_calf:
@@ -1393,6 +1412,35 @@ class Animal:
         self.receiving_stress = self.days_on_feed <= AnimalModuleConstants.RECEIVING_PERIOD_DAYS
         self._update_step_up_phase()
 
+    def _initialize_beef_cow_calf_animal(self, args: Any) -> None:
+        """
+        Initialize a beef cow-calf animal from a configuration dict.
+
+        Parameters
+        ----------
+        args : Any
+            Dict with keys from either BeefCowCalfValuesTypedDict (persistence path)
+            or NewBornCalfValuesTypedDict (calving path). Body weight is derived from
+            ``body_weight`` if present, else from ``birth_weight`` (calving path).
+
+        """
+        self.body_weight = float(args.get("body_weight", args.get("birth_weight", 0.0)))
+        self.mature_body_weight = float(args.get("mature_body_weight", AnimalConfig.beef_mature_cow_weight_kg))
+        self.wean_weight = 0.0
+        self.sex = Sex[args["sex"]] if "sex" in args else (Sex.MALE if random() < 0.5 else Sex.FEMALE)
+        self.times_calved = int(args.get("times_calved", 0))
+        self.is_open = bool(args.get("is_open", True))
+        self.days_since_calving = int(args.get("days_since_calving", 0))
+        self._days_in_pregnancy = int(args.get("days_in_pregnancy", 0))
+        self.days_in_breeding_season = None
+        self.calf_at_side = None
+        self.dam = None
+        self.lactation_day = 0
+        self.body_condition_score_9 = AnimalModuleConstants.BEEF_DEFAULT_BCS_9
+        self._breeding_weight_event_fired = False
+        if args.get("events"):
+            self.events.init_from_string(args.get("events"))
+
     def _initialize_calf_or_heiferI(self, args: CalfValuesTypedDict | HeiferIValuesTypedDict) -> None:
         """
         Initializes the attributes of a calf or heifer.
@@ -1604,6 +1652,9 @@ class Animal:
             The current time context for the daily milking update.
 
         """
+        if self.animal_type.is_beef_cow_calf:
+            self._beef_daily_suckling_update(time)
+            return
         if not self.animal_type.is_cow:
             return
         milk_production_inputs = MilkProductionInputs(
@@ -1754,6 +1805,8 @@ class Animal:
             A collection of statistical properties related to the animal's reproduction lifecycle.
 
         """
+        if self.animal_type.is_beef_cow_calf:
+            return self._beef_daily_reproduction_update(time)
         if not (self.animal_type == AnimalType.HEIFER_II or self.animal_type.is_cow):
             return None, HerdReproductionStatistics()
 
@@ -1850,7 +1903,7 @@ class Animal:
             time
         )
 
-        if self.animal_type.is_cow and newborn_calf_config is not None:
+        if (self.animal_type.is_cow or self.animal_type == AnimalType.BEEF_COW) and newborn_calf_config is not None:
             daily_routines_output.newborn_calf_config = newborn_calf_config
 
         if self.animal_type == AnimalType.HEIFER_III and self.is_pregnant:
@@ -2061,6 +2114,10 @@ class Animal:
             AnimalType.DRY_COW: self._cow_life_stage_update,
             AnimalType.FEEDLOT_STEER: self._feedlot_life_stage_update,
             AnimalType.FEEDLOT_HEIFER: self._feedlot_life_stage_update,
+            AnimalType.BEEF_CALF: self._beef_calf_life_stage_update,
+            AnimalType.BEEF_HEIFER_REPLACEMENT: self._beef_replacement_heifer_life_stage_update,
+            AnimalType.BEEF_COW: self._beef_cow_life_stage_update,
+            AnimalType.BEEF_BULL: self._beef_bull_life_stage_update,
         }
         animal_status, newborn_calf_config = ANIMAL_TYPE_TO_LIFE_STAGE_UPDATE_METHOD_MAP[self.animal_type](time)
 
@@ -2107,6 +2164,332 @@ class Animal:
             self.sold_at_day = time.simulation_day
             return AnimalStatus.SOLD, None
 
+        return AnimalStatus.REMAIN, None
+
+    def _beef_daily_suckling_update(self, time: RufasTime) -> None:
+        """
+        Track beef cow suckling: increment lactation_day when a calf is at side.
+
+        Parameters
+        ----------
+        time : RufasTime
+            Current simulation time (unused directly; present for interface consistency).
+
+        """
+        if self.calf_at_side is not None:
+            self.lactation_day += 1
+
+    def _beef_handle_conception_attempt(self, time: RufasTime) -> None:
+        """
+        Draw a daily conception attempt for an open beef cow in the breeding season.
+
+        Parameters
+        ----------
+        time : RufasTime
+            Current simulation time; provides day_of_year for season window check.
+
+        Notes
+        -----
+        Sets ``is_open = False`` and ``_days_in_pregnancy = 1`` on successful conception.
+        No state change occurs when the probability draw fails.
+
+        """
+        season_start = AnimalConfig.beef_breeding_season_start_day
+        season_end = season_start + AnimalConfig.beef_breeding_season_length
+        day = time.day_of_year
+        if season_end <= 365:
+            in_season = season_start <= day < season_end
+        else:
+            in_season = day >= season_start or day < (season_end % 365)
+        if not in_season:
+            return
+        if self.days_since_calving < AnimalModuleConstants.BEEF_POSTPARTUM_ANESTRUS_DAYS:
+            return
+        prob = calculate_seasonal_conception_probability(
+            body_condition_score=self.body_condition_score_9,
+            bull_to_cow_ratio=AnimalConfig.beef_natural_service_bull_ratio,
+            days_since_calving=self.days_since_calving,
+        )
+        if random() < prob:
+            self.is_open = False
+            self._days_in_pregnancy = 1
+
+    def _beef_handle_calving(self, time: RufasTime) -> NewBornCalfValuesTypedDict | None:
+        """
+        Handle a beef calving event: build calf dict, apply stillbirth, reset state.
+
+        Parameters
+        ----------
+        time : RufasTime
+            Current simulation time; provides current_date for calf birth_date.
+
+        Returns
+        -------
+        NewBornCalfValuesTypedDict | None
+            Calf configuration dict, or None if stillbirth occurs.
+
+        """
+        self._days_in_pregnancy = 0
+        self.days_since_calving = 0
+        self.lactation_day = 0
+        self.is_open = True
+        self.times_calved += 1
+
+        newborn: NewBornCalfValuesTypedDict = {
+            "id": 0,
+            "animal_type": AnimalType.BEEF_CALF.value,
+            "breed": self.breed.name,
+            "days_born": 0,
+            "birth_weight": float(
+                AnimalModuleConstants.BREED_CBW_KG.get(
+                    self.breed.value,
+                    AnimalModuleConstants.BEEF_CALF_BIRTH_WEIGHT_KG,
+                )
+            ),
+            "birth_date": str(time.current_date),
+            "initial_phosphorus": 0.0,
+        }
+
+        self.events.add_event(self.days_born, time.simulation_day, animal_constants.BEEF_CALVING)
+
+        if random() < AnimalModuleConstants.BEEF_STILLBIRTH_RATE:
+            return None
+
+        return newborn
+
+    def _beef_daily_reproduction_update(
+        self, time: RufasTime
+    ) -> tuple[NewBornCalfValuesTypedDict | None, HerdReproductionStatistics]:
+        """
+        Daily reproduction update for beef cow-calf animals.
+
+        Parameters
+        ----------
+        time : RufasTime
+            Current simulation time.
+
+        Returns
+        -------
+        tuple[NewBornCalfValuesTypedDict | None, HerdReproductionStatistics]
+            Calf configuration dict if calving occurs this day, else None; plus empty stats.
+
+        Notes
+        -----
+        AI protocols (AI_SEASONAL, AI_CONTROLLED_BREEDING) are declared in
+        BeefReproductionProtocol but raise NotImplementedError in PR-B; only
+        NATURAL_SERVICE_SEASONAL is implemented here.
+        # TODO(beef-integration): report_cow_calf_performance belongs in
+        # herd_factory.py _beef_cow_calf_update (Step 7).
+
+        """
+        if self.animal_type == AnimalType.BEEF_BULL:
+            return None, HerdReproductionStatistics()
+
+        if AnimalConfig.beef_reproduction_program == BeefReproductionProtocol.AI_SEASONAL:
+            raise NotImplementedError(
+                "BeefReproductionProtocol.AI_SEASONAL not implemented (PR-B scope: NATURAL_SERVICE_SEASONAL only)"
+            )
+        if AnimalConfig.beef_reproduction_program == BeefReproductionProtocol.AI_CONTROLLED_BREEDING:
+            raise NotImplementedError("BeefReproductionProtocol.AI_CONTROLLED_BREEDING not implemented (PR-B scope)")
+
+        self.days_since_calving += 1
+
+        if self.animal_type == AnimalType.BEEF_CALF:
+            return None, HerdReproductionStatistics()
+
+        if self.animal_type == AnimalType.BEEF_HEIFER_REPLACEMENT:
+            breeding_threshold = (
+                AnimalModuleConstants.BEEF_HEIFER_TARGET_BREEDING_PCT_MATURE * AnimalConfig.beef_mature_cow_weight_kg
+            )
+            if self.body_weight < breeding_threshold:
+                return None, HerdReproductionStatistics()
+
+        was_pregnant_at_start = self._days_in_pregnancy > 0
+        if self.is_open:
+            self._beef_handle_conception_attempt(time)
+        if was_pregnant_at_start and self._days_in_pregnancy > 0:
+            self._days_in_pregnancy += 1
+
+        if self._days_in_pregnancy >= AnimalModuleConstants.BEEF_GESTATION_LENGTH_DAYS:
+            newborn_config = self._beef_handle_calving(time)
+            return newborn_config, HerdReproductionStatistics()
+
+        return None, HerdReproductionStatistics()
+
+    def _beef_calf_life_stage_update(self, time: RufasTime) -> tuple[AnimalStatus, NewBornCalfValuesTypedDict | None]:
+        """
+        Life-stage update for BEEF_CALF: check weaning threshold.
+
+        Parameters
+        ----------
+        time : RufasTime
+            Current simulation time.
+
+        Returns
+        -------
+        tuple[AnimalStatus, NewBornCalfValuesTypedDict | None]
+            REMAIN if below weaning age; otherwise result of _beef_weaning_event.
+
+        """
+        at_weaning_age = self.days_born >= AnimalConfig.beef_weaning_age_days
+        at_weaning_weight = (
+            AnimalConfig.beef_weaning_weight_kg is not None and self.body_weight >= AnimalConfig.beef_weaning_weight_kg
+        )
+        if at_weaning_age or at_weaning_weight:
+            return self._beef_weaning_event(time)
+        return AnimalStatus.REMAIN, None
+
+    def _beef_weaning_event(self, time: RufasTime) -> tuple[AnimalStatus, NewBornCalfValuesTypedDict | None]:
+        """
+        Handle calf weaning: clear dam reference and dispatch to post-weaning destination.
+
+        Parameters
+        ----------
+        time : RufasTime
+            Current simulation time.
+
+        Returns
+        -------
+        tuple[AnimalStatus, NewBornCalfValuesTypedDict | None]
+            (SOLD, None), (LIFE_STAGE_CHANGED, None), or raises ValueError.
+
+        """
+        self.events.add_event(self.days_born, time.simulation_day, animal_constants.CALF_WEANED)
+
+        if self.dam is not None:
+            self.dam.calf_at_side = None
+
+        destination = AnimalConfig.beef_post_weaning_destination
+        if destination is BeefPostWeaningDestination.SELL:
+            self.sold_at_day = time.simulation_day
+            return AnimalStatus.SOLD, None
+        if destination is BeefPostWeaningDestination.REPLACEMENT_HEIFER:
+            if self.sex != Sex.FEMALE:
+                raise ValueError(f"Calf with sex {self.sex} cannot be transitioned to a replacement heifer.")
+            self.animal_type = AnimalType.BEEF_HEIFER_REPLACEMENT
+            return AnimalStatus.LIFE_STAGE_CHANGED, None
+        if destination is BeefPostWeaningDestination.DIRECT_TO_FEEDLOT:
+            self.animal_type = AnimalType.FEEDLOT_STEER if self.sex == Sex.MALE else AnimalType.FEEDLOT_HEIFER
+            self.birth_weight = 0.0
+            self._initialize_feedlot_animal(
+                {"body_weight": self.body_weight, "mature_body_weight": AnimalConfig.beef_mature_cow_weight_kg}
+            )
+            return AnimalStatus.LIFE_STAGE_CHANGED, None
+        raise ValueError(f"Unknown beef_post_weaning_destination: {destination!r}")
+
+    def _beef_replacement_heifer_life_stage_update(
+        self, time: RufasTime
+    ) -> tuple[AnimalStatus, NewBornCalfValuesTypedDict | None]:
+        """
+        Life-stage update for BEEF_HEIFER_REPLACEMENT.
+
+        Parameters
+        ----------
+        time : RufasTime
+            Current simulation time.
+
+        Returns
+        -------
+        tuple[AnimalStatus, NewBornCalfValuesTypedDict | None]
+            LIFE_STAGE_CHANGED if promoted to BEEF_COW, else REMAIN.
+
+        Notes
+        -----
+        Type promotion is deferred here (not in _beef_daily_reproduction_update) to
+        avoid a same-tick race condition where _beef_cow_life_stage_update's open-cull
+        check would fire on the calving day before the cow has had any chance to rebreed.
+
+        """
+        if self.times_calved >= 1:
+            self.animal_type = AnimalType.BEEF_COW
+            self.events.add_event(
+                self.days_born, time.simulation_day, animal_constants.REPLACEMENT_HEIFER_PROMOTED_TO_COW
+            )
+            return AnimalStatus.LIFE_STAGE_CHANGED, None
+
+        if not self._breeding_weight_event_fired:
+            threshold = (
+                AnimalModuleConstants.BEEF_HEIFER_TARGET_BREEDING_PCT_MATURE * AnimalConfig.beef_mature_cow_weight_kg
+            )
+            if self.body_weight >= threshold:
+                self.events.add_event(
+                    self.days_born,
+                    time.simulation_day,
+                    animal_constants.REPLACEMENT_HEIFER_REACHED_BREEDING_WEIGHT,
+                )
+                self._breeding_weight_event_fired = True
+
+        return AnimalStatus.REMAIN, None
+
+    def _beef_cow_life_stage_update(self, time: RufasTime) -> tuple[AnimalStatus, NewBornCalfValuesTypedDict | None]:
+        """
+        Life-stage update for BEEF_COW: age-ceiling cull and open-cow pregnancy-check mark.
+
+        Parameters
+        ----------
+        time : RufasTime
+            Current simulation time.
+
+        Returns
+        -------
+        tuple[AnimalStatus, NewBornCalfValuesTypedDict | None]
+            SOLD if age ceiling reached; REMAIN otherwise (open-cull mark sets cull_reason only).
+
+        Notes
+        -----
+        Actual removal of open cows from the herd is deferred to Step 7 (PR-C); this method
+        only sets cull_reason so the higher layer (herd_factory) can act.
+        # TODO(beef-integration): report_cow_calf_performance belongs in herd_factory.py (Step 7).
+
+        """
+        if self.days_born >= AnimalModuleConstants.BEEF_COW_MAX_AGE_DAYS:
+            self.events.add_event(self.days_born, time.simulation_day, animal_constants.COW_CULLED_AGE)
+            self.cull_reason = animal_constants.COW_CULLED_AGE
+            self.sold_at_day = time.simulation_day
+            return AnimalStatus.SOLD, None
+
+        season_start = AnimalConfig.beef_breeding_season_start_day
+        season_end = season_start + AnimalConfig.beef_breeding_season_length
+        day = time.day_of_year
+        if season_end <= 365:
+            season_closed = day >= season_end
+            season_close_day = time.simulation_day - day + season_end
+        else:
+            season_closed = (season_end % 365) <= day < season_start
+            season_close_day = time.simulation_day - day + (season_end % 365)
+        postpartum_eligible_day = (
+            time.simulation_day - self.days_since_calving + AnimalModuleConstants.BEEF_POSTPARTUM_ANESTRUS_DAYS
+        )
+        has_had_rebreeding_opportunity = (
+            self.days_since_calving >= AnimalModuleConstants.BEEF_POSTPARTUM_ANESTRUS_DAYS
+            and postpartum_eligible_day < season_close_day
+        )
+        if (
+            self.is_open
+            and has_had_rebreeding_opportunity
+            and season_closed
+            and self.cull_reason != animal_constants.COW_OPEN_AT_PREGNANCY_CHECK
+        ):
+            self.events.add_event(self.days_born, time.simulation_day, animal_constants.COW_OPEN_AT_PREGNANCY_CHECK)
+            self.cull_reason = animal_constants.COW_OPEN_AT_PREGNANCY_CHECK
+
+        return AnimalStatus.REMAIN, None
+
+    def _beef_bull_life_stage_update(self, time: RufasTime) -> tuple[AnimalStatus, NewBornCalfValuesTypedDict | None]:
+        """
+        Life-stage update for BEEF_BULL: no exit conditions in PR-B scope.
+
+        Parameters
+        ----------
+        time : RufasTime
+            Current simulation time (unused; present for interface consistency).
+
+        Returns
+        -------
+        tuple[AnimalStatus, NewBornCalfValuesTypedDict | None]
+            Always (REMAIN, None).
+
+        """
         return AnimalStatus.REMAIN, None
 
     def _update_step_up_phase(self, simulation_day: int = 0) -> None:
@@ -2282,6 +2665,7 @@ class Animal:
         | HeiferIIValuesTypedDict
         | HeiferIIIValuesTypedDict
         | CowValuesTypedDict
+        | BeefCowCalfValuesTypedDict
     ):
         """
         Get the attribute values of the animal.
@@ -2289,7 +2673,7 @@ class Animal:
         Returns
         -------
         (CalfValuesTypedDict | HeiferIValuesTypedDict | HeiferIIValuesTypedDict | HeiferIIIValuesTypedDict |
-         CowValuesTypedDict)
+         CowValuesTypedDict | BeefCowCalfValuesTypedDict)
             A dictionary containing key-value pairs specific to the current animal.
 
         Raises
@@ -2308,6 +2692,7 @@ class Animal:
                     | HeiferIIValuesTypedDict
                     | HeiferIIIValuesTypedDict
                     | CowValuesTypedDict
+                    | BeefCowCalfValuesTypedDict
                 ),
             ],
         ] = {
@@ -2317,6 +2702,10 @@ class Animal:
             AnimalType.HEIFER_III: self._get_heiferIII_values,
             AnimalType.DRY_COW: self._get_cow_values,
             AnimalType.LAC_COW: self._get_cow_values,
+            AnimalType.BEEF_COW: self._get_beef_cow_calf_values,
+            AnimalType.BEEF_CALF: self._get_beef_cow_calf_values,
+            AnimalType.BEEF_HEIFER_REPLACEMENT: self._get_beef_cow_calf_values,
+            AnimalType.BEEF_BULL: self._get_beef_cow_calf_values,
         }
         return mapping[self.animal_type]()
 
@@ -2468,6 +2857,32 @@ class Animal:
             days_in_milk=self.days_in_milk,
             calving_interval=self.calving_interval,
             parity=self.calves,
+        )
+
+    def _get_beef_cow_calf_values(self) -> BeefCowCalfValuesTypedDict:
+        """
+        Get the attribute values for a beef cow-calf animal.
+
+        Returns
+        -------
+        BeefCowCalfValuesTypedDict
+            A dictionary containing key-value pairs specific to the current beef animal.
+
+        """
+        return BeefCowCalfValuesTypedDict(
+            id=self.id,
+            breed=self.breed.name,
+            animal_type=self.animal_type.value,
+            days_born=self.days_born,
+            birth_weight=self.birth_weight,
+            body_weight=self.body_weight,
+            mature_body_weight=self.mature_body_weight,
+            sex=self.sex.name,
+            times_calved=self.times_calved,
+            is_open=self.is_open,
+            days_since_calving=self.days_since_calving,
+            days_in_pregnancy=self.days_in_pregnancy,
+            events=str(self.events),
         )
 
     def determine_future_death_date(self) -> int:

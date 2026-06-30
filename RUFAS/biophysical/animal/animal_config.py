@@ -10,6 +10,7 @@ from RUFAS.biophysical.animal.data_types.repro_protocol_enums import (
     CowReSynchSubProtocol,
     HeiferTAISubProtocol,
     HeiferSynchEDSubProtocol,
+    BeefReproductionProtocol,
 )
 from RUFAS.input_manager import InputManager
 from RUFAS.output_manager import OutputManager
@@ -423,6 +424,7 @@ class AnimalConfig:
     beef_mature_cow_weight_kg: float = AnimalModuleConstants.BEEF_DEFAULT_MATURE_COW_WEIGHT_KG
     beef_natural_service_bull_ratio: int = 25
     beef_cow_cull_rate_annual: float = AnimalModuleConstants.BEEF_ANNUAL_CULL_RATE
+    beef_reproduction_program: BeefReproductionProtocol = BeefReproductionProtocol.NATURAL_SERVICE_SEASONAL
 
     @classmethod
     def initialize_animal_config(cls) -> None:
@@ -624,6 +626,12 @@ class AnimalConfig:
             raise ValueError(
                 f"Invalid beef post-weaning destination '{destination_str}'. " f"Expected one of: {valid}."
             )
+        if cls.beef_post_weaning_destination is BeefPostWeaningDestination.STOCKER:
+            raise NotImplementedError(
+                "BeefPostWeaningDestination.STOCKER requires the native stocker "
+                "module (Segment 3) which is not yet implemented. "
+                "Use SELL, REPLACEMENT_HEIFER, or DIRECT_TO_FEEDLOT."
+            )
         cls.beef_mature_cow_weight_kg = float(
             beef_cfg.get("mature_cow_weight_kg", AnimalModuleConstants.BEEF_DEFAULT_MATURE_COW_WEIGHT_KG)
         )
@@ -631,3 +639,16 @@ class AnimalConfig:
         cls.beef_cow_cull_rate_annual = float(
             beef_cfg.get("cow_cull_rate_annual", AnimalModuleConstants.BEEF_ANNUAL_CULL_RATE)
         )
+        reproduction_program_str = str(
+            beef_cfg.get(
+                "reproduction_program",
+                BeefReproductionProtocol.NATURAL_SERVICE_SEASONAL.value,
+            )
+        )
+        try:
+            cls.beef_reproduction_program = BeefReproductionProtocol(reproduction_program_str)
+        except ValueError:
+            valid = sorted(p.value for p in BeefReproductionProtocol)
+            raise ValueError(
+                f"Invalid beef reproduction program '{reproduction_program_str}'. " f"Expected one of: {valid}."
+            )

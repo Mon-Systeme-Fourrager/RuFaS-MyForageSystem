@@ -298,6 +298,21 @@ class AnimalModuleConstants:
     BEEF_COW_MAX_AGE_DAYS: int = 5475
     """Conservative longevity ceiling of 15 years = 5475 days."""
 
+    BEEF_POSTPARTUM_ANESTRUS_DAYS: int = 45
+    """Minimum days postpartum before a cow resumes cycling (NRC 2016 Ch.13)."""
+
+    BEEF_CONCEPTION_BASE_DAILY_PROB: float = 0.0404
+    """Base daily conception probability calibrated to USDA 91.5% seasonal pregnancy rate at BCS=5, 25:1 bull ratio."""
+
+    BEEF_CONCEPTION_BULL_RATIO_REFERENCE: float = 30.0
+    """Bull-to-cow ratio above which bull coverage capacity constrains conception (NRC 2016 Ch.13)."""
+
+    BEEF_CONCEPTION_BCS_DIVISOR: float = 4.0
+    """BCS normalization divisor mapping the 1-9 scale to a [0, 1] factor (NRC 2016 Ch.13 qualitative guidance)."""
+
+    BEEF_CONCEPTION_BCS_FLOOR: float = 0.5
+    """Minimum BCS factor retained by severely thin cows; pragmatic floor, not a specific NRC 2016 equation."""
+
     BEEF_DEFAULT_BREEDING_SEASON_LENGTH_DAYS: int = 63
     """Standard 9-week (63-day) breeding season per NRC 2016 management reference."""
 
