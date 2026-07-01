@@ -381,6 +381,9 @@ def test_collect_daily_herd_updates(
     cow_newborns = [mock_animal(AnimalType.CALF)]
     cow_sold_newborns = [mock_animal(AnimalType.CALF, sold=True)]
 
+    mock_beef_cow = mock_animal(AnimalType.BEEF_COW)
+    herd_manager.beef_cows = [mock_beef_cow]
+
     mock_report_cow_calf = mocker.patch.object(AnimalModuleReporter, "report_cow_calf_performance")
     mock_perform_daily_routines_for_animals = mocker.patch.object(
         herd_manager,
@@ -406,12 +409,14 @@ def test_collect_daily_herd_updates(
 
     actual_daily_herd_updates = herd_manager._process_daily_herd_updates(mock_time)
 
-    assert mock_report_cow_calf.call_count == (
+    expected_beef_count = (
         len(herd_manager.beef_cows)
         + len(herd_manager.beef_replacement_heifers)
         + len(herd_manager.beef_calves)
         + len(herd_manager.beef_bulls)
     )
+    assert expected_beef_count == 1, "test setup must seed at least one beef animal"
+    assert mock_report_cow_calf.call_count == expected_beef_count
     assert mock_perform_daily_routines_for_animals.call_args_list == [
         call(mock_time, herd_manager.calves),
         call(mock_time, herd_manager.heiferIs),
@@ -665,7 +670,7 @@ def test_daily_routines(herd_manager: HerdManager, mock_herd: dict[str, list[Ani
         "_perform_daily_routines_for_animals",
         side_effect=mock_perform_daily_routines_for_animals_side_effect,
     )
-    mocker.patch("RUFAS.biophysical.animal.animal_module_reporter.AnimalModuleReporter.report_cow_calf_performance")
+    mocker.patch.object(AnimalModuleReporter, "report_cow_calf_performance")
     mock_update_sold_animal_statistics = mocker.patch.object(herd_manager, "_update_sold_animal_statistics")
     mock_check_if_cows_need_to_be_sold = mocker.patch.object(
         herd_manager, "_check_if_cows_need_to_be_sold", return_value=sold_oversupply_heiferIIIs

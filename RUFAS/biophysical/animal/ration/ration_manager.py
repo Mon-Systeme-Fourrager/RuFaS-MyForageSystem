@@ -107,12 +107,7 @@ class RationManager:
             ("finisher", feedlot_finisher),
         ):
             if ration:
-                negative = [pct for pct in ration.values() if pct < 0.0]
-                if negative:
-                    raise ValueError(f"Feedlot {name} ration percentages must be non-negative, got: {negative}")
-                total_pct = sum(ration.values())
-                if abs(total_pct - 100.0) > 1e-2:
-                    raise ValueError(f"Feedlot {name} ration percentages must sum to 100.0%, got {total_pct}%")
+                cls._validate_ration_percentages(f"Feedlot {name}", ration)
 
         next_ration_feeds[AnimalCombination.FEEDLOT_FINISHING] = [
             int(f) for f in ration_config.get("feedlot_feeds", [])
@@ -138,13 +133,7 @@ class RationManager:
             ("beef_replacement_heifer", beef_replacement_heifer_ration),
         ]:
             if ration:
-                if any(pct < 0.0 for pct in ration.values()):
-                    raise ValueError(f"Beef {name} ration percentages must be non-negative")
-                if not math.isfinite(sum(ration.values())):
-                    raise ValueError(f"Beef {name} ration contains non-finite values")
-                total_pct = sum(ration.values())
-                if abs(total_pct - 100.0) > 1e-2:
-                    raise ValueError(f"Beef {name} ration must sum to 100.0%, got {total_pct}%")
+                cls._validate_ration_percentages(f"Beef {name}", ration)
 
         cls.ration_feeds = next_ration_feeds
         cls.feedlot_starter_ration = feedlot_starter
@@ -154,6 +143,26 @@ class RationManager:
         cls.beef_dry_gestating_ration = beef_dry_gestating_ration
         cls.beef_creep_feed_ration = beef_creep_feed_ration
         cls.beef_replacement_heifer_ration = beef_replacement_heifer_ration
+
+    @staticmethod
+    def _validate_ration_percentages(name: str, ration: dict[int, float]) -> None:
+        """Raise ValueError if ``ration`` has negative, non-finite, or non-100% percentages.
+
+        Parameters
+        ----------
+        name : str
+            Human-readable ration label used in error messages.
+        ration : dict[int, float]
+            Feed-ID to percentage mapping to validate.
+        """
+        negative = [pct for pct in ration.values() if pct < 0.0]
+        if negative:
+            raise ValueError(f"{name} ration percentages must be non-negative, got: {negative}")
+        total_pct = sum(ration.values())
+        if not math.isfinite(total_pct):
+            raise ValueError(f"{name} ration contains non-finite values")
+        if abs(total_pct - 100.0) > 1e-2:
+            raise ValueError(f"{name} ration percentages must sum to 100.0%, got {total_pct}%")
 
     @classmethod
     def get_feedlot_phase_ration(
@@ -187,7 +196,7 @@ class RationManager:
         return {feed_id: requirements.dry_matter * pct / 100.0 for feed_id, pct in ration_pct.items()}
 
     @classmethod
-    def get_beef_seasonal_ration(cls, animal: "Animal") -> dict[RUFAS_ID, float]:
+    def get_beef_seasonal_ration(cls, animal: Animal) -> dict[RUFAS_ID, float]:
         """Returns the seasonal ration dict for a beef cow-calf animal based on its current state.
 
         Parameters

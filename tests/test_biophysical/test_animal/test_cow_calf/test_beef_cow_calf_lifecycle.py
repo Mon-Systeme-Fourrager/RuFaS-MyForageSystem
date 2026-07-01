@@ -697,11 +697,11 @@ def test_B3_all_animal_types_in_life_stage_map(animal_type: AnimalType) -> None:
 
 
 @pytest.mark.unit
-def test_GA_male_calf_replacement_heifer_destination_raises_value_error() -> None:
-    """GA: Male BEEF_CALF with destination='replacement_heifer' must raise ValueError.
+def test_GA_male_calf_replacement_heifer_destination_sells() -> None:
+    """GA: Male BEEF_CALF with destination='replacement_heifer' must sell at weaning.
 
-    Verifies the sex guard added in Fix A prevents males from being incorrectly
-    transitioned to BEEF_HEIFER_REPLACEMENT.
+    FIX 1 (PR #35 round 2): males cannot become replacement heifers; they route to
+    SOLD so the simulation continues rather than crashing with ValueError.
     """
     weaning_age = AnimalConfig.beef_weaning_age_days
     animal = _make_beef_animal(
@@ -712,8 +712,10 @@ def test_GA_male_calf_replacement_heifer_destination_raises_value_error() -> Non
     AnimalConfig.beef_post_weaning_destination = BeefPostWeaningDestination.REPLACEMENT_HEIFER
     t = _mock_time(simulation_day=weaning_age)
 
-    with pytest.raises(ValueError, match="replacement heifer"):
-        animal._beef_calf_life_stage_update(t)
+    status, newborn = animal._beef_calf_life_stage_update(t)
+
+    assert status == AnimalStatus.SOLD
+    assert newborn is None
 
 
 @pytest.mark.unit

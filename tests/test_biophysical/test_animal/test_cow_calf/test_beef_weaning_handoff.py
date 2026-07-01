@@ -265,3 +265,48 @@ def test_heifer_replacement_promotion_to_cow_syncs_lists() -> None:
     heifer.animal_type = AnimalType.BEEF_COW
     hm._add_animal_to_new_array(heifer)
     assert heifer in hm.beef_cows
+
+
+# ── FIX 1 + FIX 6 regression tests (PR #35 round 2) ─────────────────────────
+
+
+@pytest.mark.unit
+def test_weaning_replacement_heifer_male_calf_sells() -> None:
+    """Male calf with REPLACEMENT_HEIFER destination sells at weaning instead of raising ValueError.
+
+    Verifies FIX 1: male calves cannot become replacement heifers; they route to
+    SOLD so the simulation continues rather than crashing.
+    """
+    AnimalConfig.beef_post_weaning_destination = BeefPostWeaningDestination.REPLACEMENT_HEIFER
+    AnimalConfig.beef_weaning_age_days = 207
+    AnimalConfig.beef_weaning_weight_kg = None
+    AnimalConfig.beef_mature_cow_weight_kg = AnimalModuleConstants.BEEF_DEFAULT_MATURE_COW_WEIGHT_KG
+
+    calf = _make_beef_calf(sex=Sex.MALE, days_born=210)
+    time = _mock_time(simulation_day=210)
+
+    status, newborn = calf._beef_calf_life_stage_update(time)
+
+    assert status == AnimalStatus.SOLD
+    assert newborn is None
+    assert calf.sold_at_day == 210
+
+
+@pytest.mark.unit
+def test_weaning_sets_wean_weight() -> None:
+    """_beef_weaning_event captures wean_weight == body_weight at the moment of weaning.
+
+    Verifies FIX 6: wean_weight is assigned before the destination branch so the
+    reporter can read it regardless of the post-weaning path taken.
+    """
+    AnimalConfig.beef_post_weaning_destination = BeefPostWeaningDestination.SELL
+    AnimalConfig.beef_weaning_age_days = 207
+    AnimalConfig.beef_weaning_weight_kg = None
+    AnimalConfig.beef_mature_cow_weight_kg = AnimalModuleConstants.BEEF_DEFAULT_MATURE_COW_WEIGHT_KG
+
+    calf = _make_beef_calf(sex=Sex.FEMALE, days_born=210, body_weight=185.5)
+    time = _mock_time(simulation_day=210)
+
+    calf._beef_calf_life_stage_update(time)
+
+    assert calf.wean_weight == 185.5

@@ -94,8 +94,6 @@ def _make_minimal_ration_optimizer() -> RationOptimizer:
     """
     optimizer = RationOptimizer()
     mock_ration_config = MagicMock()
-    mock_ration_config.nutrient_standard.__eq__ = lambda self, other: False
-    mock_ration_config.nutrient_standard.__is__ = lambda self, other: False
     mock_ration_config.nutrient_standard = NutrientStandard.NRC
     optimizer.set_constraints(mock_ration_config)
     return optimizer

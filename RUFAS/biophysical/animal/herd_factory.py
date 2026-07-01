@@ -829,7 +829,7 @@ class HerdFactory:
                 "sex": "MALE",
                 "days_born": animal_constants.DAYS_PER_YEAR * animal_constants.BEEF_BULL_INITIAL_AGE_YEARS,
                 "body_weight": mature_bw * animal_constants.BEEF_BULL_INITIAL_WEIGHT_PCT_MATURE,
-                "mature_body_weight": mature_bw * animal_constants.BEEF_BULL_INITIAL_WEIGHT_PCT_MATURE,
+                "mature_body_weight": mature_bw,
             }
             animals.append(Animal(cast(Any, bull_data), self.time))
 

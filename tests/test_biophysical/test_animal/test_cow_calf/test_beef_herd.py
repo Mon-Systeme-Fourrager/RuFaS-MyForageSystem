@@ -767,3 +767,85 @@ def test_animals_by_combination_skips_beef_cow_in_beef_cow_calf_herd(mocker: Moc
     assert heifer in all_result_animals, "BEEF_HEIFER_REPLACEMENT must appear in animals_by_combination"
     assert calf in all_result_animals, "BEEF_CALF must appear in animals_by_combination"
     assert bull in all_result_animals, "BEEF_BULL must appear in animals_by_combination"
+
+
+# ---------------------------------------------------------------------------
+# FIX 2 + FIX 7 regression tests (PR #35 round 2)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_beef_bull_initialized_with_unscaled_mature_body_weight(mocker: MockerFixture) -> None:
+    """BEEF_BULL must receive mature_body_weight == mature_bw (not body_weight).
+
+    Verifies FIX 2: prior code accidentally passed the scaled initial body weight
+    as the mature_body_weight target, causing the bull to plateau at a fraction of
+    the correct adult size.
+    """
+    import RUFAS.biophysical.animal.animal_constants as animal_constants
+
+    hf: HerdFactory = HerdFactory.__new__(HerdFactory)
+    hf.im = MagicMock()
+    hf.time = _make_time_mock()
+    mature_bw = 900.0
+    hf.im.get_data.return_value = {
+        "num_cows": 0,
+        "num_replacement_heifers": 0,
+        "num_calves": 0,
+        "num_bulls": 1,
+        "mature_cow_weight_kg": mature_bw,
+        "breed": "AN",
+    }
+
+    captured_args: list[dict[str, object]] = []
+
+    def _capture(args: Mapping[str, object], _time: RufasTime) -> MagicMock:
+        captured_args.append(dict(args))
+        return MagicMock()
+
+    mocker.patch("RUFAS.biophysical.animal.herd_factory.Animal", side_effect=_capture)
+    hf._initialize_beef_cow_calf_herd()
+
+    assert len(captured_args) == 1
+    bull_args = captured_args[0]
+    assert bull_args["mature_body_weight"] == mature_bw, (
+        f"BEEF_BULL mature_body_weight must be {mature_bw}, " f"got {bull_args['mature_body_weight']}"
+    )
+    assert bull_args["body_weight"] == mature_bw * animal_constants.BEEF_BULL_INITIAL_WEIGHT_PCT_MATURE
+
+
+@pytest.mark.unit
+def test_initialize_pens_forage_quality_factor_zero_preserved(mocker: MockerFixture) -> None:
+    """forage_quality_factor=0.0 in pen config must be forwarded to Pen as 0.0, not 1.0.
+
+    Verifies FIX 7: the previous ``or 1.0`` fallback collapsed explicit 0.0 to the
+    default, breaking bare-ground pasture scenarios.  The None-check must treat 0.0
+    as a valid user-supplied value.
+    """
+    mock_pen_init = mocker.patch.object(Pen, "__init__", return_value=None)
+
+    hm: HerdManager = HerdManager.__new__(HerdManager)
+    hm.all_pens = []
+    hm.animal_to_pen_id_map = {}
+
+    pen_data = [
+        {
+            "id": 1,
+            "name": "pasture",
+            "animal_combination": "BEEF_COW_CALF_PAIR",
+            "vertical_dist_to_milking_parlor": 0.0,
+            "horizontal_dist_to_milking_parlor": 0.0,
+            "number_of_stalls": 50,
+            "housing_type": "open",
+            "pen_type": "pasture",
+            "max_stocking_density": 1.0,
+            "forage_quality_factor": 0.0,
+        }
+    ]
+
+    hm.initialize_pens(pen_data)
+
+    _, kwargs = mock_pen_init.call_args
+    assert (
+        kwargs["forage_quality_factor"] == 0.0
+    ), "forage_quality_factor=0.0 in config must not be replaced by the 1.0 default"

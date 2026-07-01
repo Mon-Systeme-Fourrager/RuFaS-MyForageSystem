@@ -1275,7 +1275,9 @@ class HerdManager:
                 first_parlor_processor=first_parlor_processor,
                 parlor_stream_name=parlor_stream_name,
                 manure_streams=manure_streams,
-                forage_quality_factor=float(pen_data.get("forage_quality_factor") or 1.0),
+                forage_quality_factor=(
+                    1.0 if pen_data.get("forage_quality_factor") is None else float(pen_data["forage_quality_factor"])
+                ),
             )
 
             self.all_pens.append(pen)

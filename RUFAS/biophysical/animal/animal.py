@@ -2353,7 +2353,7 @@ class Animal:
         Returns
         -------
         tuple[AnimalStatus, NewBornCalfValuesTypedDict | None]
-            (SOLD, None), (LIFE_STAGE_CHANGED, None), or raises ValueError.
+            (SOLD, None) or (LIFE_STAGE_CHANGED, None).
 
         """
         self.events.add_event(self.days_born, time.simulation_day, animal_constants.CALF_WEANED)
@@ -2361,13 +2361,16 @@ class Animal:
         if self.dam is not None:
             self.dam.calf_at_side = None
 
+        self.wean_weight = self.body_weight
         destination = AnimalConfig.beef_post_weaning_destination
         if destination is BeefPostWeaningDestination.SELL:
             self.sold_at_day = time.simulation_day
             return AnimalStatus.SOLD, None
         if destination is BeefPostWeaningDestination.REPLACEMENT_HEIFER:
             if self.sex != Sex.FEMALE:
-                raise ValueError(f"Calf with sex {self.sex} cannot be transitioned to a replacement heifer.")
+                # Male calves under REPLACEMENT_HEIFER destination sell at weaning
+                self.sold_at_day = time.simulation_day
+                return AnimalStatus.SOLD, None
             self.animal_type = AnimalType.BEEF_HEIFER_REPLACEMENT
             return AnimalStatus.LIFE_STAGE_CHANGED, None
         if destination is BeefPostWeaningDestination.DIRECT_TO_FEEDLOT:
