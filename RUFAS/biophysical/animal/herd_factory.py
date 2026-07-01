@@ -742,10 +742,10 @@ class HerdFactory:
             If any cohort count is negative or any weight is non-positive or non-finite.
 
         """
-        n_cows = int(cow_calf_cfg.get("num_cows", 0))
-        n_heifers = int(cow_calf_cfg.get("num_replacement_heifers", 0))
-        n_calves = int(cow_calf_cfg.get("num_calves", 0))
-        n_bulls = int(cow_calf_cfg.get("num_bulls", 0))
+        n_cows = int(cow_calf_cfg.get("num_cows") or 0)
+        n_heifers = int(cow_calf_cfg.get("num_replacement_heifers") or 0)
+        n_calves = int(cow_calf_cfg.get("num_calves") or 0)
+        n_bulls = int(cow_calf_cfg.get("num_bulls") or 0)
         if min(n_cows, n_heifers, n_calves, n_bulls) < 0:
             raise ValueError("Beef cow-calf cohort counts must be non-negative.")
         mature_raw = cow_calf_cfg.get("mature_cow_weight_kg")

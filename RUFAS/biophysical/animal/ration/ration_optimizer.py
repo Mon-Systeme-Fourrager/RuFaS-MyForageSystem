@@ -1137,30 +1137,9 @@ class RationOptimizer:
         om = OutputManager()
 
         constraints_failed_list = []
-        if animal_combination == AnimalCombination.LAC_COW:
-            failed_constraints = RationOptimizer.find_failed_constraints(
-                solution.x, self.cow_constraints, ration_config
-            )
-        elif animal_combination is AnimalCombination.FEEDLOT_FINISHING:
-            failed_constraints = RationOptimizer.find_failed_constraints(
-                solution.x, self.feedlot_constraints, ration_config
-            )
-        elif animal_combination in (
-            AnimalCombination.BEEF_COW_CALF_PAIR,
-            AnimalCombination.BEEF_GESTATING,
-            AnimalCombination.BEEF_BULL_BATTERY,
-        ):
-            failed_constraints = RationOptimizer.find_failed_constraints(
-                solution.x, self.beef_cow_constraints, ration_config
-            )
-        elif animal_combination is AnimalCombination.BEEF_REPLACEMENT:
-            failed_constraints = RationOptimizer.find_failed_constraints(
-                solution.x, self.beef_replacement_constraints, ration_config
-            )
-        else:
-            failed_constraints = RationOptimizer.find_failed_constraints(
-                solution.x, self.heifer_constraints, ration_config
-            )
+        failed_constraints = RationOptimizer.find_failed_constraints(
+            solution.x, list(self._select_constraints(animal_combination)), ration_config
+        )
 
         if failed_constraints:
             for constraint in failed_constraints:

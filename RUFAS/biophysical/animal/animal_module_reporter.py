@@ -1521,7 +1521,7 @@ class AnimalModuleReporter:
         om.add_variable(
             "beef_times_calved",
             animal.times_calved,
-            dict(info_map, units=MeasurementUnits.ANIMALS),
+            dict(info_map, units=MeasurementUnits.UNITLESS),
         )
         wean_weight: float = animal.wean_weight if animal.wean_weight is not None else 0.0
         om.add_variable(

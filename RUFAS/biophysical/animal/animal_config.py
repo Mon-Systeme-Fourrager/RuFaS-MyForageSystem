@@ -645,7 +645,14 @@ class AnimalConfig:
                 else AnimalModuleConstants.BEEF_DEFAULT_BREEDING_SEASON_LENGTH_DAYS
             ),
             "natural_service_bull_ratio": (
-                beef_cfg["natural_service_bull_ratio"] if beef_cfg.get("natural_service_bull_ratio") is not None else 25
+                beef_cfg["natural_service_bull_ratio"]
+                if beef_cfg.get("natural_service_bull_ratio") is not None
+                else cls.beef_natural_service_bull_ratio
+            ),
+            "cow_cull_rate_annual": (
+                beef_cfg["cow_cull_rate_annual"]
+                if beef_cfg.get("cow_cull_rate_annual") is not None
+                else AnimalModuleConstants.BEEF_ANNUAL_CULL_RATE
             ),
         }
         DataValidator.validate_beef_cow_calf_config(merged_beef_cfg)
@@ -653,8 +660,11 @@ class AnimalConfig:
         cls.beef_weaning_age_days = int(merged_beef_cfg["weaning_age_days"])
         cls.beef_mature_cow_weight_kg = float(merged_beef_cfg["mature_cow_weight_kg"])
         cls.beef_natural_service_bull_ratio = int(merged_beef_cfg["natural_service_bull_ratio"])
+        cls.beef_cow_cull_rate_annual = float(merged_beef_cfg["cow_cull_rate_annual"])
         breeding_start_raw = beef_cfg.get("breeding_season_start_day")
-        cls.beef_breeding_season_start_day = int(90 if breeding_start_raw is None else breeding_start_raw)
+        cls.beef_breeding_season_start_day = int(
+            cls.beef_breeding_season_start_day if breeding_start_raw is None else breeding_start_raw
+        )
         raw_weaning_weight = beef_cfg.get("weaning_weight_kg")
         cls.beef_weaning_weight_kg = float(raw_weaning_weight) if raw_weaning_weight is not None else None
         cls.beef_creep_feeding_enabled = bool(beef_cfg.get("creep_feeding_enabled") or False)
@@ -672,10 +682,6 @@ class AnimalConfig:
                 "module (Segment 3) which is not yet implemented. "
                 "Use SELL, REPLACEMENT_HEIFER, or DIRECT_TO_FEEDLOT."
             )
-        cow_cull_rate_raw = beef_cfg.get("cow_cull_rate_annual")
-        cls.beef_cow_cull_rate_annual = float(
-            AnimalModuleConstants.BEEF_ANNUAL_CULL_RATE if cow_cull_rate_raw is None else cow_cull_rate_raw
-        )
         reproduction_program_str = str(
             beef_cfg.get(
                 "reproduction_program",

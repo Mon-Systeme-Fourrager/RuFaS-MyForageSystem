@@ -162,7 +162,6 @@ def test_herd_manager_beef_lists_populated_from_factory(
 
 
 def _make_herd_manager_stub(
-    mocker: MockerFixture,
     beef_cows: list[MagicMock] | None = None,
     beef_replacement_heifers: list[MagicMock] | None = None,
     beef_calves: list[MagicMock] | None = None,
@@ -172,8 +171,6 @@ def _make_herd_manager_stub(
 
     Parameters
     ----------
-    mocker : MockerFixture
-        pytest-mock fixture used to patch HerdFactory class attributes.
     beef_cows : list[MagicMock] | None, optional
         Initial BEEF_COW list; defaults to empty.
     beef_replacement_heifers : list[MagicMock] | None, optional
@@ -261,7 +258,6 @@ def test_process_daily_herd_updates_includes_beef_groups(mocker: MockerFixture) 
     bull = _make_animal_mock(AnimalType.BEEF_BULL)
 
     hm = _make_herd_manager_stub(
-        mocker,
         beef_cows=[cow],
         beef_replacement_heifers=[heifer],
         beef_calves=[calf],
@@ -305,7 +301,7 @@ def test_beef_cow_calving_propagates_to_newborn_calves(mocker: MockerFixture) ->
     output.newborn_calf_config = newborn_cfg
     cow.daily_routines.return_value = output
 
-    hm = _make_herd_manager_stub(mocker, beef_cows=[cow])
+    hm = _make_herd_manager_stub(beef_cows=[cow])
 
     newborn_animal = MagicMock()
     newborn_animal.stillborn = False
@@ -334,7 +330,6 @@ def test_process_daily_herd_updates_calls_reporter_for_beef(mocker: MockerFixtur
     bull = _make_animal_mock(AnimalType.BEEF_BULL)
 
     hm = _make_herd_manager_stub(
-        mocker,
         beef_cows=[cow],
         beef_replacement_heifers=[heifer],
         beef_calves=[calf],
@@ -357,7 +352,7 @@ def test_process_daily_herd_updates_calls_reporter_for_beef(mocker: MockerFixtur
 
 
 @pytest.mark.unit
-def test_initialize_beef_cow_calf_herd_non_dict_config_returns_empty(mocker: MockerFixture) -> None:
+def test_initialize_beef_cow_calf_herd_non_dict_config_returns_empty() -> None:
     """_initialize_beef_cow_calf_herd must return [] when config value is not a dict.
 
     Verifies Lesson 2: the isinstance(cfg, dict) guard prevents attempts to call
@@ -389,7 +384,7 @@ def test_first_calving_heifer_newborn_captured_in_herd_updates(mocker: MockerFix
     output.newborn_calf_config = newborn_cfg
     heifer.daily_routines.return_value = output
 
-    hm = _make_herd_manager_stub(mocker, beef_replacement_heifers=[heifer])
+    hm = _make_herd_manager_stub(beef_replacement_heifers=[heifer])
 
     newborn_animal = MagicMock()
     newborn_animal.stillborn = False
@@ -461,21 +456,21 @@ def _make_minimal_pen(mocker: MockerFixture, forage_quality_factor: float | None
             }
         ],
     )
-    kwargs: dict[str, object] = dict(
-        pen_id=1,
-        pen_name="Test Pen",
-        vertical_dist_to_milking_parlor=0.0,
-        horizontal_dist_to_milking_parlor=0.0,
-        number_of_stalls=10,
-        housing_type="freestall",
-        pen_type="freestall",
-        animal_combination=AnimalCombination.LAC_COW,
-        max_stocking_density=1.0,
-        minutes_away_for_milking=0,
-        first_parlor_processor=None,
-        parlor_stream_name=None,
-        manure_streams=[{"stream_name": "s1", "stream_proportion": 1.0, "bedding_name": "bedding_1"}],
-    )
+    kwargs: dict[str, object] = {
+        "pen_id": 1,
+        "pen_name": "Test Pen",
+        "vertical_dist_to_milking_parlor": 0.0,
+        "horizontal_dist_to_milking_parlor": 0.0,
+        "number_of_stalls": 10,
+        "housing_type": "freestall",
+        "pen_type": "freestall",
+        "animal_combination": AnimalCombination.LAC_COW,
+        "max_stocking_density": 1.0,
+        "minutes_away_for_milking": 0,
+        "first_parlor_processor": None,
+        "parlor_stream_name": None,
+        "manure_streams": [{"stream_name": "s1", "stream_proportion": 1.0, "bedding_name": "bedding_1"}],
+    }
     if forage_quality_factor is not None:
         kwargs["forage_quality_factor"] = forage_quality_factor
     return Pen(**kwargs)  # type: ignore[arg-type]
@@ -758,7 +753,6 @@ def test_animals_by_combination_skips_beef_cow_in_beef_cow_calf_herd(mocker: Moc
     bull.animal_type = AnimalType.BEEF_BULL
 
     hm = _make_herd_manager_stub(
-        mocker,
         beef_cows=[cow],
         beef_replacement_heifers=[heifer],
         beef_calves=[calf],

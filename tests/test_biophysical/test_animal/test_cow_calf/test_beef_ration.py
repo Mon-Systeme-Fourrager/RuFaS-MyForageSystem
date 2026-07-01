@@ -5,6 +5,7 @@ RED tests must FAIL before Step 6 is implemented and PASS (GREEN) after.
 
 from __future__ import annotations
 
+import contextlib
 import types
 from collections.abc import Generator
 from unittest.mock import MagicMock
@@ -77,10 +78,8 @@ def restore_ration_manager_beef_state() -> Generator[None, None, None]:
         if isinstance(RationManager.__dict__[name], (types.FunctionType, classmethod, staticmethod)):
             continue
         if name not in original_names:
-            try:
+            with contextlib.suppress(AttributeError):
                 delattr(RationManager, name)
-            except AttributeError:
-                pass
     for name, value in original_attrs.items():
         setattr(RationManager, name, value)
 
@@ -245,7 +244,7 @@ def test_set_ration_feeds_is_atomic() -> None:
 # ── Task 6.2: Seasonal ration selection ───────────────────────────────────────
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_animal_lactating_cow() -> MagicMock:
     """Mock Animal: BEEF_COW with calf at side (lactating).
 
@@ -260,7 +259,7 @@ def mock_animal_lactating_cow() -> MagicMock:
     return animal
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_animal_dry_cow() -> MagicMock:
     """Mock Animal: BEEF_COW without calf at side (dry/gestating).
 
@@ -275,7 +274,7 @@ def mock_animal_dry_cow() -> MagicMock:
     return animal
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_animal_replacement_heifer() -> MagicMock:
     """Mock Animal: BEEF_HEIFER_REPLACEMENT.
 
@@ -290,7 +289,7 @@ def mock_animal_replacement_heifer() -> MagicMock:
     return animal
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_animal_bull() -> MagicMock:
     """Mock Animal: BEEF_BULL.
 
@@ -305,7 +304,7 @@ def mock_animal_bull() -> MagicMock:
     return animal
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_animal_calf() -> MagicMock:
     """Mock Animal: BEEF_CALF (nursing).
 
@@ -331,7 +330,7 @@ def test_get_beef_seasonal_ration_lactating_cow(mock_animal_lactating_cow: Magic
 
     result = RationManager.get_beef_seasonal_ration(mock_animal_lactating_cow)
 
-    assert result is SENTINEL_LACTATING
+    assert result == SENTINEL_LACTATING
 
 
 def test_get_beef_seasonal_ration_dry_cow(mock_animal_dry_cow: MagicMock) -> None:
@@ -345,7 +344,7 @@ def test_get_beef_seasonal_ration_dry_cow(mock_animal_dry_cow: MagicMock) -> Non
 
     result = RationManager.get_beef_seasonal_ration(mock_animal_dry_cow)
 
-    assert result is SENTINEL_DRY
+    assert result == SENTINEL_DRY
 
 
 def test_get_beef_seasonal_ration_replacement_heifer(mock_animal_replacement_heifer: MagicMock) -> None:
@@ -358,7 +357,7 @@ def test_get_beef_seasonal_ration_replacement_heifer(mock_animal_replacement_hei
 
     result = RationManager.get_beef_seasonal_ration(mock_animal_replacement_heifer)
 
-    assert result is SENTINEL_HEIFER
+    assert result == SENTINEL_HEIFER
 
 
 def test_get_beef_seasonal_ration_bull(mock_animal_bull: MagicMock) -> None:
@@ -371,7 +370,7 @@ def test_get_beef_seasonal_ration_bull(mock_animal_bull: MagicMock) -> None:
 
     result = RationManager.get_beef_seasonal_ration(mock_animal_bull)
 
-    assert result is SENTINEL_DRY
+    assert result == SENTINEL_DRY
 
 
 def test_get_beef_creep_feed_supplement_disabled(mock_animal_calf: MagicMock) -> None:
@@ -391,15 +390,15 @@ def test_get_beef_creep_feed_supplement_disabled(mock_animal_calf: MagicMock) ->
 def test_get_beef_creep_feed_supplement_enabled(mock_animal_calf: MagicMock) -> None:
     """Returns beef_creep_feed_ration when beef_creep_feeding_enabled is True for a BEEF_CALF.
 
-    Verifies the enabled path returns the exact ClassVar dict, not a copy, so
-    callers consume the same shared reference set by set_ration_feeds.
+    Verifies the enabled path returns a copy equal to the ClassVar dict so
+    callers cannot mutate shared state.
     """
     AnimalConfig.beef_creep_feeding_enabled = True
     RationManager.beef_creep_feed_ration = SENTINEL_CREEP
 
     result = RationManager.get_beef_creep_feed_supplement(mock_animal_calf)
 
-    assert result is SENTINEL_CREEP
+    assert result == SENTINEL_CREEP
 
 
 def test_get_beef_creep_feed_supplement_non_calf_returns_empty(mock_animal_lactating_cow: MagicMock) -> None:
@@ -419,7 +418,7 @@ def test_get_beef_creep_feed_supplement_non_calf_returns_empty(mock_animal_lacta
 # ── Task 6.3: RationOptimizer beef constraint branches ────────────────────────
 
 
-@pytest.fixture()
+@pytest.fixture
 def optimizer() -> RationOptimizer:
     """Provide a RationOptimizer with constraints initialized for NRC standard.
 
@@ -493,4 +492,4 @@ def test_handle_failed_constraints_agrees_with_select_constraints(
 
     mock_find.assert_called_once()
     _, constraints_used, _ = mock_find.call_args.args
-    assert constraints_used is expected_constraints
+    assert constraints_used == list(expected_constraints)

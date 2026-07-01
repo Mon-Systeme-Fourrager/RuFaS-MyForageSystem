@@ -207,11 +207,11 @@ class RationManager:
 
         """
         if animal.animal_type == AnimalType.BEEF_HEIFER_REPLACEMENT:
-            return cls.beef_replacement_heifer_ration
+            return cls.beef_replacement_heifer_ration.copy()
         if animal.animal_type == AnimalType.BEEF_COW and animal.calf_at_side is not None:
-            return cls.beef_lactating_pasture_ration
+            return cls.beef_lactating_pasture_ration.copy()
         if animal.animal_type in (AnimalType.BEEF_COW, AnimalType.BEEF_BULL):
-            return cls.beef_dry_gestating_ration
+            return cls.beef_dry_gestating_ration.copy()
         if animal.animal_type == AnimalType.BEEF_CALF:
             return {}
         raise ValueError(f"No beef seasonal ration for animal_type {animal.animal_type}")
@@ -235,7 +235,7 @@ class RationManager:
             return {}
         if not AnimalConfig.beef_creep_feeding_enabled:
             return {}
-        return cls.beef_creep_feed_ration
+        return cls.beef_creep_feed_ration.copy()
 
     @classmethod
     def get_ration_feeds(cls, animal_combination: AnimalCombination) -> list[RUFAS_ID]:

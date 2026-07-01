@@ -1836,6 +1836,11 @@ class DataValidator:
                     f"natural_service_bull_ratio must be 1–{animal_constants.MAX_BULL_TO_COW_RATIO}, got {bull_ratio}"
                 )
 
+        if "cow_cull_rate_annual" in config:
+            rate = float(config["cow_cull_rate_annual"])
+            if not math.isfinite(rate) or not (0.0 <= rate <= 1.0):
+                raise ValueError(f"cow_cull_rate_annual must be between 0.0 and 1.0, got {rate}")
+
 
 class CrossValidator:
     """

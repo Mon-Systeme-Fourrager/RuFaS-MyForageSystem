@@ -317,7 +317,9 @@ class HerdManager:
             try:
                 animal_combination = self.ANIMAL_GROUPING_SCENARIO.find_animal_combination(animal)
             except NotImplementedError:
-                continue  # BEEF_COW pending runtime reproduction-state dispatch (Step 7)
+                if animal.animal_type == AnimalType.BEEF_COW:
+                    continue  # pending runtime reproduction-state dispatch
+                raise
             animals_by_combination[animal_combination].append(animal)
         return animals_by_combination
 
@@ -1273,7 +1275,7 @@ class HerdManager:
                 first_parlor_processor=first_parlor_processor,
                 parlor_stream_name=parlor_stream_name,
                 manure_streams=manure_streams,
-                forage_quality_factor=float(pen_data.get("forage_quality_factor", 1.0)),
+                forage_quality_factor=float(pen_data.get("forage_quality_factor") or 1.0),
             )
 
             self.all_pens.append(pen)
