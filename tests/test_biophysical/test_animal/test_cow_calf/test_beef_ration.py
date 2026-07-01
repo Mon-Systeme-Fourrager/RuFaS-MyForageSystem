@@ -111,8 +111,7 @@ def test_set_ration_feeds_registers_beef_rations() -> None:
     Verifies Task 6.1: lactating-pasture, dry-gestating, creep-feed, and replacement-heifer
     rations are committed to RationManager ClassVars when all four are valid.
     """
-    RationManager.set_ration_feeds(VALID_RATION_CONFIG)  # type: ignore[arg-type]
-
+    RationManager.set_ration_feeds(VALID_RATION_CONFIG)
     assert RationManager.beef_lactating_pasture_ration == {301: 60.0, 302: 40.0}
     assert RationManager.beef_dry_gestating_ration == {303: 100.0}
     assert RationManager.beef_creep_feed_ration == {304: 100.0}
@@ -143,7 +142,7 @@ def test_set_ration_feeds_rejects_negative_percentage(ration_key: str) -> None:
     config[ration_key] = {"301": -5.0, "302": 105.0}
 
     with pytest.raises(ValueError, match="non-negative"):
-        RationManager.set_ration_feeds(config)  # type: ignore[arg-type]
+        RationManager.set_ration_feeds(config)
 
 
 @pytest.mark.parametrize("invalid_pct", [float("nan"), float("inf")])
@@ -168,7 +167,7 @@ def test_set_ration_feeds_rejects_non_finite_values(invalid_pct: float) -> None:
     }
 
     with pytest.raises(ValueError, match="non-finite"):
-        RationManager.set_ration_feeds(config)  # type: ignore[arg-type]
+        RationManager.set_ration_feeds(config)
 
 
 @pytest.mark.parametrize(
@@ -196,7 +195,7 @@ def test_set_ration_feeds_rejects_bad_sum(ration_key: str) -> None:
     config[ration_key] = {"301": 60.0, "302": 20.0}  # sums to 80, not 100
 
     with pytest.raises(ValueError, match="100"):
-        RationManager.set_ration_feeds(config)  # type: ignore[arg-type]
+        RationManager.set_ration_feeds(config)
 
 
 def test_set_ration_feeds_allows_empty_creep_feed() -> None:
@@ -212,7 +211,7 @@ def test_set_ration_feeds_allows_empty_creep_feed() -> None:
         "beef_creep_feed_ration": {},
         "beef_replacement_heifer_ration": {"304": 100.0},
     }
-    RationManager.set_ration_feeds(config)  # type: ignore[arg-type]
+    RationManager.set_ration_feeds(config)
     assert RationManager.beef_creep_feed_ration == {}
 
 
@@ -236,8 +235,7 @@ def test_set_ration_feeds_is_atomic() -> None:
     }
 
     with pytest.raises(ValueError, match="non-negative|sum to 100"):
-        RationManager.set_ration_feeds(bad_config)  # type: ignore[arg-type]
-
+        RationManager.set_ration_feeds(bad_config)
     assert RationManager.beef_lactating_pasture_ration is SENTINEL_LACTATING
     assert RationManager.beef_dry_gestating_ration is SENTINEL_DRY
     assert RationManager.beef_creep_feed_ration is SENTINEL_CREEP

@@ -10,7 +10,7 @@ import pytest
 from RUFAS.biophysical.animal.animal import Animal
 from RUFAS.biophysical.animal.animal_config import AnimalConfig
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
-from RUFAS.biophysical.animal.data_types.animal_enums import AnimalStatus, Sex
+from RUFAS.biophysical.animal.data_types.animal_enums import AnimalStatus, BeefPostWeaningDestination, Sex
 from RUFAS.biophysical.animal.data_types.animal_events import AnimalEvents
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 from RUFAS.biophysical.animal.herd_manager import HerdManager
@@ -143,7 +143,7 @@ def test_weaning_replacement_heifer_changes_type_and_clears_dam() -> None:
     Verifies Task 8.2: _beef_weaning_event sets BEEF_HEIFER_REPLACEMENT, clears dam.calf_at_side,
     and returns LIFE_STAGE_CHANGED.
     """
-    AnimalConfig.beef_post_weaning_destination = "replacement_heifer"
+    AnimalConfig.beef_post_weaning_destination = BeefPostWeaningDestination.REPLACEMENT_HEIFER
     AnimalConfig.beef_weaning_age_days = 207
     AnimalConfig.beef_weaning_weight_kg = None
     AnimalConfig.beef_mature_cow_weight_kg = AnimalModuleConstants.BEEF_DEFAULT_MATURE_COW_WEIGHT_KG
@@ -170,7 +170,7 @@ def test_weaning_direct_to_feedlot_changes_type_to_steer_or_heifer() -> None:
 
     Verifies Task 8.2: _beef_weaning_event correctly assigns FEEDLOT_STEER for a male calf.
     """
-    AnimalConfig.beef_post_weaning_destination = "direct_to_feedlot"
+    AnimalConfig.beef_post_weaning_destination = BeefPostWeaningDestination.DIRECT_TO_FEEDLOT
     AnimalConfig.beef_weaning_age_days = 207
     AnimalConfig.beef_weaning_weight_kg = None
     AnimalConfig.beef_mature_cow_weight_kg = AnimalModuleConstants.BEEF_DEFAULT_MATURE_COW_WEIGHT_KG
@@ -191,7 +191,7 @@ def test_weaning_sell_sets_sold_at_day() -> None:
 
     Verifies Task 8.2: _beef_weaning_event sets sold_at_day == simulation_day.
     """
-    AnimalConfig.beef_post_weaning_destination = "sell"
+    AnimalConfig.beef_post_weaning_destination = BeefPostWeaningDestination.SELL
     AnimalConfig.beef_weaning_age_days = 207
     AnimalConfig.beef_weaning_weight_kg = None
     AnimalConfig.beef_mature_cow_weight_kg = AnimalModuleConstants.BEEF_DEFAULT_MATURE_COW_WEIGHT_KG
@@ -213,7 +213,7 @@ def test_weaning_unknown_destination_raises_value_error() -> None:
 
     Verifies Task 8.2: _beef_weaning_event raises ValueError for invalid destination strings.
     """
-    AnimalConfig.beef_post_weaning_destination = "not_valid"
+    AnimalConfig.beef_post_weaning_destination = "not_valid"  # type: ignore[assignment]
     AnimalConfig.beef_weaning_age_days = 207
     AnimalConfig.beef_weaning_weight_kg = None
     AnimalConfig.beef_mature_cow_weight_kg = AnimalModuleConstants.BEEF_DEFAULT_MATURE_COW_WEIGHT_KG

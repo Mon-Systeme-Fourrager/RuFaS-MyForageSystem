@@ -195,10 +195,12 @@ def _make_herd_manager_stub(
     hm.heiferIIIs = []
     hm.cows = []
     hm.feedlot_animals = []
-    hm.beef_cows = beef_cows if beef_cows is not None else []
-    hm.beef_replacement_heifers = beef_replacement_heifers if beef_replacement_heifers is not None else []
-    hm.beef_calves = beef_calves if beef_calves is not None else []
-    hm.beef_bulls = beef_bulls if beef_bulls is not None else []
+    hm.beef_cows = beef_cows if beef_cows is not None else []  # type: ignore[assignment]
+    hm.beef_replacement_heifers = (
+        beef_replacement_heifers if beef_replacement_heifers is not None else []  # type: ignore[assignment]
+    )
+    hm.beef_calves = beef_calves if beef_calves is not None else []  # type: ignore[assignment]
+    hm.beef_bulls = beef_bulls if beef_bulls is not None else []  # type: ignore[assignment]
     hm.herd_reproduction_statistics = HerdReproductionStatistics()
     hm.herd_statistics = MagicMock()
     hm.herd_statistics.animals_deaths_by_stage = {}
@@ -365,7 +367,8 @@ def test_initialize_beef_cow_calf_herd_non_dict_config_returns_empty(mocker: Moc
     hf.im = MagicMock()
     hf.time = _make_time_mock()
 
-    for bad_value in [None, [], "string", 42]:
+    bad_values: list[object] = [None, [], "string", 42]
+    for bad_value in bad_values:
         hf.im.get_data.return_value = bad_value
         result = hf._initialize_beef_cow_calf_herd()
         assert result == [], f"Expected [] for config value {bad_value!r}, got {result}"

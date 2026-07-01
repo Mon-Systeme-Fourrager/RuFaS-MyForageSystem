@@ -608,6 +608,17 @@ class AnimalConfig:
         cls.feedlot_ndf_minimum_pct = float(feedlot_cfg.get("ndf_minimum_pct", 10.0))
 
         # ── COW-CALF PARAMETERS ──────────────────────────────────────────────
+        cls._initialize_beef_cow_calf_config(animal_config_data)
+
+    @classmethod
+    def _initialize_beef_cow_calf_config(cls, animal_config_data: dict[str, Any]) -> None:
+        """Initialize cow-calf ClassVars from the ``beef_cow_calf`` config block.
+
+        Parameters
+        ----------
+        animal_config_data : dict[str, Any]
+            The parsed ``animal_config`` sub-dict from InputManager.
+        """
         beef_cfg_raw: Any = animal_config_data.get("beef_cow_calf", {})
         if beef_cfg_raw is None:
             beef_cfg: dict[str, Any] = {}
