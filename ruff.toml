@@ -1,0 +1,64 @@
+# Ruff configuration (MyForageSystem fork).
+#
+# Kept as a STANDALONE file (not [tool.ruff] in pyproject.toml) on purpose: this is a
+# fork that never merges upstream, so isolating fork-only config in its own file avoids
+# recurrent merge conflicts on the shared pyproject.toml when re-syncing with RuFaS/dev.
+#
+# Ruff COMPLEMENTS flake8 (it does not replace it): the selection below is deliberately
+# NARROW and contains none of flake8's own codes (no E/W/F/C901). It only adds rules that
+# flake8-without-plugins cannot check, matching the recurring RuFaS review conventions.
+#
+# This one config is consumed by TWO tools — no custom script anywhere:
+#   * pre-commit (`.pre-commit-config.yaml`) runs `ruff check` on STAGED files (= new code),
+#   * CodeRabbit runs Ruff on the PR diff.
+# Both are naturally scoped to changed lines, so accepted legacy patterns are never flagged.
+#
+# Human-readable explanation of every rule: docs/style_rules_explained.md.
+# Rules deliberately NOT enabled (would harass accepted legacy style): pep8-naming (N8xx —
+# scientific sigils TDN/NEm/DMI/pH/ADG/BW), PLR2004 (published SWAT/Parton/NRC coefficients),
+# PLR09xx (NRC calculators take ~20 params), ANN401/dict[str, Any] (Any at JSON boundaries),
+# UP004/UP008 (class(object)), TRY003 (long exception messages).
+
+line-length = 120
+target-version = "py312"
+
+[lint]
+select = [
+    # Typing modernization
+    "UP035", # deprecated typing import -> collections.abc
+    "UP037", # redundant quoted annotation under `from __future__ import annotations`
+    "FA102", # missing `from __future__ import annotations` for new-syntax annotations
+    # pytest hygiene
+    "PT001", # @pytest.fixture() parentheses style
+    "PT006", # parametrize names as a tuple
+    "PT011", # pytest.raises(...) too broad, needs match=
+    # Simplify / style
+    "SIM105", # use contextlib.suppress
+    "SIM910", # dict.get(key, None) -> dict.get(key)
+    "C408",   # dict()/list() call -> literal
+    "ISC001", # implicitly concatenated strings on one line
+    # Ambiguous unicode in strings / docstrings / comments
+    "RUF001",
+    "RUF002",
+    "RUF003",
+    "RUF012", # mutable ClassVar without typing.ClassVar
+    # Correctness the reviewers flag
+    "B904",   # raise ... from err inside except
+    "BLE001", # blind `except Exception`
+    "ARG001", # unused function argument
+    "ARG003", # unused class-method argument
+    "ARG004", # unused static-method argument
+    "PGH004", # blanket noqa without a code
+    "PLC0415", # import outside top level (only to break a real import cycle)
+    # Docstring PRESENCE on new public API (content quality is a review-time concern)
+    "D101",
+    "D102",
+    "D103",
+    "D106",
+    "D419",
+]
+
+[lint.pydocstyle]
+# numpy convention disables the mutually-contradictory D203/D212/D213 family, matching the
+# docstring layout already used throughout RUFAS/.
+convention = "numpy"

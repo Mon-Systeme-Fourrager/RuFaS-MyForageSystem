@@ -1,0 +1,52 @@
+# Pre-commit hooks that mirror the RuFaS CI
+# (.github/workflows/combined_format_lint_test_mypy.yml).
+#
+# These are `local` / `system` hooks on purpose: they invoke the SAME tools the CI
+# installs with `pip install -e ".[dev]"`, so tool versions AND their configs match the CI
+# exactly — Black reads pyproject [tool.black], flake8 reads .flake8, mypy reads
+# pyproject [tool.mypy], Ruff reads ruff.toml. Nothing is hard-coded here; the config
+# files are the single source of truth (same rule as the CI).
+#
+# Fork note: this file is fork-only and self-contained, so re-syncing dev-msf with
+# upstream RuFaS/dev never conflicts on it.
+#
+# One-time setup:
+#   pip install -e ".[dev]"
+#   pip install ruff pre-commit
+#   pre-commit install --hook-type pre-commit --hook-type pre-push
+#
+# Run manually on everything (optional): pre-commit run --all-files
+
+default_language_version:
+  python: python3.12
+
+repos:
+  - repo: local
+    hooks:
+      # ---- on `git commit` (fast, staged files = new code) ----
+      - id: black
+        name: black (pyproject [tool.black], line-length 120)
+        entry: black
+        language: system
+        types_or: [python, pyi]
+
+      - id: ruff
+        name: ruff check (ruff.toml — complements flake8, never overlaps it)
+        entry: ruff check --force-exclude
+        language: system
+        types_or: [python, pyi]
+
+      - id: flake8
+        name: flake8 (.flake8 — max-line 120, max-complexity 10, ignore E203/W503)
+        entry: flake8
+        language: system
+        types: [python]
+
+      # ---- on `git push` (slower, whole project — mirrors CI `python -m mypy .`) ----
+      - id: mypy
+        name: mypy --strict (whole project, pyproject [tool.mypy])
+        entry: python -m mypy .
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
