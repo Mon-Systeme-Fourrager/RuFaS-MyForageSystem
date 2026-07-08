@@ -150,6 +150,26 @@ Requires the `pyright`/`pyright-langserver` binary on your machine
 > feedback and may differ from mypy — don't treat a pyright warning as a CI
 > gate, and don't "fix" code solely to satisfy pyright if mypy is happy.
 
+## MSF style gate (new-code style enforcement)
+
+A **diff-aware** style gate under `tools/msf_style/` enforces the recurring RuFaS review
+conventions on **new/changed code only** (like the mypy count ratchet — legacy lines are
+never flagged). It complements, and does not replace, the existing Black/flake8/mypy CI.
+
+- **Run it**: `python -m tools.msf_style.lint_new_code --mypy` (auto-detects the
+  `dev-msf` base). Exit `0` clean, `1` violations, `2` no base ref.
+- **Layers**: Ruff (narrow `ruff_msf.toml`) + custom AST/text checks (`MSF0xx`) +
+  changelog format + opt-in per-file `mypy --strict`.
+- **Where it fires**: a PostToolUse hook (`.claude/hooks/msf-style-check.sh`) blocks
+  in-session edits that add violations; a fork-specific CI workflow
+  (`.github/workflows/msf_style_gate.yml`) gates PRs into `dev-msf`.
+- **Judgement rules** a linter can't decide (enum-over-string, docstring content, DRY,
+  scientific refs, test quality) live in the `/msf-style-review` skill.
+- **Maintenance**: `/msf-style-audit` re-mines PR feedback and proposes rule updates.
+- **Rule catalogue + provenance**: `tools/msf_style/STYLE_RULES.md`. Do **not** add rules
+  that condemn accepted legacy style (scientific sigils, published coefficients,
+  god-object calculators, `dict[str, Any]` boundaries) — see that file's "NOT enforced".
+
 ## graphify (dependency graph)
 
 This repo has a graphify knowledge graph of the model code (`RUFAS/` + `main.py`)

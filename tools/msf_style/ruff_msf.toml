@@ -1,0 +1,58 @@
+# MSF style gate — dedicated Ruff config.
+#
+# Applied DIFF-AWARE (added/changed lines and brand-new files only) by
+# tools/msf_style/lint_new_code.py, so it never flags accepted legacy patterns.
+#
+# The selection is intentionally NARROW: every rule here maps to a convention RuFaS
+# reviewers (human SME + CodeRabbit/Gemini) requested repeatedly on recent PRs. Rules
+# that would retroactively condemn accepted legacy style are deliberately NOT selected:
+#   - pep8-naming (N8xx)      -> scientific sigils (TDN, NEm, DMI, pH, ADG, BW ...)
+#   - PLR2004 magic values    -> published SWAT/Parton/NRC coefficients everywhere
+#   - too-many-* (PLR09xx)    -> NRC calculators legitimately take ~20 parameters
+#   - ANN401 / dict[str, Any] -> Any is accepted at JSON/config/pool boundaries
+#   - UP004/UP008, TRY003     -> class(object), long exception messages are tolerated
+# See STYLE_RULES.md for the rule -> review-comment provenance mapping.
+
+line-length = 120
+target-version = "py312"
+
+[lint]
+select = [
+    # Modernization the reviewers asked for
+    "UP035", # deprecated typing import (use collections.abc)
+    "UP037", # redundant quoted annotation under `from __future__ import annotations`
+    "FA102", # missing `from __future__ import annotations` for new-syntax annotations
+    # pytest hygiene
+    "PT001", # @pytest.fixture() parentheses style
+    "PT006", # parametrize names as a tuple
+    "PT011", # pytest.raises(...) too broad, needs match=
+    # Simplify / style
+    "SIM105", # use contextlib.suppress
+    "SIM910", # dict.get(key, None) -> dict.get(key)
+    "C408",   # dict()/list() call -> literal
+    "ISC001", # implicitly concatenated strings on one line
+    # Ambiguous unicode in strings / docstrings / comments (en-dash, ×, etc.)
+    "RUF001",
+    "RUF002",
+    "RUF003",
+    "RUF012", # mutable ClassVar without typing.ClassVar
+    # Correctness the reviewers flagged
+    "B904",   # raise ... from err inside except
+    "BLE001", # blind `except Exception`
+    "ARG001", # unused function argument
+    "ARG003", # unused class-method argument
+    "ARG004", # unused static-method argument
+    "PGH004", # blanket noqa without a code
+    "PLC0415", # import outside top level (allowed only to break real import cycles)
+    # Docstring PRESENCE on new public API (content quality is left to the review skill)
+    "D101", # missing docstring in public class
+    "D102", # missing docstring in public method
+    "D103", # missing docstring in public function
+    "D106", # missing docstring in public nested class
+    "D419", # empty docstring
+]
+
+[lint.pydocstyle]
+# numpy convention disables the mutually-contradictory D203/D212/D213 family, matching
+# the docstring layout already used throughout RUFAS/.
+convention = "numpy"

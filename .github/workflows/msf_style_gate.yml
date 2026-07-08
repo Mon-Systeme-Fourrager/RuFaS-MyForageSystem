@@ -1,0 +1,56 @@
+# MyForageSystem style gate (fork-specific).
+#
+# Kept in its own workflow file — separate from the upstream-shared
+# combined_format_lint_test_mypy.yml — so re-syncing dev-msf with RuFaS/dev never
+# conflicts here. Enforces the RuFaS review conventions on NEW/CHANGED code only
+# (mirrors the mypy error-count ratchet: legacy lines are never judged).
+#
+# See tools/msf_style/STYLE_RULES.md for the rule catalogue and its provenance.
+name: MSF Style Gate
+
+on:
+  push:
+    branches: [dev-msf]
+  pull_request:
+    branches: [dev-msf, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  msf_style_gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install gate dependencies (project + ruff)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          pip install "ruff>=0.15,<0.16"
+
+      - name: Determine base ref
+        id: base
+        run: |
+          BASE_REF="${{ github.base_ref }}"
+          if [ -z "$BASE_REF" ]; then
+            BASE_REF="dev-msf"
+          fi
+          git fetch --no-tags origin "$BASE_REF"
+          echo "ref=origin/$BASE_REF" >> "$GITHUB_OUTPUT"
+
+      - name: Run diff-aware style gate
+        run: |
+          python -m tools.msf_style.lint_new_code \
+            --base "${{ steps.base.outputs.ref }}" \
+            --mypy \
+            --format github
