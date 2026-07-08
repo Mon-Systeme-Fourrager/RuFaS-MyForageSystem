@@ -48,6 +48,18 @@ class FileScope:
 
 
 def _rev_parse_ok(ref: str) -> bool:
+    """Return whether ``ref`` resolves to an existing git object.
+
+    Parameters
+    ----------
+    ref : str
+        A git ref (branch, tag, or SHA) to verify.
+
+    Returns
+    -------
+    bool
+        ``True`` when ``git rev-parse --verify`` succeeds.
+    """
     result = subprocess.run(
         ["git", "rev-parse", "--verify", "--quiet", ref],
         capture_output=True,
@@ -81,6 +93,18 @@ def resolve_base(explicit: str | None = None) -> str | None:
 
 
 def _merge_base(base: str) -> str:
+    """Return the merge-base of ``base`` and ``HEAD`` (or ``base`` on failure).
+
+    Parameters
+    ----------
+    base : str
+        The base ref to fork from.
+
+    Returns
+    -------
+    str
+        The merge-base SHA, or ``base`` itself when git cannot compute one.
+    """
     result = subprocess.run(
         ["git", "merge-base", base, "HEAD"],
         capture_output=True,
@@ -92,6 +116,18 @@ def _merge_base(base: str) -> str:
 
 
 def _raw_diff(against: str) -> str:
+    """Return the zero-context unified diff of the working tree versus ``against``.
+
+    Parameters
+    ----------
+    against : str
+        The ref (typically a merge-base) to diff against, limited to ``*.py``/``*.md``.
+
+    Returns
+    -------
+    str
+        Raw ``git diff`` output.
+    """
     result = subprocess.run(
         ["git", "diff", "--unified=0", "--no-color", against, "--", "*.py", "*.md"],
         capture_output=True,
@@ -102,6 +138,13 @@ def _raw_diff(against: str) -> str:
 
 
 def _untracked_files() -> list[str]:
+    """Return not-yet-staged ``*.py``/``*.md`` files, honouring ``.gitignore``.
+
+    Returns
+    -------
+    list of str
+        Repository-relative paths of untracked, non-ignored files.
+    """
     result = subprocess.run(
         ["git", "ls-files", "--others", "--exclude-standard", "--", "*.py", "*.md"],
         capture_output=True,
@@ -112,6 +155,18 @@ def _untracked_files() -> list[str]:
 
 
 def _added_range(hunk_header: str) -> range:
+    """Return the added-line numbers encoded in a unified-diff hunk header.
+
+    Parameters
+    ----------
+    hunk_header : str
+        A ``@@ -a,b +c,d @@`` header line.
+
+    Returns
+    -------
+    range
+        The ``c .. c+d-1`` range of lines the hunk adds (``d`` defaults to 1).
+    """
     plus = hunk_header.split("+", 1)[1].split(" ", 1)[0]
     start_str, _, count_str = plus.partition(",")
     start = int(start_str)
@@ -120,12 +175,36 @@ def _added_range(hunk_header: str) -> range:
 
 
 def _strip_prefix(diff_path: str) -> str:
+    """Remove a leading ``a/`` or ``b/`` diff prefix from a path.
+
+    Parameters
+    ----------
+    diff_path : str
+        A path as it appears in a diff header.
+
+    Returns
+    -------
+    str
+        The path without its diff prefix.
+    """
     if diff_path.startswith(("a/", "b/")):
         return diff_path[2:]
     return diff_path
 
 
 def _parse_unified_diff(raw: str) -> dict[str, FileScope]:
+    """Parse unified-diff text into per-file added-line scopes.
+
+    Parameters
+    ----------
+    raw : str
+        Zero-context unified-diff output.
+
+    Returns
+    -------
+    dict of str to FileScope
+        One scope per changed file; deleted files (``+++ /dev/null``) are omitted.
+    """
     scopes: dict[str, FileScope] = {}
     current: FileScope | None = None
     minus_is_devnull = False
@@ -140,6 +219,22 @@ def _parse_unified_diff(raw: str) -> dict[str, FileScope]:
 
 
 def _open_file_scope(plus_path: str, is_new: bool, scopes: dict[str, FileScope]) -> FileScope | None:
+    """Register and return a fresh :class:`FileScope` for a diff's ``+++`` path.
+
+    Parameters
+    ----------
+    plus_path : str
+        The ``+++`` path (with its ``b/`` prefix, or ``/dev/null`` for a deletion).
+    is_new : bool
+        Whether the preceding ``---`` line was ``/dev/null`` (an added file).
+    scopes : dict of str to FileScope
+        Accumulator the new scope is inserted into.
+
+    Returns
+    -------
+    FileScope or None
+        The registered scope, or ``None`` for a deleted file.
+    """
     if plus_path == "/dev/null":
         return None
     path = _strip_prefix(plus_path)

@@ -1,4 +1,4 @@
-"""Render style-gate findings in human, JSON, GitHub-annotation and hook formats."""
+"""Render style-gate findings in human, JSON, and GitHub-annotation formats."""
 
 from __future__ import annotations
 
@@ -99,7 +99,8 @@ def render(violations: list[Violation], fmt: str) -> str:
     violations : list of Violation
         Findings to render.
     fmt : str
-        One of ``"human"``, ``"github"``, ``"json"``, ``"hook"``.
+        One of ``"human"``, ``"github"``, ``"json"``. Any other value falls back to
+        the human renderer.
 
     Returns
     -------

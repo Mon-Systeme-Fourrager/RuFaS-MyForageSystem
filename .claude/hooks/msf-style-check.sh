@@ -41,5 +41,7 @@ if [ "$code" -eq 1 ]; then
   if [ "${MSF_STYLE_HOOK_BLOCKING:-1}" = "1" ]; then
     exit 2
   fi
+elif [ "$code" -ne 0 ]; then
+  printf 'MSF style gate: unexpected exit %s (gate misconfigured or errored)\n%s\n' "$code" "$out" >&2
 fi
 exit 0

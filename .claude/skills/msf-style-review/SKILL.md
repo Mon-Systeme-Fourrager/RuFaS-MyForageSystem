@@ -25,7 +25,9 @@ one of the rules below.
    ```
 
    Do not re-report anything the gate already flagged. Your job is only what it cannot
-   see. If the gate exits non-zero, tell the author to clear it first.
+   see. If the gate exits `1`, tell the author to clear the findings first. If it exits
+   `2`, no base ref could be resolved — tell them to fix the base-ref setup or pass
+   `--base` explicitly before you review.
 
 2. **Get the diff** to review:
 

@@ -36,8 +36,15 @@ def _read_text(path: str) -> str | None:
 def _select_scopes(scopes: dict[str, FileScope], only: list[str] | None) -> dict[str, FileScope]:
     if not only:
         return scopes
-    wanted = {p.lstrip("./").replace("\\", "/") for p in only}
+    wanted = {_normalize_only(p) for p in only}
     return {path: scope for path, scope in scopes.items() if path in wanted}
+
+
+def _normalize_only(path: str) -> str:
+    normalized = path.replace("\\", "/")
+    if normalized.startswith("./"):
+        normalized = normalized[2:]
+    return normalized
 
 
 def _collect_ruff(python_paths: list[str]) -> list[Violation]:

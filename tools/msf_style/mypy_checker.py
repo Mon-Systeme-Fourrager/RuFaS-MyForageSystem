@@ -25,13 +25,26 @@ def mypy_available() -> bool:
         ``True`` when ``mypy --version`` succeeds.
     """
     try:
-        subprocess.run(["mypy", "--version"], capture_output=True, text=True, check=True)
-    except (OSError, subprocess.CalledProcessError):
+        subprocess.run(["mypy", "--version"], capture_output=True, text=True, check=True, timeout=10)
+    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return False
     return True
 
 
 def _eligible(paths: list[str]) -> list[str]:
+    """Restrict changed files to the project's mypy scope.
+
+    Parameters
+    ----------
+    paths : list of str
+        Candidate changed files.
+
+    Returns
+    -------
+    list of str
+        Files that are ``main.py`` or live under ``RUFAS/``/``tests/`` (backslashes
+        normalized), mirroring the project's mypy configuration.
+    """
     normalized = ((p, p.replace("\\", "/")) for p in paths)
     return [p for p, norm in normalized if norm.endswith(".py") and (norm == "main.py" or norm.startswith(MYPY_ROOTS))]
 
@@ -53,16 +66,32 @@ def run_mypy(paths: list[str]) -> list[Violation]:
     targets = _eligible(paths)
     if not targets:
         return []
-    result = subprocess.run(
-        ["mypy", "--follow-imports=silent", *targets],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    try:
+        result = subprocess.run(
+            ["mypy", "--follow-imports=silent", *targets],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=300,
+        )
+    except subprocess.TimeoutExpired:
+        return []
     return _parse_mypy_output(result.stdout)
 
 
 def _parse_mypy_output(raw: str) -> list[Violation]:
+    """Extract per-line error findings from mypy's stdout.
+
+    Parameters
+    ----------
+    raw : str
+        Raw mypy stdout.
+
+    Returns
+    -------
+    list of Violation
+        One finding per ``error:`` line; notes and summaries are ignored.
+    """
     findings: list[Violation] = []
     for line in raw.splitlines():
         match = MYPY_LINE.match(line)

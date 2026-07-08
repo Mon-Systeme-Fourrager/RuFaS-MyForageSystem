@@ -47,6 +47,22 @@ def check_changelog(path: str, text: str, scope: FileScope) -> list[Violation]:
 
 
 def _line_level_checks(path: str, lines: list[str], scope: FileScope) -> Iterator[Violation]:
+    """Yield per-line changelog findings (TBD placeholder, contradictory tags).
+
+    Parameters
+    ----------
+    path : str
+        Changelog path (stamped onto findings).
+    lines : list of str
+        The changelog's lines.
+    scope : FileScope
+        New-code perimeter; only added/changed lines are judged.
+
+    Yields
+    ------
+    Violation
+        ``MSF050`` for a TBD placeholder, ``MSF051`` for both output tags on one line.
+    """
     for index, line in enumerate(lines, start=1):
         if not scope.in_scope(index):
             continue
@@ -69,6 +85,23 @@ def _line_level_checks(path: str, lines: list[str], scope: FileScope) -> Iterato
 
 
 def _duplicate_pr_numbers(path: str, lines: list[str], scope: FileScope) -> Iterator[Violation]:
+    """Yield ``MSF052`` when a PR number appears in more than one changelog bullet.
+
+    Parameters
+    ----------
+    path : str
+        Changelog path (stamped onto findings).
+    lines : list of str
+        The changelog's lines.
+    scope : FileScope
+        New-code perimeter; a duplicate is reported only when its second occurrence
+        falls on an added/changed line.
+
+    Yields
+    ------
+    Violation
+        ``MSF052`` for each in-scope duplicate PR bullet.
+    """
     seen: dict[str, int] = {}
     for index, line in enumerate(lines, start=1):
         match = PR_BULLET.match(line)

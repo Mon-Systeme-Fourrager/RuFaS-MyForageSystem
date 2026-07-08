@@ -77,3 +77,26 @@ def test_render_json_roundtrips_fields() -> None:
     payload = reporting.render_json([violation])
     assert '"code": "MSF011"' in payload
     assert '"line": 7' in payload
+
+
+def test_render_dispatches_by_format() -> None:
+    """render() selects the renderer named by fmt and falls back to human."""
+    violation = Violation("RUFAS/x.py", 3, "MSF001", "bare coefficient", "custom")
+    assert reporting.render([violation], "github").startswith("::error")
+    assert reporting.render([violation], "json").lstrip().startswith("[")
+    assert "MSF001" in reporting.render([violation], "human")
+    assert "MSF001" in reporting.render([violation], "unknown-format")
+
+
+def test_render_human_groups_by_path() -> None:
+    """render_human prints each path once and lists its findings underneath."""
+    violations = [
+        Violation("RUFAS/a.py", 2, "MSF001", "first", "custom"),
+        Violation("RUFAS/a.py", 9, "MSF010", "second", "custom"),
+        Violation("RUFAS/b.py", 1, "MSF002", "third", "custom"),
+    ]
+    report = reporting.render_human(violations)
+    assert report.count("RUFAS/a.py") == 1
+    assert report.count("RUFAS/b.py") == 1
+    assert "3 new-code violation(s)" in report
+    assert "MSF010" in report

@@ -84,19 +84,34 @@ def check_python_file(path: str, text: str) -> list[Violation]:
 
 
 def _is_test_path(path: str) -> bool:
+    """Return whether ``path`` lives under a ``tests`` tree."""
     return path.startswith("tests/") or "/tests/" in path
 
 
 def _in_dirs(path: str, roots: Iterable[str]) -> bool:
+    """Return whether ``path`` equals or lives under any of ``roots``."""
     return any(path == root or path.startswith(f"{root}/") for root in roots)
 
 
 def _is_constants_module(path: str) -> bool:
+    """Return whether ``path`` is a constants/enums module (exempt from magic numbers)."""
     name = path.rsplit("/", 1)[-1]
     return "constant" in name or name.endswith("_enums.py") or name == "enums.py"
 
 
 def _parent_map(tree: ast.AST) -> dict[ast.AST, ast.AST]:
+    """Return a child-to-parent mapping for every node in ``tree``.
+
+    Parameters
+    ----------
+    tree : ast.AST
+        The parsed module.
+
+    Returns
+    -------
+    dict of ast.AST to ast.AST
+        Maps each child node to its immediate parent (roots are absent).
+    """
     parents: dict[ast.AST, ast.AST] = {}
     for parent in ast.walk(tree):
         for child in ast.iter_child_nodes(parent):
@@ -105,6 +120,18 @@ def _parent_map(tree: ast.AST) -> dict[ast.AST, ast.AST]:
 
 
 def _comment_tokens(text: str) -> list[tuple[int, str]]:
+    """Return ``(line, text)`` for every comment token, tolerating tokenizer errors.
+
+    Parameters
+    ----------
+    text : str
+        Full source text.
+
+    Returns
+    -------
+    list of (int, str)
+        One entry per ``# ...`` comment; empty when the source cannot be tokenized.
+    """
     comments: list[tuple[int, str]] = []
     try:
         for token in tokenize.generate_tokens(io.StringIO(text).readline):
@@ -116,6 +143,20 @@ def _comment_tokens(text: str) -> list[tuple[int, str]]:
 
 
 def _text_checks(path: str, text: str) -> Iterator[Violation]:
+    """Yield comment-based findings (MSF040/041/042) for one file.
+
+    Parameters
+    ----------
+    path : str
+        Repository-relative path (stamped onto findings).
+    text : str
+        Full source text.
+
+    Yields
+    ------
+    Violation
+        A finding per offending comment.
+    """
     for lineno, comment in _comment_tokens(text):
         if NOQA_C901.search(comment):
             yield Violation(
@@ -139,6 +180,7 @@ def _text_checks(path: str, text: str) -> Iterator[Violation]:
 
 
 def _scaffolding_violation(path: str, lineno: int) -> Violation:
+    """Build the shared ``MSF041`` scaffolding-reference finding."""
     return Violation(
         path,
         lineno,
@@ -149,6 +191,20 @@ def _scaffolding_violation(path: str, lineno: int) -> Violation:
 
 
 def _scaffolding_in_docstrings(path: str, tree: ast.AST) -> Iterator[Violation]:
+    """Yield ``MSF041`` for a ``Lesson N``/``Task N.N`` reference in any docstring.
+
+    Parameters
+    ----------
+    path : str
+        Repository-relative path (stamped onto findings).
+    tree : ast.AST
+        The parsed module.
+
+    Yields
+    ------
+    Violation
+        One finding per offending module/class/function docstring.
+    """
     for node in ast.walk(tree):
         if not isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
             continue
@@ -158,6 +214,7 @@ def _scaffolding_in_docstrings(path: str, tree: ast.AST) -> Iterator[Violation]:
 
 
 def _docstring_lineno(node: ast.Module | ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef) -> int:
+    """Return the 1-indexed line of ``node``'s docstring (or 1 when absent)."""
     first = node.body[0] if node.body else None
     if isinstance(first, ast.Expr):
         return first.value.lineno
@@ -165,6 +222,7 @@ def _docstring_lineno(node: ast.Module | ast.ClassDef | ast.FunctionDef | ast.As
 
 
 def _ancestors(node: ast.AST, parents: dict[ast.AST, ast.AST]) -> Iterator[ast.AST]:
+    """Yield ``node``'s ancestors from nearest to furthest using ``parents``."""
     current = parents.get(node)
     while current is not None:
         yield current
@@ -172,6 +230,7 @@ def _ancestors(node: ast.AST, parents: dict[ast.AST, ast.AST]) -> Iterator[ast.A
 
 
 def _is_named_constant_target(node: ast.AST) -> bool:
+    """Return whether ``node`` is an assignment target named in UPPER_SNAKE_CASE."""
     if isinstance(node, ast.Name):
         return bool(UPPER_SNAKE.match(node.id))
     if isinstance(node, ast.Attribute):
@@ -180,6 +239,7 @@ def _is_named_constant_target(node: ast.AST) -> bool:
 
 
 def _declares_constant(assign: ast.AST) -> bool:
+    """Return whether ``assign`` binds a value to an UPPER_SNAKE constant name."""
     if isinstance(assign, ast.Assign):
         return any(_is_named_constant_target(target) for target in assign.targets)
     if isinstance(assign, ast.AnnAssign):
@@ -188,6 +248,21 @@ def _declares_constant(assign: ast.AST) -> bool:
 
 
 def _float_is_exempt(node: ast.AST, parents: dict[ast.AST, ast.AST]) -> bool:
+    """Return whether a float literal is a declaration/default rather than magic.
+
+    Parameters
+    ----------
+    node : ast.AST
+        The float ``Constant`` node.
+    parents : dict of ast.AST to ast.AST
+        Child-to-parent map from :func:`_parent_map`.
+
+    Returns
+    -------
+    bool
+        ``True`` when the literal sits in a function-signature default or a named
+        constant assignment.
+    """
     for ancestor in _ancestors(node, parents):
         if isinstance(ancestor, ast.arguments):
             return True
@@ -197,6 +272,22 @@ def _float_is_exempt(node: ast.AST, parents: dict[ast.AST, ast.AST]) -> bool:
 
 
 def _magic_numbers(path: str, tree: ast.AST, parents: dict[ast.AST, ast.AST]) -> Iterator[Violation]:
+    """Yield ``MSF001`` for bare float coefficients in a domain module.
+
+    Parameters
+    ----------
+    path : str
+        Repository-relative path (only biophysical/EEE non-constants files apply).
+    tree : ast.AST
+        The parsed module.
+    parents : dict of ast.AST to ast.AST
+        Child-to-parent map used to exempt declarations/defaults.
+
+    Yields
+    ------
+    Violation
+        One finding per non-exempt float literal other than 0.0/1.0.
+    """
     if not _in_dirs(path, MAGIC_NUMBER_DIRS) or _is_constants_module(path):
         return
     for node in ast.walk(tree):
@@ -215,10 +306,25 @@ def _magic_numbers(path: str, tree: ast.AST, parents: dict[ast.AST, ast.AST]) ->
 
 
 def _is_get_call(node: ast.AST) -> bool:
+    """Return whether ``node`` is a ``<expr>.get(...)`` call."""
     return isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "get"
 
 
 def _config_none_safety(path: str, tree: ast.AST) -> Iterator[Violation]:
+    """Yield the None-safety config findings (MSF002/010/011) for a RUFAS module.
+
+    Parameters
+    ----------
+    path : str
+        Repository-relative path (only files under ``RUFAS`` apply).
+    tree : ast.AST
+        The parsed module.
+
+    Yields
+    ------
+    Violation
+        Findings from the three sub-checks.
+    """
     if not _in_dirs(path, [CONFIG_CHECK_ROOT]):
         return
     for node in ast.walk(tree):
@@ -228,12 +334,14 @@ def _config_none_safety(path: str, tree: ast.AST) -> Iterator[Violation]:
 
 
 def _unwrap_unary(node: ast.expr) -> ast.expr:
+    """Return the operand of a unary ``+``/``-`` node, else ``node`` unchanged."""
     if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.UAdd, ast.USub)):
         return node.operand
     return node
 
 
 def _numeric_get_default(path: str, node: ast.AST) -> Iterator[Violation]:
+    """Yield ``MSF002`` when ``node`` is a ``.get(key, <number>)`` in a domain module."""
     if not (_is_get_call(node) and isinstance(node, ast.Call) and len(node.args) == 2):
         return
     default = _unwrap_unary(node.args[1])
@@ -253,6 +361,7 @@ def _numeric_get_default(path: str, node: ast.AST) -> Iterator[Violation]:
 
 
 def _get_or_default(path: str, node: ast.AST) -> Iterator[Violation]:
+    """Yield ``MSF010`` when a ``.get()`` precedes the last term of an ``or`` chain."""
     if not (isinstance(node, ast.BoolOp) and isinstance(node.op, ast.Or) and node.values):
         return
     if any(_is_get_call(value) for value in node.values[:-1]):
@@ -266,6 +375,7 @@ def _get_or_default(path: str, node: ast.AST) -> Iterator[Violation]:
 
 
 def _coerce_possibly_none(path: str, node: ast.AST) -> Iterator[Violation]:
+    """Yield ``MSF011`` for ``int()``/``float()`` wrapping a possibly-None ``.get()``."""
     if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in {"int", "float"}):
         return
     if not node.args:
@@ -283,6 +393,7 @@ def _coerce_possibly_none(path: str, node: ast.AST) -> Iterator[Violation]:
 
 
 def _get_may_return_none(get_call: ast.Call) -> bool:
+    """Return whether a ``.get()`` call can yield ``None`` (no/None default)."""
     if len(get_call.args) < 2:
         return True
     default = get_call.args[1]
@@ -290,6 +401,7 @@ def _get_may_return_none(get_call: ast.Call) -> bool:
 
 
 def _classvar_containers(class_node: ast.ClassDef) -> set[str]:
+    """Return the names of class-level dict/list/set attributes in ``class_node``."""
     names: set[str] = set()
     for stmt in class_node.body:
         value = _assigned_value(stmt)
@@ -299,6 +411,7 @@ def _classvar_containers(class_node: ast.ClassDef) -> set[str]:
 
 
 def _assigned_value(stmt: ast.stmt) -> ast.expr | None:
+    """Return the right-hand value of an assignment statement, else ``None``."""
     if isinstance(stmt, ast.Assign):
         return stmt.value
     if isinstance(stmt, ast.AnnAssign):
@@ -307,6 +420,7 @@ def _assigned_value(stmt: ast.stmt) -> ast.expr | None:
 
 
 def _assignment_names(stmt: ast.stmt) -> Iterator[str]:
+    """Yield the simple ``Name`` targets bound by an assignment statement."""
     if isinstance(stmt, ast.Assign):
         for target in stmt.targets:
             if isinstance(target, ast.Name):
@@ -316,6 +430,7 @@ def _assignment_names(stmt: ast.stmt) -> Iterator[str]:
 
 
 def _returns_bare_container(func: ast.AST, names: set[str]) -> Iterator[int]:
+    """Yield the line of each ``return cls/self.<name>`` where ``<name>`` is in ``names``."""
     for node in ast.walk(func):
         if not (isinstance(node, ast.Return) and isinstance(node.value, ast.Attribute)):
             continue
@@ -325,6 +440,20 @@ def _returns_bare_container(func: ast.AST, names: set[str]) -> Iterator[int]:
 
 
 def _mutable_classvar_returns(path: str, tree: ast.AST) -> Iterator[Violation]:
+    """Yield ``MSF030`` for methods returning a class-level dict/list/set unguarded.
+
+    Parameters
+    ----------
+    path : str
+        Repository-relative path (only files under ``RUFAS`` apply).
+    tree : ast.AST
+        The parsed module.
+
+    Yields
+    ------
+    Violation
+        One finding per ``return cls/self.<container>`` without a copy.
+    """
     if not _in_dirs(path, [CONFIG_CHECK_ROOT]):
         return
     for node in ast.walk(tree):
@@ -347,6 +476,7 @@ def _mutable_classvar_returns(path: str, tree: ast.AST) -> Iterator[Violation]:
 
 
 def _is_mock_call(value: ast.expr | None) -> bool:
+    """Return whether ``value`` is a ``MagicMock``/``Mock``/``AsyncMock`` construction."""
     if not isinstance(value, ast.Call):
         return False
     func = value.func
@@ -358,11 +488,26 @@ def _is_mock_call(value: ast.expr | None) -> bool:
 
 
 def _is_class_like_owner(target: ast.Attribute) -> bool:
+    """Return whether ``target``'s owner is a CapWords name (a class, heuristically)."""
     owner = target.value
     return isinstance(owner, ast.Name) and bool(re.match(r"^[A-Z][A-Za-z0-9_]*$", owner.id))
 
 
 def _test_class_attr_assignment(path: str, tree: ast.AST) -> Iterator[Violation]:
+    """Yield ``MSF020`` for ``SomeClass.member = MagicMock()`` assignments in tests.
+
+    Parameters
+    ----------
+    path : str
+        Repository-relative path (stamped onto findings).
+    tree : ast.AST
+        The parsed test module.
+
+    Yields
+    ------
+    Violation
+        One finding per direct class-attribute mock assignment.
+    """
     for node in ast.walk(tree):
         if not (isinstance(node, ast.Assign) and len(node.targets) == 1):
             continue

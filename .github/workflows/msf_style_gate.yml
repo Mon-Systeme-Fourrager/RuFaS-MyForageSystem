@@ -19,6 +19,11 @@ on:
 permissions:
   contents: read
 
+# Cancel superseded runs when a PR is updated rapidly.
+concurrency:
+  group: msf-style-gate-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   msf_style_gate:
     runs-on: ubuntu-latest

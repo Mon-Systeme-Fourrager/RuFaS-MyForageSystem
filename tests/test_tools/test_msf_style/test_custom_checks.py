@@ -164,7 +164,9 @@ def test_backslash_path_is_normalized() -> None:
     assert "MSF001" in _codes("RUFAS\\biophysical\\animal\\growth.py", source)
 
 
-def test_syntax_error_returns_no_ast_findings() -> None:
-    """Invalid Python still runs text checks and does not raise (invalid input)."""
+def test_syntax_error_still_runs_text_checks() -> None:
+    """Invalid Python skips AST checks but still runs comment checks (invalid input)."""
     source = "def broken(:\n    # noqa: C901\n"
-    assert custom_checks.check_python_file("RUFAS/util.py", source) is not None
+    codes = _codes("RUFAS/util.py", source)
+    assert "MSF040" in codes
+    assert "MSF001" not in codes

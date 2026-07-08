@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from tools.msf_style import diff_scope
 from tools.msf_style.diff_scope import FileScope
 
@@ -65,3 +67,43 @@ def test_file_scope_in_scope_for_edited_file() -> None:
     scope = FileScope(path="a.py", is_new=False, added_lines={5, 6})
     assert scope.in_scope(5) is True
     assert scope.in_scope(7) is False
+
+
+def test_resolve_base_prefers_first_existing_ref(monkeypatch: pytest.MonkeyPatch) -> None:
+    """resolve_base returns the first candidate that git can verify."""
+    monkeypatch.setattr(diff_scope, "_rev_parse_ok", lambda ref: ref == "dev-msf")
+    assert diff_scope.resolve_base() == "dev-msf"
+
+
+def test_resolve_base_honours_explicit_ref(monkeypatch: pytest.MonkeyPatch) -> None:
+    """An explicit, existing ref wins over the default candidates."""
+    monkeypatch.setattr(diff_scope, "_rev_parse_ok", lambda ref: True)
+    assert diff_scope.resolve_base("origin/feature") == "origin/feature"
+
+
+def test_resolve_base_returns_none_when_nothing_exists(monkeypatch: pytest.MonkeyPatch) -> None:
+    """resolve_base returns None when no candidate resolves (invalid environment)."""
+    monkeypatch.setattr(diff_scope, "_rev_parse_ok", lambda ref: False)
+    assert diff_scope.resolve_base() is None
+
+
+def test_compute_scopes_wires_helpers_and_merges_untracked(monkeypatch: pytest.MonkeyPatch) -> None:
+    """compute_scopes parses the diff and adds untracked files as new scopes."""
+    diff = "diff --git a/RUFAS/x.py b/RUFAS/x.py\n--- a/RUFAS/x.py\n+++ b/RUFAS/x.py\n@@ -1 +1,2 @@\n+added\n"
+    monkeypatch.setattr(diff_scope, "_merge_base", lambda base: "MERGEBASE")
+    monkeypatch.setattr(diff_scope, "_raw_diff", lambda against: diff if against == "MERGEBASE" else "")
+    monkeypatch.setattr(diff_scope, "_untracked_files", lambda: ["RUFAS/new.py"])
+    scopes = diff_scope.compute_scopes("dev-msf")
+    assert scopes["RUFAS/x.py"].added_lines == {1, 2}
+    assert scopes["RUFAS/new.py"].is_new is True
+
+
+def test_compute_scopes_untracked_does_not_override_tracked(monkeypatch: pytest.MonkeyPatch) -> None:
+    """An untracked entry never overrides a file already parsed from the diff (edge case)."""
+    diff = "diff --git a/RUFAS/x.py b/RUFAS/x.py\n--- a/RUFAS/x.py\n+++ b/RUFAS/x.py\n@@ -1 +1,2 @@\n+added\n"
+    monkeypatch.setattr(diff_scope, "_merge_base", lambda base: "MB")
+    monkeypatch.setattr(diff_scope, "_raw_diff", lambda against: diff)
+    monkeypatch.setattr(diff_scope, "_untracked_files", lambda: ["RUFAS/x.py"])
+    scopes = diff_scope.compute_scopes("dev-msf")
+    assert scopes["RUFAS/x.py"].is_new is False
+    assert scopes["RUFAS/x.py"].added_lines == {1, 2}

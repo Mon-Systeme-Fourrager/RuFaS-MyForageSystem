@@ -24,8 +24,8 @@ def ruff_available() -> bool:
         ``True`` when ``ruff --version`` succeeds.
     """
     try:
-        subprocess.run(["ruff", "--version"], capture_output=True, text=True, check=True)
-    except (OSError, subprocess.CalledProcessError):
+        subprocess.run(["ruff", "--version"], capture_output=True, text=True, check=True, timeout=10)
+    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return False
     return True
 
@@ -46,16 +46,41 @@ def run_ruff(paths: list[str]) -> list[Violation]:
     python_paths = [p for p in paths if p.endswith(".py")]
     if not python_paths:
         return []
-    result = subprocess.run(
-        ["ruff", "check", "--config", str(CONFIG_PATH), "--output-format", "json", "--force-exclude", *python_paths],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    try:
+        result = subprocess.run(
+            [
+                "ruff",
+                "check",
+                "--config",
+                str(CONFIG_PATH),
+                "--output-format",
+                "json",
+                "--force-exclude",
+                *python_paths,
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=120,
+        )
+    except subprocess.TimeoutExpired:
+        return []
     return _parse_ruff_json(result.stdout)
 
 
 def _parse_ruff_json(raw: str) -> list[Violation]:
+    """Convert Ruff's JSON diagnostics into :class:`Violation` objects.
+
+    Parameters
+    ----------
+    raw : str
+        Raw stdout from ``ruff check --output-format json``.
+
+    Returns
+    -------
+    list of Violation
+        One finding per well-formed diagnostic; empty on blank or malformed output.
+    """
     if not raw.strip():
         return []
     try:
@@ -73,6 +98,18 @@ def _parse_ruff_json(raw: str) -> list[Violation]:
 
 
 def _to_violation(item: object) -> Violation | None:
+    """Map one Ruff diagnostic dict to a :class:`Violation`.
+
+    Parameters
+    ----------
+    item : object
+        A single decoded diagnostic (expected to be a dict with a ``location``).
+
+    Returns
+    -------
+    Violation or None
+        The finding, or ``None`` when the item lacks a usable location.
+    """
     if not isinstance(item, dict):
         return None
     location = item.get("location")
@@ -86,6 +123,19 @@ def _to_violation(item: object) -> Violation | None:
 
 
 def _relativize(filename: str) -> str:
+    """Return ``filename`` relative to the working directory, using forward slashes.
+
+    Parameters
+    ----------
+    filename : str
+        Absolute or relative path reported by Ruff.
+
+    Returns
+    -------
+    str
+        A repository-relative, forward-slash path (unchanged when it is outside the
+        working directory).
+    """
     try:
         relative = str(Path(filename).resolve().relative_to(Path.cwd()))
     except ValueError:
