@@ -62,7 +62,7 @@ reviews:
     - path: "changelog.md"
       instructions: >-
         Every PR must add exactly one bullet: `- [NN](PR-url) - [Major/minor change]
-        [Area] [In/NoInputChange] [In/NoOutputChange] description`. Flag a `TBD` placeholder,
+        [Area] [InputChange or NoInputChange] [OutputChange or NoOutputChange] description`. Flag a `TBD` placeholder,
         an entry tagged both [OutputChange] and [NoOutputChange], or a duplicate bullet for
         the same PR number.
     - path: "!(RUFAS|tests)/**"
