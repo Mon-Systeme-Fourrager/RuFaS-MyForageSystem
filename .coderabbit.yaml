@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 # CodeRabbit configuration — MyForageSystem fork of RuFaS.
 # Schema: https://coderabbit.ai/docs/reference/configuration
 #
@@ -5,15 +6,16 @@
 # they stop being caught by hand on every PR. The mechanical rules are handled by the
 # tools CodeRabbit already runs (Ruff via ruff.toml, plus flake8); the conventions no
 # linter can express are stated as path_instructions below.
+#
+# (tone_instructions must be <= 250 chars; the fuller fork guidance lives in
+# path_instructions and .gemini/styleguide.md / docs/style_rules_explained.md.)
 
 language: en-US
 
 tone_instructions: >-
-  Be concise (path:line — issue → fix). This is the MyForageSystem FORK of RuFaS; it is
-  never merged back into the upstream repository, so also flag changes that would cause
-  recurrent merge conflicts when re-syncing with RuFaS/dev (e.g. reformatting or editing
-  large upstream-shared files unnecessarily). Judge only added/changed lines; never ask to
-  "fix" untouched legacy code.
+  Concise: path:line — issue → fix. RuFaS MyForageSystem FORK, never merged upstream — flag
+  churn causing recurrent merge conflicts on upstream sync. Judge only added/changed lines;
+  never ask to fix untouched legacy.
 
 reviews:
   profile: assertive
