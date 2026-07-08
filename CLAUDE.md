@@ -26,7 +26,22 @@ files there — keep this root file repository-wide, push specifics down:
 - `tests/CLAUDE.md` — pytest conventions
 
 Cross-cutting path-scoped rules live in `.claude/rules/` and load when a
-matching file enters context (e.g. `protected-inputs.md`).
+matching file enters context (e.g. `protected-inputs.md`, `style.md`).
+
+## Fork discipline & config-driven enforcement
+
+This is a **fork** never merged upstream (`dev` is synced from `RuminantFarmSystems/RuFaS`;
+`dev-msf` is rebased on it — see `README.md`). **Minimize divergence**: isolate fork-only
+changes in their own files and never reformat/churn upstream code you are not functionally
+changing, or it becomes a merge conflict on the next rebase. Judge only added/changed lines.
+
+Style conventions are enforced by **configuration, not custom scripts**: `ruff.toml`
+(complements flake8) + `.flake8` + `pyproject` mypy via `.pre-commit-config.yaml` and CI;
+`.coderabbit.yaml` + `.gemini/styleguide.md` for the conventions no linter expresses; and
+`.claude/rules/style.md` at write time. **Read tool settings from their config files** — do
+not hard-code them. Exact CI commands: `black .`, `flake8 .`, `ruff check .`,
+`python -m mypy .`, `coverage run --rcfile=.github/.coveragerc`. Onboarding:
+`docs/onboarding_dev.md`. Every rule with examples: `docs/style_rules_explained.md`.
 
 ## Tooling
 
