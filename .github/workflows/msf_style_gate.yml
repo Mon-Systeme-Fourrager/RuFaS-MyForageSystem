@@ -9,8 +9,9 @@
 name: MSF Style Gate
 
 on:
-  push:
-    branches: [dev-msf]
+  # PR-only: the gate is diff-aware against the PR base. A `push` to dev-msf has no
+  # meaningful base (merge-base(origin/dev-msf, HEAD) == HEAD -> empty diff), so gating
+  # pushes would be a silent no-op. Manual runs compare a feature branch to dev-msf.
   pull_request:
     branches: [dev-msf, dev]
   workflow_dispatch:
