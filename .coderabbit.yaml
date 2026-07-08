@@ -1,0 +1,70 @@
+# CodeRabbit configuration — MyForageSystem fork of RuFaS.
+# Schema: https://coderabbit.ai/docs/reference/configuration
+#
+# Goal: make CodeRabbit enforce the recurring RuFaS review conventions automatically, so
+# they stop being caught by hand on every PR. The mechanical rules are handled by the
+# tools CodeRabbit already runs (Ruff via ruff.toml, plus flake8); the conventions no
+# linter can express are stated as path_instructions below.
+
+language: en-US
+
+tone_instructions: >-
+  Be concise (path:line — issue → fix). This is the MyForageSystem FORK of RuFaS; it is
+  never merged back into the upstream repository, so also flag changes that would cause
+  recurrent merge conflicts when re-syncing with RuFaS/dev (e.g. reformatting or editing
+  large upstream-shared files unnecessarily). Judge only added/changed lines; never ask to
+  "fix" untouched legacy code.
+
+reviews:
+  profile: assertive
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  auto_review:
+    enabled: true
+    drafts: false
+    # This fork integrates on dev-msf (its "dev"); review PRs targeting either.
+    base_branches:
+      - dev-msf
+      - dev
+  tools:
+    # Ruff runs with the repo's ruff.toml (complements flake8). Keep it on.
+    ruff:
+      enabled: true
+  path_instructions:
+    - path: "RUFAS/**/*.py"
+      instructions: >-
+        Enforce RuFaS new-code conventions (full reference: docs/style_rules_explained.md),
+        on added/changed lines only. Flag: (1) hard-coded scientific coefficients / magic
+        numbers in RUFAS/biophysical/** or RUFAS/EEE/** — they must live in a *_constants.py
+        with an NRC/published reference; (2) None-unsafe config parsing — require an explicit
+        `is None` check, never `x.get(key) or default` (it drops a real 0/0.0) and never
+        `int(x.get(key))`/`float(...)` without a None guard; (3) raw string literals used as
+        domain values — use the existing Enum instead (Enum == "str" is always False), in
+        production AND tests; (4) methods returning a class-level dict/list/set without
+        .copy()/deepcopy; (5) new `# noqa: C901`, bare `# type: ignore` (pin a code), and
+        `Lesson N`/`Task N.N` scaffolding refs; (6) a missing NumPy-style docstring on any
+        added/modified function. Do NOT flag accepted legacy style: scientific sigils
+        (TDN, NEm, DMI, pH, ADG, BW), published SWAT/Parton/NRC coefficients, dict[str, Any]
+        at JSON/config boundaries, god-object managers / ~20-parameter NRC calculators,
+        class X(object), long exception messages.
+    - path: "tests/**/*.py"
+      instructions: >-
+        Enforce RuFaS test conventions on added/changed lines. Flag: direct class-attribute
+        mock assignment (`SomeClass.method = MagicMock()`) — require `mocker.patch.object`;
+        tests that assert only return type / call_count instead of behaviour; missing
+        `match=` on `pytest.raises`; class-state isolation that uses a shallow `dict()`
+        instead of `copy.deepcopy`; raw string literals where a domain Enum exists; and a
+        missing NumPy-style docstring on added fixtures/helpers/tests.
+    - path: "changelog.md"
+      instructions: >-
+        Every PR must add exactly one bullet: `- [NN](PR-url) - [Major/minor change]
+        [Area] [In/NoInputChange] [In/NoOutputChange] description`. Flag a `TBD` placeholder,
+        an entry tagged both [OutputChange] and [NoOutputChange], or a duplicate bullet for
+        the same PR number.
+    - path: "!(RUFAS|tests)/**"
+      instructions: >-
+        This is a fork that never merges upstream. Prefer changes isolated in fork-specific
+        files over edits to large upstream-shared files; flag unnecessary reformatting or
+        churn that would create recurrent merge conflicts on the next upstream sync.
