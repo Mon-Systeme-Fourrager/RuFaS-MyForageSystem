@@ -94,9 +94,13 @@ Return a copy.
 ```python
 class RationManager:
     RATIONS = {"a": 1}
+
     @classmethod
     def all_rations(cls):
-        return cls.RATIONS          # before: shared, mutable
+        return cls.RATIONS          # before: shared, caller can mutate class state
+
+    @classmethod
+    def all_rations(cls):
         return cls.RATIONS.copy()   # after: protected
 ```
 
