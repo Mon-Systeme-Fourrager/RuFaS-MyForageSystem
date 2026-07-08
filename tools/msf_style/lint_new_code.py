@@ -41,6 +41,19 @@ def _select_scopes(scopes: dict[str, FileScope], only: list[str] | None) -> dict
 
 
 def _normalize_only(path: str) -> str:
+    """Normalize a ``--paths`` entry for comparison against diff-scope keys.
+
+    Parameters
+    ----------
+    path : str
+        A raw entry from ``--paths``.
+
+    Returns
+    -------
+    str
+        The path with backslashes converted to forward slashes and a leading
+        ``"./"`` (but not a leading ``"."`` from a dotfile) removed.
+    """
     normalized = path.replace("\\", "/")
     if normalized.startswith("./"):
         normalized = normalized[2:]
