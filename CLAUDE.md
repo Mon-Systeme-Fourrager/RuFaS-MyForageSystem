@@ -26,7 +26,8 @@ files there — keep this root file repository-wide, push specifics down:
 - `tests/CLAUDE.md` — pytest conventions
 
 Cross-cutting path-scoped rules live in `.claude/rules/` and load when a
-matching file enters context (e.g. `protected-inputs.md`).
+matching file enters context (e.g. `protected-inputs.md`, `style.md` — the
+new-code style conventions for `RUFAS/**`, `tests/**`, `main.py`).
 
 ## Tooling
 
