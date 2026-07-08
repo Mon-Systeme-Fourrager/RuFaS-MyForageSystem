@@ -32,7 +32,8 @@ def mypy_available() -> bool:
 
 
 def _eligible(paths: list[str]) -> list[str]:
-    return [p for p in paths if p.endswith(".py") and (p == "main.py" or p.startswith(MYPY_ROOTS))]
+    normalized = ((p, p.replace("\\", "/")) for p in paths)
+    return [p for p, norm in normalized if norm.endswith(".py") and (norm == "main.py" or norm.startswith(MYPY_ROOTS))]
 
 
 def run_mypy(paths: list[str]) -> list[Violation]:

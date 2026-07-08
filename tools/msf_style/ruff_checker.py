@@ -87,6 +87,7 @@ def _to_violation(item: object) -> Violation | None:
 
 def _relativize(filename: str) -> str:
     try:
-        return str(Path(filename).resolve().relative_to(Path.cwd()))
+        relative = str(Path(filename).resolve().relative_to(Path.cwd()))
     except ValueError:
-        return filename
+        relative = filename
+    return relative.replace("\\", "/")

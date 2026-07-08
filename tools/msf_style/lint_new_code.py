@@ -36,7 +36,7 @@ def _read_text(path: str) -> str | None:
 def _select_scopes(scopes: dict[str, FileScope], only: list[str] | None) -> dict[str, FileScope]:
     if not only:
         return scopes
-    wanted = {p.lstrip("./") for p in only}
+    wanted = {p.lstrip("./").replace("\\", "/") for p in only}
     return {path: scope for path, scope in scopes.items() if path in wanted}
 
 

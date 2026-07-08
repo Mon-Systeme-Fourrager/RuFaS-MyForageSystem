@@ -37,6 +37,7 @@ def check_changelog(path: str, text: str, scope: FileScope) -> list[Violation]:
     list of Violation
         Changelog format findings.
     """
+    path = path.replace("\\", "/")
     if path.rsplit("/", 1)[-1] != CHANGELOG_NAME:
         return []
     lines = text.splitlines()

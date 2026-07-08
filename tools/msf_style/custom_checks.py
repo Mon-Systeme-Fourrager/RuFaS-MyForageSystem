@@ -67,6 +67,7 @@ def check_python_file(path: str, text: str) -> list[Violation]:
     list of Violation
         Findings across the whole file; the caller filters them to changed lines.
     """
+    path = path.replace("\\", "/")
     violations = list(_text_checks(path, text))
     try:
         tree = ast.parse(text)
@@ -226,10 +227,16 @@ def _config_none_safety(path: str, tree: ast.AST) -> Iterator[Violation]:
         yield from _coerce_possibly_none(path, node)
 
 
+def _unwrap_unary(node: ast.expr) -> ast.expr:
+    if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.UAdd, ast.USub)):
+        return node.operand
+    return node
+
+
 def _numeric_get_default(path: str, node: ast.AST) -> Iterator[Violation]:
     if not (_is_get_call(node) and isinstance(node, ast.Call) and len(node.args) == 2):
         return
-    default = node.args[1]
+    default = _unwrap_unary(node.args[1])
     if (
         isinstance(default, ast.Constant)
         and isinstance(default.value, (int, float))
@@ -248,7 +255,7 @@ def _numeric_get_default(path: str, node: ast.AST) -> Iterator[Violation]:
 def _get_or_default(path: str, node: ast.AST) -> Iterator[Violation]:
     if not (isinstance(node, ast.BoolOp) and isinstance(node.op, ast.Or) and node.values):
         return
-    if _is_get_call(node.values[0]):
+    if any(_is_get_call(value) for value in node.values[:-1]):
         yield Violation(
             path,
             node.lineno,
@@ -327,7 +334,7 @@ def _mutable_classvar_returns(path: str, tree: ast.AST) -> Iterator[Violation]:
         if not containers:
             continue
         for method in node.body:
-            if isinstance(method, ast.FunctionDef):
+            if isinstance(method, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 for lineno in _returns_bare_container(method, containers):
                     yield Violation(
                         path,

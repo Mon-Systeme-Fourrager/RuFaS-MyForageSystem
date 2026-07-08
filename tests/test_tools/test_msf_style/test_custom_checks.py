@@ -135,6 +135,35 @@ def test_lesson_reference_flagged() -> None:
     assert "MSF041" in _codes("RUFAS/util.py", source)
 
 
+def test_negative_numeric_get_default_flagged() -> None:
+    """A negative ``.get(key, -1)`` default (ast.UnaryOp) still raises MSF002."""
+    source = "def read(cfg: dict) -> int:\n    return cfg.get('n', -45)\n"
+    assert "MSF002" in _codes("RUFAS/biophysical/animal/animal.py", source)
+
+
+def test_get_or_default_not_first_in_chain_flagged() -> None:
+    """A get call anywhere but last in an ``or`` chain raises MSF010 (edge case)."""
+    source = "def read(cfg: dict, x: int) -> int:\n    return x or cfg.get('n') or 10\n"
+    assert "MSF010" in _codes("RUFAS/input_manager.py", source)
+
+
+def test_async_method_mutable_classvar_return_flagged() -> None:
+    """An async method returning a class-level dict raw raises MSF030 (edge case)."""
+    source = (
+        "class RationManager:\n"
+        "    RATIONS = {'a': 1}\n"
+        "    async def all_rations(self) -> dict:\n"
+        "        return self.RATIONS\n"
+    )
+    assert "MSF030" in _codes("RUFAS/biophysical/animal/ration/ration_manager.py", source)
+
+
+def test_backslash_path_is_normalized() -> None:
+    """A Windows-style backslash path still resolves directory-scoped checks."""
+    source = "def calc(bw: float) -> float:\n    return bw * 0.62\n"
+    assert "MSF001" in _codes("RUFAS\\biophysical\\animal\\growth.py", source)
+
+
 def test_syntax_error_returns_no_ast_findings() -> None:
     """Invalid Python still runs text checks and does not raise (invalid input)."""
     source = "def broken(:\n    # noqa: C901\n"
