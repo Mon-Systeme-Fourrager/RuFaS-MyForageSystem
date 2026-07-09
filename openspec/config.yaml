@@ -27,8 +27,8 @@ context: |
   boundaries, god-object calculators).
 
   Protected input fixtures under input/ (see .claude/rules/protected-inputs.md) must not be
-  edited. Update changelog.md for changes to the RuFaS model/system; tooling- or docs-only
-  changes do not need a changelog entry.
+  edited. changelog.md is mandatory on every PR (CI enforces it); for tooling- or docs-only
+  PRs a brief one-line entry is enough.
 
 # Per-artifact rules.
 rules:

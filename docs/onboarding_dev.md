@@ -161,8 +161,9 @@ skill) before OpenSpec/coding.
 2. `pre-commit run --all-files` (Black, flake8) and `pre-commit run --all-files --hook-stage
    pre-push` (mypy) both green.
 3. Tests + coverage pass (`coverage run --rcfile=.github/.coveragerc`).
-4. **`changelog.md`** updated for RuFaS model/system changes: one bullet, real PR link (no
-   `TBD`), one of `[InputChange]`/`[NoInputChange]` and one of `[OutputChange]`/`[NoOutputChange]`.
+4. **`changelog.md`** updated — mandatory on every PR (CI enforces it); a brief one-line entry
+   is enough for tooling/docs. One bullet, real PR link (no `TBD`), one of
+   `[InputChange]`/`[NoInputChange]` and one of `[OutputChange]`/`[NoOutputChange]`.
 5. No protected input fixtures edited.
 6. PR description: what / why / how + a Test Plan; link the issue.
 7. Two reviews + all CI green before merge (author merges and deletes the branch).
