@@ -39,3 +39,29 @@ flowchart LR
     end
 
 ````
+
+---
+
+# Working on this fork
+
+New here? Read **[`docs/onboarding_dev.md`](docs/onboarding_dev.md)** — it covers the
+fork discipline, the local tooling (identical to CI), Claude Code, and OpenSpec.
+
+**Fork discipline (most important):** this fork is never merged upstream (`dev` is synced
+from RuFaS, `dev-msf` tracks it — see the Dependency diagram above). Keep divergence minimal —
+isolate fork-only changes in their own files and never reformat/churn upstream code you are
+not functionally changing, or every edit becomes a merge conflict on the next upstream sync.
+
+**Setup + local checks (same tools and config files as CI):**
+
+```bash
+pip install -e ".[dev]" && pip install pre-commit
+pre-commit install --hook-type pre-commit --hook-type pre-push
+black .           # pyproject [tool.black]
+flake8 .          # .flake8
+python -m mypy .  # pyproject [tool.mypy]
+coverage run --rcfile=.github/.coveragerc && coverage report --rcfile=.github/.coveragerc
+```
+
+Read tool settings **from the config files** (never hard-code them). Style rules, with
+before/after examples, are in **[`.claude/rules/style.md`](.claude/rules/style.md)**.
