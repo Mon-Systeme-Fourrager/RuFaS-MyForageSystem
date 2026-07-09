@@ -1,12 +1,16 @@
 # RuFaS style guide (for Gemini Code Assist)
 
 Follow these conventions when reviewing RuFaS (MyForageSystem fork) pull requests. Review
-**added/changed lines only** — never ask to "fix" untouched legacy code. Full,
-example-driven reference: `docs/style_rules_explained.md`.
+**added/changed lines only** — never ask to "fix" untouched legacy code. The single source
+of truth for the conventions is the root `CLAUDE.md` and `.claude/rules/style.md`.
 
 Context: this is a **fork** that is never merged back upstream. Flag changes that would
 cause recurrent merge conflicts on re-sync with `RuFaS/dev` (e.g. reformatting or editing
 large upstream-shared files unnecessarily).
+
+The mechanical rules (formatting, complexity, imports, typing) are handled by the CI tools
+(black, flake8, mypy `--strict`); do not restate them. Enforce only the conventions no
+linter checks:
 
 ## Enforce on new code
 
@@ -21,13 +25,9 @@ large upstream-shared files unnecessarily).
 - **Return a copy** of a class-level `dict`/`list`/`set`, never the shared attribute.
 - **NumPy-style docstring** on every added/modified function (incl. fixtures/test helpers),
   with `Parameters`/`Returns` matching the real signature.
-- **Full type annotations** (mypy runs `--strict`); **top-level imports** (in-function only
-  to break a real cycle); **cyclomatic complexity ≤ 10** (no new `# noqa: C901`).
 - **Tests assert behaviour**, not just return type / `call_count`; use
   `mocker.patch.object` (never `Class.attr = MagicMock()`); `copy.deepcopy` for state
   isolation; `pytest.raises(..., match=...)`.
-- **changelog.md**: exactly one bullet per PR; no `TBD`; not both `[OutputChange]` and
-  `[NoOutputChange]`.
 
 ## Do NOT flag (accepted legacy style)
 
