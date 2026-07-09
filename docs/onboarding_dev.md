@@ -123,7 +123,7 @@ Other AI tools (Cursor, Windsurf, Copilot) read `AGENTS.md`; Gemini reads `CLAUD
 
 For non-trivial changes, use the OpenSpec flow to agree the spec before coding.
 
-```
+```text
 /opsx:propose      # create a change proposal + specs + tasks
 /opsx:apply        # implement the tasks (TDD)
 /opsx:sync         # sync delta specs into the main specs (the optional sync skill)
@@ -158,7 +158,8 @@ skill) before OpenSpec/coding.
 ## 9. PR checklist
 
 1. Keep the diff minimal and fork-conflict-free (isolate fork-only changes in their own files).
-2. `pre-commit run --all-files` green (Black, flake8, mypy).
+2. `pre-commit run --all-files` (Black, flake8) and `pre-commit run --all-files --hook-stage
+   pre-push` (mypy) both green.
 3. Tests + coverage pass (`coverage run --rcfile=.github/.coveragerc`).
 4. **`changelog.md`** updated for RuFaS model/system changes: one bullet, real PR link (no
    `TBD`), one of `[InputChange]`/`[NoInputChange]` and one of `[OutputChange]`/`[NoOutputChange]`.

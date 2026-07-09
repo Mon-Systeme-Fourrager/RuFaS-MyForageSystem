@@ -30,12 +30,14 @@ repos:
         entry: black
         language: system
         types_or: [python, pyi]
+        stages: [pre-commit]
 
       - id: flake8
         name: flake8 (.flake8 — max-line 120, max-complexity 10, ignore E203/W503)
         entry: flake8
         language: system
         types: [python]
+        stages: [pre-commit]
 
       # ---- on `git push` (slower, whole project — mirrors CI `python -m mypy .`) ----
       - id: mypy
