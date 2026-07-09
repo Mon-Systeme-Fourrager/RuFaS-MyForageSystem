@@ -4,15 +4,15 @@
 # These are `local` / `system` hooks on purpose: they invoke the SAME tools the CI
 # installs with `pip install -e ".[dev]"`, so tool versions AND their configs match the CI
 # exactly — Black reads pyproject [tool.black], flake8 reads .flake8, mypy reads
-# pyproject [tool.mypy], Ruff reads ruff.toml. Nothing is hard-coded here; the config
-# files are the single source of truth (same rule as the CI).
+# pyproject [tool.mypy]. Nothing is hard-coded here; the config files are the single
+# source of truth (same rule as the CI).
 #
 # Fork note: this file is fork-only and self-contained, so re-syncing dev-msf with
 # upstream RuFaS/dev never conflicts on it.
 #
 # One-time setup:
 #   pip install -e ".[dev]"
-#   pip install ruff pre-commit
+#   pip install pre-commit
 #   pre-commit install --hook-type pre-commit --hook-type pre-push
 #
 # Run manually on everything (optional): pre-commit run --all-files
@@ -27,12 +27,6 @@ repos:
       - id: black
         name: black (pyproject [tool.black], line-length 120)
         entry: black
-        language: system
-        types_or: [python, pyi]
-
-      - id: ruff
-        name: ruff check (ruff.toml — complements flake8, never overlaps it)
-        entry: ruff check --force-exclude
         language: system
         types_or: [python, pyi]
 
