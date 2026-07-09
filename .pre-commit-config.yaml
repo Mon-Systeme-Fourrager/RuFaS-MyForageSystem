@@ -15,7 +15,8 @@
 #   pip install pre-commit
 #   pre-commit install --hook-type pre-commit --hook-type pre-push
 #
-# Run manually on everything (optional): pre-commit run --all-files
+# Run manually (optional): `pre-commit run --all-files` runs the commit-stage hooks
+# (Black, flake8); add `--hook-stage pre-push` to also run mypy.
 
 default_language_version:
   python: python3.12

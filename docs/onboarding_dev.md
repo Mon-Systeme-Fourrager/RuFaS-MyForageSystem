@@ -61,7 +61,8 @@ which is the single source of truth — never hard-code line length, ignore list
 | mypy (types, strict) | `python -m mypy .` | `pyproject.toml` `[tool.mypy]` (CI ratchets vs `dev`) |
 | Tests + coverage | `coverage run --rcfile=.github/.coveragerc && coverage report --rcfile=.github/.coveragerc` | `.github/.coveragerc` |
 
-Run every hook at once locally: `pre-commit run --all-files`.
+Run the commit-stage hooks at once locally with `pre-commit run --all-files`; add
+`--hook-stage pre-push` to also run mypy.
 
 ---
 

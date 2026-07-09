@@ -55,8 +55,9 @@ read those config files, don't restate them.
       n = 10
   ```
 
-- **NumPy-style docstring** on every added/modified function — including fixtures and test
-  helpers, with `Parameters`/`Returns` matching the real signature.
+- **NumPy-style docstring** on every added/modified function, including fixtures and test
+  helpers, with `Parameters`/`Returns` matching the real signature. Test functions themselves
+  (`def test_*`) need only a one-line docstring — they take no parameters and return nothing.
 
 ## Tests
 
@@ -71,7 +72,8 @@ read those config files, don't restate them.
   ```
 
 - Assert **behaviour**, not just return type or `call_count`; seed real data.
-- Isolate class state with an autouse save/restore fixture using `copy.deepcopy`.
+- Isolate class state with an autouse save/restore fixture using `copy.deepcopy` (or a custom
+  reset/restore method when the state holds un-copyable resources).
 - `pytest.raises(...)` needs `match=` so it can't pass on the wrong failure path.
 
   ```python
