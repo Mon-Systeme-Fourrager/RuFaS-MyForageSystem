@@ -4,8 +4,8 @@ A practical guide for anyone contributing to this fork (including new devs). It 
 **fork discipline**, the **local tooling** (matching CI exactly), **Claude Code**,
 **OpenSpec**, and **where every config lives** so you know what to tweak.
 
-Read this once, then keep [`docs/style_rules_explained.md`](./style_rules_explained.md) open
-as the day-to-day style reference.
+Read this once, then keep [`.claude/rules/style.md`](../.claude/rules/style.md) open as the
+day-to-day style reference (it has before/after examples for every convention).
 
 ---
 
@@ -13,16 +13,16 @@ as the day-to-day style reference.
 
 This repository (`RuFaS-MyForageSystem`) is a **fork** of upstream
 `RuminantFarmSystems/RuFaS`. It is **never merged back upstream**: instead `dev` is synced
-from upstream and our integration branch **`dev-msf`** is rebased onto it (see the diagram in
+from upstream and our integration branch **`dev-msf`** tracks it (see the diagram in
 `README.md`). Tags cut from `dev-msf` feed `rufas-api` and `msf-rufas`.
 
 Because of this, the single most important habit is **minimize divergence from upstream**:
 
-- **Isolate fork-only changes in their own files** (e.g. `ruff.toml`, `.pre-commit-config.yaml`,
+- **Isolate fork-only changes in their own files** (e.g. `.pre-commit-config.yaml`,
   `.coderabbit.yaml`, `.gemini/`, `.claude/`, `docs/*`) rather than editing large
   upstream-shared files.
 - **Do not reformat or churn** upstream code you are not functionally changing — every such
-  edit becomes a merge conflict on the next upstream rebase.
+  edit becomes a merge conflict on the next upstream sync.
 - Touch shared files (`pyproject.toml`, `README.md`, workflows) only when necessary, and keep
   the change small and localized.
 
@@ -33,11 +33,11 @@ Your PRs and the review bots are configured to flag violations of this.
 ## 2. One-time setup
 
 ```bash
-# Python (3.12; project supports >=3.12,<3.14)
+# Python — use the version required by pyproject.toml (requires-python)
 python -m venv .venv && source .venv/bin/activate
 pip install --upgrade pip
 pip install -e ".[dev]"          # black, flake8, mypy, pytest, coverage, …
-pip install ruff pre-commit      # ruff + the pre-commit runner (not in [dev])
+pip install pre-commit           # the pre-commit runner (not in [dev])
 
 # Git hooks that mirror CI (see §4)
 pre-commit install --hook-type pre-commit --hook-type pre-push
@@ -56,13 +56,12 @@ which is the single source of truth — never hard-code line length, ignore list
 
 | Tool | Command (local) | Config file |
 | --- | --- | --- |
-| Black (format) | `black .` | `pyproject.toml` `[tool.black]` (line-length 120, py312) |
-| flake8 (lint) | `flake8 .` | `.flake8` (max-line 120, max-complexity 10, ignore E203,W503) |
-| Ruff (extra rules) | `ruff check .` | `ruff.toml` (complements flake8) |
+| Black (format) | `black .` | `pyproject.toml` `[tool.black]` |
+| flake8 (lint) | `flake8 .` | `.flake8` |
 | mypy (types, strict) | `python -m mypy .` | `pyproject.toml` `[tool.mypy]` (CI ratchets vs `dev`) |
 | Tests + coverage | `coverage run --rcfile=.github/.coveragerc && coverage report --rcfile=.github/.coveragerc` | `.github/.coveragerc` |
 
-Run all linters at once locally: `pre-commit run --all-files`.
+Run every hook at once locally: `pre-commit run --all-files`.
 
 ---
 
@@ -72,10 +71,10 @@ Run all linters at once locally: `pre-commit run --all-files`.
 `pip install -e ".[dev]"`**, reading the **same config files** — so what passes locally passes
 in CI.
 
-- **on `git commit`** (staged files): Black, Ruff, flake8.
+- **on `git commit`** (staged files): Black, flake8.
 - **on `git push`** (whole project): `python -m mypy .` (mirrors CI).
 
-Skip a hook occasionally with `SKIP=mypy git commit …`, but never push red.
+Skip the mypy hook occasionally with `SKIP=mypy git push`, but never push red.
 
 ---
 
@@ -86,13 +85,13 @@ script):
 
 | Layer | Where | What it does |
 | --- | --- | --- |
-| Deterministic linters | `ruff.toml` + `.flake8` + `pyproject` (mypy) via pre-commit & CI | mechanical rules (typing, pytest, unicode, docstring presence, complexity, types) |
-| Review bots | `.coderabbit.yaml`, `.gemini/styleguide.md` | the conventions no linter expresses (magic numbers → constants, None-safe config, enum-over-string, mocking discipline) + fork guidance |
+| Deterministic linters | `.flake8` + `pyproject.toml` (Black, mypy) via pre-commit and CI | mechanical rules: formatting, complexity, imports, typing |
+| Review bots | `.coderabbit.yaml`, `.gemini/styleguide.md` | the conventions no linter expresses (magic numbers to constants, None-safe config, enum-over-string, mocking discipline) + fork guidance |
 | Write-time rule | `.claude/rules/style.md` | steers Claude Code to write compliant code up front |
 
 Human-readable reference for **every** rule (with before/after examples):
-[`docs/style_rules_explained.md`](./style_rules_explained.md). It also lists the **accepted
-legacy style you must NOT "fix"** (scientific sigils, published coefficients, `dict[str, Any]`
+[`.claude/rules/style.md`](../.claude/rules/style.md). It also lists the **accepted legacy
+style you must NOT "fix"** (scientific sigils, published coefficients, `dict[str, Any]`
 boundaries, god-object calculators).
 
 ---
@@ -101,7 +100,7 @@ boundaries, god-object calculators).
 
 This repo is set up for [Claude Code](https://claude.com/claude-code).
 
-- **Layered `CLAUDE.md`**: root file is repo-wide; subsystem `CLAUDE.md` files load when you
+- **Layered `CLAUDE.md`**: the root file is repo-wide; subsystem `CLAUDE.md` files load when you
   open files there (`RUFAS/`, `RUFAS/biophysical/animal/`, `tests/`, …).
 - **Path-scoped rules** (`.claude/rules/`): load automatically when a matching file is in
   context — `protected-inputs.md` (never edit protected fixtures) and `style.md` (new-code
@@ -111,10 +110,11 @@ This repo is set up for [Claude Code](https://claude.com/claude-code).
   skills, and the OpenSpec commands below.
 - **Output style**: caveman lite by default (`/caveman lite`) — concise. Do **not** use
   `caveman full/ultra` on model logic, typing, or numeric outputs (see `AGENTS.md`).
-- **Hooks** (`.claude/settings.json` → `.claude/hooks/`): a SessionStart hook injects the
+- **Hooks** (`.claude/settings.json` and `.claude/hooks/`): a SessionStart hook injects the
   dependency graph and, on Claude Code Web, installs the caveman plugin.
 
-Other AI tools (Cursor, Windsurf, Copilot, Gemini) read `AGENTS.md`.
+Other AI tools (Cursor, Windsurf, Copilot) read `AGENTS.md`; Gemini reads `CLAUDE.md` via
+`.gemini/settings.json`.
 
 ---
 
@@ -144,13 +144,11 @@ skill) before OpenSpec/coding.
 | --- | --- |
 | Black / mypy settings | `pyproject.toml` (`[tool.black]` / `[tool.mypy]`) |
 | flake8 settings | `.flake8` |
-| Ruff rule selection | `ruff.toml` |
 | Which hooks run pre-commit | `.pre-commit-config.yaml` |
 | What CodeRabbit enforces | `.coderabbit.yaml` (`path_instructions`) |
 | What Gemini enforces | `.gemini/styleguide.md` (+ `.gemini/config.yaml`) |
 | OpenSpec context / rules | `openspec/config.yaml` |
-| New-code conventions for Claude | `.claude/rules/style.md` |
-| The human style reference | `docs/style_rules_explained.md` |
+| New-code conventions (and the human style reference) | `.claude/rules/style.md` |
 | Protected input list | `.claude/rules/protected-inputs.md` (matches the CI list) |
 | CI itself | `.github/workflows/combined_format_lint_test_mypy.yml` |
 
@@ -158,11 +156,11 @@ skill) before OpenSpec/coding.
 
 ## 9. PR checklist
 
-1. Rebase on `dev-msf`; keep the diff minimal and fork-conflict-free.
-2. `pre-commit run --all-files` green (Black, Ruff, flake8, mypy).
+1. Keep the diff minimal and fork-conflict-free (isolate fork-only changes in their own files).
+2. `pre-commit run --all-files` green (Black, flake8, mypy).
 3. Tests + coverage pass (`coverage run --rcfile=.github/.coveragerc`).
-4. **`changelog.md`** updated: one bullet, real PR link (no `TBD`), one of
-   `[InputChange]`/`[NoInputChange]` and one of `[OutputChange]`/`[NoOutputChange]`.
+4. **`changelog.md`** updated for RuFaS model/system changes: one bullet, real PR link (no
+   `TBD`), one of `[InputChange]`/`[NoInputChange]` and one of `[OutputChange]`/`[NoOutputChange]`.
 5. No protected input fixtures edited.
 6. PR description: what / why / how + a Test Plan; link the issue.
 7. Two reviews + all CI green before merge (author merges and deletes the branch).

@@ -43,23 +43,9 @@ compression can drop nuance that matters:
 - **CI target is `dev`**; this fork integrates on `dev-msf`. Never push to a
   protected branch directly — open a PR.
 
-## Fork discipline (important)
-
-This is a **fork** that is never merged back upstream: `dev` is synced from
-`RuminantFarmSystems/RuFaS` and `dev-msf` is rebased onto it. **Minimize divergence** —
-isolate fork-only changes in their own files (`ruff.toml`, `.pre-commit-config.yaml`,
-`.coderabbit.yaml`, `.gemini/`, `.claude/`, `docs/*`) and **never reformat or churn upstream
-code you are not functionally changing**, or every edit becomes a merge conflict on the next
-rebase. Judge only added/changed lines; do not "fix" untouched legacy code.
-
-Read tool settings **from their config files** — do not hard-code line length, ignore lists,
-etc. The exact CI commands are `black .`, `flake8 .`, `ruff check .`, `python -m mypy .`,
-`coverage run --rcfile=.github/.coveragerc`.
-
 ## Project conventions
 
 See the root `CLAUDE.md` (and the layered per-subsystem `CLAUDE.md` files) for
 the full rules: Python 3.12, `pip install -e ".[dev]"`, Black (line-length 120),
 flake8 (max-complexity 10), mypy strict, pytest, and the graphify dependency
-graph at `graphify-out/`. New contributors: **`docs/onboarding_dev.md`**. Every
-style rule with examples: **`docs/style_rules_explained.md`**.
+graph at `graphify-out/`.
