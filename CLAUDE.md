@@ -208,3 +208,7 @@ All NRC 2016 beef module reference data lives in `docs/beef_module/`:
 Cow-calf system reference data lives in `docs/beef_module/cow_calf/`:
 
 - `README.md` — scope boundaries, known simplifications, and future-PR candidates
+
+Stocker/backgrounding reference data lives in `docs/beef_module/stocker/`:
+
+- `README.md` — 5 named scope boundaries (BeefGEM deferrals) and diet system valid values
