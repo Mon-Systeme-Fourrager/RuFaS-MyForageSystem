@@ -38,6 +38,8 @@ def test_animals_by_type(herd_manager: HerdManager, mock_herd: dict[str, list[An
         AnimalType.BEEF_HEIFER_REPLACEMENT: herd_manager.beef_replacement_heifers,
         AnimalType.BEEF_CALF: herd_manager.beef_calves,
         AnimalType.BEEF_BULL: herd_manager.beef_bulls,
+        AnimalType.BEEF_STOCKER_STEER: herd_manager.beef_stocker_steers,
+        AnimalType.BEEF_STOCKER_HEIFER: herd_manager.beef_stocker_heifers,
     }
     actual = herd_manager.animals_by_type
 
@@ -90,6 +92,8 @@ def test_phosphorus_concentration_by_animal_class(
         AnimalType.BEEF_HEIFER_REPLACEMENT: 0.0,
         AnimalType.BEEF_CALF: 0.0,
         AnimalType.BEEF_BULL: 0.0,
+        AnimalType.BEEF_STOCKER_STEER: 0.0,
+        AnimalType.BEEF_STOCKER_HEIFER: 0.0,
     }
     animals_by_type_mapping: dict[AnimalType, list[Animal]] = {
         AnimalType.CALF: mock_herd["calves"],
@@ -104,6 +108,8 @@ def test_phosphorus_concentration_by_animal_class(
         AnimalType.BEEF_HEIFER_REPLACEMENT: herd_manager.beef_replacement_heifers,
         AnimalType.BEEF_CALF: herd_manager.beef_calves,
         AnimalType.BEEF_BULL: herd_manager.beef_bulls,
+        AnimalType.BEEF_STOCKER_STEER: [],
+        AnimalType.BEEF_STOCKER_HEIFER: [],
     }
 
     for animal_type, animals in animals_by_type_mapping.items():

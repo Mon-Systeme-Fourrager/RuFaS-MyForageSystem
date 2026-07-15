@@ -1315,6 +1315,7 @@ def test_initialize_herd_init_herd_true_save_animals_true(
     mock_random_sample_with_replacement = mocker.patch.object(mock_herd_factory, "_random_sample_with_replacement")
     mocker.patch.object(mock_herd_factory, "_initialize_feedlot_herd", return_value=[])
     mocker.patch.object(mock_herd_factory, "_initialize_beef_cow_calf_herd", return_value=[])
+    mocker.patch.object(mock_herd_factory, "_initialize_beef_stocker_herd", return_value=[])
     mock_report_animal_population_statistics = mocker.patch.object(
         AnimalModuleReporter, "report_animal_population_statistics"
     )
@@ -1373,6 +1374,7 @@ def test_initialize_herd_init_herd_true_save_animals_false(
     mock_random_sample_with_replacement = mocker.patch.object(mock_herd_factory, "_random_sample_with_replacement")
     mocker.patch.object(mock_herd_factory, "_initialize_feedlot_herd", return_value=[])
     mocker.patch.object(mock_herd_factory, "_initialize_beef_cow_calf_herd", return_value=[])
+    mocker.patch.object(mock_herd_factory, "_initialize_beef_stocker_herd", return_value=[])
     mock_report_animal_population_statistics = mocker.patch.object(
         AnimalModuleReporter, "report_animal_population_statistics"
     )
@@ -1421,6 +1423,7 @@ def test_initialize_herd_init_herd_with_sexed_semen_save_animals_false(
     mock_random_sample_with_replacement = mocker.patch.object(mock_herd_factory, "_random_sample_with_replacement")
     mocker.patch.object(mock_herd_factory, "_initialize_feedlot_herd", return_value=[])
     mocker.patch.object(mock_herd_factory, "_initialize_beef_cow_calf_herd", return_value=[])
+    mocker.patch.object(mock_herd_factory, "_initialize_beef_stocker_herd", return_value=[])
     mock_report_animal_population_statistics = mocker.patch.object(
         AnimalModuleReporter, "report_animal_population_statistics"
     )
@@ -1470,6 +1473,7 @@ def test_initialize_herd_init_herd_false(
     mock_random_sample_with_replacement = mocker.patch.object(mock_herd_factory, "_random_sample_with_replacement")
     mocker.patch.object(mock_herd_factory, "_initialize_feedlot_herd", return_value=[])
     mocker.patch.object(mock_herd_factory, "_initialize_beef_cow_calf_herd", return_value=[])
+    mocker.patch.object(mock_herd_factory, "_initialize_beef_stocker_herd", return_value=[])
     mock_report_animal_population_statistics = mocker.patch.object(
         AnimalModuleReporter, "report_animal_population_statistics"
     )

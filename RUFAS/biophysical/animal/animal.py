@@ -1645,6 +1645,11 @@ class Animal:
                 self.nutrients.phosphorus_requirement = self.nutrition_requirements.phosphorus
             return
 
+        if self.animal_type.is_beef_stocker:
+            if self.nutrition_requirements is not None:
+                self.nutrients.phosphorus_requirement = self.nutrition_requirements.phosphorus
+            return
+
         nutrients_inputs = NutrientsInputs(
             animal_type=self.animal_type,
             body_weight=self.body_weight,

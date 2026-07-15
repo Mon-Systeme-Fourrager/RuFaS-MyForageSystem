@@ -68,6 +68,7 @@ class HerdFactory:
     post_animal_population: AnimalPopulation | None = None
     feedlot_animals: list[Animal] = []
     beef_cow_calf_animals: list[Animal] = []  # populated by initialize_herd via _initialize_beef_cow_calf_herd
+    beef_stocker_animals: list[Animal] = []  # populated by initialize_herd via _initialize_beef_stocker_herd
 
     def __init__(
         self,
@@ -841,6 +842,61 @@ class HerdFactory:
 
         return animals
 
+    def _initialize_beef_stocker_herd(self) -> list[Animal]:
+        """
+        Create the initial beef stocker animal population from user config.
+
+        Returns
+        -------
+        list[Animal]
+            Stocker animals. Returns an empty list when the
+            'animal.herd_initialization.beef_stocker' key is absent from the input.
+
+        """
+        try:
+            stocker_cfg: Any = self.im.get_data("animal.herd_initialization.beef_stocker")
+        except (KeyError, TypeError):
+            return []
+
+        if not isinstance(stocker_cfg, dict) or not stocker_cfg:
+            return []
+
+        n_steers: int = int(stocker_cfg.get("n_steers", 0))
+        n_heifers: int = int(stocker_cfg.get("n_heifers", 0))
+        entry_weight: float = float(stocker_cfg.get("entry_weight_kg", AnimalConfig.stocker_entry_weight))
+        mature_bw: float = AnimalConfig.beef_mature_cow_weight_kg
+        breed_str: str = stocker_cfg.get("breed", Breed.AN.value)
+
+        animals: list[Animal] = []
+
+        for _ in range(n_steers):
+            steer_data: dict[str, Any] = {
+                "id": AnimalPopulation.next_id(),
+                "breed": breed_str,
+                "animal_type": AnimalType.BEEF_STOCKER_STEER.value,
+                "sex": "STEER",
+                "days_born": 1,
+                "body_weight": entry_weight,
+                "mature_body_weight": mature_bw,
+                "birth_weight": AnimalModuleConstants.BEEF_CALF_BIRTH_WEIGHT_KG,
+            }
+            animals.append(Animal(cast(Any, steer_data), self.time))
+
+        for _ in range(n_heifers):
+            heifer_data: dict[str, Any] = {
+                "id": AnimalPopulation.next_id(),
+                "breed": breed_str,
+                "animal_type": AnimalType.BEEF_STOCKER_HEIFER.value,
+                "sex": "FEMALE",
+                "days_born": 1,
+                "body_weight": entry_weight,
+                "mature_body_weight": mature_bw,
+                "birth_weight": AnimalModuleConstants.BEEF_CALF_BIRTH_WEIGHT_KG,
+            }
+            animals.append(Animal(cast(Any, heifer_data), self.time))
+
+        return animals
+
     def initialize_herd(self) -> None:
         """
         Initialize an AnimalPopulation object for simulation, either from input data or generate from simulation.
@@ -880,6 +936,7 @@ class HerdFactory:
         HerdFactory.set_post_animal_population(post_animal_population)
         HerdFactory.feedlot_animals = self._initialize_feedlot_herd()
         HerdFactory.beef_cow_calf_animals = self._initialize_beef_cow_calf_herd()
+        HerdFactory.beef_stocker_animals = self._initialize_beef_stocker_herd()
         AnimalModuleReporter.report_animal_population_statistics(
             "population", self.pre_animal_population.get_herd_summary()
         )
