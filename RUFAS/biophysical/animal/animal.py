@@ -2491,6 +2491,8 @@ class Animal:
         -------
         tuple[AnimalStatus, NewBornCalfValuesTypedDict | None]
             (SOLD, None) or (LIFE_STAGE_CHANGED, None).
+            SELL → SOLD; REPLACEMENT_HEIFER female → LIFE_STAGE_CHANGED;
+            DIRECT_TO_FEEDLOT → LIFE_STAGE_CHANGED; STOCKER → LIFE_STAGE_CHANGED.
 
         """
         self.events.add_event(self.days_born, time.simulation_day, animal_constants.CALF_WEANED)
@@ -2515,6 +2517,17 @@ class Animal:
             self.birth_weight = 0.0
             self._initialize_feedlot_animal(
                 {"body_weight": self.body_weight, "mature_body_weight": AnimalConfig.beef_mature_cow_weight_kg}
+            )
+            return AnimalStatus.LIFE_STAGE_CHANGED, None
+        if destination is BeefPostWeaningDestination.STOCKER:
+            new_type = AnimalType.BEEF_STOCKER_STEER if self.sex == Sex.MALE else AnimalType.BEEF_STOCKER_HEIFER
+            self.animal_type = new_type
+            self._initialize_stocker_animal(
+                {
+                    "body_weight": self.body_weight,
+                    "mature_body_weight": AnimalConfig.beef_mature_cow_weight_kg,
+                    "days_in_stocker": 0,
+                }
             )
             return AnimalStatus.LIFE_STAGE_CHANGED, None
         raise ValueError(f"Unknown beef_post_weaning_destination: {destination!r}")
