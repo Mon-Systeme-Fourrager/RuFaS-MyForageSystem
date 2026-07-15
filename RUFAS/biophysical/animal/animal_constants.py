@@ -175,3 +175,10 @@ BEEF_HEIFER_INITIAL_WEIGHT_PCT_MATURE: float = 0.6
 
 BEEF_BULL_INITIAL_WEIGHT_PCT_MATURE: float = 1.1
 """Bull starting weight as a fraction of mature cow weight (bulls ~10% heavier)."""
+
+# ── STOCKER / BACKGROUNDING EVENTS ────────────────────────────────────────────
+STOCKER_ARRIVAL = "stocker_arrival"
+STOCKER_EXIT_WEIGHT = "stocker_exit_weight_reached"
+STOCKER_MAX_DAYS = "stocker_max_days_reached"
+STOCKER_TO_FEEDLOT = "stocker_transferred_to_feedlot"
+STOCKER_SOLD = "stocker_sold_direct"

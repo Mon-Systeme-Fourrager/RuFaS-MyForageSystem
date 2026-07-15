@@ -33,6 +33,13 @@ class BeefPostWeaningDestination(str, Enum):
     STOCKER = "stocker"
 
 
+class StockerDietSystem(str, Enum):
+    """Valid diet systems for the stocker/backgrounding phase (NRC 2016 Ch.10)."""
+
+    PASTURE = "pasture"
+    DRYLOT_FORAGE = "drylot_forage"
+
+
 class AnimalStatus(Enum):
     """Enum indicating the status of the animal after performing daily routines update."""
 
