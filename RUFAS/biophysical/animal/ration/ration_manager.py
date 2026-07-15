@@ -10,6 +10,7 @@ from RUFAS.biophysical.animal.data_types.nutrition_data_structures import Nutrit
 from RUFAS.data_structures.feed_storage_to_animal_connection import RUFAS_ID
 from RUFAS.biophysical.animal.animal_config import AnimalConfig
 from RUFAS.biophysical.animal.data_types.animal_combination import AnimalCombination
+from RUFAS.biophysical.animal.data_types.animal_enums import StockerDietSystem
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 from RUFAS.general_constants import GeneralConstants
 from RUFAS.output_manager import OutputManager
@@ -53,6 +54,8 @@ class RationManager:
     beef_dry_gestating_ration: ClassVar[dict[RUFAS_ID, float]] = {}
     beef_creep_feed_ration: ClassVar[dict[RUFAS_ID, float]] = {}
     beef_replacement_heifer_ration: ClassVar[dict[RUFAS_ID, float]] = {}
+    beef_stocker_pasture_ration: ClassVar[dict[RUFAS_ID, float]] = {}
+    beef_stocker_drylot_ration: ClassVar[dict[RUFAS_ID, float]] = {}
 
     @classmethod
     def set_ration_feeds(cls, ration_config: dict[str, Any]) -> None:
@@ -135,6 +138,19 @@ class RationManager:
             if ration:
                 cls._validate_ration_percentages(f"Beef {name}", ration)
 
+        beef_stocker_pasture_ration = {
+            int(k): float(v) for k, v in (ration_config.get("beef_stocker_pasture_ration") or {}).items()
+        }
+        beef_stocker_drylot_ration = {
+            int(k): float(v) for k, v in (ration_config.get("beef_stocker_drylot_ration") or {}).items()
+        }
+        for name, ration in [
+            ("beef_stocker_pasture", beef_stocker_pasture_ration),
+            ("beef_stocker_drylot", beef_stocker_drylot_ration),
+        ]:
+            if ration:
+                cls._validate_ration_percentages(f"Beef {name}", ration)
+
         cls.ration_feeds = next_ration_feeds
         cls.feedlot_starter_ration = feedlot_starter
         cls.feedlot_transition_ration = feedlot_transition
@@ -143,6 +159,8 @@ class RationManager:
         cls.beef_dry_gestating_ration = beef_dry_gestating_ration
         cls.beef_creep_feed_ration = beef_creep_feed_ration
         cls.beef_replacement_heifer_ration = beef_replacement_heifer_ration
+        cls.beef_stocker_pasture_ration = beef_stocker_pasture_ration
+        cls.beef_stocker_drylot_ration = beef_stocker_drylot_ration
 
     @staticmethod
     def _validate_ration_percentages(name: str, ration: dict[int, float]) -> None:
@@ -245,6 +263,33 @@ class RationManager:
         if not AnimalConfig.beef_creep_feeding_enabled:
             return {}
         return cls.beef_creep_feed_ration.copy()
+
+    @classmethod
+    def get_beef_stocker_ration(cls, animal: Animal) -> dict[RUFAS_ID, float]:
+        """Return the stocker ration dict for the configured diet system.
+
+        Parameters
+        ----------
+        animal : Animal
+            The stocker animal (unused; kept for API symmetry with get_beef_seasonal_ration).
+
+        Returns
+        -------
+        dict[RUFAS_ID, float]
+            Mapping of feed RUFAS ID to percentage for the active stocker diet system.
+
+        Raises
+        ------
+        ValueError
+            If AnimalConfig.stocker_diet_system is not a recognised StockerDietSystem member.
+
+        """
+        system = AnimalConfig.stocker_diet_system
+        if system is StockerDietSystem.PASTURE:
+            return cls.beef_stocker_pasture_ration.copy()
+        if system is StockerDietSystem.DRYLOT_FORAGE:
+            return cls.beef_stocker_drylot_ration.copy()
+        raise ValueError(f"Unknown stocker_diet_system: {system!r}")
 
     @classmethod
     def get_ration_feeds(cls, animal_combination: AnimalCombination) -> list[RUFAS_ID]:

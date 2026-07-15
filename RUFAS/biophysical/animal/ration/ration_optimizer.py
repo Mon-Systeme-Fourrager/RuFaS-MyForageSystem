@@ -132,6 +132,7 @@ class RationOptimizer:
         self.feedlot_constraints: list[dict[str, Any]] = []
         self.beef_cow_constraints: list[dict[str, Any]] = []
         self.beef_replacement_constraints: list[dict[str, Any]] = []
+        self.beef_stocker_constraints: list[dict[str, Any]] = []
 
     def set_constraints(self, ration_config: RationConfig) -> None:
         """
@@ -195,6 +196,9 @@ class RationOptimizer:
         ]
         self.beef_cow_constraints = list(self.heifer_constraints)
         self.beef_replacement_constraints = list(self.heifer_constraints)
+        self.beef_stocker_constraints = [
+            c for c in self.heifer_constraints if isinstance(c, dict) and c.get("fun") is not self.NDF_constraint_upper
+        ]
 
     @staticmethod
     def convert_decision_vec_to_feeds(
@@ -1010,6 +1014,8 @@ class RationOptimizer:
             return self.beef_cow_constraints
         if animal_combination is AnimalCombination.BEEF_REPLACEMENT:
             return self.beef_replacement_constraints
+        if animal_combination is AnimalCombination.BEEF_STOCKER:
+            return self.beef_stocker_constraints
         OutputManager().add_error(
             "Ration Optimization Error",
             f"Invalid animal combination: {animal_combination}",
