@@ -2035,8 +2035,6 @@ class Animal:
             Daily output with animal status and empty reproduction statistics.
 
         """
-        # TODO: report_stocker_performance() belongs in herd_manager._process_daily_herd_updates()
-        # animal.py sits at a lower layer than the reporter.
         self.days_born += 1
         self.days_in_stocker += 1
 
@@ -2277,7 +2275,6 @@ class Animal:
         Check stocker exit conditions — exit weight reached or max days in stocker.
 
         On exit, the animal transitions to feedlot via ``_initialize_feedlot_animal()``.
-        Reporter wiring belongs in ``herd_factory._beef_stocker_update()`` (Step 7).
 
         Parameters
         ----------
@@ -2290,8 +2287,6 @@ class Animal:
             (LIFE_STAGE_CHANGED, None) if an exit condition is met, (REMAIN, None) otherwise.
 
         """
-        # TODO: report_stocker_performance() belongs in herd_factory._beef_stocker_update().
-        # animal.py is below the reporter/herd-factory in the dependency hierarchy.
         if self.body_weight >= AnimalConfig.stocker_exit_weight:
             self.events.add_event(self.days_born, time.simulation_day, animal_constants.STOCKER_EXIT_WEIGHT)
             self.events.add_event(self.days_born, time.simulation_day, animal_constants.STOCKER_TO_FEEDLOT)

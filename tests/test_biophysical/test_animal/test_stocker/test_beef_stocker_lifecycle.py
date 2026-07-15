@@ -581,7 +581,7 @@ def test_no_reporter_or_herd_import_in_animal_py() -> None:
     for name in forbidden:
         assert name not in imported_names, (
             f"animal.py must not import {name} (onion-layer violation); "
-            f"wiring belongs in herd_factory._beef_stocker_update() (Step 7)"
+            f"reporter/herd wiring belongs in herd_manager._process_daily_herd_updates()"
         )
 
 
