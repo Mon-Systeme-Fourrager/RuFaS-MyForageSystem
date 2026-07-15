@@ -613,3 +613,17 @@ class AnimalModuleConstants:
 
     BEEF_PREG_LAST_DAYS: int = 90
     """Number of final gestation days during which mineral deposition for pregnancy is active — NRC 2016 Table 19-3."""
+
+    # ===== STOCKER / BACKGROUNDING CONSTANTS (NRC 2016 Ch.10-12) =====
+
+    STOCKER_MIN_ENTRY_WEIGHT_KG: float = 180.0
+    """Minimum weaning weight for stocker placement (NRC 2016)."""
+
+    STOCKER_TARGET_EXIT_WEIGHT_KG: float = 350.0
+    """NRC 2016: feedlot entry typically 300-400 kg; 350 kg midpoint default."""
+
+    STOCKER_TARGET_ADG_KG_D: float = 0.80
+    """NRC 2016 Ch.10: mid-range of 0.35-1.15 kg/d on forage-based diet."""
+
+    STOCKER_MAX_DAYS: int = 210
+    """Maximum backgrounding days before forced exit."""

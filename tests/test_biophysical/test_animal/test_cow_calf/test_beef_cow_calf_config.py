@@ -42,6 +42,11 @@ def _restore_animal_config_state() -> Generator[None, None, None]:
     saved_natural_service_bull_ratio = AnimalConfig.beef_natural_service_bull_ratio
     saved_cow_cull_rate_annual = AnimalConfig.beef_cow_cull_rate_annual
     saved_reproduction_program = AnimalConfig.beef_reproduction_program
+    saved_stocker_entry_weight = AnimalConfig.stocker_entry_weight
+    saved_stocker_exit_weight = AnimalConfig.stocker_exit_weight
+    saved_stocker_max_days = AnimalConfig.stocker_max_days
+    saved_stocker_target_adg = AnimalConfig.stocker_target_adg
+    saved_stocker_diet_system = AnimalConfig.stocker_diet_system
     yield
     AnimalConfig.beef_breeding_season_start_day = saved_breeding_season_start_day
     AnimalConfig.beef_breeding_season_length = saved_breeding_season_length
@@ -53,6 +58,11 @@ def _restore_animal_config_state() -> Generator[None, None, None]:
     AnimalConfig.beef_natural_service_bull_ratio = saved_natural_service_bull_ratio
     AnimalConfig.beef_cow_cull_rate_annual = saved_cow_cull_rate_annual
     AnimalConfig.beef_reproduction_program = saved_reproduction_program
+    AnimalConfig.stocker_entry_weight = saved_stocker_entry_weight
+    AnimalConfig.stocker_exit_weight = saved_stocker_exit_weight
+    AnimalConfig.stocker_max_days = saved_stocker_max_days
+    AnimalConfig.stocker_target_adg = saved_stocker_target_adg
+    AnimalConfig.stocker_diet_system = saved_stocker_diet_system
 
 
 # ---------------------------------------------------------------------------
@@ -390,6 +400,7 @@ _IMPLEMENTED_DESTINATIONS = (
     BeefPostWeaningDestination.SELL,
     BeefPostWeaningDestination.REPLACEMENT_HEIFER,
     BeefPostWeaningDestination.DIRECT_TO_FEEDLOT,
+    BeefPostWeaningDestination.STOCKER,
 )
 
 
@@ -403,16 +414,15 @@ def test_initialize_valid_post_weaning_destinations_accepted(
     assert AnimalConfig.beef_post_weaning_destination is dest
 
 
-def test_initialize_stocker_destination_raises_not_implemented(mocker: pytest_mock.MockerFixture) -> None:
-    """'stocker' post_weaning_destination must raise NotImplementedError at config init (not at weaning time).
+def test_initialize_stocker_destination_accepted(mocker: pytest_mock.MockerFixture) -> None:
+    """'stocker' post_weaning_destination must now be accepted without error.
 
-    STOCKER is a valid enum member but requires the stocker module (Segment 3)
-    which is not yet implemented. Rejecting it early at config time gives a clear
-    error before any animal reaches weaning age.
+    The native stocker module (Segment 3) is implemented; the placeholder
+    NotImplementedError guard has been removed from _parse_beef_enum_fields.
     """
     _mock_im(mocker, beef_overrides={"post_weaning_destination": BeefPostWeaningDestination.STOCKER.value})
-    with pytest.raises(NotImplementedError, match="STOCKER"):
-        AnimalConfig.initialize_animal_config()
+    AnimalConfig.initialize_animal_config()
+    assert AnimalConfig.beef_post_weaning_destination is BeefPostWeaningDestination.STOCKER
 
 
 def test_initialize_invalid_post_weaning_destination_raises(mocker: pytest_mock.MockerFixture) -> None:

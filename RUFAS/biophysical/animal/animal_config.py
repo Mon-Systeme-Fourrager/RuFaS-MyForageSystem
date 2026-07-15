@@ -1,7 +1,7 @@
 from typing import Any
 
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
-from RUFAS.biophysical.animal.data_types.animal_enums import BeefPostWeaningDestination
+from RUFAS.biophysical.animal.data_types.animal_enums import BeefPostWeaningDestination, StockerDietSystem
 from RUFAS.biophysical.animal.data_types.repro_protocol_enums import (
     HeiferReproductionProtocol,
     CowReproductionProtocol,
@@ -418,6 +418,13 @@ class AnimalConfig:
     feedlot_mud_condition: str = "none"
     feedlot_ndf_minimum_pct: float = 10.0
 
+    # ── STOCKER / BACKGROUNDING PARAMETERS (defaults; overridden by initialize_animal_config) ─
+    stocker_entry_weight: float = AnimalModuleConstants.STOCKER_MIN_ENTRY_WEIGHT_KG
+    stocker_exit_weight: float = AnimalModuleConstants.STOCKER_TARGET_EXIT_WEIGHT_KG
+    stocker_max_days: int = AnimalModuleConstants.STOCKER_MAX_DAYS
+    stocker_target_adg: float = AnimalModuleConstants.STOCKER_TARGET_ADG_KG_D
+    stocker_diet_system: StockerDietSystem = StockerDietSystem.PASTURE
+
     # ── COW-CALF PARAMETERS (defaults; overridden by initialize_animal_config) ─
     beef_breeding_season_start_day: int = 90
     beef_breeding_season_length: int = AnimalModuleConstants.BEEF_DEFAULT_BREEDING_SEASON_LENGTH_DAYS
@@ -613,6 +620,10 @@ class AnimalConfig:
         # ── COW-CALF PARAMETERS ──────────────────────────────────────────────
         cls._initialize_beef_cow_calf_config(animal_config_data)
 
+        # ── STOCKER / BACKGROUNDING PARAMETERS ───────────────────────────────
+        stocker_cfg: dict[str, Any] = animal_config_data.get("stocker", {}) or {}
+        cls._initialize_beef_stocker_config(stocker_cfg)
+
     @classmethod
     def _initialize_beef_cow_calf_config(cls, animal_config_data: dict[str, Any]) -> None:
         """Initialize cow-calf ClassVars from the ``beef_cow_calf`` config block.
@@ -633,6 +644,32 @@ class AnimalConfig:
         DataValidator.validate_beef_cow_calf_config(merged_beef_cfg)
         cls._assign_beef_config_fields(beef_cfg, merged_beef_cfg)
         cls._parse_beef_enum_fields(beef_cfg)
+
+    @classmethod
+    def _initialize_beef_stocker_config(cls, stocker_cfg: dict[str, Any]) -> None:
+        """Initialize stocker ClassVars from the ``stocker`` config block.
+
+        Parameters
+        ----------
+        stocker_cfg : dict[str, Any]
+            The raw ``stocker`` sub-dict from ``animal_config`` (may be empty).
+            Unknown keys are silently ignored; missing keys keep class defaults.
+        """
+        if "entry_weight" in stocker_cfg:
+            cls.stocker_entry_weight = float(stocker_cfg["entry_weight"])
+        if "exit_weight" in stocker_cfg:
+            cls.stocker_exit_weight = float(stocker_cfg["exit_weight"])
+        if "max_days" in stocker_cfg:
+            cls.stocker_max_days = int(stocker_cfg["max_days"])
+        if "target_adg" in stocker_cfg:
+            cls.stocker_target_adg = float(stocker_cfg["target_adg"])
+        if "stocker_diet_system" in stocker_cfg:
+            raw = str(stocker_cfg["stocker_diet_system"])
+            try:
+                cls.stocker_diet_system = StockerDietSystem(raw)
+            except ValueError:
+                valid = sorted(m.value for m in StockerDietSystem)
+                raise ValueError(f"stocker_diet_system must be one of {valid}, got '{raw}'") from None
 
     @classmethod
     def _merge_beef_defaults(cls, beef_cfg: dict[str, Any]) -> dict[str, Any]:
@@ -721,12 +758,6 @@ class AnimalConfig:
             raise ValueError(
                 f"Invalid beef post-weaning destination '{destination_str}'. Expected one of: {valid}."
             ) from None
-        if cls.beef_post_weaning_destination is BeefPostWeaningDestination.STOCKER:
-            raise NotImplementedError(
-                "BeefPostWeaningDestination.STOCKER requires the native stocker "
-                "module (Segment 3) which is not yet implemented. "
-                "Use SELL, REPLACEMENT_HEIFER, or DIRECT_TO_FEEDLOT."
-            )
         reproduction_program_str = str(
             beef_cfg.get("reproduction_program", BeefReproductionProtocol.NATURAL_SERVICE_SEASONAL.value)
         )
