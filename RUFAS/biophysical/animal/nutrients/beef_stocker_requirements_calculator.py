@@ -157,7 +157,7 @@ class BeefStockerRequirementsCalculator(NutritionRequirementsCalculator):
         """
         if not inputs.animal_type.is_beef_stocker:
             raise ValueError(
-                f"BeefStockerRequirementsCalculator only handles stocker types; " f"got {inputs.animal_type.value}."
+                f"BeefStockerRequirementsCalculator only handles stocker types; got {inputs.animal_type.value}."
             )
         if not math.isfinite(inputs.body_weight) or inputs.body_weight <= 0.0:
             raise ValueError(f"body_weight must be positive and finite, got {inputs.body_weight}")

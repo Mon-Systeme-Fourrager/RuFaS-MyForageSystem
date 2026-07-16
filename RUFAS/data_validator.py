@@ -6,6 +6,7 @@ from enum import Enum
 from typing import Any, Callable, Sequence, cast
 
 from RUFAS.biophysical.animal import animal_constants
+from RUFAS.biophysical.animal.data_types.animal_enums import StockerDietSystem
 from RUFAS.util import Aggregator
 
 AGGREGATION_FUNCTIONS: dict[
@@ -1885,8 +1886,6 @@ class DataValidator:
     @staticmethod
     def _validate_stocker_diet_system(config: dict[str, Any]) -> None:
         """Raise ValueError for an unrecognised stocker_diet_system value."""
-        from RUFAS.biophysical.animal.data_types.animal_enums import StockerDietSystem
-
         if "stocker_diet_system" in config and config["stocker_diet_system"] is not None:
             system = str(config["stocker_diet_system"])
             valid = {m.value for m in StockerDietSystem}

@@ -655,16 +655,16 @@ class AnimalConfig:
             The raw ``stocker`` sub-dict from ``animal_config`` (may be empty).
             Unknown keys are silently ignored; missing keys keep class defaults.
         """
-        if "entry_weight" in stocker_cfg:
-            cls.stocker_entry_weight = float(stocker_cfg["entry_weight"])
-        if "exit_weight" in stocker_cfg:
-            cls.stocker_exit_weight = float(stocker_cfg["exit_weight"])
-        if "max_days" in stocker_cfg:
-            cls.stocker_max_days = int(stocker_cfg["max_days"])
-        if "target_adg" in stocker_cfg:
-            cls.stocker_target_adg = float(stocker_cfg["target_adg"])
-        if "stocker_diet_system" in stocker_cfg:
-            raw = str(stocker_cfg["stocker_diet_system"])
+        if (entry_weight := stocker_cfg.get("entry_weight")) is not None:
+            cls.stocker_entry_weight = float(entry_weight)
+        if (exit_weight := stocker_cfg.get("exit_weight")) is not None:
+            cls.stocker_exit_weight = float(exit_weight)
+        if (max_days := stocker_cfg.get("max_days")) is not None:
+            cls.stocker_max_days = int(max_days)
+        if (target_adg := stocker_cfg.get("target_adg")) is not None:
+            cls.stocker_target_adg = float(target_adg)
+        if (raw := stocker_cfg.get("stocker_diet_system")) is not None:
+            raw = str(raw)
             try:
                 cls.stocker_diet_system = StockerDietSystem(raw)
             except ValueError:

@@ -13,7 +13,7 @@ from RUFAS.biophysical.animal.animal_config import AnimalConfig
 from RUFAS.biophysical.animal.animal_genetics.animal_genetics import Genetics
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
 from RUFAS.biophysical.animal.animal_module_reporter import AnimalModuleReporter
-from RUFAS.biophysical.animal.data_types.animal_enums import AnimalStatus, Breed
+from RUFAS.biophysical.animal.data_types.animal_enums import AnimalStatus, Breed, Sex
 from RUFAS.biophysical.animal.data_types.animal_population import AnimalPopulation
 from RUFAS.biophysical.animal.data_types.animal_typed_dicts import NewBornCalfValuesTypedDict
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
@@ -865,35 +865,33 @@ class HerdFactory:
         n_heifers: int = int(stocker_cfg.get("n_heifers", 0))
         entry_weight: float = float(stocker_cfg.get("entry_weight_kg", AnimalConfig.stocker_entry_weight))
         mature_bw: float = AnimalConfig.beef_mature_cow_weight_kg
-        breed_str: str = stocker_cfg.get("breed", Breed.AN.value)
+        breed_str: str = stocker_cfg.get("breed", Breed.AN.name)
+
+        if n_steers < 0 or n_heifers < 0:
+            raise ValueError(
+                f"Stocker cohort counts must be non-negative, got n_steers={n_steers}, n_heifers={n_heifers}"
+            )
+        if not math.isfinite(entry_weight) or entry_weight <= 0:
+            raise ValueError(f"stocker entry_weight must be positive and finite, got {entry_weight}")
 
         animals: list[Animal] = []
-
-        for _ in range(n_steers):
-            steer_data: dict[str, Any] = {
-                "id": AnimalPopulation.next_id(),
-                "breed": breed_str,
-                "animal_type": AnimalType.BEEF_STOCKER_STEER.value,
-                "sex": "STEER",
-                "days_born": 1,
-                "body_weight": entry_weight,
-                "mature_body_weight": mature_bw,
-                "birth_weight": AnimalModuleConstants.BEEF_CALF_BIRTH_WEIGHT_KG,
-            }
-            animals.append(Animal(cast(Any, steer_data), self.time))
-
-        for _ in range(n_heifers):
-            heifer_data: dict[str, Any] = {
-                "id": AnimalPopulation.next_id(),
-                "breed": breed_str,
-                "animal_type": AnimalType.BEEF_STOCKER_HEIFER.value,
-                "sex": "FEMALE",
-                "days_born": 1,
-                "body_weight": entry_weight,
-                "mature_body_weight": mature_bw,
-                "birth_weight": AnimalModuleConstants.BEEF_CALF_BIRTH_WEIGHT_KG,
-            }
-            animals.append(Animal(cast(Any, heifer_data), self.time))
+        animal_configs: list[tuple[int, AnimalType, str]] = [
+            (n_steers, AnimalType.BEEF_STOCKER_STEER, Sex.STEER.name),
+            (n_heifers, AnimalType.BEEF_STOCKER_HEIFER, Sex.FEMALE.name),
+        ]
+        for n_animals, animal_type, sex_str in animal_configs:
+            for _ in range(n_animals):
+                animal_data: dict[str, Any] = {
+                    "id": AnimalPopulation.next_id(),
+                    "breed": breed_str,
+                    "animal_type": animal_type.value,
+                    "sex": sex_str,
+                    "days_born": 1,
+                    "body_weight": entry_weight,
+                    "mature_body_weight": mature_bw,
+                    "birth_weight": AnimalModuleConstants.BEEF_CALF_BIRTH_WEIGHT_KG,
+                }
+                animals.append(Animal(cast(Any, animal_data), self.time))
 
         return animals
 

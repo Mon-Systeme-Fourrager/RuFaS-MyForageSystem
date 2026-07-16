@@ -181,21 +181,77 @@ def test_herd_factory_has_beef_stocker_animals_class_attr() -> None:
 
 
 @pytest.mark.unit
-def test_initialize_beef_stocker_herd_non_dict_config_returns_empty() -> None:
+@pytest.mark.parametrize("bad_value", [None, [], "string", 42])
+def test_initialize_beef_stocker_herd_non_dict_config_returns_empty(bad_value: object) -> None:
     """_initialize_beef_stocker_herd must return [] when config value is not a dict.
 
     Verifies the isinstance(cfg, dict) guard prevents .get() on non-dict
     values such as None, a list, or an int.
+
+    Parameters
+    ----------
+    bad_value : object
+        Non-dict value returned by InputManager.get_data.
+
+    Returns
+    -------
+    None
+
     """
     hf: HerdFactory = HerdFactory.__new__(HerdFactory)
     hf.im = MagicMock()
     hf.time = _make_time_mock()
+    hf.im.get_data.return_value = bad_value
+    result = hf._initialize_beef_stocker_herd()
+    assert result == []
 
-    bad_values: list[object] = [None, [], "string", 42]
-    for bad_value in bad_values:
-        hf.im.get_data.return_value = bad_value
-        result = hf._initialize_beef_stocker_herd()
-        assert result == [], f"Expected [] for bad config value {bad_value!r}, got {result}"
+
+@pytest.mark.unit
+@pytest.mark.parametrize(("n_steers", "n_heifers"), [(-1, 0), (0, -1), (-5, -3)])
+def test_initialize_beef_stocker_herd_raises_on_negative_counts(n_steers: int, n_heifers: int) -> None:
+    """_initialize_beef_stocker_herd must raise ValueError for negative cohort counts.
+
+    Parameters
+    ----------
+    n_steers : int
+        Negative steer count.
+    n_heifers : int
+        Negative heifer count.
+
+    Returns
+    -------
+    None
+
+    """
+    hf: HerdFactory = HerdFactory.__new__(HerdFactory)
+    hf.im = MagicMock()
+    hf.time = _make_time_mock()
+    hf.im.get_data.return_value = {"n_steers": n_steers, "n_heifers": n_heifers, "entry_weight_kg": 250.0}
+    with pytest.raises(ValueError, match="non-negative"):
+        hf._initialize_beef_stocker_herd()
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("bad_weight", [0.0, -10.0, float("nan"), float("inf")])
+def test_initialize_beef_stocker_herd_raises_on_invalid_entry_weight(bad_weight: float) -> None:
+    """_initialize_beef_stocker_herd must raise ValueError for non-positive or non-finite entry_weight.
+
+    Parameters
+    ----------
+    bad_weight : float
+        Invalid entry weight value.
+
+    Returns
+    -------
+    None
+
+    """
+    hf: HerdFactory = HerdFactory.__new__(HerdFactory)
+    hf.im = MagicMock()
+    hf.time = _make_time_mock()
+    hf.im.get_data.return_value = {"n_steers": 1, "n_heifers": 0, "entry_weight_kg": bad_weight}
+    with pytest.raises(ValueError, match="entry_weight"):
+        hf._initialize_beef_stocker_herd()
 
 
 # ---------------------------------------------------------------------------
@@ -592,10 +648,55 @@ def test_daily_nutrients_update_stocker_skips_dairy_phosphorus_chain_when_none_r
     animal: Animal = Animal.__new__(Animal)
     animal.animal_type = AnimalType.BEEF_STOCKER_HEIFER
     animal.nutrients = Nutrients()
-    animal.nutrition_requirements = None
+    animal.nutrition_requirements = None  # type: ignore[assignment]
 
     mocker.patch.object(animal.nutrients, "perform_daily_phosphorus_update")
 
     animal._daily_nutrients_update()
 
     animal.nutrients.perform_daily_phosphorus_update.assert_not_called()  # type: ignore[attr-defined]
+
+
+# ---------------------------------------------------------------------------
+# Group 9 — report_stocker_performance unit test
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_report_stocker_performance_reports_correct_metrics(mocker: MockerFixture) -> None:
+    """report_stocker_performance must compute and report all 6 output variables correctly.
+
+    Mock animal: days_in_stocker=120, stocker_entry_weight=240.0, body_weight=336.0,
+    stocker_cumulative_dmi=960.0.  Expected: total_gain=96.0, adg=0.8, fcr=10.0.
+
+    Parameters
+    ----------
+    mocker : MockerFixture
+        pytest-mock fixture for patching om.add_variable.
+
+    Returns
+    -------
+    None
+
+    """
+    from RUFAS.biophysical.animal.animal import Animal
+    from RUFAS.biophysical.animal.animal_module_reporter import AnimalModuleReporter
+
+    animal: Animal = Animal.__new__(Animal)
+    animal.days_in_stocker = 120
+    animal.stocker_entry_weight = 240.0
+    animal.body_weight = 336.0
+    animal.stocker_cumulative_dmi = 960.0
+
+    add_variable_spy = mocker.patch("RUFAS.biophysical.animal.animal_module_reporter.om.add_variable")
+
+    AnimalModuleReporter.report_stocker_performance(animal, simulation_day=120)
+
+    reported: dict[str, float] = {call.args[0]: call.args[1] for call in add_variable_spy.call_args_list}
+
+    assert reported.get("stocker_days_in_phase") == 120
+    assert reported.get("stocker_total_gain_kg") == pytest.approx(96.0)
+    assert reported.get("stocker_adg_kg_d") == pytest.approx(0.8)
+    assert reported.get("stocker_fcr") == pytest.approx(10.0)
+    assert reported.get("stocker_exit_weight_kg") == pytest.approx(336.0)
+    assert reported.get("stocker_cumulative_dmi_kg") == pytest.approx(960.0)

@@ -44,7 +44,7 @@ def test_stocker_diet_system_drylot_forage_value() -> None:
 @pytest.mark.unit
 def test_stocker_diet_system_invalid_raises_value_error() -> None:
     """Constructing StockerDietSystem from an invalid string must raise ValueError."""
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="is not a valid StockerDietSystem"):
         StockerDietSystem("limit_feed")
 
 

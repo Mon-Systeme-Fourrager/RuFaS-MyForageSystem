@@ -13,7 +13,6 @@ from collections.abc import Generator
 from typing import Any
 
 import pytest
-import pytest_mock
 
 from RUFAS.biophysical.animal.animal_config import AnimalConfig
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
@@ -209,7 +208,7 @@ def test_initialize_stocker_valid_diet_systems_accepted(valid_str: str) -> None:
 
 
 @pytest.mark.unit
-def test_stocker_post_weaning_destination_accepted(mocker: pytest_mock.MockerFixture) -> None:
+def test_stocker_post_weaning_destination_accepted() -> None:
     """BeefPostWeaningDestination.STOCKER must now be accepted without NotImplementedError.
 
     The native stocker module (Segment 3) is now implemented; the placeholder
@@ -220,7 +219,7 @@ def test_stocker_post_weaning_destination_accepted(mocker: pytest_mock.MockerFix
 
 
 @pytest.mark.unit
-def test_stocker_post_weaning_destination_does_not_raise_not_implemented(mocker: pytest_mock.MockerFixture) -> None:
+def test_stocker_post_weaning_destination_does_not_raise_not_implemented() -> None:
     """Calling _parse_beef_enum_fields with 'stocker' must NOT raise NotImplementedError."""
     try:
         AnimalConfig._parse_beef_enum_fields({"post_weaning_destination": BeefPostWeaningDestination.STOCKER.value})

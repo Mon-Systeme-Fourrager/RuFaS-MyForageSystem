@@ -15,7 +15,7 @@ from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstan
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    "attr, expected",
+    ("attr", "expected"),
     [
         ("STOCKER_MIN_ENTRY_WEIGHT_KG", 180.0),  # NRC 2016 minimum weaning weight for stocker placement
         ("STOCKER_TARGET_EXIT_WEIGHT_KG", 350.0),  # NRC 2016 feedlot entry 300-400 kg; 350 kg midpoint

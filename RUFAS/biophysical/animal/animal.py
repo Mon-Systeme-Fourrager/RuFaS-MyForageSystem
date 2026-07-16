@@ -2287,17 +2287,14 @@ class Animal:
             (LIFE_STAGE_CHANGED, None) if an exit condition is met, (REMAIN, None) otherwise.
 
         """
+        exit_event: str | None = None
         if self.body_weight >= AnimalConfig.stocker_exit_weight:
-            self.events.add_event(self.days_born, time.simulation_day, animal_constants.STOCKER_EXIT_WEIGHT)
-            self.events.add_event(self.days_born, time.simulation_day, animal_constants.STOCKER_TO_FEEDLOT)
-            self.animal_type = AnimalType.FEEDLOT_STEER if self.sex == Sex.STEER else AnimalType.FEEDLOT_HEIFER
-            self._initialize_feedlot_animal(
-                {"body_weight": self.body_weight, "mature_body_weight": AnimalConfig.beef_mature_cow_weight_kg}
-            )
-            return AnimalStatus.LIFE_STAGE_CHANGED, None
+            exit_event = animal_constants.STOCKER_EXIT_WEIGHT
+        elif self.days_in_stocker >= AnimalConfig.stocker_max_days:
+            exit_event = animal_constants.STOCKER_MAX_DAYS
 
-        if self.days_in_stocker >= AnimalConfig.stocker_max_days:
-            self.events.add_event(self.days_born, time.simulation_day, animal_constants.STOCKER_MAX_DAYS)
+        if exit_event is not None:
+            self.events.add_event(self.days_born, time.simulation_day, exit_event)
             self.events.add_event(self.days_born, time.simulation_day, animal_constants.STOCKER_TO_FEEDLOT)
             self.animal_type = AnimalType.FEEDLOT_STEER if self.sex == Sex.STEER else AnimalType.FEEDLOT_HEIFER
             self._initialize_feedlot_animal(
