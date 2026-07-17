@@ -655,6 +655,7 @@ class AnimalConfig:
             The raw ``stocker`` sub-dict from ``animal_config`` (may be empty).
             Unknown keys are silently ignored; missing keys keep class defaults.
         """
+        DataValidator.validate_beef_stocker_config(stocker_cfg)
         if (entry_weight := stocker_cfg.get("entry_weight")) is not None:
             cls.stocker_entry_weight = float(entry_weight)
         if (exit_weight := stocker_cfg.get("exit_weight")) is not None:

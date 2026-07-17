@@ -517,11 +517,11 @@ def test_validate_beef_stocker_config_accepts_valid_config() -> None:
     """validate_beef_stocker_config must not raise for a complete valid config."""
     DataValidator.validate_beef_stocker_config(
         {
-            "stocker_entry_weight": 180.0,
-            "stocker_exit_weight": 350.0,
-            "stocker_max_days": 210,
+            "entry_weight": 180.0,
+            "exit_weight": 350.0,
+            "max_days": 210,
             "stocker_diet_system": "pasture",
-            "stocker_target_adg": 0.80,
+            "target_adg": 0.80,
         }
     )
 
@@ -537,11 +537,11 @@ def test_validate_beef_stocker_config_accepts_none_values() -> None:
     """validate_beef_stocker_config must skip checks when values are explicitly None."""
     DataValidator.validate_beef_stocker_config(
         {
-            "stocker_entry_weight": None,
-            "stocker_exit_weight": None,
-            "stocker_max_days": None,
+            "entry_weight": None,
+            "exit_weight": None,
+            "max_days": None,
             "stocker_diet_system": None,
-            "stocker_target_adg": None,
+            "target_adg": None,
         }
     )
 
@@ -549,39 +549,39 @@ def test_validate_beef_stocker_config_accepts_none_values() -> None:
 @pytest.mark.unit
 @pytest.mark.parametrize("bad_val", [float("nan"), float("inf"), -1.0, 0.0])
 def test_validate_beef_stocker_config_rejects_bad_entry_weight(bad_val: float) -> None:
-    """validate_beef_stocker_config must raise ValueError for non-positive or non-finite stocker_entry_weight."""
-    with pytest.raises(ValueError, match="stocker_entry_weight"):
-        DataValidator.validate_beef_stocker_config({"stocker_entry_weight": bad_val})
+    """validate_beef_stocker_config must raise ValueError for non-positive or non-finite entry_weight."""
+    with pytest.raises(ValueError, match="entry_weight"):
+        DataValidator.validate_beef_stocker_config({"entry_weight": bad_val})
 
 
 @pytest.mark.unit
 @pytest.mark.parametrize("bad_val", [float("nan"), float("inf"), -5.0, 0.0])
 def test_validate_beef_stocker_config_rejects_bad_exit_weight(bad_val: float) -> None:
-    """validate_beef_stocker_config must raise ValueError for non-positive or non-finite stocker_exit_weight."""
-    with pytest.raises(ValueError, match="stocker_exit_weight"):
-        DataValidator.validate_beef_stocker_config({"stocker_exit_weight": bad_val})
+    """validate_beef_stocker_config must raise ValueError for non-positive or non-finite exit_weight."""
+    with pytest.raises(ValueError, match="exit_weight"):
+        DataValidator.validate_beef_stocker_config({"exit_weight": bad_val})
 
 
 @pytest.mark.unit
 def test_validate_beef_stocker_config_rejects_exit_weight_not_exceeding_entry() -> None:
-    """validate_beef_stocker_config must raise ValueError when stocker_exit_weight <= stocker_entry_weight."""
-    with pytest.raises(ValueError, match="stocker_exit_weight must exceed"):
-        DataValidator.validate_beef_stocker_config({"stocker_entry_weight": 300.0, "stocker_exit_weight": 200.0})
+    """validate_beef_stocker_config must raise ValueError when exit_weight <= entry_weight."""
+    with pytest.raises(ValueError, match="exit_weight must exceed"):
+        DataValidator.validate_beef_stocker_config({"entry_weight": 300.0, "exit_weight": 200.0})
 
 
 @pytest.mark.unit
 def test_validate_beef_stocker_config_rejects_exit_weight_equal_to_entry() -> None:
     """validate_beef_stocker_config must raise ValueError when exit_weight == entry_weight."""
-    with pytest.raises(ValueError, match="stocker_exit_weight must exceed"):
-        DataValidator.validate_beef_stocker_config({"stocker_entry_weight": 250.0, "stocker_exit_weight": 250.0})
+    with pytest.raises(ValueError, match="exit_weight must exceed"):
+        DataValidator.validate_beef_stocker_config({"entry_weight": 250.0, "exit_weight": 250.0})
 
 
 @pytest.mark.unit
 @pytest.mark.parametrize("bad_days", [0, -1, -100])
 def test_validate_beef_stocker_config_rejects_non_positive_max_days(bad_days: int) -> None:
-    """validate_beef_stocker_config must raise ValueError for stocker_max_days <= 0."""
-    with pytest.raises(ValueError, match="stocker_max_days"):
-        DataValidator.validate_beef_stocker_config({"stocker_max_days": bad_days})
+    """validate_beef_stocker_config must raise ValueError for max_days <= 0."""
+    with pytest.raises(ValueError, match="max_days"):
+        DataValidator.validate_beef_stocker_config({"max_days": bad_days})
 
 
 @pytest.mark.unit
@@ -601,9 +601,9 @@ def test_validate_beef_stocker_config_rejects_invalid_diet_system() -> None:
 @pytest.mark.unit
 @pytest.mark.parametrize("bad_adg", [float("nan"), float("inf"), -0.5, 0.0])
 def test_validate_beef_stocker_config_rejects_bad_target_adg(bad_adg: float) -> None:
-    """validate_beef_stocker_config must raise ValueError for non-positive or non-finite stocker_target_adg."""
-    with pytest.raises(ValueError, match="stocker_target_adg"):
-        DataValidator.validate_beef_stocker_config({"stocker_target_adg": bad_adg})
+    """validate_beef_stocker_config must raise ValueError for non-positive or non-finite target_adg."""
+    with pytest.raises(ValueError, match="target_adg"):
+        DataValidator.validate_beef_stocker_config({"target_adg": bad_adg})
 
 
 # ---------------------------------------------------------------------------
