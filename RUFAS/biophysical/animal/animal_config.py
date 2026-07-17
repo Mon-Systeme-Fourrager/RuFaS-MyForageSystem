@@ -665,12 +665,7 @@ class AnimalConfig:
         if (target_adg := stocker_cfg.get("target_adg")) is not None:
             cls.stocker_target_adg = float(target_adg)
         if (raw := stocker_cfg.get("stocker_diet_system")) is not None:
-            raw = str(raw)
-            try:
-                cls.stocker_diet_system = StockerDietSystem(raw)
-            except ValueError:
-                valid = sorted(m.value for m in StockerDietSystem)
-                raise ValueError(f"stocker_diet_system must be one of {valid}, got '{raw}'") from None
+            cls.stocker_diet_system = StockerDietSystem(str(raw))
 
     @classmethod
     def _merge_beef_defaults(cls, beef_cfg: dict[str, Any]) -> dict[str, Any]:

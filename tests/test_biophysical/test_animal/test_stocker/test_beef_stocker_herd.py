@@ -680,7 +680,7 @@ def test_report_stocker_performance_reports_correct_metrics(mocker: MockerFixtur
 
     """
     from RUFAS.biophysical.animal.animal import Animal
-    from RUFAS.biophysical.animal.animal_module_reporter import AnimalModuleReporter
+    from RUFAS.biophysical.animal.animal_module_reporter import AnimalModuleReporter, om
 
     animal: Animal = Animal.__new__(Animal)
     animal.days_in_stocker = 120
@@ -688,7 +688,7 @@ def test_report_stocker_performance_reports_correct_metrics(mocker: MockerFixtur
     animal.body_weight = 336.0
     animal.stocker_cumulative_dmi = 960.0
 
-    add_variable_spy = mocker.patch("RUFAS.biophysical.animal.animal_module_reporter.om.add_variable")
+    add_variable_spy = mocker.patch.object(om, "add_variable")
 
     AnimalModuleReporter.report_stocker_performance(animal, simulation_day=120)
 

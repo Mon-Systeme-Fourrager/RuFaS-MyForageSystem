@@ -1879,9 +1879,9 @@ class DataValidator:
             and "exit_weight" in config
             and config["entry_weight"] is not None
             and config["exit_weight"] is not None
+            and float(config["exit_weight"]) <= float(config["entry_weight"])
         ):
-            if float(config["exit_weight"]) <= float(config["entry_weight"]):
-                raise ValueError("exit_weight must exceed entry_weight")
+            raise ValueError("exit_weight must exceed entry_weight")
 
     @staticmethod
     def _validate_stocker_diet_system(config: dict[str, Any]) -> None:
