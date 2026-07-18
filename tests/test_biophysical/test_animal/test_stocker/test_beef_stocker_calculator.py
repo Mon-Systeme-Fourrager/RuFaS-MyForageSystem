@@ -17,6 +17,7 @@ import math
 
 import pytest
 
+from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
 from RUFAS.biophysical.animal.data_types.animal_enums import Sex
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 from RUFAS.biophysical.animal.nutrients.beef_cow_calf_requirements_calculator import (
@@ -74,7 +75,7 @@ def _make_benchmark_inputs(**overrides: object) -> StockerRequirementsInputs:
         "target_adg": _BENCHMARK_ADG,
         "temperature_c": _BENCHMARK_TEMP,
         "ne_diet_concentration": _BENCHMARK_NE_DIET,
-        "mud_condition": "none",
+        "mud_condition": AnimalModuleConstants.BEEF_MUD_CONDITION_NONE,
     }
     defaults.update(overrides)
     return StockerRequirementsInputs(**defaults)  # type: ignore[arg-type]
@@ -249,7 +250,7 @@ def test_beef_nrc_calc_raises_not_implemented_for_stocker_steer() -> None:
             target_adg=0.80,
             implant_adg_factor=1.0,
             housing="Open_Lot",
-            mud_condition="none",
+            mud_condition=AnimalModuleConstants.BEEF_MUD_CONDITION_NONE,
             temperature_c=20.0,
             ne_diet_concentration=1.0,
             process_based_phosphorus_requirement=0.0,
@@ -270,7 +271,7 @@ def test_beef_nrc_calc_raises_not_implemented_for_stocker_heifer() -> None:
             target_adg=0.80,
             implant_adg_factor=1.0,
             housing="Open_Lot",
-            mud_condition="none",
+            mud_condition=AnimalModuleConstants.BEEF_MUD_CONDITION_NONE,
             temperature_c=20.0,
             ne_diet_concentration=1.0,
             process_based_phosphorus_requirement=0.0,

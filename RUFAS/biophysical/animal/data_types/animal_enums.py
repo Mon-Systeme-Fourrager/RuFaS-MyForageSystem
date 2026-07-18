@@ -24,7 +24,7 @@ class Sex(Enum):
     STEER = "steer"
 
 
-class BeefPostWeaningDestination(str, Enum):
+class BeefPostWeaningDestination(Enum):
     """Valid destinations for a weaned beef calf."""
 
     SELL = "sell"
@@ -33,7 +33,7 @@ class BeefPostWeaningDestination(str, Enum):
     STOCKER = "stocker"
 
 
-class StockerDietSystem(str, Enum):
+class StockerDietSystem(Enum):
     """Valid diet systems for the stocker/backgrounding phase (NRC 2016 Ch.10)."""
 
     PASTURE = "pasture"

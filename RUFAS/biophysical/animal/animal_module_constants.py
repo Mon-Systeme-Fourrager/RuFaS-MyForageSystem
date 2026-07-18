@@ -627,3 +627,12 @@ class AnimalModuleConstants:
 
     STOCKER_MAX_DAYS: int = 210
     """Maximum backgrounding days before forced exit."""
+
+    BEEF_MUD_CONDITION_NONE: str = "none"
+    """NRC 2016 mud condition: no mud, multiplier = 1.00 (MUD_NEm_MULTIPLIER_NONE)."""
+
+    BEEF_MUD_CONDITION_MILD: str = "mild"
+    """NRC 2016 mud condition: mild mud, multiplier = 1.08 (MUD_NEm_MULTIPLIER_MILD)."""
+
+    BEEF_MUD_CONDITION_SEVERE: str = "severe"
+    """NRC 2016 mud condition: severe mud, multiplier = 1.30 (MUD_NEm_MULTIPLIER_SEVERE)."""

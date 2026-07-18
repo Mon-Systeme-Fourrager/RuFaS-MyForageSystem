@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import pytest
 
+from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
 from RUFAS.biophysical.animal.data_types.animal_enums import Sex
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 from RUFAS.biophysical.animal.nutrients.beef_stocker_requirements_calculator import (
@@ -58,7 +59,7 @@ def _make_inputs(**overrides: object) -> StockerRequirementsInputs:
         "target_adg": _ADG_BASE,
         "temperature_c": _TEMP_THERMO,
         "ne_diet_concentration": _NE_DIET,
-        "mud_condition": "none",
+        "mud_condition": AnimalModuleConstants.BEEF_MUD_CONDITION_NONE,
     }
     defaults.update(overrides)
     return StockerRequirementsInputs(**defaults)  # type: ignore[arg-type]

@@ -62,7 +62,7 @@ class StockerRequirementsInputs:
     target_adg: float
     temperature_c: float
     ne_diet_concentration: float
-    mud_condition: str = field(default="none")
+    mud_condition: str = field(default=AnimalModuleConstants.BEEF_MUD_CONDITION_NONE)
 
 
 class BeefStockerRequirementsCalculator(NutritionRequirementsCalculator):
