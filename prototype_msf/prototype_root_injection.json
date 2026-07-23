@@ -1,0 +1,11 @@
+{
+  "files": {
+    "tasks": {
+      "title": "Task manager data",
+      "description": "Prototype injection scenario — 30 mm application depth, 20% surface remainder.",
+      "path": "prototype_msf/prototype_task_injection.json",
+      "type": "json",
+      "properties": "tasks_properties"
+    }
+  }
+}

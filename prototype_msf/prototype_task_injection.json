@@ -1,0 +1,14 @@
+{
+  "parallel_workers": 1,
+  "tasks": [
+    {
+      "task_type": "SIMULATION_SINGLE_RUN",
+      "metadata_file_path": "prototype_msf/prototype_metadata_injection.json",
+      "output_prefix": "msf_prototype_injection",
+      "log_verbosity": "warnings",
+      "random_seed": 42,
+      "exclude_info_maps": true,
+      "cross_validation_file_paths": []
+    }
+  ]
+}

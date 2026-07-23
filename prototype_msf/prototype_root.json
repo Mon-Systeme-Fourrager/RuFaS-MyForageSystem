@@ -1,0 +1,11 @@
+{
+  "files": {
+    "tasks": {
+      "title": "Task manager data",
+      "description": "Prototype: manure timing expert system — single 35-day run.",
+      "path": "prototype_msf/prototype_task.json",
+      "type": "json",
+      "properties": "tasks_properties"
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "files": {
+    "tasks": {
+      "title": "Task manager data",
+      "description": "Prototype delayed scenario — manure applied day 205 (3 days after day-1 rain event).",
+      "path": "prototype_msf/prototype_task_delayed.json",
+      "type": "json",
+      "properties": "tasks_properties"
+    }
+  }
+}
