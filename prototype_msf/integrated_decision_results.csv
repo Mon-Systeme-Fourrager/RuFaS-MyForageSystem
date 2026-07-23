@@ -1,0 +1,6 @@
+delay_days,decision,reason,compaction_risk,compaction_ratio,sigma_act_kPa,sigma_pc_kPa,nitrate_runoff_kg,n_available_kg,root_zone_n_kg,matric_potential_kPa
+0,NO,Compaction risk RED — Irreversible compaction risk. Do NOT traffic the field.,RED,3.465,92.1,26.6,0.5862,60.249,32.927,5.0
+1,NO,Compaction risk RED — Irreversible compaction risk. Do NOT traffic the field.,RED,3.465,92.1,26.6,0.3266,61.247,33.8,5.0
+2,NO,Compaction risk RED — Irreversible compaction risk. Do NOT traffic the field.,RED,2.024,92.1,45.5,0.3668,61.407,33.84,30.0
+3,NO,Compaction risk RED — Irreversible compaction risk. Do NOT traffic the field.,RED,1.644,92.1,56.0,0.4051,60.457,38.795,60.0
+4,NO,Compaction risk YELLOW — Moderate compaction risk. Consider lighter machinery or waiting for drier conditions.,YELLOW,1.41,92.1,65.3,0.3986,60.46,35.72,100.0
