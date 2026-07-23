@@ -1,5 +1,10 @@
 # MSF Expert System — RUFAS Prototype
 
+> **STATUS: research prototype with known unverified inputs.**
+> Several model parameters are fabricated placeholders and are marked with
+> `TODO:` in the source. See "Known limitations" below before citing any
+> number from this work.
+
 Research prototype for the manure application timing decision layer of the
 Mon Système Fourrager (MSF) Expert System.
 
@@ -43,6 +48,13 @@ Multi-year sweep (6 weather years, 30 simulations) shows the optimal delay varie
 from 0 to 4 days depending on when the next significant rain event occurs. A fixed
 "delay N days" rule would be wrong 5 years out of 6.
 
+**Weather caveat:** these runs use `example_temperate_weather.csv`, the
+generic temperate dataset shipped with RUFAS (simulation config uses
+`FIPS_county_code: 55025` = Dane County, Wisconsin). **This is not Quebec
+weather.** The years labelled 2003/2013/2020 etc. are years in that dataset,
+not Quebec years. Conclusions about how the optimum shifts with rain timing
+are about the *mechanism*; the specific day numbers do not transfer to Quebec.
+
 | Year | Precip (mm) | First rain | Optimal delay |
 |---|---|---|---|
 | 2003 | 40 | day 202 | 0 days |
@@ -80,7 +92,7 @@ approach.
 - **Weather:** Open-Meteo API (real-time) + RUFAS example weather CSV (historical validation)
 - **Manure composition (RT-06):** CRAAQ Guide de référence en fertilisation, Chapitre 10
 - **N availability (RT-07):** CRAAQ CEFM/CEFO/CENtotal coefficients
-- **Compaction:** Carranza-Díaz et al. (UNAL) for σ_act + Keller et al. 2011 for σ_pc
+- **Compaction:** functional form of the sigma_pc PTF is standard in the literature (see compaction_model.py docstring); the specific coefficients used are fabricated placeholders. See "Known limitations" below.
 
 ## References
 
@@ -89,6 +101,24 @@ approach.
 - Neitsch et al. (2011). SWAT Theoretical Documentation
 - Parton et al. (1987). CENTURY model. *Soil Sci. Soc. Am. J.* 51:1173-1179
 - Del Prado et al. (2011). SIMSDAIRY framework. *Sci. Total Environ.*
+
+## Known limitations
+
+| Item | Status |
+|---|---|
+| Weather data | Generic temperate (Wisconsin FIPS), NOT Quebec. Rerun with Open-Meteo archive for Quebec before publication. |
+| sigma_pc coefficients | Fabricated. False citation to "Keller et al. 2011" removed. Absolute values unusable. |
+| Machinery parameters (MF 243) | Invented placeholders. Published values give 47.5 kPa; this model gives ~92 kPa. |
+| Matric potential estimate | Invented rainfall-based heuristic. Should read RUFAS soil water output instead. |
+| `precip_last_7days` in integrated_decision.py | Fabricated. Not read from the weather file. |
+| ODEP loss figures in Literature_Review_Models.md | From a search snippet; source paper not read. |
+
+**Verified and reliable:**
+- All RUFAS simulation outputs (runoff, N availability, root-zone N) — computed by RUFAS
+- Findings from reading the RUFAS source code (no scheduler, no compaction module, injection artefact)
+- The 11 Quebec soil series in `quebec_soils.py` / RT-08 — read directly from Michaud et al. (2020), Tableau 5
+- Bulk density PTF (Perreault et al. 2022) — read from the open-access paper
+- Open-Meteo API responses — live data
 
 ## Status
 

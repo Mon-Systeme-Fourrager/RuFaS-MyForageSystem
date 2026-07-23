@@ -19,6 +19,32 @@ import glob
 # ─────────────────────────────────────────────
 # Machinery profile — typical Quebec dairy farm
 # ─────────────────────────────────────────────
+
+# =============================================================
+# !! WARNING — MACHINERY VALUES ARE NOT VERIFIED !!
+#
+# These parameters are labelled "Massey Ferguson 243" but were NOT taken
+# from the Nebraska Tractor Test Lab report or the Goodyear tyre catalogue.
+# They were invented as plausible-looking placeholders.
+#
+# Carranza-Diaz et al. (UNAL) report the following MEASURED results for the
+# MF 243 Diesel 8-speed using Nebraska Test + Goodyear catalogue data:
+#     Nominal geometric contact area : 0.724 m2
+#     Force                          : 34.423 kN
+#     Applied stress                 : 47.533 kPa
+#     Corrected geometric area       : 0.630 m2  -> 54.635 kPa
+#
+# This model currently produces ~92 kPa — roughly DOUBLE the published value.
+# Two candidate causes, both unresolved:
+#   (a) the invented input parameters are wrong, and/or
+#   (b) this model divides the axle load by 2 for per-wheel stress, while
+#       the published table appears to divide total force by total area
+#       (34.423 / 0.724 = 47.5 kPa exactly, with no factor of 2).
+#
+# TO DO: recover the real Nebraska Test + Goodyear inputs, and confirm with
+# the paper's author whether the published force is per-axle or per-wheel.
+# Until then, treat every stress value from this script as illustrative only.
+# =============================================================
 MACHINERY_PROFILE = {
     "name": "Massey Ferguson 243 + slurry tanker",
     "static_rear_weight_kN": 21.3,
@@ -42,6 +68,11 @@ SOIL_PROFILE = {
 }
 
 
+# TODO: INVENTED HEURISTIC — the precipitation thresholds below (40/20/10/5 mm
+# -> 5/10/30/60/100 kPa) have no published basis. They were made up.
+# RUFAS computes actual per-layer soil water content; the correct fix is to
+# read matric potential from the RUFAS output CSV instead of estimating it
+# from rainfall. See soil layer columns in the simulation output.
 def estimate_matric_potential(precip_last_7days_mm: float) -> float:
     """
     Rough estimate of soil matric potential from recent precipitation.
@@ -125,6 +156,12 @@ def main():
     print()
 
     # Load the 2013 sweep results (from sweep_results.py output)
+    # Columns 1-4 (delay, runoff, n_available, root_zone_n) are REAL — read
+    # from the RUFAS simulation output CSVs.
+    # Column 5 (precip_last_7days_mm) is FABRICATED — it was invented to make
+    # the moisture story work and was never read from the weather file.
+    # TODO: compute real 7-day antecedent precipitation from
+    # input/data/weather/example_temperate_weather.csv for each application day.
     sweep_data = [
         # delay, runoff, n_avail, root_n, precip_7d_before_application
         (0, 0.5862, 60.249, 32.927, 45.0),   # wet — recent rain

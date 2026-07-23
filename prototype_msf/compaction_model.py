@@ -124,14 +124,34 @@ def precompression_stress(
 ) -> float:
     """
     Soil precompression stress (sigma_pc) in kPa.
-    Based on Stettler et al. 2014 pedotransfer function.
-    sigma_pc = f(clay%, matric_potential)
 
-    Reference equation form (Keller et al. 2011, cited in Stettler 2014):
-    log(sigma_pc) = a + b * log(|matric_potential|) + c * clay_content
+    !! WARNING — COEFFICIENTS ARE NOT FROM ANY PUBLICATION !!
 
-    Coefficients from Keller et al. 2011 (valid for mineral soils):
-    a = 0.9, b = 0.3, c = 0.009
+    The functional form log10(sigma_pc) = a + b*log10(|psi|) + c*clay is a
+    standard pedotransfer shape used in the soil compaction literature
+    (Lebert & Horn 1991; Imhoff et al. 2004; Ruecknagel et al. 2012;
+    Severiano et al. 2013; Schjonning & Lamande 2018). The DIRECTION of each
+    effect is well established: sigma_pc increases as soil dries and as bulk
+    density increases.
+
+    The specific coefficients below (a=0.9, b=0.3, c=0.009) were NOT taken
+    from any of those papers. They were fabricated. An earlier version of
+    this file falsely attributed them to "Keller et al. 2011" — that citation
+    was invented and has been removed.
+
+    CONSEQUENCES:
+      - Relative comparisons (soil A vs soil B, wet vs dry) follow the
+        published direction of effects and are qualitatively usable.
+      - ABSOLUTE sigma_pc values are meaningless. Do not report them.
+      - Any GREEN/YELLOW/RED classification from this function is provisional.
+
+    TO DO BEFORE ANY PUBLICATION OR PRESENTATION OF NUMBERS:
+      1. Obtain a published PTF (Schjonning & Lamande 2018 is the best
+         candidate: BD + pF model, R2=0.90 — paywalled, request from authors
+         or via McGill library), OR
+      2. Calibrate against Quebec measurements (IRDA — contact Marc-Olivier
+         Gasser / Catherine Bosse), THEN
+      3. Re-run every downstream analysis.
 
     Args:
         clay_content_pct: Clay content (%)
@@ -145,7 +165,7 @@ def precompression_stress(
     if psi <= 0:
         psi = 1  # avoid log(0)
 
-    # Pedotransfer function (Keller et al. 2011)
+    # TODO: FABRICATED COEFFICIENTS — see warning in docstring above.
     log_sigma_pc = 0.9 + 0.3 * math.log10(psi) + 0.009 * clay_content_pct
     return 10 ** log_sigma_pc
 
