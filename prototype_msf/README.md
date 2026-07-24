@@ -1,9 +1,12 @@
 # MSF Expert System — RUFAS Prototype
 
-> **STATUS: research prototype with known unverified inputs.**
-> Several model parameters are fabricated placeholders and are marked with
-> `TODO:` in the source. See "Known limitations" below before citing any
-> number from this work.
+> **STATUS: research prototype.**
+> All model parameters now come from sources that were read directly; see
+> "Verified sources" below for citations and SHA-256 hashes. Two primary
+> publications behind the sigma_pc model were not obtained and are cited as
+> attributed by the R package that implements them. Verified machinery
+> parameters and Quebec B-horizon soil properties are not yet available, so
+> the compaction module has no worked example. See "Known limitations".
 
 Research prototype for the manure application timing decision layer of the
 Mon Système Fourrager (MSF) Expert System.
@@ -36,7 +39,7 @@ pip install -e . -c constraints-release.txt
 | `run_sweep.py` | Delay sweep 0-4 days, single weather year |
 | `run_multiyr_sweep.py` | Full sweep: 5 delays × 6 weather years = 30 simulations |
 | `analyze_multiyr.py` | Analysis + plot generation for multi-year sweep |
-| `compaction_model.py` | Soil compaction risk (Carranza-Díaz et al. + Stettler et al. 2014) |
+| `compaction_model.py` | Soil compaction risk — sigma_act (Carranza-Díaz et al.; Grecenko 1995), bulk density (Perreault et al. 2022), sigma_pc and risk bands (soilphysics v5.0) |
 | `realtime_recommendation.py` | Live Open-Meteo forecast → RUFAS → recommendation |
 | `verify_depth.py` | Verifies RUFAS records application depth correctly |
 
@@ -92,7 +95,12 @@ approach.
 - **Weather:** Open-Meteo API (real-time) + RUFAS example weather CSV (historical validation)
 - **Manure composition (RT-06):** CRAAQ Guide de référence en fertilisation, Chapitre 10
 - **N availability (RT-07):** CRAAQ CEFM/CEFO/CENtotal coefficients
-- **Compaction:** functional form of the sigma_pc PTF is standard in the literature (see compaction_model.py docstring); the specific coefficients used are fabricated placeholders. See "Known limitations" below.
+- **Compaction:** sigma_act from Carranza-Díaz et al. (UNAL) with contact
+  area from Grecenko (1995); bulk density from Perreault et al. (2022),
+  B-horizon PTF; sigma_pc coefficients and the 0.5/1.1 risk bands from
+  `soilphysics` v5.0 (GPL-2), which attributes them to Schjonning & Lamande
+  (2018) and Stettler et al. (2014) respectively. See "Verified sources"
+  for exact file references and SHA-256 hashes.
 
 ## References
 
