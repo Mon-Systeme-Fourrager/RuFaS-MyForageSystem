@@ -116,9 +116,11 @@ approach.
 |---|---|
 | Weather data | Generic temperate dataset shipped with RUFAS (`FIPS_county_code: 55025` = Dane County, Wisconsin). NOT Quebec. |
 | Machinery parameters | None included. Nebraska Tractor Test Lab and tyre catalogue inputs are needed before any worked example. |
-| Quebec B-horizon soil properties | Not available. RT-08 holds surface texture only; sigma_pc needs subsoil clay, silt and organic carbon. |
+| Quebec B-horizon soil properties | Not integrated. RT-08 holds surface texture only. The IRDA PPC dataset has clay, silt and organic matter by horizon including B — see `irda_soil_database.md`. |
 | Schjonning & Lamande (2018) | Not read. The sigma_pc coefficients are verified against the soilphysics package source instead. |
 | Stettler et al. (2014) | Not read. The 0.5 / 1.1 bands are verified against the package source and its documentation. |
+| Compaction module | Paused. Slava Adamchuk advised against assembling a model from separate published components and has one coming. |
+| Slope and aspect | Not integrated. An API from Jeremie Durand (McGill, MRNF LiDAR) provides both per field polygon — see `slope_aspect_api.md`. |
 
 ## Verified sources
 
@@ -138,6 +140,7 @@ downloaded on 2026-07-24.
 | Terranimo attribution of the bands | `man/soilStrength.Rd` lines 25-26. SHA-256 `63AECFE2...A42E` |
 | Input units (Mg/m3, hPa) | `man/soilStrength2.Rd` lines 16-17. SHA-256 `C4BC2E07...FD1D` |
 | Package version and licence | `DESCRIPTION`. SHA-256 `BC9219AD...1063` |
+| IRDA Quebec soil database (PPC structure) | User guide PDF read. SHA-256 `4C2C3398...7312`. See `irda_soil_database.md`. |
 
 ## Status
 

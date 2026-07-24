@@ -47,6 +47,12 @@ NOT READ
 NOT AVAILABLE
   Verified machinery parameters. No worked example is included; see the
   note at the bottom of this file.
+
+  Verified Quebec B-horizon soil properties. RT-08 holds surface texture
+  only. The IRDA PPC dataset (Proprietes Physico-Chimiques, par couche de
+  sol) has Argile, Limon, Sable and MOS by horizon including B - see
+  prototype_msf/irda_soil_database.md. Bulk density did not appear in the
+  guide's field lists and would need checking against the GeoPackage itself.
 """
 
 import math
