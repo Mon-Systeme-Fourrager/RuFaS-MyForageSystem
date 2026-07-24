@@ -4,9 +4,12 @@
 > All model parameters now come from sources that were read directly; see
 > "Verified sources" below for citations and SHA-256 hashes. Two primary
 > publications behind the sigma_pc model were not obtained and are cited as
-> attributed by the R package that implements them. Verified machinery
-> parameters and Quebec B-horizon soil properties are not yet available, so
-> the compaction module has no worked example. See "Known limitations".
+> attributed by the R package that implements them.
+> The compaction module is paused pending guidance from Slava Adamchuk, who
+> advised against assembling a model from separate published components. It
+> has no worked example: verified machinery parameters are still needed, and
+> the Quebec B-horizon soil data has been identified but not loaded.
+> See "Known limitations".
 
 Research prototype for the manure application timing decision layer of the
 Mon Système Fourrager (MSF) Expert System.
@@ -101,6 +104,9 @@ approach.
   `soilphysics` v5.0 (GPL-2), which attributes them to Schjonning & Lamande
   (2018) and Stettler et al. (2014) respectively. See "Verified sources"
   for exact file references and SHA-256 hashes.
+- **Slope and aspect:** not currently used. An API from Jeremie Durand
+  (McGill) returns both per field polygon from MRNF Quebec LiDAR - see
+  `slope_aspect_api.md`.
 
 ## References
 
