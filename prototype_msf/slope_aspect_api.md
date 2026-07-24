@@ -59,12 +59,19 @@ Downslope compass bearing: 0 = North, increasing clockwise.
     67.5-112.5   E       247.5-292.5  W
     112.5-157.5  SE      292.5-337.5  NW
 
-### STAC item ids appear to be content-addressed
+### STAC ids are derived from the input geometry
 
-The slope and aspect responses for field 36-1 returned
-`lidar_slope_geom_e6df18cd` and `lidar_aspect_geom_e6df18cd` - the same
-suffix. That suggests the suffix hashes the input geometry, which would make
-it a deterministic cache key. Not confirmed with Jeremie.
+Confirmed 2026-07-25 by calling with a second field:
+
+| Field | STAC id | mean_degrees |
+|---|---|---|
+| 36-1 | `lidar_slope_geom_e6df18cd` | 1.298465 |
+| 32-1 | `lidar_slope_geom_6f481eb4` | 1.248993 |
+
+Different polygon, different 8-character suffix. The suffix is a
+deterministic function of the input geometry, so it is usable as a cache key
+on the client side: one call per field per polygon version, reusable until
+the boundary changes.
 
 ## Latency
 
@@ -72,12 +79,14 @@ The documentation Jeremie provided says the first call per field takes a few
 seconds for slope and a few minutes for aspect, with subsequent calls served
 from cache.
 
-Measured 2026-07-25, MSF field 36-1 (18.87 ha, Saint-Zotique):
+Measured, MSF fields in Saint-Zotique, 2026-07-25:
 
-| Product | Elapsed |
-|---|---|
-| slope | 7.08 s |
-| aspect | 6.27 s |
+| Call | Elapsed | Note |
+|---|---|---|
+| 36-1 slope, first call | 7.08 s | cold |
+| 36-1 aspect, first call | 6.27 s | after the slope call on the same geometry |
+| 32-1 slope, first call | 8.39 s | cold, different geometry |
+| 36-1 slope, re-sent as MultiPolygon | 1.37 s | served from cache |
 
 Aspect was far faster than documented. Two possible reasons, neither
 confirmed: the DTM tile may already have been cached server-side, or the
@@ -121,15 +130,33 @@ clay plain of the St Lawrence lowlands. On a field this flat, aspect carries
 little physical meaning for snowmelt or radiation, though the value is
 coherent.
 
-Raw responses: jeremie_slope_36-1.json, jeremie_aspect_36-1.json
-(kept outside the repo, in C:\Proyectos).
+Second field, 32-1 (12.47 ha, adjacent to 36-1): slope 1.25 degrees.
 
-### Geometry format
+Raw responses kept in C:\Proyectos: jeremie_slope_36-1.json,
+jeremie_aspect_36-1.json, jeremie_slope_32-1.json,
+jeremie_slope_36-1_multipolygon.json
+
+### Geometry format - MultiPolygon works directly
 
 MSF stores field boundaries as MultiPolygon in EPSG:4326. The API example
-shows Polygon. Field 36-1 has a single ring, so it was unwrapped by one
-nesting level before sending and the call succeeded. Whether the API accepts
-MultiPolygon directly, or a genuinely multi-ring field, was not tested.
+shows Polygon, but both are accepted.
+
+Field 36-1 sent both ways, 2026-07-25:
+
+| Sent as | STAC id | mean_degrees | Elapsed |
+|---|---|---|---|
+| Polygon (unwrapped) | `lidar_slope_geom_e6df18cd` | 1.298465371131897 | 7.08 s |
+| MultiPolygon (as stored) | `lidar_slope_geom_e6df18cd` | 1.298465371131897 | 1.37 s |
+
+Identical STAC id and identical value. The API canonicalises the geometry
+before hashing, so the two formats collapse to the same cache entry - this
+is not a hash of the raw JSON string.
+
+Practical consequence: MSF polygons can be sent as-is, with no unwrapping
+step in the client.
+
+A field with genuinely multiple disjoint rings was not tested; both fields
+used here have a single ring.
 
 ## Status
 
