@@ -106,19 +106,30 @@ approach.
 
 | Item | Status |
 |---|---|
-| Weather data | Generic temperate (Wisconsin FIPS), NOT Quebec. Rerun with Open-Meteo archive for Quebec before publication. |
-| sigma_pc coefficients | Fabricated. False citation to "Keller et al. 2011" removed. Absolute values unusable. |
-| Machinery parameters (MF 243) | Invented placeholders. Published values give 47.5 kPa; this model gives ~92 kPa. |
-| Matric potential estimate | Invented rainfall-based heuristic. Should read RUFAS soil water output instead. |
-| `precip_last_7days` in integrated_decision.py | Fabricated. Not read from the weather file. |
-| ODEP loss figures in Literature_Review_Models.md | From a search snippet; source paper not read. |
+| Weather data | Generic temperate dataset shipped with RUFAS (`FIPS_county_code: 55025` = Dane County, Wisconsin). NOT Quebec. |
+| Machinery parameters | None included. Nebraska Tractor Test Lab and tyre catalogue inputs are needed before any worked example. |
+| Quebec B-horizon soil properties | Not available. RT-08 holds surface texture only; sigma_pc needs subsoil clay, silt and organic carbon. |
+| Schjonning & Lamande (2018) | Not read. The sigma_pc coefficients are verified against the soilphysics package source instead. |
+| Stettler et al. (2014) | Not read. The 0.5 / 1.1 bands are verified against the package source and its documentation. |
 
-**Verified and reliable:**
-- All RUFAS simulation outputs (runoff, N availability, root-zone N) — computed by RUFAS
-- Findings from reading the RUFAS source code (no scheduler, no compaction module, injection artefact)
-- The 11 Quebec soil series in `quebec_soils.py` / RT-08 — read directly from Michaud et al. (2020), Tableau 5
-- Bulk density PTF (Perreault et al. 2022) — read from the open-access paper
-- Open-Meteo API responses — live data
+## Verified sources
+
+Verified means the source was read directly. Hashes are of the files as
+downloaded on 2026-07-24.
+
+| Source | How verified |
+|---|---|
+| RUFAS simulation outputs | Computed by RUFAS |
+| RUFAS source-code findings | Files read directly |
+| `quebec_soils.py` — 11 soil series | Michaud, A.R., M.A. Niang, A. Blais-Gagnon, W. Huertas (2020). *Caracterisation hydrologique des cours d'eau de Saint-Zotique*. IRDA. Tableau 5. PDF read. |
+| Bulk density PTFs (A and B horizon) | Perreault, S., El Alem, A., Chokmani, K., Cambouris, A.N. (2022). *Agronomy* 12(2):526, Tables A1-A3. PDF read. |
+| sigma_act — dynamic axle load | Carranza-Diaz, A.K. et al., Universidad Nacional de Colombia. Paper read. |
+| sigma_act — contact area | Grecenko, A. (1995). *J. Terramechanics* 32(6):325-333, via the above. |
+| sigma_pc coefficients | `soilphysics` v5.0 (GPL-2), `R/soilStrength2.R` line 7. SHA-256 `7F7200EF...15B3` |
+| Risk bands 0.5 / 1.1 | `soilphysics` v5.0, `R/soilStrength.R` lines 76-77. SHA-256 `832AE88D...C21A` |
+| Terranimo attribution of the bands | `man/soilStrength.Rd` lines 25-26. SHA-256 `63AECFE2...A42E` |
+| Input units (Mg/m3, hPa) | `man/soilStrength2.Rd` lines 16-17. SHA-256 `C4BC2E07...FD1D` |
+| Package version and licence | `DESCRIPTION`. SHA-256 `BC9219AD...1063` |
 
 ## Status
 
