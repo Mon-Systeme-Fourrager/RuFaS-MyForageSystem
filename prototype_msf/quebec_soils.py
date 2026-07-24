@@ -9,16 +9,13 @@ assigned using clay-content thresholds that were not taken from any
 CRAAQ publication. The same correction was applied to RT-08 in Supabase.
 
 Python mirror of RT-08 (public.ref_soil_series_quebec in Supabase).
-Used by compaction_model.py and integrated_decision.py for sigma_pc calculation.
+Used by compaction_model.py for sigma_pc calculation. Note that sigma_pc
+needs B-horizon (subsoil) properties; this table holds surface texture,
+so it cannot yet feed the compaction model directly.
 
 Hydrologic groups (A-D) follow USDA-SCS classification:
   A = low runoff potential (sandy, high infiltration)
   D = high runoff potential (clayey, low infiltration)
-
-CRAAQ groups (G1/G2/G3) used by RT-07 CENtotal coefficients:
-  G1 = clay soils (>30% clay)
-  G2 = loam soils (15-30% clay)
-  G3 = sandy soils (<15% clay)
 """
 
 QUEBEC_SOILS = {
