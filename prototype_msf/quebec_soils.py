@@ -4,6 +4,10 @@ Source: Michaud, A.R., M.A. Niang, A. Blais-Gagnon, W. Huertas (2020).
         Caracterisation hydrologique des cours d'eau de Saint-Zotique.
         Rapport final. IRDA. Tableau 5.
 
+A craaq_group field (G1/G2/G3) was removed on 2026-07-24. It had been
+assigned using clay-content thresholds that were not taken from any
+CRAAQ publication. The same correction was applied to RT-08 in Supabase.
+
 Python mirror of RT-08 (public.ref_soil_series_quebec in Supabase).
 Used by compaction_model.py and integrated_decision.py for sigma_pc calculation.
 
@@ -22,7 +26,6 @@ QUEBEC_SOILS = {
         "name_fr": "Shefford loam graveleux",
         "name_en": "Shefford gravelly loam",
         "hydrologic_group": "B",
-        "craaq_group": "G3",
         "clay_pct": 13.0,
         "silt_pct": 41.0,
         "sand_pct": 46.0,
@@ -38,7 +41,6 @@ QUEBEC_SOILS = {
         "name_fr": "Sainte-Rosalie loam argileux",
         "name_en": "Sainte-Rosalie clay loam",
         "hydrologic_group": "C",
-        "craaq_group": "G1",
         "clay_pct": 32.0,
         "silt_pct": 37.0,
         "sand_pct": 30.0,
@@ -54,7 +56,6 @@ QUEBEC_SOILS = {
         "name_fr": "Sorel sable",
         "name_en": "Sorel sand",
         "hydrologic_group": "A",
-        "craaq_group": "G3",
         "clay_pct": 3.0,
         "silt_pct": 7.0,
         "sand_pct": 91.0,
@@ -70,7 +71,6 @@ QUEBEC_SOILS = {
         "name_fr": "Saint-Zotique loam sableux",
         "name_en": "Saint-Zotique sandy loam",
         "hydrologic_group": "D",
-        "craaq_group": "G3",
         "clay_pct": 10.0,
         "silt_pct": 31.0,
         "sand_pct": 59.0,
@@ -86,7 +86,6 @@ QUEBEC_SOILS = {
         "name_fr": "Soulanges loam sableux",
         "name_en": "Soulanges sandy loam",
         "hydrologic_group": "C",
-        "craaq_group": "G3",
         "clay_pct": 7.0,
         "silt_pct": 33.0,
         "sand_pct": 60.0,
@@ -102,7 +101,6 @@ QUEBEC_SOILS = {
         "name_fr": "Sainte-Rosalie argile",
         "name_en": "Sainte-Rosalie clay",
         "hydrologic_group": "C",
-        "craaq_group": "G1",
         "clay_pct": 45.0,
         "silt_pct": 27.0,
         "sand_pct": 28.0,
@@ -118,7 +116,6 @@ QUEBEC_SOILS = {
         "name_fr": "Courval loam sableux",
         "name_en": "Courval sandy loam",
         "hydrologic_group": "C",
-        "craaq_group": "G3",
         "clay_pct": 13.0,
         "silt_pct": 16.0,
         "sand_pct": 70.0,
@@ -134,7 +131,6 @@ QUEBEC_SOILS = {
         "name_fr": "Saint-Amable sable",
         "name_en": "Saint-Amable sand",
         "hydrologic_group": "C",
-        "craaq_group": "G3",
         "clay_pct": 3.0,
         "silt_pct": 7.0,
         "sand_pct": 90.0,
@@ -150,7 +146,6 @@ QUEBEC_SOILS = {
         "name_fr": "Beaudette loam limoneux",
         "name_en": "Beaudette silt loam",
         "hydrologic_group": "C",
-        "craaq_group": "G2",
         "clay_pct": 18.0,
         "silt_pct": 56.0,
         "sand_pct": 26.0,
@@ -166,7 +161,6 @@ QUEBEC_SOILS = {
         "name_fr": "Saint-Bernard loam sableux",
         "name_en": "Saint-Bernard sandy loam",
         "hydrologic_group": "B",
-        "craaq_group": "G3",
         "clay_pct": 12.0,
         "silt_pct": 27.0,
         "sand_pct": 61.0,
@@ -182,7 +176,6 @@ QUEBEC_SOILS = {
         "name_fr": "Saint-Urbain argile",
         "name_en": "Saint-Urbain clay",
         "hydrologic_group": "B",
-        "craaq_group": "G1",
         "clay_pct": 47.0,
         "silt_pct": 31.0,
         "sand_pct": 21.0,
@@ -198,13 +191,22 @@ QUEBEC_SOILS = {
 
 
 def get_craaq_group(clay_pct: float) -> str:
-    """Map clay content to CRAAQ soil group (G1/G2/G3) for RT-07 coefficients."""
-    if clay_pct >= 30.0:
-        return "G1"
-    elif clay_pct >= 15.0:
-        return "G2"
-    else:
-        return "G3"
+    """
+    Not implemented.
+
+    An earlier version assigned CRAAQ soil groups using clay thresholds
+    (>30% G1, 15-30% G2, <15% G3). Those thresholds were not taken from
+    any CRAAQ publication and have been removed. The same correction was
+    applied to RT-08 in Supabase (ref_soil_series_quebec.craaq_group is
+    now NULL).
+
+    The CRAAQ group is needed to select CENtotal coefficients in RT-07.
+    Obtain the official definition from CRAAQ before reimplementing.
+    """
+    raise NotImplementedError(
+        "CRAAQ soil group thresholds are not available from a cited source. "
+        "See the docstring."
+    )
 
 
 def get_soil(soil_key: str) -> dict:
@@ -218,7 +220,7 @@ def get_soil(soil_key: str) -> dict:
 def list_soils_by_clay() -> list:
     """List all soils sorted by clay content (highest first)."""
     return sorted(
-        [(k, v["name_fr"], v["clay_pct"], v["craaq_group"])
+        [(k, v["name_fr"], v["clay_pct"])
          for k, v in QUEBEC_SOILS.items()],
         key=lambda x: x[2],
         reverse=True
@@ -231,12 +233,11 @@ if __name__ == "__main__":
     print("Python mirror of RT-08 (public.ref_soil_series_quebec)")
     print("=" * 75)
     print()
-    print(f"{'Soil series':<32} {'Clay %':<8} {'Hydro':<7} {'CRAAQ':<7} {'Area (ha)':<10}")
+    print(f"{'Soil series':<32} {'Clay %':<8} {'Hydro':<7} {'Area (ha)':<10}")
     print("-" * 75)
-    for key, name, clay, group in list_soils_by_clay():
+    for key, name, clay in list_soils_by_clay():
         soil = QUEBEC_SOILS[key]
-        print(f"{name:<32} {clay:<8.1f} {soil['hydrologic_group']:<7} {group:<7} {soil['area_ha']:<10.2f}")
+        print(f"{name:<32} {clay:<8.1f} {soil['hydrologic_group']:<7} {soil['area_ha']:<10.2f}")
     print("-" * 75)
     print()
-    print("CRAAQ groups: G1 = clay (>30%), G2 = loam (15-30%), G3 = sandy (<15%)")
     print("Hydrologic groups: A = low runoff, D = high runoff (USDA-SCS)")
