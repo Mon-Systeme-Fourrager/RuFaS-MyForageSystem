@@ -109,6 +109,10 @@ These mirror the RuFaS wiki — see
   `rufas-e2e-testing` skill.
 - **Design-doc-driven for large work** — a change ≈ 1 engineer-month or more needs
   a design doc agreed before coding. Use the `rufas-design-doc` skill.
+- **Data pipeline reuse** — when integrating external data sources into RUFAS inputs,
+  reuse the ingestion patterns established by Rami (AWS state machines, Lambda
+  functions, S3 buckets). Do not invent parallel pipeline architectures
+  (per Maxime Leduc, 2026-07-28 weekly).
 
 ## Branching & PRs
 
@@ -117,7 +121,8 @@ Upstream flow: feature branch → `dev` → `test` → `main`. **This fork integ
 
 - Keep PRs **≤ ~200 lines** where possible (larger = "large", needs design review).
 - PR description follows **what / why / how** (concise) + a **Test Plan**; link the
-  GitHub issue; no temp/unused files; rebase before review.
+  GitHub issue; no temp/unused files. **Never rebase** — preserve branch history for
+  auditability (per Maxime Leduc, 2026-07-28 weekly, reconfirmed 2026-07-29).
 - **Two reviews** required (ideally one SME + one software engineer) + all CI green
   before merge; the author merges and deletes the branch.
 
