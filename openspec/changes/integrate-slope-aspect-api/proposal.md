@@ -33,9 +33,11 @@ support field-specific decisions.
   within a sweep does not repeat API calls (cold call ~7 s, cached
   ~1.4 s).
 
-- Add a **field CSV writer** that materializes API responses into the
-  `angle_of_slope` and `angle_of_slope_aspect` columns of the RUFAS
-  Zone CSV, consumed by `input_manager` via the existing CSV pipeline.
+- Add a **soil JSON writer** that materializes the slope value from
+  the API into the `average_subbasin_slope` field of the soil JSON
+  file that RUFAS reads (`input/data/soil/example_soil.json`).
+  Aspect is stored in the Supabase cache but not written to RUFAS
+  input — RUFAS does not consume aspect today.
 
 - Add **unit conversion logic** — the API returns slope in degrees;
   RUFAS SCS-CN uses fraction (m/m); Terranimo uses percent. Conversion
@@ -52,12 +54,13 @@ support field-specific decisions.
 
 ## Not in scope
 
-- **Modifying RUFAS core.** The hardcoded
-  `SLOPE_FACTOR_FOR_LAND = 0.05` in `Soil/Water` remains untouched in
-  this change. See Open Questions.
-- **Aspect-driven radiation modeling.** RUFAS validates aspect but
-  does not appear to consume it in current equations. Feeding aspect
-  for future use only.
+- **Modifying RUFAS core.** This change only writes into an existing 
+  RUFAS input file (`example_soil.json`). No changes to Python code 
+  under `RUFAS/`.
+- **Aspect consumption in RUFAS.** RUFAS does not have any aspect
+  input, variable, or equation today. The API returns aspect and 
+  the service stores it in the Supabase cache for future specs, 
+  but this change does not write aspect to RUFAS input.
 - **Terranimo compaction integration.** Waiting for external model
   decision.
 - **Multi-objective optimization.** Requires compaction model first.
@@ -73,8 +76,8 @@ support field-specific decisions.
   with response caching by STAC ID.
 - `prototype_msf/field_geometry_loader.py` — loads and validates a
   field geometry (GeoJSON) from disk.
-- `prototype_msf/field_csv_writer.py` — materializes API responses
-  into RUFAS Zone CSV columns.
+- `prototype_msf/soil_json_writer.py` — writes the slope value into
+  `average_subbasin_slope` of the soil JSON that RUFAS reads.
 - `prototype_msf/unit_conversions.py` — centralizes slope degree ↔
   fraction ↔ percent conversion.
 - `prototype_msf/tests/test_geomatic_client.py` — unit tests with
@@ -143,26 +146,20 @@ conversion must happen exactly once, at a documented boundary.
 signature that touches slope, and add tests that catch silent
 misuse.
 
-**Q2 — Hardcoded slope constant.**
-RUFAS Soil/Water uses a hardcoded `SLOPE_FACTOR_FOR_LAND = 0.05`
-constant. We do not know whether this is a deliberate scientific
-simplification or a leftover placeholder. If it is a placeholder,
-this change delivers the input but does not consume it in the
-affected equations — a follow-up spec would replace the constant.
-*Resolution path:* email Kevin Panke-Buisse (USDA) — he confirmed
-the RUFAS modules are stable and can clarify design intent.
+**Q2 — Empirical sensitivity of RUFAS outputs to slope.**
+RUFAS consumes `average_subbasin_slope` in the MUSLE erosion
+equation (verified in `soil_erosion.py:86`). Before implementing,
+run a two-variant experiment to quantify how much sediment yield
+and runoff change between slope=0.05 and slope=0.30 (same year,
+same everything else). This confirms the input-to-output link
+empirically and provides a baseline for validation.
 
-**Q3 — CSV input propagation.**
-RUFAS accepts `angle_of_slope` as a Zone-level input via CSV, but
-we have not confirmed that changing this value actually affects
-simulation outputs. It is possible the CSV value is loaded but
-silently overridden by the constant of Q2.
-*Resolution path:* controlled experiment before implementation —
-two identical simulations with different slope values (e.g. 0.05
-vs 0.30), compare outputs. If results differ, CSV input is
-respected. If identical, the change scope must expand.
+*Resolution path:* controlled experiment against the real 
+interface — copy `example_soil.json` to two variants, change 
+`average_subbasin_slope` in each, run `prototype_msf/run_prototype.py` 
+twice, diff the outputs in `output/CSVs/`.
 
-**Q4 — Client-side cache location.**
+**Q3 — Client-side cache location.**
 STAC IDs are geometry-derived and Jérémie's server caches responses
 across sessions. Adding a Supabase-side cache would avoid 6–8 s
 cold calls on the first invocation for a field. Cost: added
@@ -171,14 +168,14 @@ schema complexity.
 if we anticipate ≥10 fields per farm and each field is queried in
 multiple sweeps per year.
 
-**Q5 — Fallback for fields without LiDAR coverage.**
+**Q4 — Fallback for fields without LiDAR coverage.**
 Fields outside Quebec or recently added farms may have no MRNF
 LiDAR record.
 *Resolution path:* fail-fast with an explicit error and log the
 gap. Do not silently default to flat-field — that would violate
 the no-fabrication rule.
 
-**Q6 — Disjoint MultiPolygon behavior.**
+**Q5 — Disjoint MultiPolygon behavior.**
 Fields with multiple non-contiguous rings have not been tested
 against the API.
 *Resolution path:* controlled test with a synthetic MultiPolygon
@@ -196,6 +193,11 @@ before production use.
 - Vadas & Powell 2013 — SurPhos (RUFAS phosphorus module)
 - prototype_msf/slope_aspect_api.md (commit c34d86b) — verified
   API behavior
+- RUFAS/biophysical/field/soil/soil_data.py — SoilData dataclass, 
+  source of truth for slope inputs (lines 199, 226)
+- RUFAS/biophysical/field/soil/soil_erosion.py:86 — MUSLE 
+  topographic factor, sole consumer of average_subbasin_slope 
+  and slope_length
 - jeremie_slope_36-1.json, jeremie_aspect_36-1.json,
   jeremie_slope_32-1.json — authoritative API responses
   (C:\Proyectos\)
@@ -203,6 +205,6 @@ before production use.
 
 ## Design ready
 
-Once Q1–Q6 are answered and the SLOPE_FACTOR_FOR_LAND experiment
-(Q3) confirms input propagation, this change is ready for
-implementation via the tasks in `tasks.md`.
+Once Q1–Q5 are answered and the empirical sensitivity experiment 
+(Q2) quantifies the response of RUFAS outputs to slope, this change 
+is ready for implementation via the tasks in `tasks.md`.
