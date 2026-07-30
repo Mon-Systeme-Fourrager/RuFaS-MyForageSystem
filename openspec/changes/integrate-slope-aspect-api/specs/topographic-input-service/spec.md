@@ -18,7 +18,7 @@ Polygon and MultiPolygon GeoJSON as input.
   aspect (degrees), and STAC ID
 - **AND** the service SHALL write the response to the Supabase
   `topographic_cache` table
-- **AND** the returned values SHALL be available for CSV writing
+- **AND** the returned values SHALL be available for writing to the soil JSON
 
 #### Scenario: Field with cached STAC ID
 - **WHEN** the simulation runner receives a field geometry whose
@@ -38,16 +38,16 @@ Polygon and MultiPolygon GeoJSON as input.
 ### Requirement: Convert slope units at documented boundaries
 
 The service SHALL convert slope units at documented boundaries. The
-API returns slope in degrees. RUFAS SCS-CN expects slope as a
-fraction (m/m). The conversion MUST happen exactly once, at the
-boundary between the API response and the RUFAS CSV writer, in a
-centralized module.
+API returns slope in degrees. RUFAS MUSLE (soil_erosion.py:86)
+consumes `average_subbasin_slope` as a fraction (m/m). The
+conversion MUST happen exactly once, at the boundary between the
+API response and the soil JSON writer, in a centralized module.
 
 #### Scenario: Degrees to fraction conversion for RUFAS
-- **WHEN** the service prepares a Zone CSV for RUFAS
+- **WHEN** the service prepares the soil JSON for RUFAS
 - **THEN** `degrees_to_fraction(slope_deg)` SHALL be called
-- **AND** the written `angle_of_slope` column SHALL contain the
-  fraction value
+- **AND** the written `average_subbasin_slope` field SHALL contain
+  the fraction value
 - **AND** function signatures touching slope SHALL document the
   expected unit
 
@@ -105,8 +105,8 @@ no-fabrication rule for scientific inputs.
   past simulation
 - **THEN** the STAC ID in the log SHALL match a row in the Supabase
   cache
-- **AND** the cache row values SHALL match the CSV values written
-  for that simulation
+- **AND** the cache row values SHALL match the values written to
+  the soil JSON for that simulation
 
 ### Requirement: Integrate with the existing ingestion pipeline pattern
 
