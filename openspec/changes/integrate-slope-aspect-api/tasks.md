@@ -2,14 +2,18 @@
 
 ## Pre-implementation validation
 
-- [ ] Run the SLOPE_FACTOR_FOR_LAND experiment (proposal Q3):
-  - [ ] Prepare two Zone CSVs identical except for `angle_of_slope`
-        (0.05 vs 0.30)
-  - [ ] Run RUFAS with each CSV, same field otherwise
-  - [ ] Compare outputs and record result in this file
-- [ ] Email Kevin Panke-Buisse (USDA) about SLOPE_FACTOR_FOR_LAND
-      design intent (Q2)
-- [ ] Review with Bilal — pipeline reuse patterns (Q6)
+- [ ] Run the empirical sensitivity experiment (proposal Q2):
+  - [ ] Copy `input/data/soil/example_soil.json` to two variants
+        differing only in `average_subbasin_slope` (0.05 vs 0.30, m/m)
+  - [ ] Wire two `prototype_root_slope*.json` chains pointing to each
+        variant
+  - [ ] Run `python prototype_msf/run_prototype.py` twice, moving
+        `prototype_msf/output/` aside between runs
+  - [ ] Compare `output/CSVs/msf_prototype_saved_variables_*.csv` on
+        MUSLE sediment yield, nitrate runoff, per-layer nitrogen at
+        day 30; record the sensitivity coefficient in this file
+- [ ] Review with Bilal — pipeline reuse patterns (per D4 and
+      Maxime's 2026-07-28 directive)
 - [ ] Confirm Supabase cache table schema with Maxime (D2)
 - [ ] Get written approval from Slava and Maxime on this proposal
       before opening the implementation branch
@@ -52,18 +56,23 @@
   - [ ] Load GeoJSON from disk
   - [ ] Validate geometry is Polygon or MultiPolygon
   - [ ] Compute geometry hash for audit trail
-- [ ] Create `prototype_msf/field_csv_writer.py`:
-  - [ ] Read RUFAS Zone CSV template
-  - [ ] Populate `angle_of_slope` and `angle_of_slope_aspect` from
-        `TopographicResult`
-  - [ ] Convert degrees → fraction per D1
-  - [ ] Write final CSV to expected path
+- [ ] Create `prototype_msf/soil_json_writer.py`:
+  - [ ] Read the RUFAS soil JSON template
+        (`input/data/soil/example_soil.json` or a per-run copy)
+  - [ ] Convert `TopographicResult.slope_deg` → fraction (m/m) per D1
+  - [ ] Set `average_subbasin_slope` to the converted value; leave
+        `slope_length` unchanged
+  - [ ] Aspect is NOT written to the JSON (RUFAS has no aspect
+        input); aspect stays in the Supabase cache for future specs
+  - [ ] Write the modified JSON to the expected path (either
+        overwriting a per-run copy or to a new file, per the
+        runner's convention)
 
 ## Simulation runners
 
 - [ ] Modify `prototype_msf/run_prototype.py`:
   - [ ] Add `--field-geometry` CLI argument
-  - [ ] Orchestrate: load geometry → call API → write CSV → run RUFAS
+  - [ ] Orchestrate: load geometry → call API → write soil JSON → run RUFAS
   - [ ] Preserve backward compatibility (parameter is optional)
 - [ ] Modify `prototype_msf/run_prototype_delayed.py` — same pattern
 - [ ] Modify `prototype_msf/run_prototype_injection.py` — same pattern
@@ -96,7 +105,8 @@
 - [ ] Cache hit rate ≥ 90% on multi-year sweep of same field
 - [ ] `run_multiyr_sweep.py` completes without errors on
       Saint-Zotique 36-1
-- [ ] Output CSV contains real slope value, not zero and not 0.05
+- [ ] Written soil JSON contains the real API-derived slope value,
+      not zero and not the default 0.05
 - [ ] No new mypy or Black errors introduced in `prototype_msf/`
 - [ ] `openspec validate integrate-slope-aspect-api --strict` passes
 
@@ -114,4 +124,6 @@
 - [ ] Update the canonical spec in `openspec/specs/` with the deltas
 - [ ] Announce completion in weekly meeting
 - [ ] Note any follow-up specs discovered during implementation
-      (especially if Q2 result requires touching RUFAS core)
+      (especially if the empirical sensitivity result (Q2) suggests
+      RUFAS core changes are needed to unlock more of the slope
+      signal)
