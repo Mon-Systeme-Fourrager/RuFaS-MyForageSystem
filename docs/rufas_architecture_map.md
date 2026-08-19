@@ -646,7 +646,7 @@ recorded and not pursued further. Where it actually lives:
 | Economics module | **none** — no `economics.py` exists; the "E" is represented by input data only |
 | Input data | `input/data/EEE/econ/` — commodity prices, capital costs (CSV) |
 | Metadata | `input/metadata/EEE/econ_metadata.json` |
-| Toggle | `run_eee` argument key (`RUFAS/task_manager.py:842`) |
+| Toggle | `run_eee` argument key (`RUFAS/task_manager.py:854`) — **inert**, see §7.5 |
 
 The only occurrence of "econom" inside `RUFAS/biophysical/**` is the phrase "harvestable economic
 yield" in two docstrings in `field/crop/crop_management.py` — unrelated to cost modelling.
@@ -863,7 +863,9 @@ tractor_implement}`, `tractor → tractor_implement`. Five modules, five interna
   reached through the `OutputManager` singleton.
 - **Outputs:** returns `None`; writes four `om.add_log` entries bracketing the two estimation runs.
 - **Public interface:** `estimate_all()` — the entire class.
-- **Called by:** `RUFAS/simulation_engine.py:306`.
+- **Called by:** `RUFAS/simulation_engine.py:306`, **unconditionally** — the call sits in no
+  `if` branch. The apparent alternative entry via `task_manager.py`'s `run_eee` flag is dead
+  code (§7.5), so this is the sole live invocation.
 - **Calls:** `EmissionsEstimator().estimate_farmgrown_feed_emissions()`, then
   `EnergyEstimator.estimate_all()` — emissions strictly before energy, sequentially, no return
   values consumed.
@@ -887,7 +889,7 @@ tractor_implement}`, `tractor → tractor_implement`. Five modules, five interna
 
 - **What it does:** class docstring: _"Estimates energy consumption for the various field
   operations on the farm."_ In practice diesel consumption from field operations.
-- **Inputs:** field-operation events (`FieldOperationEvent`, `TractorSize`) from
+- **Inputs:** the `FieldOperationEvent` and `TractorSize` **enum members** from
   `data_structures.tillage_implements`, plus `HarvestOperation` from `field/crop`.
 - **Outputs:** returns `None`; reports via `OutputManager`.
 - **Public interface:** `estimate_all`, `report_diesel_consumption`,
@@ -960,9 +962,20 @@ biophysical packages. `FieldOperationEvent`, `TillageImplement`, `TractorSize`, 
 `FieldOperationEvent` / `TillageImplement`". `emissions.py` couples through a different
 `data_structures` module (`feed_storage_to_animal_connection`, for `RUFAS_ID`).
 
+**All four are plain `Enum` subclasses, not data-carrying objects.** The whole file is 42 lines:
+each class extends `EnumWithStrOverride` (an `Enum` with `__str__` returning `self.value`) and
+declares only string members — `TillageImplement` 6, `TractorSize` 3 (`Small`/`Medium`/`Large`),
+`OperationType` 9, `FieldOperationEvent` 5 (`Harvest`, `Fertilizer Application`,
+`Manure Application`, `Planting`, `Tilling`). They carry **no payload** — no field size, depth,
+date, or machine mass. Any such quantity is looked up separately by the consumer, typically
+through `InputManager`.
+
 **Consequence for Terranimo:** soil compaction is a function of field operations and soil state.
 EEE already consumes field operations through `tillage_implements` while touching no soil module,
-so `data_structures` — not `field/soil` — is the precedent for a new cross-cutting consumer.
+so `data_structures` — not `field/soil` — is the precedent for a new cross-cutting consumer. But
+note the limit: because these enums carry no payload, `tillage_implements` alone supplies only the
+*kind* of operation. Wheel load, tyre pressure, and pass count — the inputs a compaction model
+needs — are not on this interface today and would have to be added or sourced elsewhere.
 
 ### 7.5 Ambiguities and risks (EEE)
 
@@ -981,14 +994,33 @@ so `data_structures` — not `field/soil` — is the precedent for a new cross-c
 - **Two public methods have no caller outside EEE:** `report_diesel_consumption` and
   `calculate_diesel_consumption` are reached only from within `energy.py`. Same name-based caveat
   as §5 — tests are out of scope for this count.
-- **A stale TODO points at work already done.** `RUFAS/task_manager.py:842` carries
-  `# TODO update path to 'RUFAS.EEE.EEE_manager' when EEE is finalized and moved in either PR #2524
-  or #1299`. **Both PRs are merged upstream** (`RuminantFarmSystems/RuFaS`): #2524
+- **The `run_eee` path in `task_manager.py` is dead code.** Verified by reading
+  `RUFAS/task_manager.py:854-859`:
+
+  ```python
+  854          if args.get("run_eee", False):
+  855              pass
+  856              # TODO update path to `RUFAS.EEE.EEE_manager` when EEE is finalized and moved in either PR #2524 or #1299
+  857              # TODO update to be able to run EEE once farmgrown feed emissions are finalized #2580
+  858              # eee_manager_module = import_module("RUFAS.routines.EEE.EEE_manager")
+  859              # eee_manager_module.EEEManager.estimate_all()
+  ```
+
+  The branch body is `pass`; the actual invocation is commented out and still names the **old**
+  pre-move path `RUFAS.routines.EEE.EEE_manager`. Setting `run_eee=True` therefore does nothing —
+  contradicting the method's own docstring at `task_manager.py:842`, which states that when
+  `run_eee` is `True` "the Emissions, Energy, and Economics estimators are executed before the
+  remaining post-processing steps".
+- **EEE actually runs unconditionally from one site.** `RUFAS/simulation_engine.py:306` calls
+  `EEEManager.estimate_all()` with no enclosing conditional. That is the only live entry point;
+  `run_eee` is not the toggle it appears to be.
+- **Three upstream PRs are referenced, two merged and one still open in the comments.** #2524
   _"[EEE][FeedManager] Update Calculation Method for Purchased Feed Emissions"_ merged 2025-10-08,
-  which performed the relocation of EEE out of `routines/` to directly under `RUFAS/`; and #1299
-  _"Diesel Consumption"_ merged 2025-10-30, which introduced `Tractor`, `TractorImplement`, and
-  `energy.py`. The layout mapped in §7 is therefore the post-move, finalized one — the comment is
-  outdated and the TODO can be closed.
+  performing the relocation of EEE out of `routines/` to directly under `RUFAS/`; #1299
+  _"Diesel Consumption"_ merged 2025-10-30, introducing `Tractor`, `TractorImplement`, and
+  `energy.py`; and **#2580**, cited at line 857 as gating "farmgrown feed emissions", whose status
+  was not checked. The layout mapped in §7 is the post-move one, so the #2524/#1299 half of the
+  TODO can be closed; the #2580 half remains open.
 - **Harvest diesel figures are flagged as unvalidated upstream.** PR #1299's own description
   notes: _"The consumption for Harvest events is thousands of times larger than other operations,
   a unit conversion is probably being wrong somewhere."_ This affects `energy.py` and the
