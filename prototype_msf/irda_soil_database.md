@@ -39,8 +39,7 @@ PPC-EESSAQ dataset.
 
   Organic carbon as a separate field - the guide gives MOS "calculee avec
   un facteur 1,724", which leaves open whether the stored column is OC or
-  OM. Note that 1.724 is the same Van Bemmelen factor used in
-  compaction_model.organic_carbon_from_om().
+  OM. 1.724 is the conventional Van Bemmelen factor.
 
 ## Download formats
 
@@ -49,9 +48,10 @@ coverage, 680 sheets at 1:20 000. Free.
 
 ## Why this was sought
 
-sigma_pc in compaction_model.py needs B-horizon clay, silt and organic
-carbon. RT-08 (ref_soil_series_quebec) holds surface texture only. PPC
-covers the B horizon and would close that gap.
+Precompression-stress (sigma_pc) estimation needs B-horizon clay, silt and
+organic carbon. RT-08 (ref_soil_series_quebec) holds surface texture only.
+PPC covers the B horizon and would close that gap. The requirement stands
+regardless of which compaction model is eventually used.
 
 ## Status
 

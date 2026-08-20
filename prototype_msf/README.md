@@ -42,7 +42,6 @@ pip install -e . -c constraints-release.txt
 | `run_sweep.py` | Delay sweep 0-4 days, single weather year |
 | `run_multiyr_sweep.py` | Full sweep: 5 delays × 6 weather years = 30 simulations |
 | `analyze_multiyr.py` | Analysis + plot generation for multi-year sweep |
-| `compaction_model.py` | Soil compaction risk — sigma_act (Carranza-Díaz et al.; Grecenko 1995), bulk density (Perreault et al. 2022), sigma_pc and risk bands (soilphysics v5.0) |
 | `realtime_recommendation.py` | Live Open-Meteo forecast → RUFAS → recommendation |
 | `verify_depth.py` | Verifies RUFAS records application depth correctly |
 
@@ -123,10 +122,26 @@ approach.
 | Weather data | Generic temperate dataset shipped with RUFAS (`FIPS_county_code: 55025` = Dane County, Wisconsin). NOT Quebec. |
 | Machinery parameters | None included. Nebraska Tractor Test Lab and tyre catalogue inputs are needed before any worked example. |
 | Quebec B-horizon soil properties | Not integrated. RT-08 holds surface texture only. The IRDA PPC dataset has clay, silt and organic matter by horizon including B — see `irda_soil_database.md`. |
-| Schjonning & Lamande (2018) | Not read. The sigma_pc coefficients are verified against the soilphysics package source instead. |
-| Stettler et al. (2014) | Not read. The 0.5 / 1.1 bands are verified against the package source and its documentation. |
-| Compaction module | Paused. Slava Adamchuk advised against assembling a model from separate published components and has one coming. |
+| Schjonning & Lamande (2018) | Not read. This is why `compaction_model.py` was removed — see Removed modules. |
+| Stettler et al. (2014) | Not read. Same reason. |
+| Compaction module | **Removed** 2026-08-20, not merely paused — see Removed modules. Slava Adamchuk had already advised against assembling a model from separate published components and has one coming. |
 | Slope and aspect | Not integrated. An API from Jeremie Durand (McGill, MRNF LiDAR) provides both per field polygon — see `slope_aspect_api.md`. |
+
+## Removed modules
+
+| Module | Removed | Why |
+|---|---|---|
+| `compaction_model.py` | 2026-08-20 | The sigma_pc coefficients and the 0.5 / 1.1 risk bands were taken from the `soilphysics` package source, which attributes them to Schjonning & Lamande (2018) *Geoderma* 320:115-125 and Stettler et al. (2014) *Landtechnik* 69(3):132-138. **Neither primary source was read directly.** Per the project rule that sources must be read directly, the module could not be validated, so it was removed rather than left in place to be mistaken for verified work. |
+| `compare_contact_models.py` | 2026-08-20 | Imported `contact_area_geometric`, `contact_area_experimental` and `applied_stress` from the above. |
+
+Both remain recoverable from git history at `dd8d908`, `a3fe008`, `9db8997`,
+`9ffaed5`, `b930699`. The sources that *were* read directly — Perreault et al.
+(2022), Grecenko (1995), the Carranza-Diaz et al. UNAL paper, and the
+`soilphysics` package files themselves (SHA-256 recorded) — are unaffected by
+this removal and are listed below.
+
+The compaction gap is expected to be filled either by the Terranimo API
+integration (current sprint) or by the model Slava Adamchuk has coming.
 
 ## Verified sources
 

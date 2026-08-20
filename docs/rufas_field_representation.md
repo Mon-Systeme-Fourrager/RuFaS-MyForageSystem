@@ -397,23 +397,38 @@ must either carry a fraction of the area or be explicitly weighted at aggregatio
 | Applicators hold one `soil` reference each | `field.py:126, 135, 139` | **high** for option B |
 | `soil_layers` is depth-ordered and adjacent | `percolation.py`, `soil_data.py:532` sort | **fatal** for option C |
 
-### 7.5 There is already a compaction prototype
+### 7.5 There was a compaction prototype — removed 2026-08-20
 
-`prototype_msf/compaction_model.py` (440 lines) implements an independent compaction chain —
+> **Update, 2026-08-20:** `prototype_msf/compaction_model.py` and its dependent
+> `prototype_msf/compare_contact_models.py` were **removed** in the commit that carries this
+> note. The sigma_pc coefficients and 0.5 / 1.1 risk bands came from the `soilphysics` package
+> source, which attributes them to Schjonning & Lamande (2018) and Stettler et al. (2014) —
+> **neither primary source was read directly**, so under the project rule that sources must be
+> read directly the module could not be validated. Both files remain in git history at
+> `dd8d908`, `a3fe008`, `9db8997`, `9ffaed5`, `b930699`. The section below is retained as a
+> record of what the prototype established; it describes code that is no longer in the tree.
+
+`prototype_msf/compaction_model.py` (440 lines) implemented an independent compaction chain —
 machinery → dynamic axle load (Carranza-Díaz et al.) → contact area (Grecenko 1995) → applied
-stress → bulk density (Perreault et al. 2022) → precompression stress → GREEN/YELLOW/RED. It is
+stress → bulk density (Perreault et al. 2022) → precompression stress → GREEN/YELLOW/RED. It was
 **not imported by anything under `RUFAS/`**.
 
-Two things this settles for the Terranimo mapping:
+Two things it settled for the Terranimo mapping — both still true, since they concern what data
+exists rather than which model consumes it:
 
-- **`evaluate_compaction_risk`** takes exactly the variables the mapping listed as missing from
+- **`evaluate_compaction_risk`** took exactly the variables the mapping listed as missing from
   RUFAS: `total_diameter_m` (D), `static_load_radius_m` (SLR), `section_width_m` (W),
   `inflation_pressure_kPa` (ptyre), `tire_load_kN` (FW), `matric_suction_hPa`,
-  `organic_matter_pct`. The machinery data gap is real for RUFAS but **already solved in the
-  prototype layer**.
-- **`organic_carbon_from_om`** uses the van Bemmelen factor 1.724 explicitly. Assumption 1 in
-  `docs/rufas_terranimo_io_mapping.md` §4.3 is therefore already settled by project code — the
-  factor is in use, just outside `RUFAS/`.
+  `organic_matter_pct`. The machinery data gap is real for RUFAS, and it was the *shape* of that
+  input set — not the removed implementation — that the mapping relies on.
+- **`organic_carbon_from_om`** used the van Bemmelen factor 1.724 explicitly. Assumption 1 in
+  `docs/rufas_terranimo_io_mapping.md` §4.3 was settled by that usage; with the module removed,
+  the factor is now documented only in `prototype_msf/irda_soil_database.md` (the IRDA guide
+  gives MOS "calculee avec un facteur 1,724"), so the assumption still holds but its in-code
+  precedent is gone.
+
+The compaction gap is expected to be filled by the Terranimo API integration (current sprint) or
+by the model Slava Adamchuk has coming.
 
 ---
 

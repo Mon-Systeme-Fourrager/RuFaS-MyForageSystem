@@ -9,9 +9,8 @@ assigned using clay-content thresholds that were not taken from any
 CRAAQ publication. The same correction was applied to RT-08 in Supabase.
 
 Python mirror of RT-08 (public.ref_soil_series_quebec in Supabase).
-Used by compaction_model.py for sigma_pc calculation. Note that sigma_pc
-needs B-horizon (subsoil) properties; this table holds surface texture,
-so it cannot yet feed the compaction model directly.
+Note that this table holds surface texture only; B-horizon (subsoil)
+properties are not included.
 
 Hydrologic groups (A-D) follow USDA-SCS classification:
   A = low runoff potential (sandy, high infiltration)
