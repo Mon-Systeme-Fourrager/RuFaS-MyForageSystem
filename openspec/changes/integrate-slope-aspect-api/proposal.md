@@ -39,6 +39,10 @@ support field-specific decisions.
   Aspect is stored in the Supabase cache but not written to RUFAS
   input — RUFAS does not consume aspect today.
 
+  Note: the path above names the template that supplies the field
+  set. Actual writes happen to a per-run copy (see tasks.md task 3),
+  never the tracked example.
+
 - Add **unit conversion logic** — the API returns slope in degrees;
   RUFAS SCS-CN uses fraction (m/m); Terranimo uses percent. Conversion
   is centralized in the service to prevent silent misuse downstream.
