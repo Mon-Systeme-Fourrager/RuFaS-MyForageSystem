@@ -20,6 +20,7 @@ from RUFAS.biophysical.animal.animal_config import AnimalConfig
 from RUFAS.biophysical.animal.data_types.animal_combination import AnimalCombination
 from RUFAS.biophysical.animal.data_types.animal_enums import StockerDietSystem
 from RUFAS.biophysical.animal.data_types.nutrition_data_structures import NutritionRequirements
+from RUFAS.biophysical.animal.ration import ration_optimizer
 from RUFAS.biophysical.animal.ration.ration_manager import RationManager
 from RUFAS.biophysical.animal.ration.ration_optimizer import RationOptimizer
 from RUFAS.data_structures.feed_storage_to_animal_connection import Feed, NutrientStandard
@@ -87,7 +88,7 @@ def test_get_beef_stocker_ration_pasture(mocker: MockerFixture) -> None:
     RationManager.beef_stocker_pasture_ration = {_FEED_A: 100.0}
     mocker.patch.object(AnimalConfig, "stocker_diet_system", StockerDietSystem.PASTURE)
     result = RationManager.get_beef_stocker_ration(MagicMock())
-    assert result == {_FEED_A: 100.0}
+    assert result == {_FEED_A: pytest.approx(100.0)}
 
 
 @pytest.mark.unit
@@ -96,7 +97,7 @@ def test_get_beef_stocker_ration_drylot_forage(mocker: MockerFixture) -> None:
     RationManager.beef_stocker_drylot_ration = {_FEED_B: 100.0}
     mocker.patch.object(AnimalConfig, "stocker_diet_system", StockerDietSystem.DRYLOT_FORAGE)
     result = RationManager.get_beef_stocker_ration(MagicMock())
-    assert result == {_FEED_B: 100.0}
+    assert result == {_FEED_B: pytest.approx(100.0)}
 
 
 @pytest.mark.unit
@@ -114,7 +115,7 @@ def test_get_beef_stocker_ration_returns_shallow_copy(mocker: MockerFixture) -> 
     mocker.patch.object(AnimalConfig, "stocker_diet_system", StockerDietSystem.PASTURE)
     result = RationManager.get_beef_stocker_ration(MagicMock())
     result[_FEED_A] = 0.0
-    assert RationManager.beef_stocker_pasture_ration[_FEED_A] == 100.0
+    assert RationManager.beef_stocker_pasture_ration[_FEED_A] == pytest.approx(100.0)
 
 
 # ---------------------------------------------------------------------------
@@ -239,7 +240,7 @@ def test_handle_failed_constraints_accepts_beef_stocker(mocker: MockerFixture) -
     optimizer.set_constraints(dummy_config)
     optimizer.beef_stocker_constraints = [{"fun": MagicMock(__name__="ndf_lower")}]
     mocker.patch.object(optimizer, "make_ration_from_solution", return_value={})
-    mocker.patch("RUFAS.biophysical.animal.ration.ration_optimizer.OutputManager", return_value=MagicMock())
+    mocker.patch.object(ration_optimizer, "OutputManager", return_value=MagicMock())
     mocker.patch.object(RationOptimizer, "find_failed_constraints", return_value=[])
 
     solution = MagicMock(spec=OptimizeResult)

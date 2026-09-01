@@ -636,3 +636,7 @@ class AnimalModuleConstants:
 
     BEEF_MUD_CONDITION_SEVERE: str = "severe"
     """NRC 2016 mud condition: severe mud, multiplier = 1.30 (MUD_NEm_MULTIPLIER_SEVERE)."""
+
+    BEEF_DMI_MIN_NE_CONCENTRATION: float = 0.95
+    """Minimum NEm concentration (Mcal/kg DM) applied before division in DMI Eq.10-5.
+    This is a numerical guard against a near-zero denominator, not an NRC 2016 threshold."""

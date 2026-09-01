@@ -226,7 +226,7 @@ def test_initialize_beef_stocker_herd_raises_on_negative_counts(n_steers: int, n
     hf: HerdFactory = HerdFactory.__new__(HerdFactory)
     hf.im = MagicMock()
     hf.time = _make_time_mock()
-    hf.im.get_data.return_value = {"n_steers": n_steers, "n_heifers": n_heifers, "entry_weight_kg": 250.0}
+    hf.im.get_data.return_value = {"num_steers": n_steers, "num_heifers": n_heifers, "entry_weight_kg": 250.0}
     with pytest.raises(ValueError, match="non-negative"):
         hf._initialize_beef_stocker_herd()
 
@@ -249,7 +249,7 @@ def test_initialize_beef_stocker_herd_raises_on_invalid_entry_weight(bad_weight:
     hf: HerdFactory = HerdFactory.__new__(HerdFactory)
     hf.im = MagicMock()
     hf.time = _make_time_mock()
-    hf.im.get_data.return_value = {"n_steers": 1, "n_heifers": 0, "entry_weight_kg": bad_weight}
+    hf.im.get_data.return_value = {"num_steers": 1, "num_heifers": 0, "entry_weight_kg": bad_weight}
     with pytest.raises(ValueError, match="entry_weight"):
         hf._initialize_beef_stocker_herd()
 
@@ -367,11 +367,12 @@ def test_add_animal_to_new_array_routes_stocker_heifer_to_heifer_list() -> None:
 
 
 @pytest.mark.unit
-def test_process_daily_herd_updates_calls_reporter_for_stocker_sold(mocker: MockerFixture) -> None:
-    """report_stocker_performance must be called for stocker animals exiting via SOLD (max-days path).
+def test_process_daily_herd_updates_does_not_call_reporter_for_stocker_sold(mocker: MockerFixture) -> None:
+    """report_stocker_performance must NOT be called for stocker animals returning SOLD status.
 
-    Verifies the reporter fires from _process_daily_herd_updates, not from animal.py,
-    when _perform_daily_routines_for_animals returns the animal in the sold list.
+    Stocker exits via weight-target or max-days both return LIFE_STAGE_CHANGED (→ feedlot).
+    There is no direct-sale path; the sold list is structurally unreachable for stockers.
+    Only graduated (LIFE_STAGE_CHANGED) animals trigger the reporter.
     """
     sold_steer: MagicMock = _make_animal_mock(AnimalType.BEEF_STOCKER_STEER, AnimalStatus.SOLD)
 
@@ -391,7 +392,7 @@ def test_process_daily_herd_updates_calls_reporter_for_stocker_sold(mocker: Mock
 
     hm._process_daily_herd_updates(_make_time_mock(simulation_day=10))
 
-    reporter_spy.assert_called_once_with(sold_steer, 10)
+    reporter_spy.assert_not_called()
 
 
 @pytest.mark.unit
@@ -423,16 +424,17 @@ def test_process_daily_herd_updates_calls_reporter_for_stocker_graduated(mocker:
 
 
 @pytest.mark.unit
-def test_process_daily_herd_updates_reporter_called_for_both_sold_and_graduated(mocker: MockerFixture) -> None:
-    """report_stocker_performance must fire for BOTH the sold animal AND the graduated animal.
+def test_process_daily_herd_updates_reporter_called_for_graduated_from_both_cohorts(mocker: MockerFixture) -> None:
+    """report_stocker_performance must fire for graduated animals from both steer and heifer cohort lists.
 
-    Verifies the union stocker_sold + stocker_graduated is iterated — not just one branch.
+    Verifies the stocker loop iterates both beef_stocker_steers and beef_stocker_heifers
+    and reports every LIFE_STAGE_CHANGED (→ feedlot) graduation.
     """
-    sold_steer: MagicMock = _make_animal_mock(AnimalType.BEEF_STOCKER_STEER, AnimalStatus.SOLD)
+    grad_steer: MagicMock = _make_animal_mock(AnimalType.BEEF_STOCKER_STEER, AnimalStatus.LIFE_STAGE_CHANGED)
     grad_heifer: MagicMock = _make_animal_mock(AnimalType.BEEF_STOCKER_HEIFER, AnimalStatus.LIFE_STAGE_CHANGED)
 
     hm = _make_herd_manager_stub(
-        beef_stocker_steers=[sold_steer],
+        beef_stocker_steers=[grad_steer],
         beef_stocker_heifers=[grad_heifer],
     )
 
@@ -440,7 +442,7 @@ def test_process_daily_herd_updates_reporter_called_for_both_sold_and_graduated(
 
     def _side_effect(time: Any, animals: list[Any]) -> tuple[list[Any], list[Any], list[Any], list[Any], list[Any]]:
         if animals is hm.beef_stocker_steers:
-            return ([], [sold_steer], [], [], [])
+            return ([grad_steer], [], [], [], [])
         if animals is hm.beef_stocker_heifers:
             return ([grad_heifer], [], [], [], [])
         return empty_5
@@ -453,7 +455,7 @@ def test_process_daily_herd_updates_reporter_called_for_both_sold_and_graduated(
 
     assert reporter_spy.call_count == 2, f"Expected 2 reporter calls, got {reporter_spy.call_count}"
     called_animals = [c.args[0] for c in reporter_spy.call_args_list]
-    assert sold_steer in called_animals
+    assert grad_steer in called_animals
     assert grad_heifer in called_animals
 
 

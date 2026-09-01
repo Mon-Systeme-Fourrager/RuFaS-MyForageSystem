@@ -724,7 +724,6 @@ class HerdManager:
             AnimalModuleReporter.report_cow_calf_performance(animal, time.simulation_day)
 
         stocker_graduated: list[Animal] = []
-        stocker_sold: list[Animal] = []
         for _group_name, animals in [
             ("beef_stocker_steers", self.beef_stocker_steers),
             ("beef_stocker_heifers", self.beef_stocker_heifers),
@@ -733,8 +732,7 @@ class HerdManager:
             daily_herd_updates.graduated_animals += grads
             daily_herd_updates.removed_animals += sold
             stocker_graduated += grads
-            stocker_sold += sold
-        for animal in stocker_sold + stocker_graduated:
+        for animal in stocker_graduated:
             AnimalModuleReporter.report_stocker_performance(animal, time.simulation_day)
 
         return daily_herd_updates

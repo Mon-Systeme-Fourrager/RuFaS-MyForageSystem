@@ -207,6 +207,15 @@ def test_stocker_weaning_calf_weaned_event_fired() -> None:
     assert animal.events.get_most_recent_date(animal_constants.CALF_WEANED) != -1
 
 
+@pytest.mark.unit
+def test_stocker_weaning_stocker_arrival_event_fired() -> None:
+    """STOCKER_ARRIVAL event must be recorded in animal.events on stocker weaning."""
+    animal = _make_weaning_calf(sex=Sex.MALE)
+    AnimalConfig.beef_post_weaning_destination = BeefPostWeaningDestination.STOCKER
+    animal._beef_weaning_event(_mock_time(simulation_day=200))
+    assert animal.events.get_most_recent_date(animal_constants.STOCKER_ARRIVAL) != -1
+
+
 # ---------------------------------------------------------------------------
 # Group 2: End-to-end via _beef_calf_life_stage_update
 # ---------------------------------------------------------------------------

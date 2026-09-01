@@ -861,15 +861,15 @@ class HerdFactory:
         if not isinstance(stocker_cfg, dict) or not stocker_cfg:
             return []
 
-        n_steers: int = int(stocker_cfg.get("n_steers", 0))
-        n_heifers: int = int(stocker_cfg.get("n_heifers", 0))
+        n_steers: int = int(stocker_cfg.get("num_steers", 0))
+        n_heifers: int = int(stocker_cfg.get("num_heifers", 0))
         entry_weight: float = float(stocker_cfg.get("entry_weight_kg", AnimalConfig.stocker_entry_weight))
         mature_bw: float = AnimalConfig.beef_mature_cow_weight_kg
         breed_str: str = stocker_cfg.get("breed", Breed.AN.name)
 
         if n_steers < 0 or n_heifers < 0:
             raise ValueError(
-                f"Stocker cohort counts must be non-negative, got n_steers={n_steers}, n_heifers={n_heifers}"
+                f"Stocker cohort counts must be non-negative, got num_steers={n_steers}, num_heifers={n_heifers}"
             )
         if not math.isfinite(entry_weight) or entry_weight <= 0:
             raise ValueError(f"stocker entry_weight must be positive and finite, got {entry_weight}")

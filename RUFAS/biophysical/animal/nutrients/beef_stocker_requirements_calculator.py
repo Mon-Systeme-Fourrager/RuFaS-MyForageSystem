@@ -186,8 +186,14 @@ class BeefStockerRequirementsCalculator(NutritionRequirementsCalculator):
             No pregnancy intercept and no lactation term — stocker animals
             neither gestate nor lactate.
 
+        Notes
+        -----
+        Dietary NEm concentration is clamped to a minimum of
+        BEEF_DMI_MIN_NE_CONCENTRATION before division. This is a numerical
+        guard against a near-zero denominator, not an NRC 2016 threshold.
+
         """
-        ne_c: float = max(ne_diet_concentration, 0.95)
+        ne_c: float = max(ne_diet_concentration, AnimalModuleConstants.BEEF_DMI_MIN_NE_CONCENTRATION)
         bw075: float = body_weight**0.75
         ne_m_intake: float = bw075 * (
             AnimalModuleConstants.BEEF_DMI_COW_NE_QUAD * ne_c**2 + AnimalModuleConstants.BEEF_DMI_COW_NE_LINEAR * ne_c

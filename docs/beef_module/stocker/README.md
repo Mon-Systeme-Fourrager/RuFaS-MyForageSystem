@@ -25,6 +25,16 @@ They belong to the BeefGEM management layer and will be addressed in separate, l
    Separate pen allocation by sex, or different target ADG and exit weights per sex, is not
    implemented.
 
+6. **No post-exit feedlot simulation** — When a stocker animal reaches its exit condition it
+   becomes `FEEDLOT_STEER` or `FEEDLOT_HEIFER` and is placed in `HerdManager.feedlot_animals`.
+   That list is not currently iterated in the daily herd loop, so animals stop being simulated at
+   the point of graduation. This is a pre-existing feedlot limitation, not introduced by this
+   module, and resolves when the feedlot daily loop is wired.
+
+7. **No direct sale from the stocker phase** — Animals exit only by transferring to the feedlot.
+   Selling directly off grass at the end of the backgrounding period is not modelled and is a
+   future-PR candidate.
+
 ## Diet System Valid Values
 
 `stocker_diet_system` (validated by `DataValidator.validate_beef_stocker_config`):

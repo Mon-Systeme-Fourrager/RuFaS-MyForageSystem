@@ -2519,6 +2519,7 @@ class Animal:
         if destination is BeefPostWeaningDestination.STOCKER:
             new_type = AnimalType.BEEF_STOCKER_STEER if self.sex == Sex.MALE else AnimalType.BEEF_STOCKER_HEIFER
             self.animal_type = new_type
+            self.events.add_event(self.days_born, time.simulation_day, animal_constants.STOCKER_ARRIVAL)
             self._initialize_stocker_animal(
                 {
                     "body_weight": self.body_weight,

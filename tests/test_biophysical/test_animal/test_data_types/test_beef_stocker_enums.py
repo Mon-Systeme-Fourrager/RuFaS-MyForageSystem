@@ -16,7 +16,6 @@ from RUFAS.biophysical.animal.animal_constants import (
     STOCKER_ARRIVAL,
     STOCKER_EXIT_WEIGHT,
     STOCKER_MAX_DAYS,
-    STOCKER_SOLD,
     STOCKER_TO_FEEDLOT,
 )
 from RUFAS.biophysical.animal.animal_grouping_scenarios import AnimalGroupingScenario
@@ -246,9 +245,3 @@ def test_stocker_max_days_constant() -> None:
 def test_stocker_to_feedlot_constant() -> None:
     """STOCKER_TO_FEEDLOT event string must be 'stocker_transferred_to_feedlot'."""
     assert STOCKER_TO_FEEDLOT == "stocker_transferred_to_feedlot"
-
-
-@pytest.mark.unit
-def test_stocker_sold_constant() -> None:
-    """STOCKER_SOLD event string must be 'stocker_sold_direct'."""
-    assert STOCKER_SOLD == "stocker_sold_direct"

@@ -196,6 +196,11 @@ class RationOptimizer:
         ]
         self.beef_cow_constraints = list(self.heifer_constraints)
         self.beef_replacement_constraints = list(self.heifer_constraints)
+        # Stocker rations are forage-based (pasture or drylot forage), where NDF
+        # routinely exceeds the upper bound calibrated for concentrate-based
+        # dairy and heifer rations. Retaining NDF_constraint_upper would make
+        # legitimate forage-only stocker rations infeasible. The lower NDF bound
+        # is retained to ensure adequate effective fibre.
         self.beef_stocker_constraints = [
             c for c in self.heifer_constraints if isinstance(c, dict) and c.get("fun") is not self.NDF_constraint_upper
         ]

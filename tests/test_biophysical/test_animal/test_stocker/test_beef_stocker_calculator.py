@@ -214,21 +214,37 @@ def test_calculate_requirements_stocker_heifer_lower_eqsbw() -> None:
 def test_pregnancy_energy_is_zero() -> None:
     """Stocker animals never gestate; pregnancy_energy must be 0.0."""
     result = BeefStockerRequirementsCalculator.calculate_requirements(_make_benchmark_inputs())
-    assert result.pregnancy_energy == 0.0
+    assert result.pregnancy_energy == pytest.approx(0.0)
 
 
 @pytest.mark.unit
 def test_lactation_energy_is_zero() -> None:
     """Stocker animals never lactate; lactation_energy must be 0.0."""
     result = BeefStockerRequirementsCalculator.calculate_requirements(_make_benchmark_inputs())
-    assert result.lactation_energy == 0.0
+    assert result.lactation_energy == pytest.approx(0.0)
 
 
 @pytest.mark.unit
 def test_activity_energy_is_zero() -> None:
     """Activity energy is not modelled for stocker; activity_energy must be 0.0."""
     result = BeefStockerRequirementsCalculator.calculate_requirements(_make_benchmark_inputs())
-    assert result.activity_energy == 0.0
+    assert result.activity_energy == pytest.approx(0.0)
+
+
+@pytest.mark.unit
+def test_dmi_clamp_below_min_ne_concentration_returns_same_as_at_clamp() -> None:
+    """ne_diet_concentration below BEEF_DMI_MIN_NE_CONCENTRATION is clamped; must not raise.
+
+    Both at-clamp and below-clamp calls must produce the same DMI because
+    the floor ensures identical effective ne_c in Eq.10-5.
+    """
+    at_clamp = BeefStockerRequirementsCalculator.calculate_requirements(
+        _make_benchmark_inputs(ne_diet_concentration=AnimalModuleConstants.BEEF_DMI_MIN_NE_CONCENTRATION)
+    )
+    below_clamp = BeefStockerRequirementsCalculator.calculate_requirements(
+        _make_benchmark_inputs(ne_diet_concentration=0.1)
+    )
+    assert below_clamp.dry_matter == pytest.approx(at_clamp.dry_matter)
 
 
 # ---------------------------------------------------------------------------

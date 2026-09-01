@@ -53,8 +53,8 @@ _DAYS_MAX: int = 180
 _CHECKPOINT_DAYS: tuple[int, ...] = (50, 100, 150, _SIMULATION_DAYS)
 
 _STOCKER_CONFIG: dict[str, object] = {
-    "n_steers": _N_STEERS,
-    "n_heifers": _N_HEIFERS,
+    "num_steers": _N_STEERS,
+    "num_heifers": _N_HEIFERS,
     "entry_weight_kg": _ENTRY_WEIGHT_KG,
     "breed": "AN",
 }
