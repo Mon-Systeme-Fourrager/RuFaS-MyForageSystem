@@ -112,11 +112,9 @@ def _make_herd_manager_stub(
     hm.beef_replacement_heifers = []
     hm.beef_calves = []
     hm.beef_bulls = []
-    hm.beef_stocker_steers = (  # type: ignore[assignment]
-        beef_stocker_steers if beef_stocker_steers is not None else []
-    )
-    hm.beef_stocker_heifers = (  # type: ignore[assignment]
-        beef_stocker_heifers if beef_stocker_heifers is not None else []
+    hm.beef_stocker_steers = beef_stocker_steers if beef_stocker_steers is not None else []  # type: ignore[assignment]
+    hm.beef_stocker_heifers = (
+        beef_stocker_heifers if beef_stocker_heifers is not None else []  # type: ignore[assignment]
     )
     hm.herd_reproduction_statistics = HerdReproductionStatistics()
     hm.herd_statistics = MagicMock()

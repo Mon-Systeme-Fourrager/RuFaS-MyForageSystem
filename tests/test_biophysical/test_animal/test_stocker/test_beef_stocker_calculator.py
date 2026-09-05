@@ -1,14 +1,14 @@
-"""Tests for BeefStockerRequirementsCalculator — Step 3 NRC 2016 benchmarks.
+"""Unit tests for BeefStockerRequirementsCalculator.
 
-All four NRC 2016 benchmark scenarios (SK-MAINT-1, SK-GROW-1, SK-DMI-1, SK-MP-1)
-are verified against analytically-derived values from NRC 2016 Ch.10-12 equations.
-Do NOT use BeefGEM outputs as test oracle (NRC 2000 / monthly timestep mismatch).
-
-Also verifies:
+Verifies:
 - StockerRequirementsInputs type-guard (non-stocker animal_type raises ValueError)
 - Weight/sex input validation (NaN, zero, non-finite raise ValueError)
 - NotImplementedError guards on BeefNRCRequirementsCalculator and
   BeefCowCalfRequirementsCalculator when passed stocker animal types
+- Structural checks: pregnancy/lactation/activity energy == 0
+- DMI clamp at BEEF_DMI_MIN_NE_CONCENTRATION
+
+NRC 2016 benchmark scenarios (SK-MAINT-1…SK-MP-1) live in test_beef_stocker_benchmarks.py.
 """
 
 from __future__ import annotations
@@ -42,27 +42,6 @@ _BENCHMARK_ADG = 0.80  # kg/d
 _BENCHMARK_NE_DIET = 1.0  # Mcal/kg DM forage (Eq.10-5 input)
 _BENCHMARK_TEMP = 20.0  # °C thermoneutral — a2 cold-stress term = 0
 
-# Analytically-derived expected values from NRC 2016 equations:
-# SK-MAINT-1: NEm = SBW^0.75 × 0.077 × BE × SEX (no mud, thermoneutral)
-#   SBW=268.8, SBW^0.75≈66.39, BE=1.0 (Angus), SEX=1.00 (steer)
-#   NEm = 66.39 × 0.077 = 5.112 Mcal/d
-_SK_MAINT_1_EXPECTED_NEM = 5.112  # Mcal/d  (tolerance ±3%)
-
-# SK-GROW-1: NEg via NRC 2016 Eq.12-3
-#   MSBW=499.2, EQSBW=257.46, EQEBW=229.39, EBG=0.7648
-#   NEg = 0.0635 × 229.39^0.75 × 0.7648^1.097 ≈ 2.789 Mcal/d
-_SK_GROW_1_EXPECTED_NEG = 2.789  # Mcal/d  (tolerance ±3%)
-
-# SK-DMI-1: DMI via NRC 2016 Eq.10-5 (stocker formula, no intercept, no lact)
-#   BW^0.75=68.45, ne_c=1.0
-#   ne_m_intake = 68.45 × (0.04997 × 1.0² + 0.04631 × 1.0) = 68.45 × 0.09628 = 6.592
-#   DMI = 6.592 / 1.0 = 6.592 kg/d
-_SK_DMI_1_EXPECTED_DMI = 6.592  # kg/d  (tolerance ±3%)
-
-# SK-MP-1: MP via NRC 2016 Ch.6 / Box 12-1
-#   NPg=132.38 g/d, eff_g=0.5405, MPm=260.10 g/d, MPg=244.93 g/d, MP≈505.0 g/d
-_SK_MP_1_EXPECTED_MP = 505.0  # g/d  (tolerance ±5%)
-
 
 def _make_benchmark_inputs(**overrides: object) -> StockerRequirementsInputs:
     """Build a StockerRequirementsInputs with benchmark values and optional overrides."""
@@ -79,59 +58,6 @@ def _make_benchmark_inputs(**overrides: object) -> StockerRequirementsInputs:
     }
     defaults.update(overrides)
     return StockerRequirementsInputs(**defaults)  # type: ignore[arg-type]
-
-
-# ---------------------------------------------------------------------------
-# NRC 2016 benchmark tests — write FIRST, confirm RED before implementing
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.nrc2016
-def test_nrc_benchmark_sk_maint_1() -> None:
-    """SK-MAINT-1: NEm for 280 kg Angus steer, thermoneutral, no mud.
-
-    Source: NRC 2016 Eq.11-1. NEm = SBW^0.75 × 0.077 × BE × SEX.
-    SBW=268.8, BE=1.0 (Angus), SEX=1.00 (steer), a2=0 (thermoneutral).
-    Expected ≈ 5.112 Mcal/d, tolerance ±3%.
-    """
-    result = BeefStockerRequirementsCalculator.calculate_requirements(_make_benchmark_inputs())
-    assert result.maintenance_energy == pytest.approx(_SK_MAINT_1_EXPECTED_NEM, rel=0.03)
-
-
-@pytest.mark.nrc2016
-def test_nrc_benchmark_sk_grow_1() -> None:
-    """SK-GROW-1: NEg for 280 kg steer at ADG 0.80 kg/d.
-
-    Source: NRC 2016 Eq.12-3. NEg = 0.0635 × EQEBW^0.75 × EBG^1.097.
-    EQSBW=257.46 (mature BW=520 kg), EQEBW=229.39, EBG=0.7648.
-    Expected ≈ 2.789 Mcal/d, tolerance ±3%.
-    """
-    result = BeefStockerRequirementsCalculator.calculate_requirements(_make_benchmark_inputs())
-    assert result.growth_energy == pytest.approx(_SK_GROW_1_EXPECTED_NEG, rel=0.03)
-
-
-@pytest.mark.nrc2016
-def test_nrc_benchmark_sk_dmi_1() -> None:
-    """SK-DMI-1: DMI for 280 kg steer at forage NEm = 1.0 Mcal/kg DM.
-
-    Source: NRC 2016 Eq.10-5 (forage-based growing cattle).
-    No pregnancy intercept, no lactation term.
-    BW^0.75=68.45, ne_c=1.0, expected ≈ 6.592 kg/d, tolerance ±3%.
-    """
-    result = BeefStockerRequirementsCalculator.calculate_requirements(_make_benchmark_inputs())
-    assert result.dry_matter == pytest.approx(_SK_DMI_1_EXPECTED_DMI, rel=0.03)
-
-
-@pytest.mark.nrc2016
-def test_nrc_benchmark_sk_mp_1() -> None:
-    """SK-MP-1: MP for 280 kg steer at ADG 0.80 kg/d.
-
-    Source: NRC 2016 Ch.6 / Box 12-1.
-    MPm=3.8×BW^0.75, MPg=NPg/eff_g, eff_g=max(0.492, 0.834-0.00114×EQSBW).
-    Expected ≈ 505 g/d, tolerance ±5%.
-    """
-    result = BeefStockerRequirementsCalculator.calculate_requirements(_make_benchmark_inputs())
-    assert result.metabolizable_protein == pytest.approx(_SK_MP_1_EXPECTED_MP, rel=0.05)
 
 
 # ---------------------------------------------------------------------------
