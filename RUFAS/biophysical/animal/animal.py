@@ -1,3 +1,4 @@
+import math
 import sys
 from datetime import timedelta
 from random import random
@@ -37,6 +38,10 @@ from RUFAS.biophysical.animal.nutrients.nutrients import Nutrients
 from RUFAS.biophysical.animal.nutrients.nasem_requirements_calculator import NASEMRequirementsCalculator
 from RUFAS.biophysical.animal.nutrients.nrc_requirements_calculator import NRCRequirementsCalculator
 from RUFAS.biophysical.animal.nutrients.beef_nrc_requirements_calculator import BeefNRCRequirementsCalculator
+from RUFAS.biophysical.animal.nutrients.beef_stocker_requirements_calculator import (
+    BeefStockerRequirementsCalculator,
+    StockerRequirementsInputs,
+)
 from RUFAS.biophysical.animal.data_types.animal_typed_dicts import (
     NewBornCalfValuesTypedDict,
     BeefCowCalfValuesTypedDict,
@@ -196,15 +201,17 @@ class Animal:
             AnimalType.BEEF_HEIFER_REPLACEMENT: self._initialize_beef_cow_calf_animal,
             AnimalType.BEEF_COW: self._initialize_beef_cow_calf_animal,
             AnimalType.BEEF_BULL: self._initialize_beef_cow_calf_animal,
+            AnimalType.BEEF_STOCKER_STEER: self._initialize_stocker_animal,
+            AnimalType.BEEF_STOCKER_HEIFER: self._initialize_stocker_animal,
         }
         self.id = args.get("id", 0)
         self.breed: Breed = Breed(Breed[args.get("breed")])
         self.animal_type = AnimalType(args.get("animal_type"))
         self.days_born = int(args.get("days_born"))
-        # birth_weight is unused for feedlot and beef cow-calf animals (factory-managed)
+        # birth_weight is unused for feedlot, beef cow-calf, and stocker animals (factory-managed)
         self.birth_weight = (
             0.0
-            if self.animal_type.is_feedlot or self.animal_type.is_beef_cow_calf
+            if self.animal_type.is_feedlot or self.animal_type.is_beef_cow_calf or self.animal_type.is_beef_stocker
             else float(args.get("birth_weight") or 0.0)
         )
         self.body_condition_score_5 = AnimalModuleConstants.DEFAULT_BODY_CONDITION_SCORE_5
@@ -243,6 +250,11 @@ class Animal:
         self.cumulative_dmi: float = 0.0
         self.receiving_stress: bool = False
         self.step_up_phase: str = ""
+
+        # Stocker/backgrounding tracking attributes (default to safe values for all animal types)
+        self.days_in_stocker: int = 0
+        self.stocker_entry_weight: float = 0.0
+        self.stocker_cumulative_dmi: float = 0.0
 
         # Beef cow-calf attributes (default to safe values for all animal types)
         self.days_in_breeding_season: int | None = None
@@ -1416,6 +1428,39 @@ class Animal:
         self.receiving_stress = self.days_on_feed <= AnimalModuleConstants.RECEIVING_PERIOD_DAYS
         self._update_step_up_phase()
 
+    def _initialize_stocker_animal(self, args: Any) -> None:
+        """
+        Initialize a beef stocker or backgrounding animal from a configuration dict.
+
+        Parameters
+        ----------
+        args : Any
+            Dict with optional keys: body_weight (float, kg), mature_body_weight (float, kg).
+            Defaults use AnimalConfig stocker and cow-calf parameters.
+
+        Raises
+        ------
+        ValueError
+            If body_weight is not positive and finite, or mature_body_weight is not positive
+            and finite. Validation is staged-atomic: local variables are validated before
+            any instance state is written.
+
+        """
+        body_weight_raw: float = float(args.get("body_weight", AnimalConfig.stocker_entry_weight))
+        if not math.isfinite(body_weight_raw) or body_weight_raw <= 0.0:
+            raise ValueError(f"body_weight must be positive and finite, got {body_weight_raw}")
+        mature_bw_raw: float = float(args.get("mature_body_weight", AnimalConfig.beef_mature_cow_weight_kg))
+        if not math.isfinite(mature_bw_raw) or mature_bw_raw <= 0.0:
+            raise ValueError(f"mature_body_weight must be positive and finite, got {mature_bw_raw}")
+
+        self.sex = Sex.STEER if self.animal_type == AnimalType.BEEF_STOCKER_STEER else Sex.FEMALE
+        self.body_weight = body_weight_raw
+        self.mature_body_weight = mature_bw_raw
+        self.wean_weight = 0.0
+        self.days_in_stocker = int(args.get("days_in_stocker", 0))
+        self.stocker_entry_weight = self.body_weight
+        self.stocker_cumulative_dmi = 0.0
+
     def _initialize_beef_cow_calf_animal(self, args: Any) -> None:
         """
         Initialize a beef cow-calf animal from a configuration dict.
@@ -1596,6 +1641,11 @@ class Animal:
 
         """
         if self.animal_type.is_feedlot:
+            if self.nutrition_requirements is not None:
+                self.nutrients.phosphorus_requirement = self.nutrition_requirements.phosphorus
+            return
+
+        if self.animal_type.is_beef_stocker:
             if self.nutrition_requirements is not None:
                 self.nutrients.phosphorus_requirement = self.nutrition_requirements.phosphorus
             return
@@ -1898,6 +1948,9 @@ class Animal:
         if self.animal_type.is_feedlot:
             return self._feedlot_daily_routines(time)
 
+        if self.animal_type.is_beef_stocker:
+            return self._stocker_daily_routines(time)
+
         self.days_born += 1
         daily_routines_output: DailyRoutinesOutput = DailyRoutinesOutput(
             animal_status=AnimalStatus.REMAIN,
@@ -1958,6 +2011,39 @@ class Animal:
 
         if self.nutrition_supply is not None and self.nutrition_supply.dry_matter > 0:
             self.cumulative_dmi += self.nutrition_supply.dry_matter
+
+        animal_status, _ = self.animal_life_stage_update(time)
+
+        return DailyRoutinesOutput(
+            animal_status=animal_status,
+            newborn_calf_config=None,
+            herd_reproduction_statistics=HerdReproductionStatistics(),
+        )
+
+    def _stocker_daily_routines(self, time: RufasTime) -> DailyRoutinesOutput:
+        """
+        Streamlined daily routine for stocker/backgrounding animals.
+
+        Parameters
+        ----------
+        time : RufasTime
+            Current simulation time.
+
+        Returns
+        -------
+        DailyRoutinesOutput
+            Daily output with animal status and empty reproduction statistics.
+
+        """
+        self.days_born += 1
+        self.days_in_stocker += 1
+
+        effective_adg: float = AnimalConfig.stocker_target_adg
+        self.body_weight += effective_adg
+        self.growth.daily_growth = effective_adg
+
+        if self.nutrition_supply is not None and self.nutrition_supply.dry_matter > 0:
+            self.stocker_cumulative_dmi += self.nutrition_supply.dry_matter
 
         animal_status, _ = self.animal_life_stage_update(time)
 
@@ -2134,6 +2220,8 @@ class Animal:
             AnimalType.BEEF_HEIFER_REPLACEMENT: self._beef_replacement_heifer_life_stage_update,
             AnimalType.BEEF_COW: self._beef_cow_life_stage_update,
             AnimalType.BEEF_BULL: self._beef_bull_life_stage_update,
+            AnimalType.BEEF_STOCKER_STEER: self._stocker_life_stage_update,
+            AnimalType.BEEF_STOCKER_HEIFER: self._stocker_life_stage_update,
         }
         animal_status, newborn_calf_config = ANIMAL_TYPE_TO_LIFE_STAGE_UPDATE_METHOD_MAP[self.animal_type](time)
 
@@ -2179,6 +2267,40 @@ class Animal:
             self.cull_reason = animal_constants.MAX_DAYS_ON_FEED_REACHED
             self.sold_at_day = time.simulation_day
             return AnimalStatus.SOLD, None
+
+        return AnimalStatus.REMAIN, None
+
+    def _stocker_life_stage_update(self, time: RufasTime) -> tuple[AnimalStatus, NewBornCalfValuesTypedDict | None]:
+        """
+        Check stocker exit conditions — exit weight reached or max days in stocker.
+
+        On exit, the animal transitions to feedlot via ``_initialize_feedlot_animal()``.
+
+        Parameters
+        ----------
+        time : RufasTime
+            Current simulation time.
+
+        Returns
+        -------
+        tuple[AnimalStatus, NewBornCalfValuesTypedDict | None]
+            (LIFE_STAGE_CHANGED, None) if an exit condition is met, (REMAIN, None) otherwise.
+
+        """
+        exit_event: str | None = None
+        if self.body_weight >= AnimalConfig.stocker_exit_weight:
+            exit_event = animal_constants.STOCKER_EXIT_WEIGHT
+        elif self.days_in_stocker >= AnimalConfig.stocker_max_days:
+            exit_event = animal_constants.STOCKER_MAX_DAYS
+
+        if exit_event is not None:
+            self.events.add_event(self.days_born, time.simulation_day, exit_event)
+            self.events.add_event(self.days_born, time.simulation_day, animal_constants.STOCKER_TO_FEEDLOT)
+            self.animal_type = AnimalType.FEEDLOT_STEER if self.sex == Sex.STEER else AnimalType.FEEDLOT_HEIFER
+            self._initialize_feedlot_animal(
+                {"body_weight": self.body_weight, "mature_body_weight": AnimalConfig.beef_mature_cow_weight_kg}
+            )
+            return AnimalStatus.LIFE_STAGE_CHANGED, None
 
         return AnimalStatus.REMAIN, None
 
@@ -2366,6 +2488,8 @@ class Animal:
         -------
         tuple[AnimalStatus, NewBornCalfValuesTypedDict | None]
             (SOLD, None) or (LIFE_STAGE_CHANGED, None).
+            SELL → SOLD; REPLACEMENT_HEIFER female → LIFE_STAGE_CHANGED;
+            DIRECT_TO_FEEDLOT → LIFE_STAGE_CHANGED; STOCKER → LIFE_STAGE_CHANGED.
 
         """
         self.events.add_event(self.days_born, time.simulation_day, animal_constants.CALF_WEANED)
@@ -2390,6 +2514,18 @@ class Animal:
             self.birth_weight = 0.0
             self._initialize_feedlot_animal(
                 {"body_weight": self.body_weight, "mature_body_weight": AnimalConfig.beef_mature_cow_weight_kg}
+            )
+            return AnimalStatus.LIFE_STAGE_CHANGED, None
+        if destination is BeefPostWeaningDestination.STOCKER:
+            new_type = AnimalType.BEEF_STOCKER_STEER if self.sex == Sex.MALE else AnimalType.BEEF_STOCKER_HEIFER
+            self.animal_type = new_type
+            self.events.add_event(self.days_born, time.simulation_day, animal_constants.STOCKER_ARRIVAL)
+            self._initialize_stocker_animal(
+                {
+                    "body_weight": self.body_weight,
+                    "mature_body_weight": AnimalConfig.beef_mature_cow_weight_kg,
+                    "days_in_stocker": 0,
+                }
             )
             return AnimalStatus.LIFE_STAGE_CHANGED, None
         raise ValueError(f"Unknown beef_post_weaning_destination: {destination!r}")
@@ -3111,6 +3247,26 @@ class Animal:
                 temperature_c=previous_temperature,
                 ne_diet_concentration=ne_conc,
                 process_based_phosphorus_requirement=0.0,
+            )
+
+        if self.animal_type.is_beef_stocker:
+            if self.previous_nutrition_supply is None or self.previous_nutrition_supply.dry_matter <= 0:
+                ne_conc_sk: float = AnimalModuleConstants.DEFAULT_NET_ENERGY_DIET_CONCENTRATION
+            else:
+                ne_conc_sk = (
+                    self.previous_nutrition_supply.metabolizable_energy / self.previous_nutrition_supply.dry_matter
+                )
+            return BeefStockerRequirementsCalculator.calculate_requirements(
+                StockerRequirementsInputs(
+                    animal_type=self.animal_type,
+                    sex=self.sex,
+                    body_weight=self.body_weight,
+                    mature_body_weight=self.mature_body_weight,
+                    breed=self.breed.value,
+                    target_adg=AnimalConfig.stocker_target_adg,
+                    temperature_c=previous_temperature,
+                    ne_diet_concentration=ne_conc_sk,
+                )
             )
 
         if self.animal_type is AnimalType.CALF:

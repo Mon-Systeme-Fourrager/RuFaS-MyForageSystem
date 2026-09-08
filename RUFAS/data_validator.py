@@ -6,6 +6,7 @@ from enum import Enum
 from typing import Any, Callable, Sequence, cast
 
 from RUFAS.biophysical.animal import animal_constants
+from RUFAS.biophysical.animal.data_types.animal_enums import StockerDietSystem
 from RUFAS.util import Aggregator
 
 AGGREGATION_FUNCTIONS: dict[
@@ -1869,6 +1870,70 @@ class DataValidator:
 
         DataValidator._validate_beef_breeding_season_start_day(config)
         DataValidator._validate_beef_weaning_weight(config)
+
+    @staticmethod
+    def _validate_stocker_weight_order(config: dict[str, Any]) -> None:
+        """Raise ValueError when exit_weight does not exceed entry_weight."""
+        if (
+            "entry_weight" in config
+            and "exit_weight" in config
+            and config["entry_weight"] is not None
+            and config["exit_weight"] is not None
+            and float(config["exit_weight"]) <= float(config["entry_weight"])
+        ):
+            raise ValueError("exit_weight must exceed entry_weight")
+
+    @staticmethod
+    def _validate_stocker_diet_system(config: dict[str, Any]) -> None:
+        """Raise ValueError for an unrecognised stocker_diet_system value."""
+        if "stocker_diet_system" in config and config["stocker_diet_system"] is not None:
+            system = str(config["stocker_diet_system"])
+            valid = {m.value for m in StockerDietSystem}
+            if system not in valid:
+                raise ValueError(f"stocker_diet_system must be one of {sorted(valid)}, got '{system}'")
+
+    @staticmethod
+    def validate_beef_stocker_config(config: dict[str, Any]) -> None:
+        """
+        Validate beef stocker configuration business rules.
+
+        Parameters
+        ----------
+        config : dict[str, Any]
+            The stocker config block from the animal input file.
+
+        Raises
+        ------
+        ValueError
+            If any of the following rules are violated:
+
+            - ``entry_weight`` must be > 0 and finite when present and non-None.
+            - ``exit_weight`` must be > 0 and finite when present and non-None.
+            - ``exit_weight`` must exceed ``entry_weight`` when both are present.
+            - ``max_days`` must be > 0 when present and non-None.
+            - ``stocker_diet_system`` must be a valid ``StockerDietSystem`` value when present and non-None.
+            - ``target_adg`` must be > 0 and finite when present and non-None.
+
+        """
+        for key in ("entry_weight", "exit_weight"):
+            if key in config and config[key] is not None:
+                w = float(config[key])
+                if not math.isfinite(w) or w <= 0:
+                    raise ValueError(f"{key} must be positive and finite, got {w}")
+
+        DataValidator._validate_stocker_weight_order(config)
+
+        if "max_days" in config and config["max_days"] is not None:
+            d = int(config["max_days"])
+            if d <= 0:
+                raise ValueError(f"max_days must be > 0, got {d}")
+
+        DataValidator._validate_stocker_diet_system(config)
+
+        if "target_adg" in config and config["target_adg"] is not None:
+            adg = float(config["target_adg"])
+            if not math.isfinite(adg) or adg <= 0:
+                raise ValueError(f"target_adg must be positive and finite, got {adg}")
 
 
 class CrossValidator:

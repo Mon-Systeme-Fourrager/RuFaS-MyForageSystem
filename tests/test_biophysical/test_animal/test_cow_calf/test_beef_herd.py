@@ -79,6 +79,8 @@ def test_animals_by_type_returns_distinct_lists() -> None:
     hm.beef_replacement_heifers = [heifer]
     hm.beef_calves = [calf]
     hm.beef_bulls = [bull]
+    hm.beef_stocker_steers = []
+    hm.beef_stocker_heifers = []
 
     result = hm.animals_by_type
 
@@ -199,6 +201,8 @@ def _make_herd_manager_stub(
     )
     hm.beef_calves = beef_calves if beef_calves is not None else []  # type: ignore[assignment]
     hm.beef_bulls = beef_bulls if beef_bulls is not None else []  # type: ignore[assignment]
+    hm.beef_stocker_steers = []
+    hm.beef_stocker_heifers = []
     hm.herd_reproduction_statistics = HerdReproductionStatistics()
     hm.herd_statistics = MagicMock()
     hm.herd_statistics.animals_deaths_by_stage = {}

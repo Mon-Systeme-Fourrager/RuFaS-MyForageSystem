@@ -124,6 +124,8 @@ def _make_minimal_herd_manager() -> HerdManager:
     hm.beef_replacement_heifers = []
     hm.beef_calves = []
     hm.beef_bulls = []
+    hm.beef_stocker_steers = []
+    hm.beef_stocker_heifers = []
     return hm
 
 

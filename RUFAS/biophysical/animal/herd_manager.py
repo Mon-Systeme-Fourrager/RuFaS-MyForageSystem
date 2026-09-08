@@ -258,6 +258,13 @@ class HerdManager:
         ]
         self.beef_calves: list[Animal] = [a for a in beef_all if a.animal_type == AnimalType.BEEF_CALF]
         self.beef_bulls: list[Animal] = [a for a in beef_all if a.animal_type == AnimalType.BEEF_BULL]
+        stocker_all = list(HerdFactory.beef_stocker_animals)
+        self.beef_stocker_steers: list[Animal] = [
+            a for a in stocker_all if a.animal_type == AnimalType.BEEF_STOCKER_STEER
+        ]
+        self.beef_stocker_heifers: list[Animal] = [
+            a for a in stocker_all if a.animal_type == AnimalType.BEEF_STOCKER_HEIFER
+        ]
 
         self.allocate_animals_to_pens(time.simulation_day)
         self.initialize_nutrient_requirements(weather, time, available_feeds)
@@ -287,6 +294,8 @@ class HerdManager:
             AnimalType.BEEF_HEIFER_REPLACEMENT: self.beef_replacement_heifers,
             AnimalType.BEEF_CALF: self.beef_calves,
             AnimalType.BEEF_BULL: self.beef_bulls,
+            AnimalType.BEEF_STOCKER_STEER: self.beef_stocker_steers,
+            AnimalType.BEEF_STOCKER_HEIFER: self.beef_stocker_heifers,
         }
 
     @property
@@ -713,6 +722,19 @@ class HerdManager:
 
         for animal in [*self.beef_cows, *self.beef_replacement_heifers, *self.beef_calves, *self.beef_bulls]:
             AnimalModuleReporter.report_cow_calf_performance(animal, time.simulation_day)
+
+        stocker_graduated: list[Animal] = []
+        for _group_name, animals in [
+            ("beef_stocker_steers", self.beef_stocker_steers),
+            ("beef_stocker_heifers", self.beef_stocker_heifers),
+        ]:
+            grads, sold, _stillborn, _newborn, _sold_newborn = self._perform_daily_routines_for_animals(time, animals)
+            daily_herd_updates.graduated_animals += grads
+            daily_herd_updates.removed_animals += sold
+            stocker_graduated += grads
+        for animal in stocker_graduated:
+            AnimalModuleReporter.report_stocker_performance(animal, time.simulation_day)
+
         return daily_herd_updates
 
     def _apply_daily_herd_structure_updates(
@@ -1074,6 +1096,8 @@ class HerdManager:
         self.beef_replacement_heifers = [a for a in self.beef_replacement_heifers if a != animal]
         self.beef_calves = [a for a in self.beef_calves if a != animal]
         self.beef_bulls = [a for a in self.beef_bulls if a != animal]
+        self.beef_stocker_steers = [a for a in self.beef_stocker_steers if a != animal]
+        self.beef_stocker_heifers = [a for a in self.beef_stocker_heifers if a != animal]
 
     def _add_animal_to_new_array(self, animal: Animal) -> None:
         """
@@ -1098,6 +1122,8 @@ class HerdManager:
             AnimalType.BEEF_BULL: self.beef_bulls,
             AnimalType.FEEDLOT_STEER: self.feedlot_animals,
             AnimalType.FEEDLOT_HEIFER: self.feedlot_animals,
+            AnimalType.BEEF_STOCKER_STEER: self.beef_stocker_steers,
+            AnimalType.BEEF_STOCKER_HEIFER: self.beef_stocker_heifers,
         }
         new_array = animal_type_to_array_map[animal.animal_type]
         new_array.append(animal)
