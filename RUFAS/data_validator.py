@@ -5,6 +5,8 @@ import re
 from enum import Enum
 from typing import Any, Callable, Sequence, cast
 
+from RUFAS.biophysical.animal import animal_constants
+from RUFAS.biophysical.animal.data_types.animal_enums import StockerDietSystem
 from RUFAS.util import Aggregator
 
 AGGREGATION_FUNCTIONS: dict[
@@ -1795,6 +1797,143 @@ class DataValidator:
             raise ValueError(
                 f"feedlot mud_condition must be one of {sorted(valid_mud_conditions)}, " f"got '{mud_condition}'"
             )
+
+    @staticmethod
+    def _validate_beef_breeding_season_start_day(config: dict[str, Any]) -> None:
+        """Raise ValueError if breeding_season_start_day is present, non-None, and outside [1, 365]."""
+        if "breeding_season_start_day" not in config:
+            return
+        bsd = config["breeding_season_start_day"]
+        if bsd is None:
+            return
+        bsd_val = float(bsd)
+        if not math.isfinite(bsd_val) or bsd_val < 1 or bsd_val > 365:
+            raise ValueError(f"breeding_season_start_day must be 1-365, got {bsd_val}")
+
+    @staticmethod
+    def _validate_beef_weaning_weight(config: dict[str, Any]) -> None:
+        """Raise ValueError if weaning_weight_kg is present, non-None, and non-positive or non-finite."""
+        if "weaning_weight_kg" not in config:
+            return
+        ww = config["weaning_weight_kg"]
+        if ww is None:
+            return
+        ww_val = float(ww)
+        if not math.isfinite(ww_val) or ww_val <= 0:
+            raise ValueError(f"weaning_weight_kg must be positive and finite, got {ww_val}")
+
+    @staticmethod
+    def validate_beef_cow_calf_config(config: dict[str, Any]) -> None:
+        """
+        Validate beef cow-calf configuration business rules.
+
+        Parameters
+        ----------
+        config : dict[str, Any]
+            The beef_cow_calf config block from the animal input file.
+
+        Raises
+        ------
+        ValueError
+            If any of the following rules are violated:
+
+            - ``mature_cow_weight_kg`` must be > 0 and finite.
+            - ``weaning_age_days`` must be > 0 and finite.
+            - ``breeding_season_length`` must be > 0 and finite.
+            - ``natural_service_bull_ratio`` must be between 1 and ``MAX_BULL_TO_COW_RATIO``.
+            - ``breeding_season_start_day`` must be 1-365 when present and non-None.
+            - ``weaning_weight_kg`` must be > 0 and finite when present and non-None.
+
+        """
+        for key in ("mature_cow_weight_kg", "weaning_age_days", "breeding_season_length"):
+            if key in config and config[key] is not None:
+                val = float(config[key])
+                if not math.isfinite(val) or val <= 0:
+                    raise ValueError(f"{key} must be > 0, got {val}")
+
+        if "natural_service_bull_ratio" in config and config["natural_service_bull_ratio"] is not None:
+            bull_ratio_raw = float(config["natural_service_bull_ratio"])
+            if not math.isfinite(bull_ratio_raw):
+                raise ValueError(f"natural_service_bull_ratio is non-finite, got {bull_ratio_raw}")
+            if not bull_ratio_raw.is_integer():
+                raise ValueError(f"natural_service_bull_ratio must be a whole number, got {bull_ratio_raw}")
+            bull_ratio = int(bull_ratio_raw)
+            if bull_ratio <= 0 or bull_ratio > animal_constants.MAX_BULL_TO_COW_RATIO:
+                raise ValueError(
+                    f"natural_service_bull_ratio must be 1–{animal_constants.MAX_BULL_TO_COW_RATIO}, got {bull_ratio}"
+                )
+
+        if "cow_cull_rate_annual" in config and config["cow_cull_rate_annual"] is not None:
+            rate = float(config["cow_cull_rate_annual"])
+            if not math.isfinite(rate) or not (0.0 <= rate <= 1.0):
+                raise ValueError(f"cow_cull_rate_annual must be between 0.0 and 1.0, got {rate}")
+
+        DataValidator._validate_beef_breeding_season_start_day(config)
+        DataValidator._validate_beef_weaning_weight(config)
+
+    @staticmethod
+    def _validate_stocker_weight_order(config: dict[str, Any]) -> None:
+        """Raise ValueError when exit_weight does not exceed entry_weight."""
+        if (
+            "entry_weight" in config
+            and "exit_weight" in config
+            and config["entry_weight"] is not None
+            and config["exit_weight"] is not None
+            and float(config["exit_weight"]) <= float(config["entry_weight"])
+        ):
+            raise ValueError("exit_weight must exceed entry_weight")
+
+    @staticmethod
+    def _validate_stocker_diet_system(config: dict[str, Any]) -> None:
+        """Raise ValueError for an unrecognised stocker_diet_system value."""
+        if "stocker_diet_system" in config and config["stocker_diet_system"] is not None:
+            system = str(config["stocker_diet_system"])
+            valid = {m.value for m in StockerDietSystem}
+            if system not in valid:
+                raise ValueError(f"stocker_diet_system must be one of {sorted(valid)}, got '{system}'")
+
+    @staticmethod
+    def validate_beef_stocker_config(config: dict[str, Any]) -> None:
+        """
+        Validate beef stocker configuration business rules.
+
+        Parameters
+        ----------
+        config : dict[str, Any]
+            The stocker config block from the animal input file.
+
+        Raises
+        ------
+        ValueError
+            If any of the following rules are violated:
+
+            - ``entry_weight`` must be > 0 and finite when present and non-None.
+            - ``exit_weight`` must be > 0 and finite when present and non-None.
+            - ``exit_weight`` must exceed ``entry_weight`` when both are present.
+            - ``max_days`` must be > 0 when present and non-None.
+            - ``stocker_diet_system`` must be a valid ``StockerDietSystem`` value when present and non-None.
+            - ``target_adg`` must be > 0 and finite when present and non-None.
+
+        """
+        for key in ("entry_weight", "exit_weight"):
+            if key in config and config[key] is not None:
+                w = float(config[key])
+                if not math.isfinite(w) or w <= 0:
+                    raise ValueError(f"{key} must be positive and finite, got {w}")
+
+        DataValidator._validate_stocker_weight_order(config)
+
+        if "max_days" in config and config["max_days"] is not None:
+            d = int(config["max_days"])
+            if d <= 0:
+                raise ValueError(f"max_days must be > 0, got {d}")
+
+        DataValidator._validate_stocker_diet_system(config)
+
+        if "target_adg" in config and config["target_adg"] is not None:
+            adg = float(config["target_adg"])
+            if not math.isfinite(adg) or adg <= 0:
+                raise ValueError(f"target_adg must be positive and finite, got {adg}")
 
 
 class CrossValidator:

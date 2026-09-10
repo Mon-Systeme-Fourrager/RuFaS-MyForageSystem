@@ -1,8 +1,17 @@
-from typing import Any
+from __future__ import annotations
+
+import math
+from typing import TYPE_CHECKING, Any, ClassVar
+
+if TYPE_CHECKING:
+    from RUFAS.biophysical.animal.animal import Animal
 
 from RUFAS.biophysical.animal.data_types.nutrition_data_structures import NutritionRequirements
 from RUFAS.data_structures.feed_storage_to_animal_connection import RUFAS_ID
+from RUFAS.biophysical.animal.animal_config import AnimalConfig
 from RUFAS.biophysical.animal.data_types.animal_combination import AnimalCombination
+from RUFAS.biophysical.animal.data_types.animal_enums import StockerDietSystem
+from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 from RUFAS.general_constants import GeneralConstants
 from RUFAS.output_manager import OutputManager
 from RUFAS.units import MeasurementUnits
@@ -41,6 +50,12 @@ class RationManager:
     feedlot_starter_ration: dict[RUFAS_ID, float]
     feedlot_transition_ration: dict[RUFAS_ID, float]
     feedlot_finisher_ration: dict[RUFAS_ID, float]
+    beef_lactating_pasture_ration: ClassVar[dict[RUFAS_ID, float]] = {}
+    beef_dry_gestating_ration: ClassVar[dict[RUFAS_ID, float]] = {}
+    beef_creep_feed_ration: ClassVar[dict[RUFAS_ID, float]] = {}
+    beef_replacement_heifer_ration: ClassVar[dict[RUFAS_ID, float]] = {}
+    beef_stocker_pasture_ration: ClassVar[dict[RUFAS_ID, float]] = {}
+    beef_stocker_drylot_ration: ClassVar[dict[RUFAS_ID, float]] = {}
 
     @classmethod
     def set_ration_feeds(cls, ration_config: dict[str, Any]) -> None:
@@ -85,15 +100,9 @@ class RationManager:
             for feed in ration["feeds"]
         ]
 
-        feedlot_starter = {
-            int(k): float(v) for k, v in ration_config.get("feedlot_starter_ration", {}).items()
-        }
-        feedlot_transition = {
-            int(k): float(v) for k, v in ration_config.get("feedlot_transition_ration", {}).items()
-        }
-        feedlot_finisher = {
-            int(k): float(v) for k, v in ration_config.get("feedlot_finisher_ration", {}).items()
-        }
+        feedlot_starter = {int(k): float(v) for k, v in ration_config.get("feedlot_starter_ration", {}).items()}
+        feedlot_transition = {int(k): float(v) for k, v in ration_config.get("feedlot_transition_ration", {}).items()}
+        feedlot_finisher = {int(k): float(v) for k, v in ration_config.get("feedlot_finisher_ration", {}).items()}
 
         for name, ration in (
             ("starter", feedlot_starter),
@@ -101,24 +110,77 @@ class RationManager:
             ("finisher", feedlot_finisher),
         ):
             if ration:
-                negative = [pct for pct in ration.values() if pct < 0.0]
-                if negative:
-                    raise ValueError(
-                        f"Feedlot {name} ration percentages must be non-negative, got: {negative}"
-                    )
-                total_pct = sum(ration.values())
-                if abs(total_pct - 100.0) > 1e-2:
-                    raise ValueError(
-                        f"Feedlot {name} ration percentages must sum to 100.0%, got {total_pct}%"
-                    )
+                cls._validate_ration_percentages(f"Feedlot {name}", ration)
 
         next_ration_feeds[AnimalCombination.FEEDLOT_FINISHING] = [
             int(f) for f in ration_config.get("feedlot_feeds", [])
         ]
+
+        # Stage in local variables first — validate before modifying class state
+        beef_lactating_pasture_ration = {
+            int(k): float(v) for k, v in (ration_config.get("beef_lactating_pasture_ration") or {}).items()
+        }
+        beef_dry_gestating_ration = {
+            int(k): float(v) for k, v in (ration_config.get("beef_dry_gestating_ration") or {}).items()
+        }
+        beef_creep_feed_ration = {
+            int(k): float(v) for k, v in (ration_config.get("beef_creep_feed_ration") or {}).items()
+        }
+        beef_replacement_heifer_ration = {
+            int(k): float(v) for k, v in (ration_config.get("beef_replacement_heifer_ration") or {}).items()
+        }
+        for name, ration in [
+            ("beef_lactating_pasture", beef_lactating_pasture_ration),
+            ("beef_dry_gestating", beef_dry_gestating_ration),
+            ("beef_creep_feed", beef_creep_feed_ration),
+            ("beef_replacement_heifer", beef_replacement_heifer_ration),
+        ]:
+            if ration:
+                cls._validate_ration_percentages(f"Beef {name}", ration)
+
+        beef_stocker_pasture_ration = {
+            int(k): float(v) for k, v in (ration_config.get("beef_stocker_pasture_ration") or {}).items()
+        }
+        beef_stocker_drylot_ration = {
+            int(k): float(v) for k, v in (ration_config.get("beef_stocker_drylot_ration") or {}).items()
+        }
+        for name, ration in [
+            ("beef_stocker_pasture", beef_stocker_pasture_ration),
+            ("beef_stocker_drylot", beef_stocker_drylot_ration),
+        ]:
+            if ration:
+                cls._validate_ration_percentages(f"Beef {name}", ration)
+
         cls.ration_feeds = next_ration_feeds
         cls.feedlot_starter_ration = feedlot_starter
         cls.feedlot_transition_ration = feedlot_transition
         cls.feedlot_finisher_ration = feedlot_finisher
+        cls.beef_lactating_pasture_ration = beef_lactating_pasture_ration
+        cls.beef_dry_gestating_ration = beef_dry_gestating_ration
+        cls.beef_creep_feed_ration = beef_creep_feed_ration
+        cls.beef_replacement_heifer_ration = beef_replacement_heifer_ration
+        cls.beef_stocker_pasture_ration = beef_stocker_pasture_ration
+        cls.beef_stocker_drylot_ration = beef_stocker_drylot_ration
+
+    @staticmethod
+    def _validate_ration_percentages(name: str, ration: dict[int, float]) -> None:
+        """Raise ValueError if ``ration`` has negative, non-finite, or non-100% percentages.
+
+        Parameters
+        ----------
+        name : str
+            Human-readable ration label used in error messages.
+        ration : dict[int, float]
+            Feed-ID to percentage mapping to validate.
+        """
+        negative = [pct for pct in ration.values() if pct < 0.0]
+        if negative:
+            raise ValueError(f"{name} ration percentages must be non-negative, got: {negative}")
+        total_pct = sum(ration.values())
+        if not math.isfinite(total_pct):
+            raise ValueError(f"{name} ration contains non-finite values")
+        if abs(total_pct - 100.0) > 1e-2:
+            raise ValueError(f"{name} ration percentages must sum to 100.0%, got {total_pct}%")
 
     @classmethod
     def get_feedlot_phase_ration(
@@ -150,6 +212,84 @@ class RationManager:
         }
         ration_pct = phase_ration_map.get(step_up_phase, cls.feedlot_finisher_ration)
         return {feed_id: requirements.dry_matter * pct / 100.0 for feed_id, pct in ration_pct.items()}
+
+    @classmethod
+    def get_beef_seasonal_ration(cls, animal: Animal) -> dict[RUFAS_ID, float]:
+        """Returns the seasonal ration dict for a beef cow-calf animal based on its current state.
+
+        Parameters
+        ----------
+        animal : Animal
+            The beef animal whose ration is being selected.
+
+        Returns
+        -------
+        dict[RUFAS_ID, float]
+            Mapping of feed RUFAS ID to percentage of ration.
+
+        Raises
+        ------
+        ValueError
+            If the animal type has no beef seasonal ration mapping.
+
+        """
+        if animal.animal_type == AnimalType.BEEF_HEIFER_REPLACEMENT:
+            return cls.beef_replacement_heifer_ration.copy()
+        if animal.animal_type == AnimalType.BEEF_COW and animal.calf_at_side is not None:
+            return cls.beef_lactating_pasture_ration.copy()
+        if animal.animal_type in (AnimalType.BEEF_COW, AnimalType.BEEF_BULL):
+            return cls.beef_dry_gestating_ration.copy()
+        if animal.animal_type == AnimalType.BEEF_CALF:
+            return {}
+        raise ValueError(f"No beef seasonal ration for animal_type {animal.animal_type}")
+
+    @classmethod
+    def get_beef_creep_feed_supplement(cls, animal: Animal) -> dict[RUFAS_ID, float]:
+        """Returns creep feed dict for a nursing calf if creep feeding is enabled, else empty dict.
+
+        Parameters
+        ----------
+        animal : Animal
+            The beef animal (typically a nursing calf) for creep feed lookup.
+
+        Returns
+        -------
+        dict[RUFAS_ID, float]
+            Mapping of feed RUFAS ID to percentage, or empty dict if creep feeding disabled.
+
+        """
+        if animal.animal_type is not AnimalType.BEEF_CALF:
+            return {}
+        if not AnimalConfig.beef_creep_feeding_enabled:
+            return {}
+        return cls.beef_creep_feed_ration.copy()
+
+    @classmethod
+    def get_beef_stocker_ration(cls, animal: Animal) -> dict[RUFAS_ID, float]:
+        """Return the stocker ration dict for the configured diet system.
+
+        Parameters
+        ----------
+        animal : Animal
+            The stocker animal (unused; kept for API symmetry with get_beef_seasonal_ration).
+
+        Returns
+        -------
+        dict[RUFAS_ID, float]
+            Mapping of feed RUFAS ID to percentage for the active stocker diet system.
+
+        Raises
+        ------
+        ValueError
+            If AnimalConfig.stocker_diet_system is not a recognised StockerDietSystem member.
+
+        """
+        system = AnimalConfig.stocker_diet_system
+        if system is StockerDietSystem.PASTURE:
+            return cls.beef_stocker_pasture_ration.copy()
+        if system is StockerDietSystem.DRYLOT_FORAGE:
+            return cls.beef_stocker_drylot_ration.copy()
+        raise ValueError(f"Unknown stocker_diet_system: {system!r}")
 
     @classmethod
     def get_ration_feeds(cls, animal_combination: AnimalCombination) -> list[RUFAS_ID]:

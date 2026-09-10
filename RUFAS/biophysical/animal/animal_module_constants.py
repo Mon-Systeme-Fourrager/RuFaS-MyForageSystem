@@ -298,8 +298,29 @@ class AnimalModuleConstants:
     BEEF_COW_MAX_AGE_DAYS: int = 5475
     """Conservative longevity ceiling of 15 years = 5475 days."""
 
+    BEEF_POSTPARTUM_ANESTRUS_DAYS: int = 45
+    """Minimum days postpartum before a cow resumes cycling (NRC 2016 Ch.13)."""
+
+    BEEF_CONCEPTION_BASE_DAILY_PROB: float = 0.0404
+    """Base daily conception probability calibrated to USDA 91.5% seasonal pregnancy rate at BCS=5, 25:1 bull ratio."""
+
+    BEEF_CONCEPTION_BULL_RATIO_REFERENCE: float = 30.0
+    """Bull-to-cow ratio above which bull coverage capacity constrains conception (NRC 2016 Ch.13)."""
+
+    BEEF_CONCEPTION_BCS_DIVISOR: float = 4.0
+    """BCS normalization divisor mapping the 1-9 scale to a [0, 1] factor (NRC 2016 Ch.13 qualitative guidance)."""
+
+    BEEF_CONCEPTION_BCS_FLOOR: float = 0.5
+    """Minimum BCS factor retained by severely thin cows; pragmatic floor, not a specific NRC 2016 equation."""
+
     BEEF_DEFAULT_BREEDING_SEASON_LENGTH_DAYS: int = 63
     """Standard 9-week (63-day) breeding season per NRC 2016 management reference."""
+
+    BEEF_DEFAULT_NATURAL_SERVICE_BULL_RATIO: int = 25
+    """Default bulls-per-cow ratio for natural service breeding (industry standard 25:1)."""
+
+    BEEF_DEFAULT_BREEDING_SEASON_START_DAY: int = 90
+    """Default Julian day on which the breeding season opens (approximately April 1)."""
 
     BEEF_DEFAULT_BCS_9: float = 5.0
     """Default moderate body condition score on the NRC 2016 beef 1–9 scale (not the dairy 1–5 scale)."""
@@ -592,3 +613,30 @@ class AnimalModuleConstants:
 
     BEEF_PREG_LAST_DAYS: int = 90
     """Number of final gestation days during which mineral deposition for pregnancy is active — NRC 2016 Table 19-3."""
+
+    # ===== STOCKER / BACKGROUNDING CONSTANTS (NRC 2016 Ch.10-12) =====
+
+    STOCKER_MIN_ENTRY_WEIGHT_KG: float = 180.0
+    """Minimum weaning weight for stocker placement (NRC 2016)."""
+
+    STOCKER_TARGET_EXIT_WEIGHT_KG: float = 350.0
+    """NRC 2016: feedlot entry typically 300-400 kg; 350 kg midpoint default."""
+
+    STOCKER_TARGET_ADG_KG_D: float = 0.80
+    """NRC 2016 Ch.10: mid-range of 0.35-1.15 kg/d on forage-based diet."""
+
+    STOCKER_MAX_DAYS: int = 210
+    """Maximum backgrounding days before forced exit."""
+
+    BEEF_MUD_CONDITION_NONE: str = "none"
+    """NRC 2016 mud condition: no mud, multiplier = 1.00 (MUD_NEm_MULTIPLIER_NONE)."""
+
+    BEEF_MUD_CONDITION_MILD: str = "mild"
+    """NRC 2016 mud condition: mild mud, multiplier = 1.08 (MUD_NEm_MULTIPLIER_MILD)."""
+
+    BEEF_MUD_CONDITION_SEVERE: str = "severe"
+    """NRC 2016 mud condition: severe mud, multiplier = 1.30 (MUD_NEm_MULTIPLIER_SEVERE)."""
+
+    BEEF_DMI_MIN_NE_CONCENTRATION: float = 0.95
+    """Minimum NEm concentration (Mcal/kg DM) applied before division in DMI Eq.10-5.
+    This is a numerical guard against a near-zero denominator, not an NRC 2016 threshold."""
