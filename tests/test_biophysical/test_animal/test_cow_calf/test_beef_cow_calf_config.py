@@ -5,7 +5,6 @@ with correct defaults, and that initialize_animal_config() correctly
 reads them from a beef_cow_calf section in the input JSON.
 """
 
-import types
 from collections.abc import Generator
 from typing import Any
 
@@ -22,30 +21,48 @@ from RUFAS.biophysical.animal.data_types.animal_enums import BeefPostWeaningDest
 
 
 @pytest.fixture(autouse=True)
-def reset_animal_config_state() -> Generator[None, None, None]:
-    """
-    Snapshot AnimalConfig's non-callable class attributes before each test
-    and restore them afterwards to prevent state leakage.
-    """
-    original_attrs = {
-        name: value
-        for name, value in AnimalConfig.__dict__.items()
-        if not name.startswith("__") and not isinstance(value, (types.FunctionType, classmethod, staticmethod))
-    }
-    original_names = set(original_attrs.keys())
+def _restore_animal_config_state() -> Generator[None, None, None]:
+    """Save and restore AnimalConfig beef attributes around each test.
 
+    initialize_animal_config() sets all ten beef ClassVars; saving them
+    explicitly ensures teardown is predictable and type-safe.
+
+    Yields
+    ------
+    None
+        Yields control to the test body; restores state on teardown.
+    """
+    saved_breeding_season_start_day = AnimalConfig.beef_breeding_season_start_day
+    saved_breeding_season_length = AnimalConfig.beef_breeding_season_length
+    saved_weaning_age_days = AnimalConfig.beef_weaning_age_days
+    saved_weaning_weight_kg = AnimalConfig.beef_weaning_weight_kg
+    saved_creep_feeding_enabled = AnimalConfig.beef_creep_feeding_enabled
+    saved_post_weaning_destination = AnimalConfig.beef_post_weaning_destination
+    saved_mature_cow_weight_kg = AnimalConfig.beef_mature_cow_weight_kg
+    saved_natural_service_bull_ratio = AnimalConfig.beef_natural_service_bull_ratio
+    saved_cow_cull_rate_annual = AnimalConfig.beef_cow_cull_rate_annual
+    saved_reproduction_program = AnimalConfig.beef_reproduction_program
+    saved_stocker_entry_weight = AnimalConfig.stocker_entry_weight
+    saved_stocker_exit_weight = AnimalConfig.stocker_exit_weight
+    saved_stocker_max_days = AnimalConfig.stocker_max_days
+    saved_stocker_target_adg = AnimalConfig.stocker_target_adg
+    saved_stocker_diet_system = AnimalConfig.stocker_diet_system
     yield
-
-    for name in list(AnimalConfig.__dict__.keys()):
-        if name.startswith("__"):
-            continue
-        if isinstance(AnimalConfig.__dict__[name], (types.FunctionType, classmethod, staticmethod)):
-            continue
-        if name not in original_names:
-            delattr(AnimalConfig, name)
-
-    for name, value in original_attrs.items():
-        setattr(AnimalConfig, name, value)
+    AnimalConfig.beef_breeding_season_start_day = saved_breeding_season_start_day
+    AnimalConfig.beef_breeding_season_length = saved_breeding_season_length
+    AnimalConfig.beef_weaning_age_days = saved_weaning_age_days
+    AnimalConfig.beef_weaning_weight_kg = saved_weaning_weight_kg
+    AnimalConfig.beef_creep_feeding_enabled = saved_creep_feeding_enabled
+    AnimalConfig.beef_post_weaning_destination = saved_post_weaning_destination
+    AnimalConfig.beef_mature_cow_weight_kg = saved_mature_cow_weight_kg
+    AnimalConfig.beef_natural_service_bull_ratio = saved_natural_service_bull_ratio
+    AnimalConfig.beef_cow_cull_rate_annual = saved_cow_cull_rate_annual
+    AnimalConfig.beef_reproduction_program = saved_reproduction_program
+    AnimalConfig.stocker_entry_weight = saved_stocker_entry_weight
+    AnimalConfig.stocker_exit_weight = saved_stocker_exit_weight
+    AnimalConfig.stocker_max_days = saved_stocker_max_days
+    AnimalConfig.stocker_target_adg = saved_stocker_target_adg
+    AnimalConfig.stocker_diet_system = saved_stocker_diet_system
 
 
 # ---------------------------------------------------------------------------
@@ -379,14 +396,33 @@ def _mock_im(mocker: pytest_mock.MockerFixture, beef_overrides: dict[str, Any] |
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("dest", list(BeefPostWeaningDestination))
+_IMPLEMENTED_DESTINATIONS = (
+    BeefPostWeaningDestination.SELL,
+    BeefPostWeaningDestination.REPLACEMENT_HEIFER,
+    BeefPostWeaningDestination.DIRECT_TO_FEEDLOT,
+    BeefPostWeaningDestination.STOCKER,
+)
+
+
+@pytest.mark.parametrize("dest", _IMPLEMENTED_DESTINATIONS)
 def test_initialize_valid_post_weaning_destinations_accepted(
     dest: BeefPostWeaningDestination, mocker: pytest_mock.MockerFixture
 ) -> None:
-    """All four valid post_weaning_destination values must be accepted without error."""
+    """SELL, REPLACEMENT_HEIFER, and DIRECT_TO_FEEDLOT must be accepted without error."""
     _mock_im(mocker, beef_overrides={"post_weaning_destination": dest.value})
     AnimalConfig.initialize_animal_config()
     assert AnimalConfig.beef_post_weaning_destination is dest
+
+
+def test_initialize_stocker_destination_accepted(mocker: pytest_mock.MockerFixture) -> None:
+    """'stocker' post_weaning_destination must now be accepted without error.
+
+    The native stocker module (Segment 3) is implemented; the placeholder
+    NotImplementedError guard has been removed from _parse_beef_enum_fields.
+    """
+    _mock_im(mocker, beef_overrides={"post_weaning_destination": BeefPostWeaningDestination.STOCKER.value})
+    AnimalConfig.initialize_animal_config()
+    assert AnimalConfig.beef_post_weaning_destination is BeefPostWeaningDestination.STOCKER
 
 
 def test_initialize_invalid_post_weaning_destination_raises(mocker: pytest_mock.MockerFixture) -> None:
@@ -394,3 +430,51 @@ def test_initialize_invalid_post_weaning_destination_raises(mocker: pytest_mock.
     _mock_im(mocker, beef_overrides={"post_weaning_destination": "auction"})
     with pytest.raises(ValueError, match="Invalid beef post-weaning destination"):
         AnimalConfig.initialize_animal_config()
+
+
+def test_initialize_invalid_reproduction_program_raises(mocker: pytest_mock.MockerFixture) -> None:
+    """initialize_animal_config must raise ValueError for an unrecognised reproduction_program.
+
+    Verifies that a clear, user-facing error message is returned listing valid
+    options (FIX 3 — mirrors the post_weaning_destination validation pattern).
+    """
+    _mock_im(mocker, beef_overrides={"reproduction_program": "synchronized_timed_ai"})
+    with pytest.raises(ValueError, match="Invalid beef reproduction program"):
+        AnimalConfig.initialize_animal_config()
+
+
+# ---------------------------------------------------------------------------
+# None-safe assignment block (FIX 1 — CodeRabbit Round 3)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        "mature_cow_weight_kg",
+        "weaning_age_days",
+        "breeding_season_length",
+        "natural_service_bull_ratio",
+    ],
+)
+def test_initialize_explicit_none_for_validated_key_uses_default(key: str, mocker: pytest_mock.MockerFixture) -> None:
+    """An explicit None in the beef_cow_calf section must not raise TypeError.
+
+    Each of the four keys covered by merged_beef_cfg must fall back to its default
+    when present but set to None, rather than propagating None to int()/float().
+
+    Parameters
+    ----------
+    key : str
+        The beef_cow_calf config key to set to None.
+    mocker : pytest_mock.MockerFixture
+        pytest-mock fixture for patching InputManager.
+    """
+    _mock_im(mocker, beef_overrides={key: None})
+    AnimalConfig.initialize_animal_config()
+    assert AnimalConfig.beef_mature_cow_weight_kg == pytest.approx(
+        AnimalModuleConstants.BEEF_DEFAULT_MATURE_COW_WEIGHT_KG
+    )
+    assert AnimalConfig.beef_weaning_age_days == AnimalModuleConstants.BEEF_DEFAULT_WEANING_AGE_DAYS
+    assert AnimalConfig.beef_breeding_season_length == AnimalModuleConstants.BEEF_DEFAULT_BREEDING_SEASON_LENGTH_DAYS
+    assert AnimalConfig.beef_natural_service_bull_ratio == 25

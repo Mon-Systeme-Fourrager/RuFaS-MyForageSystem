@@ -214,4 +214,4 @@ def test_breed_lookup_dicts_are_immutable(attr: str) -> None:
     """Breed lookup dicts must be MappingProxyType and raise TypeError on mutation attempt."""
     mapping = getattr(AnimalModuleConstants, attr)
     with pytest.raises(TypeError):
-        mapping["__test_sentinel__"] = 0.0  # type: ignore[index]
+        mapping["__test_sentinel__"] = 0.0

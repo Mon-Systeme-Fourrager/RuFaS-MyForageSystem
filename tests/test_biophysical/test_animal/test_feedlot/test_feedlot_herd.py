@@ -55,6 +55,12 @@ def test_herd_manager_feedlot_animals_in_animals_by_type() -> None:
     hm.heiferIIIs = []
     hm.cows = []
     hm.feedlot_animals = []
+    hm.beef_cows = []
+    hm.beef_replacement_heifers = []
+    hm.beef_calves = []
+    hm.beef_bulls = []
+    hm.beef_stocker_steers = []
+    hm.beef_stocker_heifers = []
 
     result = hm.animals_by_type
     assert AnimalType.FEEDLOT_STEER in result
@@ -74,6 +80,12 @@ def test_herd_manager_animals_by_type_steer_heifer_filtered_separately() -> None
     hm.heiferIIs = []
     hm.heiferIIIs = []
     hm.cows = []
+    hm.beef_cows = []
+    hm.beef_replacement_heifers = []
+    hm.beef_calves = []
+    hm.beef_bulls = []
+    hm.beef_stocker_steers = []
+    hm.beef_stocker_heifers = []
 
     steer = MagicMock()
     steer.animal_type = AnimalType.FEEDLOT_STEER

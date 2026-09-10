@@ -1,5 +1,6 @@
 import copy
 import datetime
+import math
 import random
 from pathlib import Path
 from typing import Any, cast
@@ -12,7 +13,7 @@ from RUFAS.biophysical.animal.animal_config import AnimalConfig
 from RUFAS.biophysical.animal.animal_genetics.animal_genetics import Genetics
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
 from RUFAS.biophysical.animal.animal_module_reporter import AnimalModuleReporter
-from RUFAS.biophysical.animal.data_types.animal_enums import AnimalStatus, Breed
+from RUFAS.biophysical.animal.data_types.animal_enums import AnimalStatus, Breed, Sex
 from RUFAS.biophysical.animal.data_types.animal_population import AnimalPopulation
 from RUFAS.biophysical.animal.data_types.animal_typed_dicts import NewBornCalfValuesTypedDict
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
@@ -66,6 +67,8 @@ class HerdFactory:
 
     post_animal_population: AnimalPopulation | None = None
     feedlot_animals: list[Animal] = []
+    beef_cow_calf_animals: list[Animal] = []  # populated by initialize_herd via _initialize_beef_cow_calf_herd
+    beef_stocker_animals: list[Animal] = []  # populated by initialize_herd via _initialize_beef_stocker_herd
 
     def __init__(
         self,
@@ -718,6 +721,180 @@ class HerdFactory:
 
         return animals
 
+    @staticmethod
+    def _parse_beef_cow_calf_config(
+        cow_calf_cfg: dict[str, Any],
+    ) -> tuple[int, int, int, int, float, float, str]:
+        """Parse and validate cohort counts and weights from a beef cow-calf config block.
+
+        Parameters
+        ----------
+        cow_calf_cfg : dict[str, Any]
+            The ``beef_cow_calf`` section of ``herd_initialization`` input config.
+
+        Returns
+        -------
+        tuple[int, int, int, int, float, float, str]
+            ``(n_cows, n_heifers, n_calves, n_bulls, mature_bw, calf_birth_weight_kg, breed_str)``
+
+        Raises
+        ------
+        ValueError
+            If any cohort count is negative or any weight is non-positive or non-finite.
+
+        """
+        n_cows = int(cow_calf_cfg.get("num_cows") or 0)
+        n_heifers = int(cow_calf_cfg.get("num_replacement_heifers") or 0)
+        n_calves = int(cow_calf_cfg.get("num_calves") or 0)
+        n_bulls = int(cow_calf_cfg.get("num_bulls") or 0)
+        if min(n_cows, n_heifers, n_calves, n_bulls) < 0:
+            raise ValueError("Beef cow-calf cohort counts must be non-negative.")
+        mature_raw = cow_calf_cfg.get("mature_cow_weight_kg")
+        mature_bw = float(AnimalConfig.beef_mature_cow_weight_kg) if mature_raw is None else float(mature_raw)
+        if not math.isfinite(mature_bw) or mature_bw <= 0:
+            raise ValueError(f"mature_cow_weight_kg must be positive and finite, got {mature_bw}")
+        calf_bw_raw = cow_calf_cfg.get("calf_birth_weight_kg")
+        calf_birth_weight_kg = (
+            float(AnimalModuleConstants.BEEF_CALF_BIRTH_WEIGHT_KG) if calf_bw_raw is None else float(calf_bw_raw)
+        )
+        if not math.isfinite(calf_birth_weight_kg) or calf_birth_weight_kg <= 0:
+            raise ValueError(f"calf_birth_weight_kg must be positive and finite, got {calf_birth_weight_kg}")
+        breed_str = str(cow_calf_cfg.get("breed") or "XB")
+        return n_cows, n_heifers, n_calves, n_bulls, mature_bw, calf_birth_weight_kg, breed_str
+
+    def _initialize_beef_cow_calf_herd(self) -> list[Animal]:
+        """
+        Create the initial beef cow-calf animal population from user config.
+
+        Returns
+        -------
+        list[Animal]
+            Beef cow-calf animals. Returns an empty list when the
+            'animal.herd_initialization.beef_cow_calf' key is absent from the input.
+
+        """
+        try:
+            cow_calf_cfg: Any = self.im.get_data("animal.herd_initialization.beef_cow_calf")
+        except (KeyError, TypeError):
+            return []
+
+        if (
+            not isinstance(cow_calf_cfg, dict) or not cow_calf_cfg
+        ):  # isinstance guard prevents .get() calls on non-dict config values
+            return []
+
+        n_cows, n_heifers, n_calves, n_bulls, mature_bw, calf_birth_weight_kg, breed_str = (
+            self._parse_beef_cow_calf_config(cow_calf_cfg)
+        )
+
+        animals: list[Animal] = []
+
+        for _ in range(n_cows):
+            cow_data: dict[str, Any] = {
+                "id": AnimalPopulation.next_id(),
+                "breed": breed_str,
+                "animal_type": AnimalType.BEEF_COW.value,
+                "sex": "FEMALE",
+                "days_born": animal_constants.DAYS_PER_YEAR * animal_constants.BEEF_COW_INITIAL_AGE_YEARS,
+                "body_weight": mature_bw,
+                "mature_body_weight": mature_bw,
+                "birth_weight": AnimalModuleConstants.BEEF_CALF_BIRTH_WEIGHT_KG,
+            }
+            animals.append(Animal(cast(Any, cow_data), self.time))
+
+        for _ in range(n_heifers):
+            heifer_data: dict[str, Any] = {
+                "id": AnimalPopulation.next_id(),
+                "breed": breed_str,
+                "animal_type": AnimalType.BEEF_HEIFER_REPLACEMENT.value,
+                "sex": "FEMALE",
+                "days_born": animal_constants.DAYS_PER_YEAR * animal_constants.BEEF_HEIFER_INITIAL_AGE_YEARS,
+                "body_weight": mature_bw * animal_constants.BEEF_HEIFER_INITIAL_WEIGHT_PCT_MATURE,
+                "mature_body_weight": mature_bw,
+                "birth_weight": AnimalModuleConstants.BEEF_CALF_BIRTH_WEIGHT_KG,
+            }
+            animals.append(Animal(cast(Any, heifer_data), self.time))
+
+        for _ in range(n_calves):
+            calf_data: dict[str, Any] = {
+                "id": AnimalPopulation.next_id(),
+                "breed": breed_str,
+                "animal_type": AnimalType.BEEF_CALF.value,
+                "days_born": 1,
+                "body_weight": calf_birth_weight_kg,
+                "mature_body_weight": mature_bw,
+                "birth_weight": calf_birth_weight_kg,
+            }
+            animals.append(Animal(cast(Any, calf_data), self.time))
+
+        for _ in range(n_bulls):
+            bull_data: dict[str, Any] = {
+                "id": AnimalPopulation.next_id(),
+                "breed": breed_str,
+                "animal_type": AnimalType.BEEF_BULL.value,
+                "sex": "MALE",
+                "days_born": animal_constants.DAYS_PER_YEAR * animal_constants.BEEF_BULL_INITIAL_AGE_YEARS,
+                "body_weight": mature_bw * animal_constants.BEEF_BULL_INITIAL_WEIGHT_PCT_MATURE,
+                "mature_body_weight": mature_bw,
+                "birth_weight": AnimalModuleConstants.BEEF_CALF_BIRTH_WEIGHT_KG,
+            }
+            animals.append(Animal(cast(Any, bull_data), self.time))
+
+        return animals
+
+    def _initialize_beef_stocker_herd(self) -> list[Animal]:
+        """
+        Create the initial beef stocker animal population from user config.
+
+        Returns
+        -------
+        list[Animal]
+            Stocker animals. Returns an empty list when the
+            'animal.herd_initialization.beef_stocker' key is absent from the input.
+
+        """
+        try:
+            stocker_cfg: Any = self.im.get_data("animal.herd_initialization.beef_stocker")
+        except (KeyError, TypeError):
+            return []
+
+        if not isinstance(stocker_cfg, dict) or not stocker_cfg:
+            return []
+
+        n_steers: int = int(stocker_cfg.get("num_steers", 0))
+        n_heifers: int = int(stocker_cfg.get("num_heifers", 0))
+        entry_weight: float = float(stocker_cfg.get("entry_weight_kg", AnimalConfig.stocker_entry_weight))
+        mature_bw: float = AnimalConfig.beef_mature_cow_weight_kg
+        breed_str: str = stocker_cfg.get("breed", Breed.AN.name)
+
+        if n_steers < 0 or n_heifers < 0:
+            raise ValueError(
+                f"Stocker cohort counts must be non-negative, got num_steers={n_steers}, num_heifers={n_heifers}"
+            )
+        if not math.isfinite(entry_weight) or entry_weight <= 0:
+            raise ValueError(f"stocker entry_weight must be positive and finite, got {entry_weight}")
+
+        animals: list[Animal] = []
+        animal_configs: list[tuple[int, AnimalType, str]] = [
+            (n_steers, AnimalType.BEEF_STOCKER_STEER, Sex.STEER.name),
+            (n_heifers, AnimalType.BEEF_STOCKER_HEIFER, Sex.FEMALE.name),
+        ]
+        for n_animals, animal_type, sex_str in animal_configs:
+            for _ in range(n_animals):
+                animal_data: dict[str, Any] = {
+                    "id": AnimalPopulation.next_id(),
+                    "breed": breed_str,
+                    "animal_type": animal_type.value,
+                    "sex": sex_str,
+                    "days_born": 1,
+                    "body_weight": entry_weight,
+                    "mature_body_weight": mature_bw,
+                    "birth_weight": AnimalModuleConstants.BEEF_CALF_BIRTH_WEIGHT_KG,
+                }
+                animals.append(Animal(cast(Any, animal_data), self.time))
+
+        return animals
+
     def initialize_herd(self) -> None:
         """
         Initialize an AnimalPopulation object for simulation, either from input data or generate from simulation.
@@ -756,6 +933,8 @@ class HerdFactory:
         post_animal_population = self._random_sample_with_replacement()
         HerdFactory.set_post_animal_population(post_animal_population)
         HerdFactory.feedlot_animals = self._initialize_feedlot_herd()
+        HerdFactory.beef_cow_calf_animals = self._initialize_beef_cow_calf_herd()
+        HerdFactory.beef_stocker_animals = self._initialize_beef_stocker_herd()
         AnimalModuleReporter.report_animal_population_statistics(
             "population", self.pre_animal_population.get_herd_summary()
         )
