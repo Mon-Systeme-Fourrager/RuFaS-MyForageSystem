@@ -209,15 +209,23 @@ Django DB schema, and a UW-Extension pile-density spreadsheet doc
 **Decision: geometry dimensions get no reference-table fallback, for any of Bunker/Pile/Bag.**
 Two independent, authoritative sources (the primary IFSM manual and MSF's own production schema)
 converge on the same answer — this isn't a compromise from failing to find data, it's the
-architecturally correct choice. Drop the "optional, reference-table fallback" half of §3's scope;
-geometry becomes a required field in each storage's own config JSON, same as MSF's DB already
-requires. The Bunker/Tower worked-example numbers found above (Buckmaster 1989, p.1149) are kept in
-this doc for context but are **not** to be wired in as a code fallback.
+architecturally correct choice. No placeholder numbers are hardcoded into production code paths, and
+no literature default is ever substituted for a real dimension: a missing value is never turned into
+an invented number. The Bunker/Tower worked-example numbers found above (Buckmaster 1989, p.1149) are
+kept in this doc for context but are **not** wired in as a code fallback.
 
-No placeholder numbers will be hardcoded into production code paths — the lookup mechanism will be
-built, but calling it for Bag permeability or for any geometry dimension without a sourced/decided value
-should fail loudly (explicit error), not silently return an invented number, until the open items above
-are closed.
+**Revised during implementation: geometry is optional, and a missing value skips Preseal rather than
+failing loudly.** The original plan above called for geometry to be a *required* config field, with
+construction failing loudly (an explicit error) if it was absent — enforcing "no invented number" by
+refusing to run at all without real data. That would have broken every existing Bunker/Pile/Bag
+config anywhere the moment this feature shipped, since none of them predate these fields. The revised
+behavior: `width_m`/`height_m`/`diameter_m`/`dry_matter_density_kg_per_m3` are optional on
+`Bunker`/`Pile`/`Bag`; a storage missing any of the fields it needs simply skips Preseal for its
+crops (no exception, no substituted number — the rest of the model, Effluent/Fermentation/mass
+tracking, is unaffected). A *present but invalid* value (non-numeric, zero, negative) still raises
+`ValueError` — the "no silent fallback for a real farm's storage" principle is preserved for anyone
+who does configure Preseal; it's absence, not garbage, that's now tolerated. This is strictly
+opt-in: no existing farm config is required to change.
 
 ## 8. Testing strategy
 

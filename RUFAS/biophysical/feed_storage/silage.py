@@ -602,7 +602,7 @@ def _read_optional_positive_config_float(
     if value is None:
         return None
     if isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0:
-        raise ValueError(f"{class_name} requires a positive '{key}' in its config, got {value!r}.")
+        raise ValueError(f"{class_name} '{key}' must be a positive number when provided, got {value!r}.")
     return float(value)
 
 

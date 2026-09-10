@@ -280,7 +280,6 @@ def test_bunker_geometry_and_density_are_optional(mock_silage_config: dict[str, 
     """Bunker constructs fine with width_m, height_m, or dry_matter_density_kg_per_m3 missing — the
     attribute is None, and no reference-table fallback is substituted."""
     config = dict(mock_silage_config)
-    config.pop("size", None)
     for missing_key in ("width_m", "height_m", "dry_matter_density_kg_per_m3"):
         bad_config = {**config, "width_m": 10.0, "height_m": 3.0, "dry_matter_density_kg_per_m3": 180.0}
         del bad_config[missing_key]
@@ -296,7 +295,6 @@ def test_bunker_requires_positive_geometry_and_density_rejects_non_positive_valu
 ) -> None:
     """Bunker raises ValueError if width_m, height_m, or dry_matter_density_kg_per_m3 is zero or negative."""
     config = dict(mock_silage_config)
-    config.pop("size", None)
     bad_config = {**config, "width_m": 10.0, "height_m": 3.0, "dry_matter_density_kg_per_m3": 180.0}
     bad_config[field_name] = bad_value
     with pytest.raises(ValueError, match=field_name):
@@ -307,7 +305,6 @@ def test_bunker_requires_positive_geometry_and_density_rejects_non_positive_valu
 def test_bunker_stores_geometry_and_density(mock_silage_config: dict[str, str | float | list[str]]) -> None:
     """Bunker stores width_m, height_m, and dry_matter_density_kg_per_m3 from config."""
     config = dict(mock_silage_config)
-    config.pop("size", None)
     config.update({"width_m": 10.0, "height_m": 3.0, "dry_matter_density_kg_per_m3": 180.0})
 
     bunker = Bunker(config=config)
@@ -322,7 +319,6 @@ def test_pile_geometry_and_density_are_optional(mock_silage_config: dict[str, st
     """Pile constructs fine with width_m, height_m, or dry_matter_density_kg_per_m3 missing — the
     attribute is None, and no reference-table fallback is substituted."""
     config = dict(mock_silage_config)
-    config.pop("size", None)
     for missing_key in ("width_m", "height_m", "dry_matter_density_kg_per_m3"):
         bad_config = {**config, "width_m": 10.0, "height_m": 3.0, "dry_matter_density_kg_per_m3": 180.0}
         del bad_config[missing_key]
@@ -334,7 +330,6 @@ def test_pile_geometry_and_density_are_optional(mock_silage_config: dict[str, st
 def test_pile_stores_geometry_and_density(mock_silage_config: dict[str, str | float | list[str]]) -> None:
     """Pile stores width_m, height_m, and dry_matter_density_kg_per_m3 from config."""
     config = dict(mock_silage_config)
-    config.pop("size", None)
     config.update({"width_m": 10.0, "height_m": 3.0, "dry_matter_density_kg_per_m3": 180.0})
 
     pile = Pile(config=config)
@@ -349,7 +344,6 @@ def test_bag_geometry_and_density_are_optional(mock_silage_config: dict[str, str
     """Bag constructs fine with diameter_m or dry_matter_density_kg_per_m3 missing — the attribute is
     None, and no reference-table fallback is substituted."""
     config = dict(mock_silage_config)
-    config.pop("size", None)
     for missing_key in ("diameter_m", "dry_matter_density_kg_per_m3"):
         bad_config = {**config, "diameter_m": 3.0, "dry_matter_density_kg_per_m3": 180.0}
         del bad_config[missing_key]
@@ -361,7 +355,6 @@ def test_bag_geometry_and_density_are_optional(mock_silage_config: dict[str, str
 def test_bag_stores_geometry_and_density(mock_silage_config: dict[str, str | float | list[str]]) -> None:
     """Bag stores diameter_m and dry_matter_density_kg_per_m3 from config."""
     config = dict(mock_silage_config)
-    config.pop("size", None)
     config.update({"diameter_m": 3.0, "dry_matter_density_kg_per_m3": 180.0})
 
     bag = Bag(config=config)
@@ -492,34 +485,56 @@ def test_process_degradations_skips_already_finalized_crop(
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    "storage_class,config_overrides",
+    "storage_class,extra_config,missing_key",
     [
-        (Bunker, {"width_m": None, "height_m": 3.0, "dry_matter_density_kg_per_m3": 180.0}),
-        (Bunker, {"width_m": 10.0, "height_m": 3.0, "dry_matter_density_kg_per_m3": None}),
-        (Bag, {"diameter_m": None, "dry_matter_density_kg_per_m3": 180.0}),
+        (Bunker, {"width_m": 10.0, "height_m": 3.0, "dry_matter_density_kg_per_m3": 180.0}, "width_m"),
+        (Bunker, {"width_m": 10.0, "height_m": 3.0, "dry_matter_density_kg_per_m3": 180.0}, "height_m"),
+        (
+            Bunker,
+            {"width_m": 10.0, "height_m": 3.0, "dry_matter_density_kg_per_m3": 180.0},
+            "dry_matter_density_kg_per_m3",
+        ),
+        (Pile, {"width_m": 10.0, "height_m": 3.0, "dry_matter_density_kg_per_m3": 180.0}, "width_m"),
+        (Pile, {"width_m": 10.0, "height_m": 3.0, "dry_matter_density_kg_per_m3": 180.0}, "height_m"),
+        (
+            Pile,
+            {"width_m": 10.0, "height_m": 3.0, "dry_matter_density_kg_per_m3": 180.0},
+            "dry_matter_density_kg_per_m3",
+        ),
+        (Bag, {"diameter_m": 3.0, "dry_matter_density_kg_per_m3": 180.0}, "diameter_m"),
+        (Bag, {"diameter_m": 3.0, "dry_matter_density_kg_per_m3": 180.0}, "dry_matter_density_kg_per_m3"),
     ],
 )
 def test_finalize_preseal_loss_skips_gracefully_when_geometry_missing(
     mock_silage_config: dict[str, str | float | list[str]],
     harvested_crop: HarvestedCrop,
     storage_class: type[Silage],
-    config_overrides: dict[str, float | None],
+    extra_config: dict[str, float],
+    missing_key: str,
 ) -> None:
     """A storage missing any Preseal geometry/density field skips Preseal for a crop entirely: no
-    exception, no mass/temperature change, but the crop is still marked finalized so it isn't
-    re-attempted on every degradation pass. This is what keeps existing farm configs that predate
-    the Preseal geometry fields working unchanged."""
-    config = dict(mock_silage_config)
-    config.pop("size", None)
-    config.update(config_overrides)
+    exception, no mass/nutrient/temperature change, but the crop is still marked finalized so it
+    isn't re-attempted on every degradation pass. Deletes the key entirely (the real production
+    route for an absent field) rather than injecting an explicit None. Covers all three storage
+    classes and every field each one depends on. This is what keeps existing farm configs that
+    predate the Preseal geometry fields working unchanged."""
+    config: dict[str, str | float | list[str]] = dict(mock_silage_config)
+    config.update(extra_config)
+    del config[missing_key]
     storage = storage_class(config=config)
     initial_dry_matter_mass = harvested_crop.dry_matter_mass
+    initial_dry_matter_percentage = harvested_crop.dry_matter_percentage
+    initial_ndf = harvested_crop.ndf
+    initial_crude_protein_percent = harvested_crop.crude_protein_percent
     initial_temperature = harvested_crop.temperature
 
     storage._finalize_preseal_loss(harvested_crop, exposure_days=2.0)
 
     assert harvested_crop.preseal_finalized is True
     assert harvested_crop.dry_matter_mass == initial_dry_matter_mass
+    assert harvested_crop.dry_matter_percentage == initial_dry_matter_percentage
+    assert harvested_crop.ndf == initial_ndf
+    assert harvested_crop.crude_protein_percent == initial_crude_protein_percent
     assert harvested_crop.temperature == initial_temperature
 
 
@@ -538,7 +553,6 @@ def test_preseal_full_cycle_stays_within_bounds(
 ) -> None:
     """Two crops received in sequence: the first's Preseal loss finalizes on the second's arrival, stays in (0, 1)."""
     config = dict(mock_silage_config)
-    config.pop("size", None)
     config.update(extra_config)
     storage = storage_class(config=config)
     first_crop = HarvestedCrop(**{**sample_crop_data, "config_name": "corn_silage", "dry_matter_percentage": 35.0})
@@ -570,7 +584,6 @@ def test_preseal_full_cycle_bunker_matches_hand_calculation(
     `exposed_area_m2`/`dry_matter_density_kg_per_m3` being passed through `receive_crop`.
     """
     config = dict(mock_silage_config)
-    config.pop("size", None)
     config.update({"width_m": 10.0, "height_m": 3.0, "dry_matter_density_kg_per_m3": 180.0})
     bunker = Bunker(config=config)
     first_crop = HarvestedCrop(**{**sample_crop_data, "config_name": "corn_silage", "dry_matter_percentage": 35.0})
