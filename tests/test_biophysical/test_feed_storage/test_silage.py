@@ -276,15 +276,16 @@ def test_bag_init(mock_silage_config: dict[str, Any], mocker: MockerFixture) -> 
 
 
 @pytest.mark.unit
-def test_bunker_requires_positive_geometry_and_density(mock_silage_config: dict[str, str | float | list[str]]) -> None:
-    """Bunker raises ValueError if width_m, height_m, or dry_matter_density_kg_per_m3 is missing or non-positive."""
+def test_bunker_geometry_and_density_are_optional(mock_silage_config: dict[str, str | float | list[str]]) -> None:
+    """Bunker constructs fine with width_m, height_m, or dry_matter_density_kg_per_m3 missing — the
+    attribute is None, and no reference-table fallback is substituted."""
     config = dict(mock_silage_config)
     config.pop("size", None)
     for missing_key in ("width_m", "height_m", "dry_matter_density_kg_per_m3"):
         bad_config = {**config, "width_m": 10.0, "height_m": 3.0, "dry_matter_density_kg_per_m3": 180.0}
         del bad_config[missing_key]
-        with pytest.raises(ValueError, match=missing_key):
-            Bunker(config=bad_config)
+        bunker = Bunker(config=bad_config)
+        assert getattr(bunker, missing_key) is None
 
 
 @pytest.mark.unit
@@ -317,15 +318,16 @@ def test_bunker_stores_geometry_and_density(mock_silage_config: dict[str, str | 
 
 
 @pytest.mark.unit
-def test_pile_requires_positive_geometry_and_density(mock_silage_config: dict[str, str | float | list[str]]) -> None:
-    """Pile raises ValueError if width_m, height_m, or dry_matter_density_kg_per_m3 is missing or non-positive."""
+def test_pile_geometry_and_density_are_optional(mock_silage_config: dict[str, str | float | list[str]]) -> None:
+    """Pile constructs fine with width_m, height_m, or dry_matter_density_kg_per_m3 missing — the
+    attribute is None, and no reference-table fallback is substituted."""
     config = dict(mock_silage_config)
     config.pop("size", None)
     for missing_key in ("width_m", "height_m", "dry_matter_density_kg_per_m3"):
         bad_config = {**config, "width_m": 10.0, "height_m": 3.0, "dry_matter_density_kg_per_m3": 180.0}
         del bad_config[missing_key]
-        with pytest.raises(ValueError, match=missing_key):
-            Pile(config=bad_config)
+        pile = Pile(config=bad_config)
+        assert getattr(pile, missing_key) is None
 
 
 @pytest.mark.unit
@@ -343,15 +345,16 @@ def test_pile_stores_geometry_and_density(mock_silage_config: dict[str, str | fl
 
 
 @pytest.mark.unit
-def test_bag_requires_positive_geometry_and_density(mock_silage_config: dict[str, str | float | list[str]]) -> None:
-    """Bag raises ValueError if diameter_m or dry_matter_density_kg_per_m3 is missing or non-positive."""
+def test_bag_geometry_and_density_are_optional(mock_silage_config: dict[str, str | float | list[str]]) -> None:
+    """Bag constructs fine with diameter_m or dry_matter_density_kg_per_m3 missing — the attribute is
+    None, and no reference-table fallback is substituted."""
     config = dict(mock_silage_config)
     config.pop("size", None)
     for missing_key in ("diameter_m", "dry_matter_density_kg_per_m3"):
         bad_config = {**config, "diameter_m": 3.0, "dry_matter_density_kg_per_m3": 180.0}
         del bad_config[missing_key]
-        with pytest.raises(ValueError, match=missing_key):
-            Bag(config=bad_config)
+        bag = Bag(config=bad_config)
+        assert getattr(bag, missing_key) is None
 
 
 @pytest.mark.unit
@@ -485,6 +488,39 @@ def test_process_degradations_skips_already_finalized_crop(
     silage.process_degradations(mock_weather, mock_time)
 
     finalize.assert_not_called()
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "storage_class,config_overrides",
+    [
+        (Bunker, {"width_m": None, "height_m": 3.0, "dry_matter_density_kg_per_m3": 180.0}),
+        (Bunker, {"width_m": 10.0, "height_m": 3.0, "dry_matter_density_kg_per_m3": None}),
+        (Bag, {"diameter_m": None, "dry_matter_density_kg_per_m3": 180.0}),
+    ],
+)
+def test_finalize_preseal_loss_skips_gracefully_when_geometry_missing(
+    mock_silage_config: dict[str, str | float | list[str]],
+    harvested_crop: HarvestedCrop,
+    storage_class: type[Silage],
+    config_overrides: dict[str, float | None],
+) -> None:
+    """A storage missing any Preseal geometry/density field skips Preseal for a crop entirely: no
+    exception, no mass/temperature change, but the crop is still marked finalized so it isn't
+    re-attempted on every degradation pass. This is what keeps existing farm configs that predate
+    the Preseal geometry fields working unchanged."""
+    config = dict(mock_silage_config)
+    config.pop("size", None)
+    config.update(config_overrides)
+    storage = storage_class(config=config)
+    initial_dry_matter_mass = harvested_crop.dry_matter_mass
+    initial_temperature = harvested_crop.temperature
+
+    storage._finalize_preseal_loss(harvested_crop, exposure_days=2.0)
+
+    assert harvested_crop.preseal_finalized is True
+    assert harvested_crop.dry_matter_mass == initial_dry_matter_mass
+    assert harvested_crop.temperature == initial_temperature
 
 
 @pytest.mark.component

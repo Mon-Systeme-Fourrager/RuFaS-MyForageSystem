@@ -219,12 +219,19 @@ class Silage(Storage):
         -----
         Applied exactly once per crop (matches ``Silostg.for``'s one-shot-per-plot semantics) — the
         caller is responsible for only invoking this on crops with ``preseal_finalized is False``.
+        If this storage has no configured geometry/density (`_preseal_exposed_area_m2`/
+        `_preseal_dry_matter_density_kg_per_m3` returning ``None``), this is a no-op beyond marking
+        the crop finalized — existing storages that predate these optional fields are unaffected.
         ``[FS.SIL.9]``.
 
         """
-        preseal_result = calculate_preseal_loss(
-            crop, exposure_days, self._preseal_exposed_area_m2(), self._preseal_dry_matter_density_kg_per_m3()
-        )
+        exposed_area_m2 = self._preseal_exposed_area_m2()
+        dry_matter_density_kg_per_m3 = self._preseal_dry_matter_density_kg_per_m3()
+        if exposed_area_m2 is None or dry_matter_density_kg_per_m3 is None:
+            crop.preseal_finalized = True
+            return
+
+        preseal_result = calculate_preseal_loss(crop, exposure_days, exposed_area_m2, dry_matter_density_kg_per_m3)
         dry_matter_loss_kg = crop.dry_matter_mass * preseal_result["dry_matter_loss_fraction"]
 
         crop.ndf = self.recalculate_nutrient_percentage(crop.ndf, 0.0, dry_matter_loss_kg, crop.dry_matter_mass)
@@ -241,19 +248,22 @@ class Silage(Storage):
         crop.temperature = preseal_result["final_temperature"]
         crop.preseal_finalized = True
 
-    def _preseal_exposed_area_m2(self) -> float:
+    def _preseal_exposed_area_m2(self) -> float | None:
         """
         Returns the exposed surface area used by the Preseal calculation for this storage class.
 
         Returns
         -------
-        float
-            Exposed area (m2).
+        float | None
+            Exposed area (m2). A concrete subclass may return ``None`` when this storage instance
+            lacks the config needed for the calculation — Preseal is then skipped for it, not
+            substituted with a fallback.
 
         Raises
         ------
         NotImplementedError
-            If called on a `Silage` subclass that has not defined its own exposed-area geometry.
+            If called on a `Silage` subclass that has not overridden this method at all (a
+            programmer error — `Bunker`/`Pile`/`Bag` always override it).
 
         """
         self.om.add_error(
@@ -263,23 +273,22 @@ class Silage(Storage):
         )
         raise NotImplementedError(f"{self.__class__.__name__} must implement _preseal_exposed_area_m2.")
 
-    def _preseal_dry_matter_density_kg_per_m3(self) -> float:
+    def _preseal_dry_matter_density_kg_per_m3(self) -> float | None:
         """
         Returns the packed dry-matter density used by the Preseal calculation for this storage class.
 
         Returns
         -------
-        float
-            Packed dry-matter density (kg DM / m3).
+        float | None
+            Packed dry-matter density (kg DM / m3). A concrete subclass may return ``None`` when
+            this storage instance lacks the config needed for the calculation — Preseal is then
+            skipped for it, not substituted with a fallback.
 
         Raises
         ------
         NotImplementedError
-            If called on a `Silage` subclass with no `dry_matter_density_kg_per_m3` config. Mirrors
-            `_preseal_exposed_area_m2`'s guard above: the base `Silage` class has no
-            `dry_matter_density_kg_per_m3` attribute (only the `Bunker`/`Pile`/`Bag` subclasses do),
-            so `_finalize_preseal_loss` cannot read it as a plain attribute without a real
-            mypy-strict error.
+            If called on a `Silage` subclass that has not overridden this method at all (a
+            programmer error — `Bunker`/`Pile`/`Bag` always override it).
 
         """
         self.om.add_error(
@@ -560,9 +569,11 @@ class Silage(Storage):
         return max(0.0, new_percentage)
 
 
-def _require_positive_config_float(config: dict[str, str | float | list[str]], key: str, class_name: str) -> float:
+def _read_optional_positive_config_float(
+    config: dict[str, str | float | list[str]], key: str, class_name: str
+) -> float | None:
     """
-    Reads and validates a required positive float from a storage config dict.
+    Reads and validates an optional positive float from a storage config dict.
 
     Parameters
     ----------
@@ -575,16 +586,21 @@ def _require_positive_config_float(config: dict[str, str | float | list[str]], k
 
     Returns
     -------
-    float
-        The validated, positive config value.
+    float | None
+        The validated, positive config value, or ``None`` if the key is absent. Existing farm
+        configs that predate the Preseal geometry/density fields are unaffected: a storage
+        missing one or more of them simply skips Preseal (see `Silage._finalize_preseal_loss`)
+        rather than failing to construct.
 
     Raises
     ------
     ValueError
-        If the key is missing or its value is not a positive number.
+        If the key is present but its value is not a positive number.
 
     """
     value = config.get(key)
+    if value is None:
+        return None
     if isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0:
         raise ValueError(f"{class_name} requires a positive '{key}' in its config, got {value!r}.")
     return float(value)
@@ -596,31 +612,34 @@ class Bunker(Silage):
 
     Attributes
     ----------
-    width_m : float
-        Bunker width (m). Required per-storage input — no reference-table fallback.
-    height_m : float
-        Bunker wall height (m). Required per-storage input — no reference-table fallback.
-    dry_matter_density_kg_per_m3 : float
-        Packed dry-matter density (kg DM / m3). Required per-storage input — no reference-table fallback.
+    width_m : float | None
+        Bunker width (m). Optional — omitting it (or `height_m` or
+        `dry_matter_density_kg_per_m3`) skips Preseal for this storage, no reference-table
+        fallback is substituted.
+    height_m : float | None
+        Bunker wall height (m). Optional, same as `width_m`.
+    dry_matter_density_kg_per_m3 : float | None
+        Packed dry-matter density (kg DM / m3). Optional, same as `width_m`.
 
     """
 
     def __init__(self, config: dict[str, str | float | list[str]]) -> None:
         super().__init__(config)
-        self.width_m = _require_positive_config_float(config, "width_m", self.__class__.__name__)
-        self.height_m = _require_positive_config_float(config, "height_m", self.__class__.__name__)
-        self.dry_matter_density_kg_per_m3 = _require_positive_config_float(
+        self.width_m = _read_optional_positive_config_float(config, "width_m", self.__class__.__name__)
+        self.height_m = _read_optional_positive_config_float(config, "height_m", self.__class__.__name__)
+        self.dry_matter_density_kg_per_m3 = _read_optional_positive_config_float(
             config, "dry_matter_density_kg_per_m3", self.__class__.__name__
         )
 
-    def _preseal_exposed_area_m2(self) -> float:
+    def _preseal_exposed_area_m2(self) -> float | None:
         """
         Exposed surface area for the Preseal phase, accounting for a 50% filling grade.
 
         Returns
         -------
-        float
-            Exposed area (m2).
+        float | None
+            Exposed area (m2), or ``None`` if `width_m`/`height_m` isn't configured — Preseal is
+            then skipped for this storage (see `Silage._finalize_preseal_loss`).
 
         Notes
         -----
@@ -628,16 +647,19 @@ class Bunker(Silage):
         "Estimation of surface area is based on a 50% grade during filling."
 
         """
+        if self.width_m is None or self.height_m is None:
+            return None
         return math.sqrt(5.0) * self.width_m * self.height_m
 
-    def _preseal_dry_matter_density_kg_per_m3(self) -> float:
+    def _preseal_dry_matter_density_kg_per_m3(self) -> float | None:
         """
         Packed dry-matter density for the Preseal calculation.
 
         Returns
         -------
-        float
-            ``self.dry_matter_density_kg_per_m3``, set from config in ``__init__``.
+        float | None
+            ``self.dry_matter_density_kg_per_m3``, set from config in ``__init__``, or ``None``
+            if not configured.
 
         """
         return self.dry_matter_density_kg_per_m3
@@ -649,31 +671,34 @@ class Pile(Silage):
 
     Attributes
     ----------
-    width_m : float
-        Pile width (m). Required per-storage input — no reference-table fallback.
-    height_m : float
-        Pile height (m). Required per-storage input — no reference-table fallback.
-    dry_matter_density_kg_per_m3 : float
-        Packed dry-matter density (kg DM / m3). Required per-storage input — no reference-table fallback.
+    width_m : float | None
+        Pile width (m). Optional — omitting it (or `height_m` or
+        `dry_matter_density_kg_per_m3`) skips Preseal for this storage, no reference-table
+        fallback is substituted.
+    height_m : float | None
+        Pile height (m). Optional, same as `width_m`.
+    dry_matter_density_kg_per_m3 : float | None
+        Packed dry-matter density (kg DM / m3). Optional, same as `width_m`.
 
     """
 
     def __init__(self, config: dict[str, str | float | list[str]]) -> None:
         super().__init__(config)
-        self.width_m = _require_positive_config_float(config, "width_m", self.__class__.__name__)
-        self.height_m = _require_positive_config_float(config, "height_m", self.__class__.__name__)
-        self.dry_matter_density_kg_per_m3 = _require_positive_config_float(
+        self.width_m = _read_optional_positive_config_float(config, "width_m", self.__class__.__name__)
+        self.height_m = _read_optional_positive_config_float(config, "height_m", self.__class__.__name__)
+        self.dry_matter_density_kg_per_m3 = _read_optional_positive_config_float(
             config, "dry_matter_density_kg_per_m3", self.__class__.__name__
         )
 
-    def _preseal_exposed_area_m2(self) -> float:
+    def _preseal_exposed_area_m2(self) -> float | None:
         """
         Exposed surface area for the Preseal phase, accounting for a 50% filling grade.
 
         Returns
         -------
-        float
-            Exposed area (m2).
+        float | None
+            Exposed area (m2), or ``None`` if `width_m`/`height_m` isn't configured — Preseal is
+            then skipped for this storage (see `Silage._finalize_preseal_loss`).
 
         Notes
         -----
@@ -681,16 +706,19 @@ class Pile(Silage):
         "Estimation of surface area is based on a 50% grade during filling."
 
         """
+        if self.width_m is None or self.height_m is None:
+            return None
         return math.sqrt(5.0) * self.width_m * self.height_m
 
-    def _preseal_dry_matter_density_kg_per_m3(self) -> float:
+    def _preseal_dry_matter_density_kg_per_m3(self) -> float | None:
         """
         Packed dry-matter density for the Preseal calculation.
 
         Returns
         -------
-        float
-            ``self.dry_matter_density_kg_per_m3``, set from config in ``__init__``.
+        float | None
+            ``self.dry_matter_density_kg_per_m3``, set from config in ``__init__``, or ``None``
+            if not configured.
 
         """
         return self.dry_matter_density_kg_per_m3
@@ -702,28 +730,30 @@ class Bag(Silage):
 
     Attributes
     ----------
-    diameter_m : float
-        Bag diameter (m). Required per-storage input — no reference-table fallback.
-    dry_matter_density_kg_per_m3 : float
-        Packed dry-matter density (kg DM / m3). Required per-storage input — no reference-table fallback.
+    diameter_m : float | None
+        Bag diameter (m). Optional — omitting it (or `dry_matter_density_kg_per_m3`) skips
+        Preseal for this storage, no reference-table fallback is substituted.
+    dry_matter_density_kg_per_m3 : float | None
+        Packed dry-matter density (kg DM / m3). Optional, same as `diameter_m`.
 
     """
 
     def __init__(self, config: dict[str, str | float | list[str]]) -> None:
         super().__init__(config)
-        self.diameter_m = _require_positive_config_float(config, "diameter_m", self.__class__.__name__)
-        self.dry_matter_density_kg_per_m3 = _require_positive_config_float(
+        self.diameter_m = _read_optional_positive_config_float(config, "diameter_m", self.__class__.__name__)
+        self.dry_matter_density_kg_per_m3 = _read_optional_positive_config_float(
             config, "dry_matter_density_kg_per_m3", self.__class__.__name__
         )
 
-    def _preseal_exposed_area_m2(self) -> float:
+    def _preseal_exposed_area_m2(self) -> float | None:
         """
         Exposed surface area for the Preseal phase — the bag's circular cross-section.
 
         Returns
         -------
-        float
-            Exposed area (m2).
+        float | None
+            Exposed area (m2), or ``None`` if `diameter_m` isn't configured — Preseal is then
+            skipped for this storage (see `Silage._finalize_preseal_loss`).
 
         Notes
         -----
@@ -731,17 +761,20 @@ class Bag(Silage):
         tower branch sets ``EXPAR = CSA = pi * RAD**2``.
 
         """
+        if self.diameter_m is None:
+            return None
         radius_m = self.diameter_m / 2.0
         return math.pi * radius_m**2
 
-    def _preseal_dry_matter_density_kg_per_m3(self) -> float:
+    def _preseal_dry_matter_density_kg_per_m3(self) -> float | None:
         """
         Packed dry-matter density for the Preseal calculation.
 
         Returns
         -------
-        float
-            ``self.dry_matter_density_kg_per_m3``, set from config in ``__init__``.
+        float | None
+            ``self.dry_matter_density_kg_per_m3``, set from config in ``__init__``, or ``None``
+            if not configured.
 
         """
         return self.dry_matter_density_kg_per_m3
