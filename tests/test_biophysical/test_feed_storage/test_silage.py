@@ -579,14 +579,16 @@ def test_preseal_full_cycle_stays_within_bounds(
 def test_preseal_full_cycle_bunker_matches_hand_calculation(
     mock_silage_config: dict[str, str | float | list[str]],
 ) -> None:
-    """The Bunker case's dry-matter loss matches an independently-derived expected value for the same
-    exposure/geometry/crop inputs, not just a bounds check (spec §8's component-test requirement).
+    """`receive_crop`'s full cycle passes the right ``exposed_area_m2``/``dry_matter_density_kg_per_m3``
+    through to `calculate_preseal_loss` — wiring coverage only.
 
-    ``calculate_preseal_loss`` is already unit-tested in isolation (Task 3); calling it directly here,
-    against the same inputs `receive_crop` will use internally, gives an exact expected value without
-    hand-transcribing decimal literals into this plan (a real risk of introducing its own arithmetic
-    error) — the assertion below is what actually catches a Task 1-4 integration bug, e.g. a wrong
-    `exposed_area_m2`/`dry_matter_density_kg_per_m3` being passed through `receive_crop`.
+    This computes its expected value by calling `calculate_preseal_loss` directly, the same function
+    `_finalize_preseal_loss` calls internally, so it cannot catch a defect in the equation itself (a
+    wrong formula would move both sides together) — it only proves the Task 1-4 integration correctly
+    passes this Bunker's actual geometry/density through `receive_crop`, e.g. that
+    `exposed_area_m2`/`dry_matter_density_kg_per_m3` aren't silently swapped or mis-derived on the way
+    in. See `test_preseal_full_cycle_bunker_matches_independent_oracle` below for a numeric oracle
+    that is independent of `calculate_preseal_loss` and would catch a shared equation defect.
     """
     config = dict(mock_silage_config)
     config.update({"width_m": 10.0, "height_m": 3.0, "dry_matter_density_kg_per_m3": 180.0})
@@ -610,6 +612,46 @@ def test_preseal_full_cycle_bunker_matches_hand_calculation(
 
     assert first_crop.dry_matter_mass == pytest.approx(
         sample_crop_data["dry_matter_mass"] - expected_dry_matter_loss_kg
+    )
+
+
+@pytest.mark.component
+def test_preseal_full_cycle_bunker_matches_independent_oracle(
+    mock_silage_config: dict[str, str | float | list[str]],
+) -> None:
+    """The Bunker case's dry-matter loss matches a numeric oracle independently re-derived from
+    `Silostg.for`'s ``PRESEAL`` subroutine (lines 634-714) in isolation from
+    `calculate_preseal_loss` — unlike `test_preseal_full_cycle_bunker_matches_hand_calculation`
+    above, a defect shared by both this test's expectation and the production equation (e.g. a wrong
+    coefficient transcribed from the Fortran source) cannot pass both sides here, since this oracle
+    was computed without calling any RuFaS code (spec §8's "hand-calculated expectation" requirement).
+
+    Same inputs as the wiring-coverage test above: corn silage (non-alfalfa; ``MUMAX`` coefficient
+    2.9), ``dry_matter_percentage=35.0``, ``dry_matter_mass=100.0``, initial temperature 8.0
+    (``INITIAL_FILL_TEMPERATURE_NON_ALFALFA_C``), 1 day of exposure (exactly one iteration of
+    `PRESEAL`'s day-stepping loop, since ``day_step = min(1.0, remaining_exposure_days)`` consumes the
+    full 1.0-day ``remaining_exposure_days`` on that single pass), Bunker geometry ``width_m=10.0`` /
+    ``height_m=3.0`` (``exposed_area_m2 = sqrt(5) * width_m * height_m``, Silostg.for:329), density
+    180.0 kg DM/m3. Independently evaluating that translation by hand (a standalone script, not
+    importing `silage.py`) for these inputs gives ``dry_matter_loss_fraction ≈ 0.0033307256642235447``
+    (``dry_matter_loss_kg ≈ 0.3330725664223544``) — the fixed expectation asserted below.
+
+    """
+    config = dict(mock_silage_config)
+    config.update({"width_m": 10.0, "height_m": 3.0, "dry_matter_density_kg_per_m3": 180.0})
+    bunker = Bunker(config=config)
+    first_crop = HarvestedCrop(**{**sample_crop_data, "config_name": "corn_silage", "dry_matter_percentage": 35.0})
+    second_crop = replace(
+        HarvestedCrop(**{**sample_crop_data, "config_name": "corn_silage", "dry_matter_percentage": 35.0}),
+        storage_time=first_crop.storage_time + timedelta(days=1),
+    )
+    independently_derived_dry_matter_loss_kg = 0.3330725664223544
+
+    bunker.receive_crop(first_crop, simulation_day=1)
+    bunker.receive_crop(second_crop, simulation_day=2)
+
+    assert first_crop.dry_matter_mass == pytest.approx(
+        sample_crop_data["dry_matter_mass"] - independently_derived_dry_matter_loss_kg
     )
 
 
