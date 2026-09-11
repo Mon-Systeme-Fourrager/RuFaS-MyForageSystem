@@ -2,28 +2,28 @@
 
 ## Phase A — Finishing System Flag
 
-- [ ] A-1-1: Add `FinishingSystem(Enum)` to `animal_enums.py`
+- [x] A-1-1: Add `FinishingSystem(Enum)` to `animal_enums.py`
       (plain Enum, not str,Enum)
-- [ ] A-1-2: Add `finishing_system: FinishingSystem` ClassVar to
+- [x] A-1-2: Add `finishing_system: FinishingSystem` ClassVar to
       `AnimalConfig` with default `FinishingSystem.GRAIN_FED`
-- [ ] A-1-3: Parse `finishing_system` from feedlot config using
+- [x] A-1-3: Parse `finishing_system` from feedlot config using
       walrus operator pattern in `_initialize_feedlot_config()`
-- [ ] A-1-4: Add `finishing_system` validation to
+- [x] A-1-4: Add `finishing_system` validation to
       `DataValidator.validate_feedlot_config()`
-- [ ] A-1-5: Add `calculate_enteric_ch4_grass_fed()` to
+- [x] A-1-5: Add `calculate_enteric_ch4_grass_fed()` to
       `BeefNRCRequirementsCalculator` (linear grass-fed model)
-- [ ] A-1-6: Add `calculate_enteric_ch4_grain_fed()` to
+- [x] A-1-6: Add `calculate_enteric_ch4_grain_fed()` to
       `BeefNRCRequirementsCalculator` (IPCC Tier 2, Ym = 3.0%;
       NRC 2016 Table 16-2). Eq. 16-9 deferred — needs ration composition
       at the call site.
-- [ ] A-1-7: Route CH4 equation in
+- [x] A-1-7: Route CH4 equation in
       `AnimalModuleReporter.report_feedlot_performance()`
       based on `finishing_system` flag, emitting
       `feedlot_mean_daily_enteric_ch4_g_d` [OutputChange]
-- [ ] A-1-8: Add BEEF_CH4_GRASS_FED_INTERCEPT, BEEF_CH4_GRASS_FED_SLOPE,
+- [x] A-1-8: Add BEEF_CH4_GRASS_FED_INTERCEPT, BEEF_CH4_GRASS_FED_SLOPE,
       BEEF_CH4_YM_FRACTION, BEEF_GROSS_ENERGY_MJ_PER_KG_DM and
       BEEF_CH4_ENERGY_MJ_PER_G to `animal_module_constants.py`
-- [ ] A-1-9: Write `test_finishing_system.py` — Phase A checkpoint
+- [x] A-1-9: Write `test_finishing_system.py` — Phase A checkpoint
       (regression guard + CH4 routing tests)
 
 ## Phase B — Stocker Enhancements
@@ -52,10 +52,10 @@
 
 ## Phase C — Herd Population Dynamics
 
-- [ ] C-0-1: Add `COW_CALF_STOCKER_FEEDLOT` to `animal_grouping_scenarios.py`
+- [x] C-0-1: Add `COW_CALF_STOCKER_FEEDLOT` to `animal_grouping_scenarios.py`
       reusing the six existing `AnimalCombination` members. No new
       combination member required.
-- [ ] C-0-2: Write `test_grouping_scenario.py` — Phase C-0 checkpoint
+- [x] C-0-2: Write `test_grouping_scenario.py` — Phase C-0 checkpoint
       (distinct lists, no shared types, BEEF_STOCKER_ONLY regression guard)
 
 - [ ] C-1-1: Add named scenario constants to
