@@ -192,6 +192,56 @@ def calculate_preseal_loss(
     return {"dry_matter_loss_fraction": dry_matter_loss_fraction, "final_temperature": temperature}
 
 
+"""
+Effective oxygen permeability by storage class (cm/h), used by the Infiltration phase
+(Silostg.for TOWER/BUNKER). Only storage classes with a confirmed citation appear here — an
+unsourced class must fail loudly at lookup time, not receive an invented default.
+
+Bunker and Pile: Buckmaster, Rotz & Muck (1989), Trans. ASAE 32(4):1143-1152, as compiled in the
+MSF `hf_silo_types` reference table (RT-19). Bunker uses cover permeability only (its
+`infiltration_geometry` is "Top only"); Pile uses structure-wall permeability (its geometry is
+"Top + sides", matching the source's general silo-wall class of value).
+Bag: IFSM Reference Manual (Rotz et al. 2023, v4.7), p.76-77 — "sealed plastic (1.0 cm/h)".
+
+"""
+SILAGE_PERMEABILITY_CONSTANTS: dict[str, float] = {
+    "Bunker": 1.0,
+    "Pile": 4.0,
+    "Bag": 1.0,
+}
+
+
+def get_permeability_constants(storage_class_name: str) -> float:
+    """
+    Looks up the sourced effective oxygen permeability for a silage storage class.
+
+    Parameters
+    ----------
+    storage_class_name : str
+        Name of the `Silage` subclass (e.g. ``"Bunker"``, ``"Pile"``, ``"Bag"``).
+
+    Returns
+    -------
+    float
+        Effective permeability (cm/h).
+
+    Raises
+    ------
+    ValueError
+        If no sourced permeability value exists for the given storage class.
+
+    """
+    try:
+        return SILAGE_PERMEABILITY_CONSTANTS[storage_class_name]
+    except KeyError:
+        OutputManager().add_error(
+            "Unsourced permeability error",
+            f"No sourced permeability reference exists for storage type: {storage_class_name}.",
+            info_map={"class": __name__, "function": get_permeability_constants.__name__},
+        )
+        raise ValueError(f"No sourced permeability reference for storage type: {storage_class_name}.")
+
+
 class Silage(Storage):
     """
     Represents Silage storage, a subclass of ``Storage``.

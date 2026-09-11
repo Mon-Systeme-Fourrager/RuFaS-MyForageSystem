@@ -16,6 +16,7 @@ from RUFAS.biophysical.feed_storage.silage import (
     Silage,
     calculate_preseal_loss,
     _clamp_preseal_fraction,
+    get_permeability_constants,
 )
 from RUFAS.biophysical.feed_storage.silage_constants import (
     PRESEAL_FALLBACK_EXPOSURE_DAYS,
@@ -608,3 +609,28 @@ def test_preseal_full_cycle_bunker_matches_hand_calculation(
     assert first_crop.dry_matter_mass == pytest.approx(
         sample_crop_data["dry_matter_mass"] - expected_dry_matter_loss_kg
     )
+
+
+@pytest.mark.unit
+def test_get_permeability_constants_bunker() -> None:
+    """Bunker's sourced cover permeability is 1.0 cm/h."""
+    assert get_permeability_constants("Bunker") == 1.0
+
+
+@pytest.mark.unit
+def test_get_permeability_constants_pile() -> None:
+    """Pile's sourced structure-wall permeability is 4.0 cm/h."""
+    assert get_permeability_constants("Pile") == 4.0
+
+
+@pytest.mark.unit
+def test_get_permeability_constants_bag() -> None:
+    """Bag's sourced sealed-plastic permeability is 1.0 cm/h (IFSM Reference Manual, p.76-77)."""
+    assert get_permeability_constants("Bag") == 1.0
+
+
+@pytest.mark.unit
+def test_get_permeability_constants_unknown_raises() -> None:
+    """An unsourced or unknown storage class fails loudly instead of returning a placeholder."""
+    with pytest.raises(ValueError, match="Vertical"):
+        get_permeability_constants("Vertical")
