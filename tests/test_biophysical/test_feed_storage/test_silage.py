@@ -494,6 +494,70 @@ def test_process_degradations_skips_already_finalized_crop(
 
 
 @pytest.mark.unit
+def test_process_degradations_runs_fermentation_before_infiltration(
+    mocker: MockerFixture, silage: Silage, harvested_crop: HarvestedCrop
+) -> None:
+    """Fermentation (`Storage.process_degradations`) must run before Infiltration
+    (`_process_infiltration`) for every crop — the exact bug this test guards against is the
+    original ordering (Effluent -> Infiltration -> Fermentation), which a test only checking that
+    both were eventually called would not catch."""
+    mock_weather = mocker.MagicMock(autospec=Weather)
+    mock_time = mocker.MagicMock(autospec=RufasTime)
+    mock_time.simulation_day = 15
+    mocker.patch.object(silage, "_finalize_preseal_loss")
+    mocker.patch.object(silage, "calculate_days_of_effluent_loss_to_process", return_value=0)
+    call_order: list[str] = []
+    mocker.patch(
+        "RUFAS.biophysical.feed_storage.storage.Storage.process_degradations",
+        side_effect=lambda *args, **kwargs: call_order.append("fermentation"),
+    )
+
+    def _record_infiltration(crop: HarvestedCrop, elapsed_days: float) -> float:
+        call_order.append("infiltration")
+        return 0.0
+
+    mocker.patch.object(silage, "_process_infiltration", side_effect=_record_infiltration)
+    second_crop = copy.deepcopy(harvested_crop)
+    silage.stored = [harvested_crop, second_crop]
+
+    silage.process_degradations(mock_weather, mock_time)
+
+    assert call_order == ["fermentation", "infiltration", "infiltration"]
+
+
+@pytest.mark.unit
+def test_process_degradations_infiltration_elapsed_days_survives_fermentation(
+    mocker: MockerFixture, silage: Silage, harvested_crop: HarvestedCrop
+) -> None:
+    """`elapsed_days` passed to `_process_infiltration` reflects the gap since the crop's
+    pre-Fermentation `last_time_degraded`, not zero — even though `_process_infiltration` is only
+    invoked after `Storage.process_degradations` (Fermentation) has already run and overwritten
+    `crop.last_time_degraded` to today. This is the regression the naive "just move the loop after
+    super()" fix would silently introduce (elapsed_days == 0.0 forever)."""
+    mock_weather = mocker.MagicMock(autospec=Weather)
+    mock_time = mocker.MagicMock(autospec=RufasTime)
+    mock_time.simulation_day = 15
+    mock_time.current_date.date.return_value = harvested_crop.storage_time + timedelta(days=10)
+    harvested_crop.last_time_degraded = harvested_crop.storage_time
+    mocker.patch.object(silage, "_finalize_preseal_loss")
+    mocker.patch.object(silage, "calculate_days_of_effluent_loss_to_process", return_value=0)
+
+    def _fake_fermentation(weather: Weather, time: RufasTime) -> None:
+        # Mirrors Storage.process_degradations' real side effect (storage.py:215): every stored
+        # crop's last_time_degraded is advanced to today once Fermentation has processed it.
+        for crop in silage.stored:
+            crop.last_time_degraded = time.current_date.date()
+
+    mocker.patch("RUFAS.biophysical.feed_storage.storage.Storage.process_degradations", side_effect=_fake_fermentation)
+    infiltration = mocker.patch.object(silage, "_process_infiltration", return_value=0.0)
+    silage.stored = [harvested_crop]
+
+    silage.process_degradations(mock_weather, mock_time)
+
+    infiltration.assert_called_once_with(harvested_crop, 10.0)
+
+
+@pytest.mark.unit
 def test_process_degradations_applies_bag_infiltration(mocker: MockerFixture, harvested_crop: HarvestedCrop) -> None:
     """process_degradations reduces a Bag crop's dry matter mass via infiltration loss."""
     config: dict[str, str | float | list[str]] = {

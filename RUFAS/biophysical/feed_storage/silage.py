@@ -696,8 +696,8 @@ class Silage(Storage):
 
     def process_degradations(self, weather: Weather, time: RufasTime) -> None:
         """
-        Processes the losses of nutrients and mass to effluent in the ensiled crops, and calls the parent
-        implementation of ``process_degradations`` to handle the fermentative loss.
+        Processes the ensiled crops' three degradation stages in order — Effluent, then Fermentation
+        (the parent ``process_degradations`` implementation), then Infiltration.
 
         Any crop that has not yet had its Preseal loss finalized (i.e. has not yet been superseded by a
         newer crop via ``receive_crop``) is finalized here first, using the fallback exposure time
@@ -710,6 +710,19 @@ class Silage(Storage):
             Weather instance containing all weather information for the simulation.
         time : RufasTime
             RufasTime instance tracking the current time of the simulation.
+
+        Notes
+        -----
+        Infiltration's ``elapsed_days`` (days since Infiltration was last processed for each crop) is
+        computed from ``crop.last_time_degraded`` in a dedicated pass *before* ``super()`` runs, not
+        inline in a loop after it. ``Storage.process_degradations``/``_calculate_degradation_values``
+        (``storage.py``) both reads the OLD ``crop.last_time_degraded`` (to derive weather conditions)
+        and, as a side effect, overwrites it to ``time.current_date.date()`` for every crop by the time
+        it returns. Computing ``elapsed_days`` after that call would see the just-updated value and
+        always measure a zero-day gap, silently freezing Infiltration's accumulated loss. Capturing the
+        list here, indexed by ``self.stored``'s iteration order, is safe because neither this method's
+        own Effluent loop nor Fermentation adds/removes crops from ``self.stored`` — only
+        ``remove_empty_crops`` does that, and it is never called from here.
 
         """
         info_map = {
@@ -732,14 +745,19 @@ class Silage(Storage):
             crop.dry_matter_mass = effluent_loss_values["dry_matter_mass"]
             crop.dry_matter_percentage = effluent_loss_values["dry_matter_percentage"]
 
-            elapsed_days = float((time.current_date.date() - crop.last_time_degraded).days)
-            infiltration_loss_kg = self._process_infiltration(crop, elapsed_days)
-            self._apply_infiltration_loss(crop, infiltration_loss_kg)
-
         self.om.add_variable("total_effluent_dry_matter_loss", total_effluent_dry_matter_loss, info_map)
         self.om.add_variable("total_effluent_moisture_loss", total_effluent_moisture_loss, info_map)
 
+        # Captured before super() runs — see Notes above on why this cannot be computed afterward.
+        infiltration_elapsed_days = [
+            float((time.current_date.date() - crop.last_time_degraded).days) for crop in self.stored
+        ]
+
         super().process_degradations(weather, time)
+
+        for crop, elapsed_days in zip(self.stored, infiltration_elapsed_days):
+            infiltration_loss_kg = self._process_infiltration(crop, elapsed_days)
+            self._apply_infiltration_loss(crop, infiltration_loss_kg)
 
     def project_degradations(
         self, crops: list[HarvestedCrop], weather: Weather, time: RufasTime
