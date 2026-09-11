@@ -10,39 +10,47 @@ from RUFAS.units import MeasurementUnits
 from RUFAS.weather import Weather
 
 from .storage import Storage
+from .silage_constants import (
+    PRESEAL_K,
+    PRESEAL_KM,
+    PRESEAL_FC,
+    PRESEAL_ATMOSPHERIC_OXYGEN_FRACTION,
+    PRESEAL_INITIAL_PH,
+    PRESEAL_EXPOSURE_CAP_DAYS,
+    PRESEAL_FALLBACK_EXPOSURE_DAYS,
+    PRESEAL_WATER_RETENTION_FRACTION,
+    PRESEAL_ALFALFA_MAX_RESPIRATION_RATE,
+    PRESEAL_NON_ALFALFA_MAX_RESPIRATION_RATE,
+    PRESEAL_MIN_THICKNESS_CM,
+    PRESEAL_DEPTH_M_TO_CM,
+    PRESEAL_DIFFUSION_COEFFICIENT_FACTOR,
+    PRESEAL_DIFFUSION_TEMPERATURE_OFFSET_C,
+    PRESEAL_TORTUOSITY,
+    PRESEAL_MAX_RELATIVE_DENSITY_NUMERATOR,
+    PRESEAL_RELATIVE_DENSITY_CAP_FRACTION,
+    PRESEAL_DENSITY_KG_PER_M3_TO_G_PER_CM3,
+    PRESEAL_HIGH_DRY_MATTER_THRESHOLD,
+    PRESEAL_HIGH_DRY_MATTER_RESPIRATION_FACTOR,
+    PRESEAL_LOW_DRY_MATTER_THRESHOLD,
+    PRESEAL_RESPIRATION_FACTOR_INTERCEPT,
+    PRESEAL_RESPIRATION_FACTOR_LINEAR_COEFFICIENT,
+    PRESEAL_RESPIRATION_FACTOR_QUADRATIC_COEFFICIENT,
+    PRESEAL_TEMPERATURE_FACTOR_SATURATION_C,
+    PRESEAL_TEMPERATURE_FACTOR_COEFFICIENT,
+    PRESEAL_TEMPERATURE_FACTOR_RATE,
+    PRESEAL_PH_FACTOR_OFFSET,
+    PRESEAL_PH_FACTOR_SCALE,
+    PRESEAL_LOSS_PER_DAY_COEFFICIENT,
+    PRESEAL_TEMPERATURE_RISE_ENERGY_COEFFICIENT,
+    PRESEAL_TEMPERATURE_RISE_HEAT_RETENTION_FRACTION,
+    PRESEAL_TEMPERATURE_RISE_DENOMINATOR_COEFFICIENT_A,
+    PRESEAL_TEMPERATURE_RISE_DENOMINATOR_COEFFICIENT_B,
+)
 
 """Fraction of effluent that is dry matter by mass."""
 DRY_MATTER_FRACTION_OF_EFFLUENT = 0.1035
 """Number of days that loss of effluent occurs over after a crop is ensiled."""
 EFFLUENT_CONSTRAINER = 10
-
-"""
-Shared respiration-model constants for the Preseal phase (Silostg.for:643, PRESEAL subroutine).
-K and KM are Michaelis-Menten-derived diffusion constants; FC is the CO2-dependent respiration
-correction factor; PSIA is atmospheric oxygen concentration (fraction). All four are fixed across
-crop types in the source.
-
-"""
-PRESEAL_K = 9.0
-PRESEAL_KM = 0.055
-PRESEAL_FC = 0.756
-PRESEAL_ATMOSPHERIC_OXYGEN_FRACTION = 0.21
-"""Fixed initial silage pH under IFSM's no-acid-treatment default (Silostg.for:269-271, FACID=0)."""
-PRESEAL_INITIAL_PH = 5.8
-"""Preseal exposure time is capped at 3 days (Silostg.for:267) and floored at 0 (Silostg.for:268)."""
-PRESEAL_EXPOSURE_CAP_DAYS = 3.0
-"""Fallback exposure time (3 hours) for the newest plot in a silo with no successor yet (Silostg.for:261)."""
-PRESEAL_FALLBACK_EXPOSURE_DAYS = 0.125
-"""
-Fraction of respired dry matter retained as water rather than lost as gas, per Silostg.for:697,708
-(spec §5.1's own citation for this fact). Silostg.for:707-708's PLOT(NPL,11)/PLOT(NPL,3) update uses
-a 72/180 gas-loss ratio; solving for the resulting fresh-mass change shows only that 72/180 leaves the
-crop, while the complementary 108/180 stays as retained moisture. This constant is that retained
-(1 - 72/180) fraction — see the `moisture_loss_kg` sign in `_finalize_preseal_loss`: only the
-gas-lost fraction of dry matter leaves the crop as fresh mass, while the water-retained fraction
-stays behind.
-"""
-PRESEAL_WATER_RETENTION_FRACTION = 1.0 - 72.0 / 180.0
 
 
 def _clamp_preseal_fraction(fraction: float) -> float:
@@ -102,26 +110,46 @@ def calculate_preseal_loss(
     total_dry_matter_mass_kg = crop.dry_matter_mass
     dry_matter_fraction = crop.dry_matter_percentage * GeneralConstants.PERCENTAGE_TO_FRACTION
     temperature = crop.temperature
-    max_respiration_rate = (4.8 if crop.is_alfalfa else 2.9) * dry_matter_fraction
+    max_respiration_rate = (
+        PRESEAL_ALFALFA_MAX_RESPIRATION_RATE if crop.is_alfalfa else PRESEAL_NON_ALFALFA_MAX_RESPIRATION_RATE
+    ) * dry_matter_fraction
 
-    thickness_cm = max(100.0, 100.0 * total_dry_matter_mass_kg / (exposed_area_m2 * dry_matter_density_kg_per_m3))
-    diffusion_coefficient = 0.0086 * (273.0 + temperature) ** 2
-    tortuosity = 2.0 / 3.0
-    max_relative_density = 3.0 / (3.0 - dry_matter_fraction)
-    relative_density = min(0.99 * max_relative_density, 0.001 * dry_matter_density_kg_per_m3 / dry_matter_fraction)
+    thickness_cm = max(
+        PRESEAL_MIN_THICKNESS_CM,
+        PRESEAL_DEPTH_M_TO_CM * total_dry_matter_mass_kg / (exposed_area_m2 * dry_matter_density_kg_per_m3),
+    )
+    diffusion_coefficient = (
+        PRESEAL_DIFFUSION_COEFFICIENT_FACTOR * (PRESEAL_DIFFUSION_TEMPERATURE_OFFSET_C + temperature) ** 2
+    )
+    tortuosity = PRESEAL_TORTUOSITY
+    max_relative_density = PRESEAL_MAX_RELATIVE_DENSITY_NUMERATOR / (
+        PRESEAL_MAX_RELATIVE_DENSITY_NUMERATOR - dry_matter_fraction
+    )
+    relative_density = min(
+        PRESEAL_RELATIVE_DENSITY_CAP_FRACTION * max_relative_density,
+        PRESEAL_DENSITY_KG_PER_M3_TO_G_PER_CM3 * dry_matter_density_kg_per_m3 / dry_matter_fraction,
+    )
     porosity = 1.0 - relative_density / max_relative_density
-    if dry_matter_fraction > 0.693:
-        dry_matter_respiration_factor = 0.0384
-    elif dry_matter_fraction > 0.20:
-        dry_matter_respiration_factor = 1.93 - 5.46 * dry_matter_fraction + 3.94 * dry_matter_fraction**2
+    if dry_matter_fraction > PRESEAL_HIGH_DRY_MATTER_THRESHOLD:
+        dry_matter_respiration_factor = PRESEAL_HIGH_DRY_MATTER_RESPIRATION_FACTOR
+    elif dry_matter_fraction > PRESEAL_LOW_DRY_MATTER_THRESHOLD:
+        dry_matter_respiration_factor = (
+            PRESEAL_RESPIRATION_FACTOR_INTERCEPT
+            - PRESEAL_RESPIRATION_FACTOR_LINEAR_COEFFICIENT * dry_matter_fraction
+            + PRESEAL_RESPIRATION_FACTOR_QUADRATIC_COEFFICIENT * dry_matter_fraction**2
+        )
     else:
         dry_matter_respiration_factor = 1.0
 
     remaining_exposure_days = exposure_days
     dry_matter_loss_fraction = 0.0
     while remaining_exposure_days > 0.0:
-        temperature_factor = 1.0 if temperature >= 25.0 else 0.178 * math.exp(0.069 * temperature)
-        ph_factor = (PRESEAL_INITIAL_PH - 3.0) / 3.5
+        temperature_factor = (
+            1.0
+            if temperature >= PRESEAL_TEMPERATURE_FACTOR_SATURATION_C
+            else PRESEAL_TEMPERATURE_FACTOR_COEFFICIENT * math.exp(PRESEAL_TEMPERATURE_FACTOR_RATE * temperature)
+        )
+        ph_factor = (PRESEAL_INITIAL_PH - PRESEAL_PH_FACTOR_OFFSET) / PRESEAL_PH_FACTOR_SCALE
         respiration_rate = max_respiration_rate * dry_matter_respiration_factor * temperature_factor * ph_factor
         gamma = (
             relative_density
@@ -141,14 +169,22 @@ def calculate_preseal_loss(
             )
             / (PRESEAL_ATMOSPHERIC_OXYGEN_FRACTION * c * thickness_cm)
         )
-        loss_per_day = 0.0299 * average_respiration_rate / dry_matter_fraction
+        loss_per_day = PRESEAL_LOSS_PER_DAY_COEFFICIENT * average_respiration_rate / dry_matter_fraction
 
         day_step = min(1.0, remaining_exposure_days)
         loss_today = day_step * loss_per_day
         dry_matter_loss_fraction += loss_today
         remaining_exposure_days -= day_step
 
-        temperature_rise = 8436.0 * loss_today * 0.7 / (2.22 / dry_matter_fraction - 1.22)
+        temperature_rise = (
+            PRESEAL_TEMPERATURE_RISE_ENERGY_COEFFICIENT
+            * loss_today
+            * PRESEAL_TEMPERATURE_RISE_HEAT_RETENTION_FRACTION
+            / (
+                PRESEAL_TEMPERATURE_RISE_DENOMINATOR_COEFFICIENT_A / dry_matter_fraction
+                - PRESEAL_TEMPERATURE_RISE_DENOMINATOR_COEFFICIENT_B
+            )
+        )
         temperature += temperature_rise
 
     dry_matter_loss_fraction = _clamp_preseal_fraction(dry_matter_loss_fraction)
@@ -222,9 +258,16 @@ class Silage(Storage):
         If this storage has no configured geometry/density (`_preseal_exposed_area_m2`/
         `_preseal_dry_matter_density_kg_per_m3` returning ``None``), this is a no-op beyond marking
         the crop finalized — existing storages that predate these optional fields are unaffected.
-        ``[FS.SIL.9]``.
+        Likewise a no-op for a crop with no dry matter left (e.g. fed out via ``remove_dry_matter_mass``
+        the same day, before `Storage.remove_empty_crops` has swept it out of `self.stored`):
+        `calculate_preseal_loss` divides by ``dry_matter_fraction`` in several places, so calling it
+        on an empty crop raises `ZeroDivisionError`. ``[FS.SIL.9]``.
 
         """
+        if crop.dry_matter_mass <= 0.0:
+            crop.preseal_finalized = True
+            return
+
         exposed_area_m2 = self._preseal_exposed_area_m2()
         dry_matter_density_kg_per_m3 = self._preseal_dry_matter_density_kg_per_m3()
         if exposed_area_m2 is None or dry_matter_density_kg_per_m3 is None:
@@ -364,6 +407,13 @@ class Silage(Storage):
         list[HarvestedCrop]
             Crops in the state they are projected to be in at the given date.
 
+        Notes
+        -----
+        ``temperature`` and ``preseal_finalized`` are ``init=False`` fields on `HarvestedCrop`, so
+        `dataclasses.replace` reruns `HarvestedCrop.__post_init__`, which unconditionally resets both
+        to their as-newly-stored defaults. Copied back from the pre-``replace`` crop here, same pattern
+        `Storage.project_degradations` already uses for `last_time_degraded`.
+
         """
         crops_projected_with_effluent_loss: list[HarvestedCrop] = []
         for crop in crops:
@@ -371,6 +421,8 @@ class Silage(Storage):
             del effluent_loss_values["dry_matter_loss"]
             del effluent_loss_values["moisture_loss"]
             projected_crop = replace(crop, **effluent_loss_values)
+            projected_crop.temperature = crop.temperature
+            projected_crop.preseal_finalized = crop.preseal_finalized
             crops_projected_with_effluent_loss.append(projected_crop)
 
         return super().project_degradations(crops_projected_with_effluent_loss, weather, time)

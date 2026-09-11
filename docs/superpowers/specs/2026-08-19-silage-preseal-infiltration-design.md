@@ -1,12 +1,19 @@
 # Silage Preseal + Infiltration Phases — Design Spec
 
-Status: Draft, ready for whiteboard/SME + team review (rufas-design-doc gate) — updated 2026-09-08
+Status: Draft, ready for whiteboard/SME + team review (rufas-design-doc gate) — updated 2026-09-11
 Date: 2026-08-19
 Scope: `RUFAS/biophysical/feed_storage/silage.py`, `storage.py`, `crop_soil_to_feed_storage_connection.py`, feed-storage input schema
 
+**2026-09-11 — Infiltration split out to a follow-up PR.** This document originally scoped Preseal and
+Infiltration together. The implementation delivers **Preseal only**; Infiltration is future work,
+tracked in its own plan (`PLAN_silage-infiltration-phase.md`, dependent on this Preseal work merging
+first). Section 5.2, the Infiltration rows of Sections 3/4/8, and the design decisions specific to it
+are retained below for context/reuse by that follow-up, but describe work **not** implemented by this
+PR — see Section 9 for the authoritative current scope boundary.
+
 ## 1. Motivation
 
-RuFaS's silage module currently implements 2 of IFSM's 5 documented ensiling phases (Effluent, Fermentation). Preseal, Infiltration, and Feed-out are entirely absent. This spec covers restoring **Preseal** and **Infiltration** only. Effluent and Fermentation are explicitly untouched — they're considered established and out of scope for this work, even though the prior audit (Section 6) found real bugs in them.
+RuFaS's silage module currently implements 2 of IFSM's 5 documented ensiling phases (Effluent, Fermentation). Preseal, Infiltration, and Feed-out are entirely absent. This spec covers restoring **Preseal** now, with **Infiltration** designed here but implemented in a follow-up PR (see banner above). Effluent and Fermentation are explicitly untouched — they're considered established and out of scope for this work, even though the prior audit (Section 6) found real bugs in them.
 
 Sources used to derive this design:
 - `docs/beef_module/` sibling reference pattern (N/A here — see below instead)
@@ -49,11 +56,13 @@ These need genuinely different math (front sinking down a column vs. front shrin
 
 ## 3. Scope
 
-**In scope:**
+**In scope (this PR):**
 - Preseal phase for `Bunker`, `Pile`, `Bag` (all `Silage` subclasses)
-- Infiltration phase for the same three classes, with RS conservation as its safety ceiling
 - New per-crop state: temperature, initial pH estimate
 - New per-storage config: geometry (width/height for Bunker/Pile, diameter for Bag) — optional, reference-table fallback
+
+**Designed here, implemented in a follow-up PR (`PLAN_silage-infiltration-phase.md`) — not delivered by this PR:**
+- Infiltration phase for `Bunker`, `Pile`, `Bag`, with RS conservation as its safety ceiling
 - Permeability: reference-table only, keyed by storage type, no per-farm override
 
 **Out of scope (explicitly not touched):**
@@ -66,10 +75,12 @@ These need genuinely different math (front sinking down a column vs. front shrin
 
 ## 4. Architecture
 
+This PR delivers:
+
 ```
 receive_crop()  →  [Preseal loss finalized lazily — see 2.1]
                           ↓
-process_degradations()  →  existing Effluent (unchanged) → existing Fermentation (unchanged)  →  Infiltration (new)
+process_degradations()  →  existing Effluent (unchanged) → existing Fermentation (unchanged)
 ```
 
 Preseal loss for crop N is finalized at the first of:
@@ -78,7 +89,14 @@ Preseal loss for crop N is finalized at the first of:
 
 Once finalized, a crop's preseal loss is computed exactly once and never revisited (matches the source's one-shot-per-plot semantics — `Silostg.for:634-714`).
 
-Infiltration runs inside `process_degradations`, after the existing Effluent → Fermentation sequence, using whichever of `BUNKER` or `TOWER` math applies to the crop's storage class (Section 5.2).
+**Follow-up PR** (`PLAN_silage-infiltration-phase.md`) adds Infiltration to the chain, using whichever of
+`BUNKER` or `TOWER` math applies to the crop's storage class (Section 5.2):
+
+```
+process_degradations()  →  existing Effluent (unchanged) → Infiltration (new) → existing Fermentation (unchanged)
+```
+
+(That plan places Infiltration between Effluent and Fermentation, not after both — see its Open Decision 6 for why; this differs from this section's original before-the-split ordering.)
 
 ## 5. Component design
 
@@ -92,7 +110,7 @@ Translates `PRESEAL` (`Silostg.for:634-714`). Key structural points for implemen
 - Fiber (NDF) and protein (CP) concentrations increase via simple dilution as DM is lost (no chemical breakdown in this phase, unlike Fermentation's hemicellulose breakdown).
 - Initial pH estimate (needed only for alfalfa's `FPH` respiration factor): defaults to the no-acid-treatment case, `FACID = 0`, which resolves to a fixed starting pH (`Silostg.for:271`, evaluated at `FACID=0`). RuFaS does not currently model silage additive treatments, so this is a hard default for v1, not a per-farm input.
 
-### 5.2 Infiltration
+### 5.2 Infiltration (follow-up PR — not implemented here)
 
 Two implementations, dispatched by storage class:
 
@@ -229,12 +247,21 @@ opt-in: no existing farm config is required to change.
 
 ## 8. Testing strategy
 
+**This PR (Preseal):**
+- Unit tests per new function: normal case, zero-exposure edge case, empty-crop edge case.
+- Component test: small synthetic silo (a few plots) through Preseal → existing Effluent/Fermentation (unmodified), asserting total DM loss stays under 100% and matches a hand-calculated expectation for at least one case.
+- Follows existing repo convention: `unit`/`component` pytest markers (`tests/CLAUDE.md`).
+
+**Follow-up PR (Infiltration, `PLAN_silage-infiltration-phase.md`):**
 - Unit tests per new function: normal case, zero-exposure edge case, RS-ceiling-triggered case.
 - Component test: small synthetic silo (a few plots) through Preseal → existing Effluent/Fermentation (unmodified) → Infiltration, for one `Bunker` and one `Bag` case, asserting total DM loss stays under 100% and matches a hand-calculated expectation for at least one case.
-- Follows existing repo convention: `unit`/`component` pytest markers (`tests/CLAUDE.md`).
 
 ## 9. Non-goals
 
+**Not delivered by this PR (tracked separately):**
+- Infiltration phase (Section 5.2) — designed here, implemented in `PLAN_silage-infiltration-phase.md`
+
+**Non-goals of this whole design line (Preseal + the Infiltration follow-up):**
 - Feed-out phase (separate future work, shares Preseal's respiration submodel structurally but with different constants — not assumed reusable without its own design pass)
 - Fixing Effluent/Fermentation bugs (Section 6)
 - Corn silage kernel-processing density/NEL adjustments (`CSSILO`, `Silostg.for:1107+`) — not reviewed as part of this design

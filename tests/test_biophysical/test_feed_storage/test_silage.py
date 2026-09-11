@@ -16,6 +16,8 @@ from RUFAS.biophysical.feed_storage.silage import (
     Silage,
     calculate_preseal_loss,
     _clamp_preseal_fraction,
+)
+from RUFAS.biophysical.feed_storage.silage_constants import (
     PRESEAL_FALLBACK_EXPOSURE_DAYS,
     PRESEAL_EXPOSURE_CAP_DAYS,
 )
