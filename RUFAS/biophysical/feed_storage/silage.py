@@ -636,6 +636,64 @@ class Silage(Storage):
         )
         raise NotImplementedError(f"{self.__class__.__name__} must implement _preseal_dry_matter_density_kg_per_m3.")
 
+    def _process_infiltration(self, crop: HarvestedCrop, elapsed_days: float) -> float:
+        """
+        Calculates and applies this crop's Infiltration dry-matter loss for the elapsed period.
+
+        Parameters
+        ----------
+        crop : HarvestedCrop
+            The crop to process infiltration for.
+        elapsed_days : float
+            Days since infiltration was last processed for this crop.
+
+        Returns
+        -------
+        float
+            Dry-matter loss applied this step (kg).
+
+        Raises
+        ------
+        NotImplementedError
+            If called on a `Silage` subclass that has not defined its own infiltration geometry.
+
+        """
+        self.om.add_error(
+            "Missing Infiltration geometry error",
+            f"{self.__class__.__name__} has no _process_infiltration implementation.",
+            info_map={"class": self.__class__.__name__, "function": self._process_infiltration.__name__},
+        )
+        raise NotImplementedError(f"{self.__class__.__name__} must implement _process_infiltration.")
+
+    def _apply_infiltration_loss(self, crop: HarvestedCrop, dry_matter_loss_kg: float) -> None:
+        """
+        Applies a computed Infiltration dry-matter loss to a crop's mass and composition.
+
+        Parameters
+        ----------
+        crop : HarvestedCrop
+            The crop to update in place.
+        dry_matter_loss_kg : float
+            Dry-matter loss to apply (kg).
+
+        Notes
+        -----
+        Crude protein is deliberately left unchanged here — ``Silostg.for:871-872,978-979`` comment out CP
+        dilution specifically for `TOWER`/`BUNKER` ("CRUDE PROTEIN LOSS = DM LOSS"), so CP mass
+        tracks dry-matter loss 1:1 instead of concentrating like NDF does. Ash is likewise untouched:
+        it is a call-level scalar in the source, never a per-plot diluted field. ``moisture_loss=0.0``
+        below is likewise deliberate, not a placeholder: ``Silostg.for:794-984`` models Infiltration as
+        gaseous respirable-substrate loss with no moisture-retention term analogous to Preseal's
+        ``PRESEAL_WATER_RETENTION_FRACTION`` (Open Decision 8).
+
+        """
+        if dry_matter_loss_kg <= 0.0:
+            return
+        crop.ndf = self.recalculate_nutrient_percentage(crop.ndf, 0.0, dry_matter_loss_kg, crop.dry_matter_mass)
+        mass_values = self._calculate_mass_attributes_after_loss(crop, dry_matter_loss_kg, moisture_loss=0.0)
+        crop.dry_matter_mass = mass_values["dry_matter_mass"]
+        crop.dry_matter_percentage = mass_values["dry_matter_percentage"]
+
     def process_degradations(self, weather: Weather, time: RufasTime) -> None:
         """
         Processes the losses of nutrients and mass to effluent in the ensiled crops, and calls the parent
@@ -673,6 +731,10 @@ class Silage(Storage):
             crop.crude_protein_percent = effluent_loss_values["crude_protein_percent"]
             crop.dry_matter_mass = effluent_loss_values["dry_matter_mass"]
             crop.dry_matter_percentage = effluent_loss_values["dry_matter_percentage"]
+
+            elapsed_days = float((time.current_date.date() - crop.last_time_degraded).days)
+            infiltration_loss_kg = self._process_infiltration(crop, elapsed_days)
+            self._apply_infiltration_loss(crop, infiltration_loss_kg)
 
         self.om.add_variable("total_effluent_dry_matter_loss", total_effluent_dry_matter_loss, info_map)
         self.om.add_variable("total_effluent_moisture_loss", total_effluent_moisture_loss, info_map)
@@ -1008,6 +1070,17 @@ class Bunker(Silage):
         """
         return self.dry_matter_density_kg_per_m3
 
+    def _process_infiltration(self, crop: HarvestedCrop, elapsed_days: float) -> float:
+        """See `Silage._process_infiltration`. Dispatches to the vertical-front Bunker/Pile math, or
+        skips (returns 0.0) if geometry/density isn't configured — mirrors `_preseal_exposed_area_m2`'s
+        own None-skip pattern (Open Decision 7) rather than requiring the protected
+        `example_feed_storage_configs.json` fixture's legacy `size`-only entries to be edited."""
+        if self.width_m is None or self.height_m is None or self.dry_matter_density_kg_per_m3 is None:
+            return 0.0
+        return calculate_bunker_infiltration_loss(
+            crop, elapsed_days, self.__class__.__name__, self.width_m, self.height_m, self.dry_matter_density_kg_per_m3
+        )
+
 
 class Pile(Silage):
     """
@@ -1067,6 +1140,17 @@ class Pile(Silage):
         """
         return self.dry_matter_density_kg_per_m3
 
+    def _process_infiltration(self, crop: HarvestedCrop, elapsed_days: float) -> float:
+        """See `Silage._process_infiltration`. Dispatches to the vertical-front Bunker/Pile math, or
+        skips (returns 0.0) if geometry/density isn't configured — mirrors `_preseal_exposed_area_m2`'s
+        own None-skip pattern (Open Decision 7) rather than requiring the protected
+        `example_feed_storage_configs.json` fixture's legacy `size`-only entries to be edited."""
+        if self.width_m is None or self.height_m is None or self.dry_matter_density_kg_per_m3 is None:
+            return 0.0
+        return calculate_bunker_infiltration_loss(
+            crop, elapsed_days, self.__class__.__name__, self.width_m, self.height_m, self.dry_matter_density_kg_per_m3
+        )
+
 
 class Bag(Silage):
     """
@@ -1122,3 +1206,11 @@ class Bag(Silage):
 
         """
         return self.dry_matter_density_kg_per_m3
+
+    def _process_infiltration(self, crop: HarvestedCrop, elapsed_days: float) -> float:
+        """See `Silage._process_infiltration`. Dispatches to the radial-front Bag math, or skips
+        (returns 0.0) if geometry/density isn't configured — same None-skip pattern as Bunker/Pile
+        (Open Decision 7)."""
+        if self.diameter_m is None or self.dry_matter_density_kg_per_m3 is None:
+            return 0.0
+        return calculate_bag_infiltration_loss(crop, elapsed_days, self.diameter_m, self.dry_matter_density_kg_per_m3)

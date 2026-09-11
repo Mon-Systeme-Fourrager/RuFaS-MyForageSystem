@@ -100,6 +100,7 @@ def test_process_degradations(
     effluent_loss_days = mocker.patch.object(
         silage, "calculate_days_of_effluent_loss_to_process", return_value=days_of_loss
     )
+    mocker.patch.object(silage, "_process_infiltration", return_value=0.0)
     dry_loss = mocker.patch.object(silage, "calculate_dry_matter_loss_to_effluent", return_value=10.0)
     moisture_loss = mocker.patch.object(silage, "calculate_moisture_loss_to_effluent", return_value=20.0)
     npn_coefficient = mocker.patch.object(
@@ -459,6 +460,7 @@ def test_process_degradations_finalizes_newest_crop_with_fallback(
     mock_time.simulation_day = 5
     finalize = mocker.patch.object(silage, "_finalize_preseal_loss")
     mocker.patch.object(silage, "calculate_days_of_effluent_loss_to_process", return_value=0)
+    mocker.patch.object(silage, "_process_infiltration", return_value=0.0)
     mocker.patch("RUFAS.biophysical.feed_storage.storage.Storage.process_degradations")
     silage.stored = [harvested_crop]
 
@@ -482,12 +484,78 @@ def test_process_degradations_skips_already_finalized_crop(
     mock_time = mocker.MagicMock(autospec=RufasTime)
     finalize = mocker.patch.object(silage, "_finalize_preseal_loss")
     mocker.patch.object(silage, "calculate_days_of_effluent_loss_to_process", return_value=0)
+    mocker.patch.object(silage, "_process_infiltration", return_value=0.0)
     mocker.patch("RUFAS.biophysical.feed_storage.storage.Storage.process_degradations")
     silage.stored = [harvested_crop]
 
     silage.process_degradations(mock_weather, mock_time)
 
     finalize.assert_not_called()
+
+
+@pytest.mark.unit
+def test_process_degradations_applies_bag_infiltration(mocker: MockerFixture, harvested_crop: HarvestedCrop) -> None:
+    """process_degradations reduces a Bag crop's dry matter mass via infiltration loss."""
+    config: dict[str, str | float | list[str]] = {
+        "name": "bag_silage",
+        "rufas_id": 1,
+        "field_names": ["field_1"],
+        "crop_name": "corn",
+        "initial_storage_dry_matter": 500.0,
+        "capacity": 1_000_000.0,
+        "diameter_m": 3.0,
+        "dry_matter_density_kg_per_m3": 180.0,
+    }
+    bag = Bag(config=config)
+    harvested_crop.preseal_finalized = True
+    harvested_crop.last_time_degraded = harvested_crop.storage_time - timedelta(days=30)
+    bag.stored = [harvested_crop]
+    mock_weather = mocker.MagicMock(autospec=Weather)
+    mock_time = mocker.MagicMock(autospec=RufasTime)
+    mock_time.simulation_day = 30
+    mock_time.current_date.date.return_value = harvested_crop.storage_time
+    mocker.patch.object(bag, "calculate_days_of_effluent_loss_to_process", return_value=0)
+    mocker.patch("RUFAS.biophysical.feed_storage.storage.Storage.process_degradations")
+    initial_mass = harvested_crop.dry_matter_mass
+
+    bag.process_degradations(mock_weather, mock_time)
+
+    assert harvested_crop.dry_matter_mass < initial_mass
+    assert harvested_crop.infiltration_cumulative_loss_kg > 0.0
+
+
+@pytest.mark.unit
+def test_process_degradations_skips_infiltration_when_geometry_missing(
+    mocker: MockerFixture, harvested_crop: HarvestedCrop
+) -> None:
+    """A Bunker with no width_m/height_m/dry_matter_density_kg_per_m3 configured (e.g. the protected
+    `example_feed_storage_configs.json` fixture's legacy `size`-only entries) skips Infiltration
+    instead of crashing on `None` geometry — Open Decision 7."""
+    config: dict[str, str | float | list[str]] = {
+        "name": "bunker_silage",
+        "rufas_id": 1,
+        "field_names": ["field_1"],
+        "crop_name": "corn",
+        "initial_storage_dry_matter": 500.0,
+        "capacity": 1_000_000.0,
+        "size": 0.0,
+    }
+    bunker = Bunker(config=config)
+    harvested_crop.preseal_finalized = True
+    harvested_crop.last_time_degraded = harvested_crop.storage_time - timedelta(days=30)
+    bunker.stored = [harvested_crop]
+    mock_weather = mocker.MagicMock(autospec=Weather)
+    mock_time = mocker.MagicMock(autospec=RufasTime)
+    mock_time.simulation_day = 30
+    mock_time.current_date.date.return_value = harvested_crop.storage_time
+    mocker.patch.object(bunker, "calculate_days_of_effluent_loss_to_process", return_value=0)
+    mocker.patch("RUFAS.biophysical.feed_storage.storage.Storage.process_degradations")
+    initial_mass = harvested_crop.dry_matter_mass
+
+    bunker.process_degradations(mock_weather, mock_time)
+
+    assert harvested_crop.dry_matter_mass == initial_mass
+    assert harvested_crop.infiltration_cumulative_loss_kg == 0.0
 
 
 @pytest.mark.unit
