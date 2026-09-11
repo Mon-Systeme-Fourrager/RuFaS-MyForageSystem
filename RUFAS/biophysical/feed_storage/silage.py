@@ -104,7 +104,7 @@ def calculate_preseal_loss(
     Translated from ``Silostg.for:634-714`` (``PRESEAL``). The day-stepping loop is preserved
     deliberately — temperature rises each day from respiration heat, feeding into the next day's
     respiration rate (positive feedback). Collapsing this into one evaluation over the full exposure
-    window would lose that self-heating effect (design spec §5.1). ``[FS.SIL.8]``.
+    window would lose that self-heating effect (design spec §5.1). ``[FS.SIL.13]``.
 
     """
     total_dry_matter_mass_kg = crop.dry_matter_mass
@@ -264,7 +264,7 @@ def calculate_respirable_substrate_fraction(crop: HarvestedCrop) -> float:
     fresh from the crop's current composition each call, no new state needed. Crude protein is
     excluded from dilution here: ``Silostg.for:871-872,978-979`` explicitly comment out CP dilution for
     `TOWER`/`BUNKER` ("CRUDE PROTEIN LOSS = DM LOSS", a 1994 model change), unlike `PRESEAL`
-    (`Silostg.for:710`) where it is active. ``[FS.SIL.10]``.
+    (`Silostg.for:710`) where it is active. ``[FS.SIL.15]``.
 
     """
     ndf_fraction = crop.ndf * GeneralConstants.PERCENTAGE_TO_FRACTION
@@ -297,7 +297,7 @@ def _get_or_initialize_infiltration_ceiling_kg(crop: HarvestedCrop) -> float:
     ``infiltration_cumulative_loss_kg``. Fixing it once, in absolute kg, at the moment Infiltration
     first processes the crop matches `Silostg.for`'s own invariant — its per-call reference mass
     (``PLOT(NPL,11)``) is held fixed for the whole `TOWER`/`BUNKER` call, never re-derived mid-call.
-    ``[FS.SIL.10]``.
+    ``[FS.SIL.15]``.
 
     """
     if crop.infiltration_max_loss_kg is None:
@@ -553,7 +553,7 @@ class Silage(Storage):
         Likewise a no-op for a crop with no dry matter left (e.g. fed out via ``remove_dry_matter_mass``
         the same day, before `Storage.remove_empty_crops` has swept it out of `self.stored`):
         `calculate_preseal_loss` divides by ``dry_matter_fraction`` in several places, so calling it
-        on an empty crop raises `ZeroDivisionError`. ``[FS.SIL.9]``.
+        on an empty crop raises `ZeroDivisionError`. ``[FS.SIL.14]``.
 
         """
         if crop.dry_matter_mass <= 0.0:
@@ -781,10 +781,11 @@ class Silage(Storage):
 
         Notes
         -----
-        ``temperature`` and ``preseal_finalized`` are ``init=False`` fields on `HarvestedCrop`, so
-        `dataclasses.replace` reruns `HarvestedCrop.__post_init__`, which unconditionally resets both
-        to their as-newly-stored defaults. Copied back from the pre-``replace`` crop here, same pattern
-        `Storage.project_degradations` already uses for `last_time_degraded`.
+        ``temperature``, ``preseal_finalized``, ``infiltration_cumulative_loss_kg``, and
+        ``infiltration_max_loss_kg`` are all ``init=False`` fields on `HarvestedCrop`, so
+        `dataclasses.replace` reruns `HarvestedCrop.__post_init__`, which unconditionally resets all
+        four to their as-newly-stored defaults. Copied back from the pre-``replace`` crop here, same
+        pattern `Storage.project_degradations` already uses for `last_time_degraded`.
 
         """
         crops_projected_with_effluent_loss: list[HarvestedCrop] = []
@@ -795,6 +796,8 @@ class Silage(Storage):
             projected_crop = replace(crop, **effluent_loss_values)
             projected_crop.temperature = crop.temperature
             projected_crop.preseal_finalized = crop.preseal_finalized
+            projected_crop.infiltration_cumulative_loss_kg = crop.infiltration_cumulative_loss_kg
+            projected_crop.infiltration_max_loss_kg = crop.infiltration_max_loss_kg
             crops_projected_with_effluent_loss.append(projected_crop)
 
         return super().project_degradations(crops_projected_with_effluent_loss, weather, time)

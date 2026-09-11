@@ -249,12 +249,14 @@ class Storage:
             del degraded_crop_values["gaseous_dry_matter_loss"]
             del degraded_crop_values["last_time_degraded"]
             degraded_crop = replace(crop, **degraded_crop_values)
-            # last_time_degraded/temperature/preseal_finalized are init=False fields that
-            # __post_init__ unconditionally resets to as-newly-stored defaults; restore the
-            # pre-replace crop's actual state for each.
+            # last_time_degraded/temperature/preseal_finalized/infiltration_cumulative_loss_kg/
+            # infiltration_max_loss_kg are init=False fields that __post_init__ unconditionally resets
+            # to as-newly-stored defaults; restore the pre-replace crop's actual state for each.
             degraded_crop.last_time_degraded = last_time_degraded
             degraded_crop.temperature = crop.temperature
             degraded_crop.preseal_finalized = crop.preseal_finalized
+            degraded_crop.infiltration_cumulative_loss_kg = crop.infiltration_cumulative_loss_kg
+            degraded_crop.infiltration_max_loss_kg = crop.infiltration_max_loss_kg
             degraded_crops.append(degraded_crop)
         return degraded_crops
 

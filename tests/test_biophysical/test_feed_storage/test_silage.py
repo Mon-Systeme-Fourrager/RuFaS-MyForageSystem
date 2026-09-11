@@ -26,6 +26,7 @@ from RUFAS.biophysical.feed_storage.silage_constants import (
     PRESEAL_FALLBACK_EXPOSURE_DAYS,
     PRESEAL_EXPOSURE_CAP_DAYS,
 )
+from RUFAS.biophysical.feed_storage.storage import Storage
 from RUFAS.rufas_time import RufasTime
 from RUFAS.units import MeasurementUnits
 from RUFAS.weather import Weather
@@ -115,7 +116,7 @@ def test_process_degradations(
         silage, "_calculate_mass_attributes_after_loss", return_value=expected_mass_loss
     )
     add_variable = mocker.patch.object(OutputManager, "add_variable")
-    super_process_degradations = mocker.patch("RUFAS.biophysical.feed_storage.storage.Storage.process_degradations")
+    super_process_degradations = mocker.patch.object(Storage, "process_degradations")
     second_crop = copy.deepcopy(harvested_crop)
     silage.stored = [harvested_crop, second_crop]
     expected_info_map = {
@@ -166,13 +167,24 @@ def test_project_degradations(
         "crude_protein_percent": 5.0,
     }
     silage.stored = [replace(harvested_crop) for _ in range(3)]
+    for crop in silage.stored:
+        crop.infiltration_cumulative_loss_kg = 12.5
+        crop.infiltration_max_loss_kg = 40.0
     degraded_crops = [replace(crop, **expected_loss_values) for crop in silage.stored]
+    for original_crop, expected_crop in zip(silage.stored, degraded_crops):
+        # temperature/preseal_finalized/infiltration_cumulative_loss_kg/infiltration_max_loss_kg are
+        # init=False and get recomputed by replace()'s __post_init__; project_degradations now restores
+        # the pre-replace crop's actual values for all four instead of leaving them reset. Non-default
+        # infiltration values are set above specifically so this test fails if any of the four go
+        # unrestored (PR #49 review finding).
+        expected_crop.temperature = original_crop.temperature
+        expected_crop.preseal_finalized = original_crop.preseal_finalized
+        expected_crop.infiltration_cumulative_loss_kg = original_crop.infiltration_cumulative_loss_kg
+        expected_crop.infiltration_max_loss_kg = original_crop.infiltration_max_loss_kg
     calc_effluent_loss = mocker.patch.object(
         silage, "_calculate_effluent_loss", side_effect=[copy.copy(effluent_loss_values) for _ in range(3)]
     )
-    process_degradations = mocker.patch(
-        "RUFAS.biophysical.feed_storage.storage.Storage.project_degradations", return_value=degraded_crops
-    )
+    process_degradations = mocker.patch.object(Storage, "project_degradations", return_value=degraded_crops)
 
     actual = silage.project_degradations(silage.stored, weather, time)
 
@@ -395,6 +407,40 @@ def test_calculate_preseal_loss_alfalfa_positive_and_bounded() -> None:
 
 
 @pytest.mark.unit
+def test_calculate_preseal_loss_two_day_oracle_pins_self_heating_feedback() -> None:
+    """Day 2's loss is strictly larger than day 1's, and both the cumulative loss and the final
+    temperature are pinned against an independently re-derived oracle (a standalone re-implementation
+    of `Silostg.for`'s `PRESEAL` day-stepping loop, not calling `calculate_preseal_loss` itself) — a
+    bounds-only check (as used by `test_calculate_preseal_loss_alfalfa_positive_and_bounded`) would
+    still pass even if the self-heating feedback (`temperature` feeding into the next day's
+    `temperature_factor`) were broken or removed entirely, since it only confirms *some* temperature
+    rise happened, not that it is correctly fed back into the next day's respiration rate (PR #49
+    review finding).
+
+    Corn silage (non-alfalfa; ``MUMAX`` coefficient 2.9), ``dry_matter_percentage=35.0``,
+    ``dry_matter_mass=100.0``, initial temperature 8.0 (``INITIAL_FILL_TEMPERATURE_NON_ALFALFA_C``), 2
+    days of exposure (two full iterations of `PRESEAL`'s day-stepping loop), ``exposed_area_m2 =
+    sqrt(5) * 10.0 * 3.0`` (Bunker geometry, matching `test_preseal_full_cycle_bunker_matches_
+    independent_oracle`'s 1-day case), density 180.0 kg DM/m3. Independently evaluating that
+    translation by hand (a standalone script, not importing `silage.py`) for these inputs gives
+    ``dry_matter_loss_fraction ≈ 0.007172354895645111`` and ``final_temperature ≈ 16.267689093930407``
+    — day 2 alone contributes ≈0.003841629231 to the total, strictly more than day 1's
+    ≈0.003330725664 (which matches `test_preseal_full_cycle_bunker_matches_independent_oracle`'s own
+    1-day oracle exactly, confirming this script is a faithful re-derivation), because day 1's ≈3.84°C
+    temperature rise raises day 2's ``temperature_factor``.
+
+    """
+    crop = HarvestedCrop(**{**sample_crop_data, "config_name": "corn_silage", "dry_matter_percentage": 35.0})
+
+    result = calculate_preseal_loss(
+        crop, exposure_days=2.0, exposed_area_m2=math.sqrt(5.0) * 10.0 * 3.0, dry_matter_density_kg_per_m3=180.0
+    )
+
+    assert result["dry_matter_loss_fraction"] == pytest.approx(0.007172354895645111)
+    assert result["final_temperature"] == pytest.approx(16.267689093930407)
+
+
+@pytest.mark.unit
 def test_calculate_preseal_loss_fallback_exposure() -> None:
     """The 0.125-day fallback exposure (newest plot, no successor yet) produces a small but positive loss."""
     crop = HarvestedCrop(**{**sample_crop_data, "config_name": "corn_silage", "dry_matter_percentage": 35.0})
@@ -461,7 +507,7 @@ def test_process_degradations_finalizes_newest_crop_with_fallback(
     finalize = mocker.patch.object(silage, "_finalize_preseal_loss")
     mocker.patch.object(silage, "calculate_days_of_effluent_loss_to_process", return_value=0)
     mocker.patch.object(silage, "_process_infiltration", return_value=0.0)
-    mocker.patch("RUFAS.biophysical.feed_storage.storage.Storage.process_degradations")
+    mocker.patch.object(Storage, "process_degradations")
     silage.stored = [harvested_crop]
 
     silage.process_degradations(mock_weather, mock_time)
@@ -485,7 +531,7 @@ def test_process_degradations_skips_already_finalized_crop(
     finalize = mocker.patch.object(silage, "_finalize_preseal_loss")
     mocker.patch.object(silage, "calculate_days_of_effluent_loss_to_process", return_value=0)
     mocker.patch.object(silage, "_process_infiltration", return_value=0.0)
-    mocker.patch("RUFAS.biophysical.feed_storage.storage.Storage.process_degradations")
+    mocker.patch.object(Storage, "process_degradations")
     silage.stored = [harvested_crop]
 
     silage.process_degradations(mock_weather, mock_time)
@@ -507,8 +553,9 @@ def test_process_degradations_runs_fermentation_before_infiltration(
     mocker.patch.object(silage, "_finalize_preseal_loss")
     mocker.patch.object(silage, "calculate_days_of_effluent_loss_to_process", return_value=0)
     call_order: list[str] = []
-    mocker.patch(
-        "RUFAS.biophysical.feed_storage.storage.Storage.process_degradations",
+    mocker.patch.object(
+        Storage,
+        "process_degradations",
         side_effect=lambda *args, **kwargs: call_order.append("fermentation"),
     )
 
@@ -548,7 +595,7 @@ def test_process_degradations_infiltration_elapsed_days_survives_fermentation(
         for crop in silage.stored:
             crop.last_time_degraded = time.current_date.date()
 
-    mocker.patch("RUFAS.biophysical.feed_storage.storage.Storage.process_degradations", side_effect=_fake_fermentation)
+    mocker.patch.object(Storage, "process_degradations", side_effect=_fake_fermentation)
     infiltration = mocker.patch.object(silage, "_process_infiltration", return_value=0.0)
     silage.stored = [harvested_crop]
 
@@ -579,7 +626,7 @@ def test_process_degradations_applies_bag_infiltration(mocker: MockerFixture, ha
     mock_time.simulation_day = 30
     mock_time.current_date.date.return_value = harvested_crop.storage_time
     mocker.patch.object(bag, "calculate_days_of_effluent_loss_to_process", return_value=0)
-    mocker.patch("RUFAS.biophysical.feed_storage.storage.Storage.process_degradations")
+    mocker.patch.object(Storage, "process_degradations")
     initial_mass = harvested_crop.dry_matter_mass
 
     bag.process_degradations(mock_weather, mock_time)
@@ -613,7 +660,7 @@ def test_process_degradations_skips_infiltration_when_geometry_missing(
     mock_time.simulation_day = 30
     mock_time.current_date.date.return_value = harvested_crop.storage_time
     mocker.patch.object(bunker, "calculate_days_of_effluent_loss_to_process", return_value=0)
-    mocker.patch("RUFAS.biophysical.feed_storage.storage.Storage.process_degradations")
+    mocker.patch.object(Storage, "process_degradations")
     initial_mass = harvested_crop.dry_matter_mass
 
     bunker.process_degradations(mock_weather, mock_time)
