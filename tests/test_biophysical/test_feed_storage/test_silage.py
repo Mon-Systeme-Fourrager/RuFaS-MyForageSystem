@@ -983,3 +983,42 @@ def test_calculate_bunker_infiltration_loss_at_ceiling_returns_zero(storage_clas
     )
 
     assert loss == 0.0
+
+
+@pytest.mark.component
+@pytest.mark.parametrize(
+    "storage_class,extra_config",
+    [
+        (Bunker, {"width_m": 10.0, "height_m": 3.0, "dry_matter_density_kg_per_m3": 180.0}),
+        (Bag, {"diameter_m": 3.0, "dry_matter_density_kg_per_m3": 180.0}),
+    ],
+)
+def test_full_ensiling_chain_stays_under_total_dry_matter(
+    mocker: MockerFixture,
+    mock_silage_config: dict[str, str | float | list[str]],
+    storage_class: type[Silage],
+    extra_config: dict[str, float],
+) -> None:
+    """A crop run through Preseal, Effluent, Fermentation, and Infiltration never loses >= 100% DM."""
+    config = dict(mock_silage_config)
+    config.update(extra_config)
+    storage = storage_class(config=config)
+    first_crop = HarvestedCrop(**{**sample_crop_data, "config_name": "corn_silage", "dry_matter_percentage": 35.0})
+    second_crop = replace(
+        HarvestedCrop(**{**sample_crop_data, "config_name": "corn_silage", "dry_matter_percentage": 35.0}),
+        storage_time=first_crop.storage_time + timedelta(days=1),
+    )
+    initial_mass = first_crop.dry_matter_mass
+
+    storage.receive_crop(first_crop, simulation_day=1)
+    storage.receive_crop(second_crop, simulation_day=2)
+
+    mock_weather = mocker.MagicMock(autospec=Weather)
+    mock_time = mocker.MagicMock(autospec=RufasTime)
+    mock_time.simulation_day = 32
+    mock_time.current_date.date.return_value = first_crop.storage_time + timedelta(days=30)
+
+    storage.process_degradations(mock_weather, mock_time)
+
+    assert 0.0 < first_crop.dry_matter_mass < initial_mass
+    assert first_crop.infiltration_cumulative_loss_kg > 0.0
