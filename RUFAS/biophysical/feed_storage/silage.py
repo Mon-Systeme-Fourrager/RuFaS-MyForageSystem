@@ -305,6 +305,109 @@ def _get_or_initialize_infiltration_ceiling_kg(crop: HarvestedCrop) -> float:
     return crop.infiltration_max_loss_kg
 
 
+"""Series-diffusion parameter shared by TOWER and BUNKER infiltration math (Silostg.for:813,941)."""
+INFILTRATION_DTAU = 492.0
+"""Lower bound on porosity so infiltration never fully stops even at maximum packing (Silostg.for:818)."""
+INFILTRATION_MIN_POROSITY = 0.02
+"""Per-day dry-matter loss coefficient — the daily-step form of Eq. 30's 10-day coefficient 0.628
+(Silostg.for:949, Open Decision 1)."""
+INFILTRATION_DAILY_LOSS_COEFFICIENT = 0.0628
+
+
+def _calculate_infiltration_porosity(dry_matter_fraction: float, dry_matter_density_kg_per_m3: float) -> float:
+    """
+    Calculates packed-material porosity for the Infiltration phase, shared by `Bag` and `Bunker`/`Pile`
+    — the calculation doesn't differ by storage geometry.
+
+    Parameters
+    ----------
+    dry_matter_fraction : float
+        Crop dry-matter content as a fraction (0-1).
+    dry_matter_density_kg_per_m3 : float
+        Packed dry-matter density of the storage (kg DM / m3).
+
+    Returns
+    -------
+    float
+        Porosity, floored at `INFILTRATION_MIN_POROSITY` (Silostg.for:818).
+
+    Notes
+    -----
+    Translated from ``Silostg.for:372-380``'s relative-density term, using the flat
+    ``dry_matter_density_kg_per_m3`` config value rather than the source's packing-profile
+    computation (Open Decision 2). ``[FS.SIL.11]``.
+
+    """
+    max_relative_density = 3.0 / (3.0 - dry_matter_fraction)
+    return max(INFILTRATION_MIN_POROSITY, 1.0 - dry_matter_density_kg_per_m3 / (1000.0 * max_relative_density))
+
+
+def calculate_bag_infiltration_loss(
+    crop: HarvestedCrop, elapsed_days: float, diameter_m: float, dry_matter_density_kg_per_m3: float
+) -> float:
+    """
+    Calculates the dry-matter loss to oxygen infiltration for a `Bag` over an elapsed period,
+    advancing the radial oxygen front inward from the bag wall.
+
+    Parameters
+    ----------
+    crop : HarvestedCrop
+        The stored crop being degraded. ``infiltration_cumulative_loss_kg`` is updated in place.
+    elapsed_days : float
+        Number of days since infiltration was last processed for this crop.
+    diameter_m : float
+        Bag diameter (m).
+    dry_matter_density_kg_per_m3 : float
+        Packed dry-matter density of the storage (kg DM / m3).
+
+    Returns
+    -------
+    float
+        Dry-matter loss for this step (kg), already clipped at the RS ceiling.
+
+    Notes
+    -----
+    Translated from ``Silostg.for:794-835`` (``TOWER``, radial-diffusion portion only — the
+    downward-diffusion-into-the-top-plot branch at lines 836-863 does not apply to a `Bag`, which
+    has no distinguishable top plot; see design spec §5.2). Re-cadenced from the source's fixed
+    10-day step to an arbitrary ``elapsed_days`` step (Open Decision 1) — the per-day coefficient
+    ``0.0628`` is ``BUNKER``'s own explicit per-day form (line 949) of the same equation. ``[FS.SIL.11]``.
+
+    """
+    if elapsed_days <= 0.0:
+        return 0.0
+
+    radius_m = diameter_m / 2.0
+    max_loss_kg = _get_or_initialize_infiltration_ceiling_kg(crop)
+    if max_loss_kg <= 0.0 or crop.infiltration_cumulative_loss_kg >= max_loss_kg:
+        return 0.0
+
+    dry_matter_fraction = crop.dry_matter_percentage * GeneralConstants.PERCENTAGE_TO_FRACTION
+    if dry_matter_fraction <= 0.0:
+        return 0.0
+    porosity = _calculate_infiltration_porosity(dry_matter_fraction, dry_matter_density_kg_per_m3)
+
+    fraction_of_ceiling_consumed = crop.infiltration_cumulative_loss_kg / max_loss_kg
+    front_radius_m = radius_m * math.sqrt(max(0.0, 1.0 - fraction_of_ceiling_consumed))
+    silo_permeability = get_permeability_constants("Bag")
+    if front_radius_m >= radius_m:
+        effective_permeability = silo_permeability
+    else:
+        material_permeability = (
+            INFILTRATION_DTAU * porosity / (100.0 * front_radius_m * math.log(radius_m / front_radius_m))
+        )
+        effective_permeability = 1.0 / (1.0 / material_permeability + 1.0 / silo_permeability)
+
+    depth_m = crop.dry_matter_mass / dry_matter_fraction / dry_matter_density_kg_per_m3 / (math.pi * radius_m**2)
+    front_area_m2 = 2.0 * math.pi * front_radius_m * depth_m
+    loss_this_step_kg = INFILTRATION_DAILY_LOSS_COEFFICIENT * effective_permeability * front_area_m2 * elapsed_days
+
+    total_loss_kg = min(max_loss_kg, crop.infiltration_cumulative_loss_kg + loss_this_step_kg)
+    loss_this_step_kg = total_loss_kg - crop.infiltration_cumulative_loss_kg
+    crop.infiltration_cumulative_loss_kg = total_loss_kg
+    return loss_this_step_kg
+
+
 class Silage(Storage):
     """
     Represents Silage storage, a subclass of ``Storage``.

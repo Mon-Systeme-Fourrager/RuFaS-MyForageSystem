@@ -19,6 +19,7 @@ from RUFAS.biophysical.feed_storage.silage import (
     get_permeability_constants,
     calculate_respirable_substrate_fraction,
     _get_or_initialize_infiltration_ceiling_kg,
+    calculate_bag_infiltration_loss,
 )
 from RUFAS.biophysical.feed_storage.silage_constants import (
     PRESEAL_FALLBACK_EXPOSURE_DAYS,
@@ -714,3 +715,83 @@ def test_infiltration_ceiling_fixed_on_first_call_and_stable_after() -> None:
 
     assert first_ceiling_kg == pytest.approx(expected_ceiling_kg)
     assert second_ceiling_kg == pytest.approx(first_ceiling_kg)
+
+
+@pytest.mark.unit
+def test_calculate_bag_infiltration_loss_zero_days() -> None:
+    """Zero elapsed days produces zero loss and does not change accumulated loss."""
+    crop = HarvestedCrop(**sample_crop_data)
+
+    loss = calculate_bag_infiltration_loss(crop, elapsed_days=0.0, diameter_m=3.0, dry_matter_density_kg_per_m3=180.0)
+
+    assert loss == 0.0
+    assert crop.infiltration_cumulative_loss_kg == 0.0
+
+
+@pytest.mark.unit
+def test_calculate_bag_infiltration_loss_positive_and_bounded() -> None:
+    """A positive elapsed period produces positive loss that never exceeds the RS ceiling."""
+    crop = HarvestedCrop(**{**sample_crop_data, "dry_matter_percentage": 35.0})
+    rs_fraction = calculate_respirable_substrate_fraction(crop)
+    max_loss_kg = crop.dry_matter_mass * rs_fraction
+
+    loss = calculate_bag_infiltration_loss(crop, elapsed_days=30.0, diameter_m=3.0, dry_matter_density_kg_per_m3=180.0)
+
+    assert 0.0 < loss <= max_loss_kg
+    assert crop.infiltration_cumulative_loss_kg == pytest.approx(loss)
+
+
+@pytest.mark.unit
+def test_calculate_bag_infiltration_loss_clips_at_rs_ceiling() -> None:
+    """A very long elapsed period is clipped at the RS ceiling, never exceeding it."""
+    crop = HarvestedCrop(**{**sample_crop_data, "dry_matter_percentage": 35.0})
+    rs_fraction = calculate_respirable_substrate_fraction(crop)
+    max_loss_kg = crop.dry_matter_mass * rs_fraction
+
+    loss = calculate_bag_infiltration_loss(
+        crop, elapsed_days=10_000.0, diameter_m=3.0, dry_matter_density_kg_per_m3=180.0
+    )
+
+    assert loss == pytest.approx(max_loss_kg)
+
+
+@pytest.mark.unit
+def test_calculate_bag_infiltration_loss_stable_across_repeated_calls_with_unrelated_mass_loss() -> None:
+    """Repeated calls with unrelated (e.g. Effluent/Fermentation) mass loss between them never crash
+    and never move the fixed RS ceiling — regression test for the 2026-09-10 `/challenge-plan` finding."""
+    crop = HarvestedCrop(**{**sample_crop_data, "dry_matter_percentage": 35.0})
+    rs_fraction = calculate_respirable_substrate_fraction(crop)
+    expected_ceiling_kg = crop.dry_matter_mass * rs_fraction
+
+    for _ in range(20):
+        calculate_bag_infiltration_loss(crop, elapsed_days=5.0, diameter_m=3.0, dry_matter_density_kg_per_m3=180.0)
+        crop.dry_matter_mass = max(1.0, crop.dry_matter_mass - 5.0)
+
+    assert crop.infiltration_max_loss_kg == pytest.approx(expected_ceiling_kg)
+    assert crop.infiltration_cumulative_loss_kg <= expected_ceiling_kg
+
+
+@pytest.mark.unit
+def test_calculate_bag_infiltration_loss_at_ceiling_does_not_crash() -> None:
+    """Once cumulative loss reaches the fixed RS ceiling, a further call returns 0.0 instead of
+    raising `ZeroDivisionError` on `math.log(radius_m / front_radius_m)` — regression test for the
+    2026-09-11 `/challenge-plan` finding (front_radius_m == 0.0 exactly at the ceiling)."""
+    crop = HarvestedCrop(**{**sample_crop_data, "dry_matter_percentage": 35.0})
+    calculate_bag_infiltration_loss(crop, elapsed_days=10_000.0, diameter_m=3.0, dry_matter_density_kg_per_m3=180.0)
+
+    loss = calculate_bag_infiltration_loss(crop, elapsed_days=5.0, diameter_m=3.0, dry_matter_density_kg_per_m3=180.0)
+
+    assert loss == 0.0
+
+
+@pytest.mark.unit
+def test_calculate_bag_infiltration_loss_zero_dry_matter_percentage_returns_zero() -> None:
+    """A crop with zero dry-matter percentage (reachable via `Storage._calculate_mass_attributes_after_loss`'s
+    `new_fresh_mass == 0.0` branch, which can zero the percentage while `dry_matter_mass` stays positive)
+    returns 0.0 instead of raising `ZeroDivisionError` on `crop.dry_matter_mass / dry_matter_fraction` —
+    regression test for the 2026-09-11 `/challenge-plan` finding."""
+    crop = HarvestedCrop(**{**sample_crop_data, "dry_matter_percentage": 0.0})
+
+    loss = calculate_bag_infiltration_loss(crop, elapsed_days=5.0, diameter_m=3.0, dry_matter_density_kg_per_m3=180.0)
+
+    assert loss == 0.0
