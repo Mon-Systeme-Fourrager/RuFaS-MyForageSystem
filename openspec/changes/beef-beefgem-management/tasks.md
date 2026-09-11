@@ -7,7 +7,7 @@
 - [x] A-1-2: Add `finishing_system: FinishingSystem` ClassVar to
       `AnimalConfig` with default `FinishingSystem.GRAIN_FED`
 - [x] A-1-3: Parse `finishing_system` from feedlot config using
-      walrus operator pattern in `_initialize_feedlot_config()`
+      walrus operator pattern in `_initialize_feedlot_finishing_system()`
 - [x] A-1-4: Add `finishing_system` validation to
       `DataValidator.validate_feedlot_config()`
 - [x] A-1-5: Add `calculate_enteric_ch4_grass_fed()` to
