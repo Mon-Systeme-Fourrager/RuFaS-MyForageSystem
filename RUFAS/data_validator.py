@@ -6,7 +6,7 @@ from enum import Enum
 from typing import Any, Callable, Sequence, cast
 
 from RUFAS.biophysical.animal import animal_constants
-from RUFAS.biophysical.animal.data_types.animal_enums import StockerDietSystem
+from RUFAS.biophysical.animal.data_types.animal_enums import FinishingSystem, StockerDietSystem
 from RUFAS.util import Aggregator
 
 AGGREGATION_FUNCTIONS: dict[
@@ -1797,6 +1797,17 @@ class DataValidator:
             raise ValueError(
                 f"feedlot mud_condition must be one of {sorted(valid_mud_conditions)}, " f"got '{mud_condition}'"
             )
+
+        DataValidator._validate_feedlot_finishing_system(feedlot_config)
+
+    @staticmethod
+    def _validate_feedlot_finishing_system(config: dict[str, Any]) -> None:
+        """Raise ValueError for an unrecognised finishing_system value."""
+        if "finishing_system" in config and config["finishing_system"] is not None:
+            system = str(config["finishing_system"])
+            valid = {m.value for m in FinishingSystem}
+            if system not in valid:
+                raise ValueError(f"finishing_system must be one of {sorted(valid)}, got '{system}'")
 
     @staticmethod
     def _validate_beef_breeding_season_start_day(config: dict[str, Any]) -> None:

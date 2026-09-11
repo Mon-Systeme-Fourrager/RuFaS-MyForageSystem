@@ -7,6 +7,8 @@ References: NRC (2016) Nutrient Requirements of Beef Cattle, 8th ed.
 
 from __future__ import annotations
 
+import math
+
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
 from RUFAS.biophysical.animal.data_types.animal_enums import Sex
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
@@ -19,6 +21,75 @@ from RUFAS.biophysical.animal.ration.amino_acid import EssentialAminoAcidRequire
 
 class BeefNRCRequirementsCalculator(NutritionRequirementsCalculator):
     """Nutrition requirements calculator for feedlot cattle — NRC 2016 (Beef)."""
+
+    @classmethod
+    def calculate_enteric_ch4_grass_fed(cls, dmi: float) -> float:
+        """Enteric methane for a grass-finished animal from dry matter intake.
+
+        Parameters
+        ----------
+        dmi : float
+            Dry matter intake (kg DM/d). Must be finite and non-negative.
+
+        Returns
+        -------
+        float
+            Enteric methane production (g CH4/d).
+
+        Raises
+        ------
+        ValueError
+            If ``dmi`` is negative or not finite.
+
+        Notes
+        -----
+        Linear form ``CH4 = intercept + slope * DMI`` using
+        BEEF_CH4_GRASS_FED_INTERCEPT and BEEF_CH4_GRASS_FED_SLOPE. See those
+        constants for the open question about the equation's provenance — no
+        NRC 2016 equation number has been identified for it, and it is unrelated
+        to the Mitscherlich Model 3 used elsewhere in the animal module.
+
+        """
+        if not math.isfinite(dmi) or dmi < 0.0:
+            raise ValueError(f"dmi must be non-negative and finite, got {dmi}")
+        return AnimalModuleConstants.BEEF_CH4_GRASS_FED_INTERCEPT + AnimalModuleConstants.BEEF_CH4_GRASS_FED_SLOPE * dmi
+
+    @classmethod
+    def calculate_enteric_ch4_grain_fed(cls, dmi: float) -> float:
+        """Enteric CH4 for grain-finished feedlot cattle (g/d).
+
+        Parameters
+        ----------
+        dmi : float
+            Dry matter intake (kg/d).
+
+        Returns
+        -------
+        float
+            Enteric methane production (g/d).
+
+        Raises
+        ------
+        ValueError
+            If ``dmi`` is negative or not finite.
+
+        Notes
+        -----
+        IPCC Tier 2 with Ym = 3.0% of gross energy intake, offered by
+        NRC 2016 Table 16-2 for cases where diet composition is not
+        available at the call site.
+
+        NRC 2016 Eq. 16-9 is the preferred primary equation but requires
+        body weight, DMI, fat, crude protein, NDF and starch. Ration
+        composition is not reachable from the reporter today, so Eq. 16-9
+        is deferred to its own step. See the scope boundary note.
+
+        """
+        if not math.isfinite(dmi) or dmi < 0.0:
+            raise ValueError(f"dmi must be non-negative and finite, got {dmi}")
+        gross_energy_intake_mj = dmi * AnimalModuleConstants.BEEF_GROSS_ENERGY_MJ_PER_KG_DM
+        methane_energy_mj = gross_energy_intake_mj * AnimalModuleConstants.BEEF_CH4_YM_FRACTION
+        return methane_energy_mj / AnimalModuleConstants.BEEF_CH4_ENERGY_MJ_PER_G
 
     @classmethod
     def calculate_requirements(

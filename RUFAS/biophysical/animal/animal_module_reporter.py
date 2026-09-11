@@ -10,6 +10,7 @@ if TYPE_CHECKING:
 from RUFAS.biophysical.animal.animal_config import AnimalConfig
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
 from RUFAS.biophysical.animal.animal_genetics.animal_genetics import UNITS as genetics_units
+from RUFAS.biophysical.animal.data_types.animal_enums import FinishingSystem
 from RUFAS.biophysical.animal.data_types.animal_events import AnimalEvents
 from RUFAS.biophysical.animal.data_types.animal_population import AnimalPopulationStatistics
 from RUFAS.biophysical.animal.data_types.animal_typed_dicts import SoldAnimalTypedDict, StillbornCalfTypedDict
@@ -21,6 +22,9 @@ from RUFAS.biophysical.animal.data_types.nutrition_data_structures import (
     NutritionEvaluationResults,
 )
 from RUFAS.biophysical.animal.data_types.reproduction import HerdReproductionStatistics
+from RUFAS.biophysical.animal.nutrients.beef_nrc_requirements_calculator import (
+    BeefNRCRequirementsCalculator,
+)
 from RUFAS.biophysical.animal.data_types.animal_manure_excretions import AnimalManureExcretions
 from RUFAS.data_structures.animal_to_manure_connection import ManureStream
 from RUFAS.data_structures.feed_storage_to_animal_connection import RUFAS_ID
@@ -1471,11 +1475,22 @@ class AnimalModuleReporter:
         fcr: float = animal.cumulative_dmi / total_gain if total_gain > 0.0 else 0.0
         hcw: float = animal.body_weight * AnimalModuleConstants.FEEDLOT_HCW_DRESSING_PERCENTAGE
 
+        mean_daily_dmi: float = animal.cumulative_dmi / dof if dof > 0 else 0.0
+        if AnimalConfig.finishing_system is FinishingSystem.GRASS_FED:
+            ch4 = BeefNRCRequirementsCalculator.calculate_enteric_ch4_grass_fed(mean_daily_dmi)
+        else:
+            ch4 = BeefNRCRequirementsCalculator.calculate_enteric_ch4_grain_fed(mean_daily_dmi)
+
         om.add_variable("feedlot_days_on_feed", dof, dict(info_map, units=MeasurementUnits.DAYS))
         om.add_variable("feedlot_total_gain_kg", total_gain, dict(info_map, units=MeasurementUnits.KILOGRAMS))
         om.add_variable("feedlot_adg_kg_d", adg, dict(info_map, units=MeasurementUnits.KILOGRAMS_PER_DAY))
         om.add_variable("feedlot_fcr", fcr, dict(info_map, units=MeasurementUnits.FRACTION))
         om.add_variable("feedlot_hot_carcass_weight_kg", hcw, dict(info_map, units=MeasurementUnits.KILOGRAMS))
+        om.add_variable(
+            "feedlot_mean_daily_enteric_ch4_g_d",
+            ch4,
+            dict(info_map, units=MeasurementUnits.GRAMS_PER_DAY),
+        )
 
     @classmethod
     def report_cow_calf_performance(cls, animal: Animal, simulation_day: int) -> None:

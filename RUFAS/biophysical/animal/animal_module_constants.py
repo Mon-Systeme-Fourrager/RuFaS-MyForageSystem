@@ -640,3 +640,42 @@ class AnimalModuleConstants:
     BEEF_DMI_MIN_NE_CONCENTRATION: float = 0.95
     """Minimum NEm concentration (Mcal/kg DM) applied before division in DMI Eq.10-5.
     This is a numerical guard against a near-zero denominator, not an NRC 2016 threshold."""
+
+    # ===== BEEF FINISHING ENTERIC CH4 CONSTANTS (NRC 2016 Ch.16) =====
+
+    BEEF_CH4_GRASS_FED_INTERCEPT: float = 8.25
+    """
+    Linear enteric CH4 model for grass-finished beef: intercept (g CH4/d). Distinct
+    from the Mitscherlich Model 3 curve (MITS_PARAMETER_A/_B, Mills et al. 2003)
+    already in animal_constants.py, despite the source document referring to this
+    as "Mits3". Provenance for these coefficients is the BeefGEM source document;
+    no NRC 2016 equation number has been identified for them.
+    """
+
+    BEEF_CH4_GRASS_FED_SLOPE: float = 31.2
+    """
+    Linear enteric CH4 model for grass-finished beef: slope (g CH4 per kg DMI/d).
+    Distinct from the Mitscherlich Model 3 curve (MITS_PARAMETER_A/_B, Mills et al.
+    2003) already in animal_constants.py, despite the source document referring to
+    this as "Mits3". Provenance for these coefficients is the BeefGEM source
+    document; no NRC 2016 equation number has been identified for them.
+    """
+
+    BEEF_CH4_YM_FRACTION: float = 0.030
+    """
+    Methane conversion factor for grain-finished feedlot cattle, as a
+    fraction of gross energy intake. IPCC Tier 2 default for high-grain
+    diets; NRC 2016 Table 16-2.
+    """
+
+    BEEF_GROSS_ENERGY_MJ_PER_KG_DM: float = 18.45
+    """
+    Gross energy content of feed dry matter (MJ/kg DM). IPCC default
+    used with BEEF_CH4_YM_FRACTION.
+    """
+
+    BEEF_CH4_ENERGY_MJ_PER_G: float = 0.05565
+    """
+    Energy content of methane (MJ/g), for converting the IPCC Tier 2
+    energy result to mass. Equivalent to 55.65 MJ/kg.
+    """

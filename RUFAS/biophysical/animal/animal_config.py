@@ -1,7 +1,11 @@
 from typing import Any
 
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
-from RUFAS.biophysical.animal.data_types.animal_enums import BeefPostWeaningDestination, StockerDietSystem
+from RUFAS.biophysical.animal.data_types.animal_enums import (
+    BeefPostWeaningDestination,
+    FinishingSystem,
+    StockerDietSystem,
+)
 from RUFAS.biophysical.animal.data_types.repro_protocol_enums import (
     HeiferReproductionProtocol,
     CowReproductionProtocol,
@@ -417,6 +421,7 @@ class AnimalConfig:
     feedlot_implant_adg_factor: float = 1.0
     feedlot_mud_condition: str = "none"
     feedlot_ndf_minimum_pct: float = 10.0
+    finishing_system: FinishingSystem = FinishingSystem.GRAIN_FED
 
     # ── STOCKER / BACKGROUNDING PARAMETERS (defaults; overridden by initialize_animal_config) ─
     stocker_entry_weight: float = AnimalModuleConstants.STOCKER_MIN_ENTRY_WEIGHT_KG
@@ -616,6 +621,7 @@ class AnimalConfig:
         cls.feedlot_implant_adg_factor = float(feedlot_cfg.get("implant_adg_factor", 1.0))
         cls.feedlot_mud_condition = str(feedlot_cfg.get("mud_condition", "none"))
         cls.feedlot_ndf_minimum_pct = float(feedlot_cfg.get("ndf_minimum_pct", 10.0))
+        cls._initialize_feedlot_finishing_system(feedlot_cfg)
 
         # ── COW-CALF PARAMETERS ──────────────────────────────────────────────
         cls._initialize_beef_cow_calf_config(animal_config_data)
@@ -623,6 +629,21 @@ class AnimalConfig:
         # ── STOCKER / BACKGROUNDING PARAMETERS ───────────────────────────────
         stocker_cfg: dict[str, Any] = animal_config_data.get("stocker", {}) or {}
         cls._initialize_beef_stocker_config(stocker_cfg)
+
+    @classmethod
+    def _initialize_feedlot_finishing_system(cls, feedlot_cfg: dict[str, Any]) -> None:
+        """Initialize the finishing_system ClassVar from the ``feedlot`` config block.
+
+        Parameters
+        ----------
+        feedlot_cfg : dict[str, Any]
+            The raw ``feedlot`` sub-dict from ``animal_config`` (may be empty).
+            A missing or None value keeps the GRAIN_FED default.
+
+        """
+        DataValidator._validate_feedlot_finishing_system(feedlot_cfg)
+        if (raw := feedlot_cfg.get("finishing_system")) is not None:
+            cls.finishing_system = FinishingSystem(str(raw))
 
     @classmethod
     def _initialize_beef_cow_calf_config(cls, animal_config_data: dict[str, Any]) -> None:
