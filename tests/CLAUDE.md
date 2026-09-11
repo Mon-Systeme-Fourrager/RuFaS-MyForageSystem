@@ -1,7 +1,15 @@
 # tests/ — pytest conventions
 
 `pytest` (config in `pyproject.toml`: `testpaths = ["tests"]`). Coverage via
-`.github/.coveragerc` (omits `__init__.py`).
+`.github/.coveragerc` (omits `__init__.py`). Markers are declared in
+`pyproject.toml` (`[tool.pytest.ini_options] markers`) — tag every test with one;
+read them there rather than duplicating the list into any doc.
+
+**Test files under `tests/` are yours to create and edit freely — nothing
+protects them.** The only guarded artefacts are the E2E *expected-results* JSON
+(see below) and the CI-protected input JSON under `input/`
+(`.claude/rules/protected-inputs.md`); neither lives in `tests/`. "Protected
+fixtures" in that rule means input JSON, never pytest fixtures.
 
 ## Layout — mirror `RUFAS/`
 
@@ -58,6 +66,12 @@
   workbook by filename in the module header. Before committing a derivation
   comment, verify it actually reproduces the pinned value — a wrong derivation
   next to a right pin poisons future reviews.
+- **If you justify a design by a mechanism, pin a test that fails without it** —
+  when a docstring or design note says a loop, guard, cache or clamp exists for a
+  stated reason (self-heating feedback, accumulation, bounding), at least one test
+  must exercise it far enough to fail if that mechanism is deleted. A loop tested
+  with a single iteration does not test the loop; a clamp never reached by any
+  test input is not covered.
 
 ## End-to-end (E2E) tests
 

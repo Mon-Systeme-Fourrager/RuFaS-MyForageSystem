@@ -4,7 +4,11 @@ paths:
   - "input/metadata/**"
 ---
 
-# Protected input fixtures — do not edit
+# Protected input JSON files — do not edit
+
+Scope: **only** `example_*.json` / `no_*.json` under `input/data/**` and
+`input/metadata/**`. This rule says **nothing** about `tests/` — test files are
+yours to create and edit freely (see `tests/CLAUDE.md`).
 
 The CI workflow `.github/workflows/combined_format_lint_test_mypy.yml`
 (step **Check for Unauthorized Changes**) **fails the build** if any of a fixed
@@ -13,7 +17,7 @@ set of example input files is modified. These are reference scenarios
 
 ## Rule
 
-- **Never edit** the protected `example_*.json` / `no_*.json` files under
+- **Never edit** the protected `example_*.json` / `no_*.json` input files under
   `input/data/**` and `input/metadata/**`.
 - To test a new scenario, create a **new** JSON file with a different name and
   point your task metadata at it — do not repurpose a protected example.

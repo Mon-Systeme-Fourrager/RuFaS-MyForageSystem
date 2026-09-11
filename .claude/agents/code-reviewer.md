@@ -25,11 +25,13 @@ Review for:
 5. **Reuse / maintainability**: existing helpers reused (`util.py`, the relevant
    `*_manager.py`, `data_structures/`); no premature abstraction; no dead code,
    duplication, or unreachable branches.
-6. **Tests**: mirror `RUFAS/` under `tests/`; `pytest-mock` + fixtures;
+6. **Tests**: mirror `RUFAS/` under `tests/`; `pytest-mock` + pytest fixtures;
    `freezegun` for time-dependent logic; the test covers the fix, not just the
-   happy path; no edit to protected input fixtures
-   (`.claude/rules/protected-inputs.md`).
-7. **PR hygiene**: a `changelog.md` entry is present (CI requires it).
+   happy path. Test files themselves are freely editable — nothing protects them.
+7. **Protected inputs**: no edit to the protected `example_*.json` / `no_*.json`
+   input files under `input/` (`.claude/rules/protected-inputs.md`). This applies
+   to input JSON only, never to `tests/`.
+8. **PR hygiene**: a `changelog.md` entry is present (CI requires it).
 
 Every finding: severity (BLOCKER/MAJOR/MINOR) + file:line + concrete fix.
 Be terse. One line per finding. If the code is good, say so plainly.
