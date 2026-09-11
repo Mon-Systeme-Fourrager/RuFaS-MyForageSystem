@@ -20,6 +20,7 @@ from RUFAS.biophysical.feed_storage.silage import (
     calculate_respirable_substrate_fraction,
     _get_or_initialize_infiltration_ceiling_kg,
     calculate_bag_infiltration_loss,
+    calculate_bunker_infiltration_loss,
 )
 from RUFAS.biophysical.feed_storage.silage_constants import (
     PRESEAL_FALLBACK_EXPOSURE_DAYS,
@@ -793,5 +794,124 @@ def test_calculate_bag_infiltration_loss_zero_dry_matter_percentage_returns_zero
     crop = HarvestedCrop(**{**sample_crop_data, "dry_matter_percentage": 0.0})
 
     loss = calculate_bag_infiltration_loss(crop, elapsed_days=5.0, diameter_m=3.0, dry_matter_density_kg_per_m3=180.0)
+
+    assert loss == 0.0
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("storage_class_name", ["Bunker", "Pile"])
+def test_calculate_bunker_infiltration_loss_zero_days(storage_class_name: str) -> None:
+    """Zero elapsed days produces zero loss."""
+    crop = HarvestedCrop(**sample_crop_data)
+
+    loss = calculate_bunker_infiltration_loss(
+        crop,
+        elapsed_days=0.0,
+        storage_class_name=storage_class_name,
+        width_m=10.0,
+        height_m=3.0,
+        dry_matter_density_kg_per_m3=180.0,
+    )
+
+    assert loss == 0.0
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("storage_class_name", ["Bunker", "Pile"])
+def test_calculate_bunker_infiltration_loss_positive_and_bounded(storage_class_name: str) -> None:
+    """A positive elapsed period produces positive loss that never exceeds the RS ceiling."""
+    crop = HarvestedCrop(**{**sample_crop_data, "dry_matter_percentage": 35.0})
+    rs_fraction = calculate_respirable_substrate_fraction(crop)
+    max_loss_kg = crop.dry_matter_mass * rs_fraction
+
+    loss = calculate_bunker_infiltration_loss(
+        crop,
+        elapsed_days=30.0,
+        storage_class_name=storage_class_name,
+        width_m=10.0,
+        height_m=3.0,
+        dry_matter_density_kg_per_m3=180.0,
+    )
+
+    assert 0.0 < loss <= max_loss_kg
+
+
+@pytest.mark.unit
+def test_calculate_bunker_infiltration_loss_pile_loses_faster_than_bunker() -> None:
+    """Pile's higher sourced permeability (4.0 vs 1.0 cm/h) produces more loss over the same period."""
+    bunker_crop = HarvestedCrop(**{**sample_crop_data, "dry_matter_percentage": 35.0})
+    pile_crop = HarvestedCrop(**{**sample_crop_data, "dry_matter_percentage": 35.0})
+
+    bunker_loss = calculate_bunker_infiltration_loss(
+        bunker_crop,
+        elapsed_days=30.0,
+        storage_class_name="Bunker",
+        width_m=10.0,
+        height_m=3.0,
+        dry_matter_density_kg_per_m3=180.0,
+    )
+    pile_loss = calculate_bunker_infiltration_loss(
+        pile_crop,
+        elapsed_days=30.0,
+        storage_class_name="Pile",
+        width_m=10.0,
+        height_m=3.0,
+        dry_matter_density_kg_per_m3=180.0,
+    )
+
+    assert pile_loss > bunker_loss
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("storage_class_name", ["Bunker", "Pile"])
+def test_calculate_bunker_infiltration_loss_stable_across_repeated_calls_with_unrelated_mass_loss(
+    storage_class_name: str,
+) -> None:
+    """Repeated calls with unrelated (e.g. Effluent/Fermentation) mass loss between them never crash
+    and never move the fixed RS ceiling — regression test for the 2026-09-10 `/challenge-plan` finding."""
+    crop = HarvestedCrop(**{**sample_crop_data, "dry_matter_percentage": 35.0})
+    rs_fraction = calculate_respirable_substrate_fraction(crop)
+    expected_ceiling_kg = crop.dry_matter_mass * rs_fraction
+
+    for _ in range(20):
+        calculate_bunker_infiltration_loss(
+            crop,
+            elapsed_days=5.0,
+            storage_class_name=storage_class_name,
+            width_m=10.0,
+            height_m=3.0,
+            dry_matter_density_kg_per_m3=180.0,
+        )
+        crop.dry_matter_mass = max(1.0, crop.dry_matter_mass - 5.0)
+
+    assert crop.infiltration_max_loss_kg == pytest.approx(expected_ceiling_kg)
+    assert crop.infiltration_cumulative_loss_kg <= expected_ceiling_kg
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("storage_class_name", ["Bunker", "Pile"])
+def test_calculate_bunker_infiltration_loss_at_ceiling_returns_zero(storage_class_name: str) -> None:
+    """Once cumulative loss reaches the fixed RS ceiling, a further call returns 0.0 without
+    re-running the full per-day formula — symmetry fix with `Bag`'s equivalent guard, added during the
+    2026-09-11 `/challenge-plan` re-review (not a crash risk here, since `front_depth_cm` grows toward
+    the ceiling rather than shrinking to zero, but avoids wasted computation on a fully-capped crop)."""
+    crop = HarvestedCrop(**{**sample_crop_data, "dry_matter_percentage": 35.0})
+    calculate_bunker_infiltration_loss(
+        crop,
+        elapsed_days=10_000.0,
+        storage_class_name=storage_class_name,
+        width_m=10.0,
+        height_m=3.0,
+        dry_matter_density_kg_per_m3=180.0,
+    )
+
+    loss = calculate_bunker_infiltration_loss(
+        crop,
+        elapsed_days=5.0,
+        storage_class_name=storage_class_name,
+        width_m=10.0,
+        height_m=3.0,
+        dry_matter_density_kg_per_m3=180.0,
+    )
 
     assert loss == 0.0

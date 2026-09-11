@@ -408,6 +408,82 @@ def calculate_bag_infiltration_loss(
     return loss_this_step_kg
 
 
+def calculate_bunker_infiltration_loss(
+    crop: HarvestedCrop,
+    elapsed_days: float,
+    storage_class_name: str,
+    width_m: float,
+    height_m: float,
+    dry_matter_density_kg_per_m3: float,
+) -> float:
+    """
+    Calculates the dry-matter loss to oxygen infiltration for a `Bunker` or `Pile` over an elapsed
+    period, advancing the vertical oxygen front downward from the open top.
+
+    Parameters
+    ----------
+    crop : HarvestedCrop
+        The stored crop being degraded. ``infiltration_cumulative_loss_kg`` is updated in place.
+    elapsed_days : float
+        Number of days since infiltration was last processed for this crop.
+    storage_class_name : str
+        ``"Bunker"`` or ``"Pile"`` — selects the sourced permeability value.
+    width_m : float
+        Storage width (m).
+    height_m : float
+        Storage wall height (m).
+    dry_matter_density_kg_per_m3 : float
+        Packed dry-matter density of the storage (kg DM / m3).
+
+    Returns
+    -------
+    float
+        Dry-matter loss for this step (kg), already clipped at the RS ceiling.
+
+    Notes
+    -----
+    Translated from ``Silostg.for:879-984`` (``BUNKER``), specifically its per-day "before starting
+    to empty this silo" loop (lines 947-958), which already uses the daily-step form of the same
+    equation `Bag`'s per-10-day loop needed re-deriving (Open Decision 1). Applied per-crop, not
+    per-vertical-section (Open Decision 3 — a documented scope reduction, not a hidden one). Top
+    surface area uses ``width_m * height_m`` (the storage's static footprint) rather than the
+    source's ``A`` (``Silostg.for:938``, ``10*FDRTE/(DRHO*HEIGHT)``) — the source's term is tied to
+    the feed-out rate, which does not exist as a concept in RuFaS yet (Open Decision 4). The
+    ``crop.infiltration_cumulative_loss_kg >= max_loss_kg`` early return matches `Bag`'s own guard
+    (Task 3) for symmetry — Bunker/Pile's ``front_depth_cm`` grows toward, rather than shrinks toward,
+    zero as the ceiling is approached, so it was never at zero-division risk here, but a capped crop
+    would otherwise still re-run the full per-day formula every call only to be clipped back to a
+    ``0.0`` delta (2026-09-11 `/challenge-plan` re-review). ``[FS.SIL.12]``.
+
+    """
+    if elapsed_days <= 0.0:
+        return 0.0
+
+    max_loss_kg = _get_or_initialize_infiltration_ceiling_kg(crop)
+    if max_loss_kg <= 0.0 or crop.infiltration_cumulative_loss_kg >= max_loss_kg:
+        return 0.0
+
+    dry_matter_fraction = crop.dry_matter_percentage * GeneralConstants.PERCENTAGE_TO_FRACTION
+    porosity = _calculate_infiltration_porosity(dry_matter_fraction, dry_matter_density_kg_per_m3)
+
+    fraction_of_ceiling_consumed = crop.infiltration_cumulative_loss_kg / max_loss_kg
+    front_depth_cm = fraction_of_ceiling_consumed * height_m * 100.0
+    silo_permeability = get_permeability_constants(storage_class_name)
+    if front_depth_cm <= 0.0:
+        effective_permeability = silo_permeability
+    else:
+        material_permeability = INFILTRATION_DTAU * porosity / front_depth_cm
+        effective_permeability = 1.0 / (1.0 / material_permeability + 1.0 / silo_permeability)
+
+    top_area_m2 = width_m * height_m
+    loss_this_step_kg = INFILTRATION_DAILY_LOSS_COEFFICIENT * effective_permeability * top_area_m2 * elapsed_days
+
+    total_loss_kg = min(max_loss_kg, crop.infiltration_cumulative_loss_kg + loss_this_step_kg)
+    loss_this_step_kg = total_loss_kg - crop.infiltration_cumulative_loss_kg
+    crop.infiltration_cumulative_loss_kg = total_loss_kg
+    return loss_this_step_kg
+
+
 class Silage(Storage):
     """
     Represents Silage storage, a subclass of ``Storage``.
