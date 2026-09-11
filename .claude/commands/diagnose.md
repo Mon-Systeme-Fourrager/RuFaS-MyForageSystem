@@ -44,8 +44,8 @@ One question set per message. **Wait for the user's answers before continuing.**
 - Respect `CLAUDE.md`: full type hints (mypy strict), Black line-length 120,
   flake8 complexity ≤ 10, use the Grep tool (not `grep` in Bash), `pip` not Bun.
 - YAGNI: the minimum required to fix the identified problem, nothing more.
-- Never plan an edit to a protected input fixture
-  (`.claude/rules/protected-inputs.md`).
+- Never plan an edit to a protected input JSON file under `input/`
+  (`.claude/rules/protected-inputs.md`) — input JSON only, never `tests/`.
 
 ## Step 3 — Persist
 

@@ -101,6 +101,10 @@ These mirror the RuFaS wiki — see
 - **Line length 120**, Black-formatted. Don't hand-format against Black.
 - **Keep cyclomatic complexity ≤ 10** (flake8 `max-complexity`). Refactor
   rather than suppress. Apply DRY / SOLID; keep functions small.
+- **No speculative code (YAGNI)** — never add code (parameter, constant,
+  config field, branch, hook, …) that has no production call-site in the same
+  PR. A test is never a production call-site — code exercised only by its own
+  tests is still speculative.
 - **Comments are discouraged** — clean code should explain *what* it does; only a
   comment explaining *why* an approach was chosen is acceptable.
 - **Tests mirror `RUFAS/`** under `tests/` (`test_<module>.py`, `test_<pkg>/`),
@@ -109,6 +113,41 @@ These mirror the RuFaS wiki — see
   `rufas-e2e-testing` skill.
 - **Design-doc-driven for large work** — a change ≈ 1 engineer-month or more needs
   a design doc agreed before coding. Use the `rufas-design-doc` skill.
+
+### Naming conventions
+
+| Construct | Style | Example |
+|---|---|---|
+| Module / file | `snake_case.py` | `feed_manager.py` |
+| Class | `PascalCase` | `FeedManager` |
+| Function / method | `snake_case` | `calculate_dry_matter_loss_to_gas` |
+| Constant | `UPPER_SNAKE_CASE` | `ALFALFA_FERMENTATION_CONSTANTS` |
+| Test file | `test_<module>.py` | `test_storage.py` |
+| Test function | `test_<function_name>` | `test_calculate_dry_matter_loss_to_gas` |
+
+### pytest markers
+
+Tag every test with the appropriate marker (defined in `pyproject.toml`):
+
+| Marker | Use for |
+|---|---|
+| `unit` | Single isolated function |
+| `component` | Single class or module |
+| `integration` | 2–3 modules together |
+| `regression` | Existing dairy regression suite |
+| `validation` | NRC 2016 published benchmark checks |
+| `nrc2016` | Specifically NRC 2016 Chapter 20 |
+| `smoke` | Import / instantiation check |
+| `slow` | Tests taking > 5 seconds |
+
+### Changelog entry format
+
+Every PR must add one entry per logical change under `### Next Version Updates`
+in `changelog.md`. Format (see `changelog.md` README for full guidance):
+
+```
+- [<PR#>](<link>) - [Major change / minor change] [Impact Area] [InputChange / NoInputChange] [OutputChange / NoOutputChange] Short description — say "update X to Y", not "update X".
+```
 
 ## Branching & PRs
 
@@ -126,8 +165,9 @@ Upstream flow: feature branch → `dev` → `test` → `main`. **This fork integ
 - **`changelog.md` is mandatory on every PR** — CI fails the PR if it is not
   updated. Add an entry describing the change.
 - **Protected input files** — a set of `input/.../example_*.json` (and
-  `no_*.json`) fixtures are CI-protected; changing them fails the build. Full
-  list + rule in `.claude/rules/protected-inputs.md`. Don't edit them.
+  `no_*.json`) **input JSON files** are CI-protected; changing them fails the
+  build. Full list + rule in `.claude/rules/protected-inputs.md`. Don't edit
+  them. This covers input JSON only — never anything under `tests/`.
 - **mypy ratchet** — CI compares the error count against `dev` and **fails if
   your branch adds errors**. Don't introduce new mypy errors; reduce where you can.
 - **CI target branch is `dev`** (push/PR). This fork works on `dev-msf`.
