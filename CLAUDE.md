@@ -101,6 +101,10 @@ These mirror the RuFaS wiki — see
 - **Line length 120**, Black-formatted. Don't hand-format against Black.
 - **Keep cyclomatic complexity ≤ 10** (flake8 `max-complexity`). Refactor
   rather than suppress. Apply DRY / SOLID; keep functions small.
+- **No speculative code (YAGNI)** — never add code (parameter, constant,
+  config field, branch, hook, …) that has no production call-site in the same
+  PR. A test is never a production call-site — code exercised only by its own
+  tests is still speculative.
 - **Comments are discouraged** — clean code should explain *what* it does; only a
   comment explaining *why* an approach was chosen is acceptable.
 - **Tests mirror `RUFAS/`** under `tests/` (`test_<module>.py`, `test_<pkg>/`),
@@ -161,8 +165,9 @@ Upstream flow: feature branch → `dev` → `test` → `main`. **This fork integ
 - **`changelog.md` is mandatory on every PR** — CI fails the PR if it is not
   updated. Add an entry describing the change.
 - **Protected input files** — a set of `input/.../example_*.json` (and
-  `no_*.json`) fixtures are CI-protected; changing them fails the build. Full
-  list + rule in `.claude/rules/protected-inputs.md`. Don't edit them.
+  `no_*.json`) **input JSON files** are CI-protected; changing them fails the
+  build. Full list + rule in `.claude/rules/protected-inputs.md`. Don't edit
+  them. This covers input JSON only — never anything under `tests/`.
 - **mypy ratchet** — CI compares the error count against `dev` and **fails if
   your branch adds errors**. Don't introduce new mypy errors; reduce where you can.
 - **CI target branch is `dev`** (push/PR). This fork works on `dev-msf`.

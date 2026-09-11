@@ -63,7 +63,8 @@ The subagent must:
    - Cited import / function / class that does not exist
    - Unintended change to numeric model output, or a broken mass/nutrient
      balance, without justification
-   - Edits a protected input fixture (`.claude/rules/protected-inputs.md`)
+   - Edits a protected input JSON file under `input/`
+     (`.claude/rules/protected-inputs.md`) — input JSON only, never `tests/`
    - Introduces new mypy-strict errors (CI ratchets the count vs `dev`)
 
    🟠 IMPORTANT
