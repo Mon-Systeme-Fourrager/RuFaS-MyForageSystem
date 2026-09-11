@@ -242,6 +242,69 @@ def get_permeability_constants(storage_class_name: str) -> float:
         raise ValueError(f"No sourced permeability reference for storage type: {storage_class_name}.")
 
 
+def calculate_respirable_substrate_fraction(crop: HarvestedCrop) -> float:
+    """
+    Calculates the fraction of a crop's dry matter that is still respirable substrate — the ceiling
+    that Infiltration's dry-matter loss can never exceed.
+
+    Parameters
+    ----------
+    crop : HarvestedCrop
+        The crop to compute respirable substrate for, using its current composition.
+
+    Returns
+    -------
+    float
+        Respirable substrate as a fraction of dry matter, floored at 0.0.
+
+    Notes
+    -----
+    ``RS = 1 - NDF - CP - ASH`` (``Silostg.for:810,939``). As infiltration consumes respirable
+    substrate, NDF concentration rises via dilution (design spec §2.2's "sponge" analogy) — computed
+    fresh from the crop's current composition each call, no new state needed. Crude protein is
+    excluded from dilution here: ``Silostg.for:871-872,978-979`` explicitly comment out CP dilution for
+    `TOWER`/`BUNKER` ("CRUDE PROTEIN LOSS = DM LOSS", a 1994 model change), unlike `PRESEAL`
+    (`Silostg.for:710`) where it is active. ``[FS.SIL.10]``.
+
+    """
+    ndf_fraction = crop.ndf * GeneralConstants.PERCENTAGE_TO_FRACTION
+    crude_protein_fraction = crop.crude_protein_percent * GeneralConstants.PERCENTAGE_TO_FRACTION
+    ash_fraction = crop.ash * GeneralConstants.PERCENTAGE_TO_FRACTION
+    return max(0.0, 1.0 - ndf_fraction - crude_protein_fraction - ash_fraction)
+
+
+def _get_or_initialize_infiltration_ceiling_kg(crop: HarvestedCrop) -> float:
+    """
+    Fixes the absolute-kg respirable-substrate ceiling the first time Infiltration runs for a crop,
+    and returns that fixed value on every later call.
+
+    Parameters
+    ----------
+    crop : HarvestedCrop
+        The crop to fix (or retrieve) the ceiling for. ``infiltration_max_loss_kg`` is set in place
+        on first call.
+
+    Returns
+    -------
+    float
+        The crop's fixed Infiltration loss ceiling (kg).
+
+    Notes
+    -----
+    Added after the 2026-09-10 `/challenge-plan` review: recomputing ``dry_matter_mass *
+    calculate_respirable_substrate_fraction(crop)`` on every call let unrelated Effluent/Fermentation
+    mass loss move the ceiling between calls, since neither process touches
+    ``infiltration_cumulative_loss_kg``. Fixing it once, in absolute kg, at the moment Infiltration
+    first processes the crop matches `Silostg.for`'s own invariant — its per-call reference mass
+    (``PLOT(NPL,11)``) is held fixed for the whole `TOWER`/`BUNKER` call, never re-derived mid-call.
+    ``[FS.SIL.10]``.
+
+    """
+    if crop.infiltration_max_loss_kg is None:
+        crop.infiltration_max_loss_kg = crop.dry_matter_mass * calculate_respirable_substrate_fraction(crop)
+    return crop.infiltration_max_loss_kg
+
+
 class Silage(Storage):
     """
     Represents Silage storage, a subclass of ``Storage``.

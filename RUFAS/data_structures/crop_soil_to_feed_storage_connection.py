@@ -82,6 +82,12 @@ class HarvestedCrop:
     preseal_finalized : bool
         Whether this crop's Preseal dry-matter loss has been computed and applied. Computed exactly
         once, lazily — see ``Silage.receive_crop`` and ``Silage.process_degradations``.
+    infiltration_cumulative_loss_kg : float
+        Total dry-matter mass this crop has lost to Infiltration so far (kg). Starts at ``0.0``.
+    infiltration_max_loss_kg : float | None
+        This crop's fixed respirable-substrate Infiltration ceiling (kg), set once the first time
+        Infiltration runs for it. ``None`` until then — see
+        ``silage._get_or_initialize_infiltration_ceiling_kg``.
 
     """
 
@@ -109,6 +115,8 @@ class HarvestedCrop:
     total_sensible_heat_generated: float = field(init=False)
     temperature: float = field(init=False)
     preseal_finalized: bool = field(init=False)
+    infiltration_cumulative_loss_kg: float = field(init=False)
+    infiltration_max_loss_kg: float | None = field(init=False)
 
     def __post_init__(self) -> None:
         """
@@ -125,6 +133,8 @@ class HarvestedCrop:
             INITIAL_FILL_TEMPERATURE_ALFALFA_C if self.is_alfalfa else INITIAL_FILL_TEMPERATURE_NON_ALFALFA_C
         )
         self.preseal_finalized = False
+        self.infiltration_cumulative_loss_kg = 0.0
+        self.infiltration_max_loss_kg = None
 
         if isinstance(self.harvest_time, RufasTime):
             self.harvest_time = self.harvest_time.current_date.date()

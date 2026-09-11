@@ -17,6 +17,8 @@ from RUFAS.biophysical.feed_storage.silage import (
     calculate_preseal_loss,
     _clamp_preseal_fraction,
     get_permeability_constants,
+    calculate_respirable_substrate_fraction,
+    _get_or_initialize_infiltration_ceiling_kg,
 )
 from RUFAS.biophysical.feed_storage.silage_constants import (
     PRESEAL_FALLBACK_EXPOSURE_DAYS,
@@ -634,3 +636,39 @@ def test_get_permeability_constants_unknown_raises() -> None:
     """An unsourced or unknown storage class fails loudly instead of returning a placeholder."""
     with pytest.raises(ValueError, match="Vertical"):
         get_permeability_constants("Vertical")
+
+
+@pytest.mark.unit
+def test_calculate_respirable_substrate_fraction() -> None:
+    """RS = 1 - NDF - CP - ash, as fractions of dry matter."""
+    crop = HarvestedCrop(**{**sample_crop_data, "ndf": 40.0, "crude_protein_percent": 10.0, "ash": 6.0})
+
+    rs = calculate_respirable_substrate_fraction(crop)
+
+    assert rs == pytest.approx(1.0 - 0.40 - 0.10 - 0.06)
+
+
+@pytest.mark.unit
+def test_calculate_respirable_substrate_fraction_fully_depleted() -> None:
+    """RS is zero (not negative) when NDF+CP+ash already account for all dry matter."""
+    crop = HarvestedCrop(**{**sample_crop_data, "ndf": 60.0, "crude_protein_percent": 30.0, "ash": 10.0})
+
+    rs = calculate_respirable_substrate_fraction(crop)
+
+    assert rs == pytest.approx(0.0)
+
+
+@pytest.mark.unit
+def test_infiltration_ceiling_fixed_on_first_call_and_stable_after() -> None:
+    """The RS ceiling is fixed in absolute kg on first use and never recomputed from a later,
+    shrunken `dry_matter_mass` — the bug the 2026-09-10 `/challenge-plan` review flagged."""
+    crop = HarvestedCrop(**{**sample_crop_data, "dry_matter_percentage": 35.0})
+    rs_fraction = calculate_respirable_substrate_fraction(crop)
+    expected_ceiling_kg = crop.dry_matter_mass * rs_fraction
+
+    first_ceiling_kg = _get_or_initialize_infiltration_ceiling_kg(crop)
+    crop.dry_matter_mass -= 100.0
+    second_ceiling_kg = _get_or_initialize_infiltration_ceiling_kg(crop)
+
+    assert first_ceiling_kg == pytest.approx(expected_ceiling_kg)
+    assert second_ceiling_kg == pytest.approx(first_ceiling_kg)

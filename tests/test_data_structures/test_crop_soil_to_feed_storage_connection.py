@@ -266,3 +266,17 @@ def test_preseal_not_finalized_on_creation() -> None:
     """A newly created crop always starts with preseal_finalized False."""
     crop = HarvestedCrop(**sample_crop_data)
     assert crop.preseal_finalized is False
+
+
+@pytest.mark.unit
+def test_infiltration_cumulative_loss_starts_at_zero() -> None:
+    """A newly created crop starts with zero accumulated infiltration loss."""
+    crop = HarvestedCrop(**sample_crop_data)
+    assert crop.infiltration_cumulative_loss_kg == 0.0
+
+
+@pytest.mark.unit
+def test_infiltration_max_loss_kg_starts_as_none() -> None:
+    """A newly created crop has no fixed infiltration ceiling until Infiltration first runs."""
+    crop = HarvestedCrop(**sample_crop_data)
+    assert crop.infiltration_max_loss_kg is None
