@@ -18,6 +18,7 @@ from RUFAS.biophysical.feed_storage.silage import (
     _clamp_preseal_fraction,
     get_permeability_constants,
     calculate_respirable_substrate_fraction,
+    _respirable_substrate_fraction,
     _get_or_initialize_infiltration_ceiling_kg,
     calculate_bag_infiltration_loss,
     calculate_bunker_infiltration_loss,
@@ -879,6 +880,19 @@ def test_calculate_respirable_substrate_fraction_fully_depleted() -> None:
     rs = calculate_respirable_substrate_fraction(crop)
 
     assert rs == pytest.approx(0.0)
+
+
+@pytest.mark.unit
+def test_respirable_substrate_fraction_matches_public_wrapper(harvested_crop: HarvestedCrop) -> None:
+    """The new private helper and the existing public `calculate_respirable_substrate_fraction`
+    (still `HarvestedCrop`-typed) must agree for the same composition."""
+    ndf_fraction = harvested_crop.ndf * 0.01
+    crude_protein_fraction = harvested_crop.crude_protein_percent * 0.01
+    ash_fraction = harvested_crop.ash * 0.01
+
+    assert _respirable_substrate_fraction(ndf_fraction, crude_protein_fraction, ash_fraction) == pytest.approx(
+        calculate_respirable_substrate_fraction(harvested_crop)
+    )
 
 
 @pytest.mark.unit

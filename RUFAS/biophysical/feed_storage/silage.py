@@ -242,6 +242,29 @@ def get_permeability_constants(storage_class_name: str) -> float:
         raise ValueError(f"No sourced permeability reference for storage type: {storage_class_name}.")
 
 
+def _respirable_substrate_fraction(ndf_fraction: float, crude_protein_fraction: float, ash_fraction: float) -> float:
+    """
+    Shared arithmetic for `calculate_respirable_substrate_fraction` (a real `HarvestedCrop`) and
+    Feed-out's composited Bunker/Pile section case (not a `HarvestedCrop`, Task 4). ``[FS.SIL.15]``.
+
+    Parameters
+    ----------
+    ndf_fraction : float
+        NDF content as a fraction of dry matter.
+    crude_protein_fraction : float
+        Crude protein content as a fraction of dry matter.
+    ash_fraction : float
+        Ash content as a fraction of dry matter.
+
+    Returns
+    -------
+    float
+        Respirable substrate as a fraction of dry matter, floored at 0.0.
+
+    """
+    return max(0.0, 1.0 - ndf_fraction - crude_protein_fraction - ash_fraction)
+
+
 def calculate_respirable_substrate_fraction(crop: HarvestedCrop) -> float:
     """
     Calculates the fraction of a crop's dry matter that is still respirable substrate — the ceiling
@@ -270,7 +293,7 @@ def calculate_respirable_substrate_fraction(crop: HarvestedCrop) -> float:
     ndf_fraction = crop.ndf * GeneralConstants.PERCENTAGE_TO_FRACTION
     crude_protein_fraction = crop.crude_protein_percent * GeneralConstants.PERCENTAGE_TO_FRACTION
     ash_fraction = crop.ash * GeneralConstants.PERCENTAGE_TO_FRACTION
-    return max(0.0, 1.0 - ndf_fraction - crude_protein_fraction - ash_fraction)
+    return _respirable_substrate_fraction(ndf_fraction, crude_protein_fraction, ash_fraction)
 
 
 def _get_or_initialize_infiltration_ceiling_kg(crop: HarvestedCrop) -> float:
