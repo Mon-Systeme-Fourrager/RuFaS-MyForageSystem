@@ -8,6 +8,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 from RUFAS.data_structures.crop_soil_to_feed_storage_connection import HarvestedCrop
+from RUFAS.general_constants import GeneralConstants
 from RUFAS.output_manager import OutputManager
 from RUFAS.biophysical.feed_storage.silage import (
     Bag,
@@ -18,9 +19,13 @@ from RUFAS.biophysical.feed_storage.silage import (
     _clamp_preseal_fraction,
     get_permeability_constants,
     calculate_respirable_substrate_fraction,
+    _respirable_substrate_fraction,
     _get_or_initialize_infiltration_ceiling_kg,
     calculate_bag_infiltration_loss,
     calculate_bunker_infiltration_loss,
+    calculate_feed_out_loss,
+    FeedOutSection,
+    build_feed_out_sections,
 )
 from RUFAS.biophysical.feed_storage.silage_constants import (
     PRESEAL_FALLBACK_EXPOSURE_DAYS,
@@ -102,6 +107,7 @@ def test_process_degradations(
         silage, "calculate_days_of_effluent_loss_to_process", return_value=days_of_loss
     )
     mocker.patch.object(silage, "_process_infiltration", return_value=0.0)
+    mocker.patch.object(silage, "_process_feed_out")
     dry_loss = mocker.patch.object(silage, "calculate_dry_matter_loss_to_effluent", return_value=10.0)
     moisture_loss = mocker.patch.object(silage, "calculate_moisture_loss_to_effluent", return_value=20.0)
     npn_coefficient = mocker.patch.object(
@@ -507,6 +513,7 @@ def test_process_degradations_finalizes_newest_crop_with_fallback(
     finalize = mocker.patch.object(silage, "_finalize_preseal_loss")
     mocker.patch.object(silage, "calculate_days_of_effluent_loss_to_process", return_value=0)
     mocker.patch.object(silage, "_process_infiltration", return_value=0.0)
+    mocker.patch.object(silage, "_process_feed_out")
     mocker.patch.object(Storage, "process_degradations")
     silage.stored = [harvested_crop]
 
@@ -531,6 +538,7 @@ def test_process_degradations_skips_already_finalized_crop(
     finalize = mocker.patch.object(silage, "_finalize_preseal_loss")
     mocker.patch.object(silage, "calculate_days_of_effluent_loss_to_process", return_value=0)
     mocker.patch.object(silage, "_process_infiltration", return_value=0.0)
+    mocker.patch.object(silage, "_process_feed_out")
     mocker.patch.object(Storage, "process_degradations")
     silage.stored = [harvested_crop]
 
@@ -564,6 +572,7 @@ def test_process_degradations_runs_fermentation_before_infiltration(
         return 0.0
 
     mocker.patch.object(silage, "_process_infiltration", side_effect=_record_infiltration)
+    mocker.patch.object(silage, "_process_feed_out")
     second_crop = copy.deepcopy(harvested_crop)
     silage.stored = [harvested_crop, second_crop]
 
@@ -597,6 +606,7 @@ def test_process_degradations_infiltration_elapsed_days_survives_fermentation(
 
     mocker.patch.object(Storage, "process_degradations", side_effect=_fake_fermentation)
     infiltration = mocker.patch.object(silage, "_process_infiltration", return_value=0.0)
+    mocker.patch.object(silage, "_process_feed_out")
     silage.stored = [harvested_crop]
 
     silage.process_degradations(mock_weather, mock_time)
@@ -882,6 +892,31 @@ def test_calculate_respirable_substrate_fraction_fully_depleted() -> None:
 
 
 @pytest.mark.unit
+def test_respirable_substrate_fraction_matches_hand_calculation() -> None:
+    """Pins `_respirable_substrate_fraction`'s output against a hand-computed literal, using three
+    distinct argument values so an argument-order bug (e.g. ndf/crude-protein swapped) would be
+    caught — `1 - a - b - c` only distinguishes argument position when a, b, c actually differ, so
+    equal or symmetric inputs (as in the wrapper-equivalence test below) can't catch that class of
+    wiring bug on their own."""
+    result = _respirable_substrate_fraction(ndf_fraction=0.40, crude_protein_fraction=0.18, ash_fraction=0.08)
+    assert result == pytest.approx(1.0 - 0.40 - 0.18 - 0.08)
+
+
+@pytest.mark.unit
+def test_respirable_substrate_fraction_matches_public_wrapper(harvested_crop: HarvestedCrop) -> None:
+    """The private helper and the existing public `calculate_respirable_substrate_fraction` (still
+    `HarvestedCrop`-typed) must agree for the same composition. Uses the named unit-conversion
+    constant rather than a hardcoded `0.01`, so a future change to it stays reflected here."""
+    ndf_fraction = harvested_crop.ndf * GeneralConstants.PERCENTAGE_TO_FRACTION
+    crude_protein_fraction = harvested_crop.crude_protein_percent * GeneralConstants.PERCENTAGE_TO_FRACTION
+    ash_fraction = harvested_crop.ash * GeneralConstants.PERCENTAGE_TO_FRACTION
+
+    assert _respirable_substrate_fraction(ndf_fraction, crude_protein_fraction, ash_fraction) == pytest.approx(
+        calculate_respirable_substrate_fraction(harvested_crop)
+    )
+
+
+@pytest.mark.unit
 def test_infiltration_ceiling_fixed_on_first_call_and_stable_after() -> None:
     """The RS ceiling is fixed in absolute kg on first use and never recomputed from a later,
     shrunken `dry_matter_mass` — the bug the 2026-09-10 `/challenge-plan` review flagged."""
@@ -1096,6 +1131,390 @@ def test_calculate_bunker_infiltration_loss_at_ceiling_returns_zero(storage_clas
     assert loss == 0.0
 
 
+@pytest.mark.unit
+def test_calculate_feed_out_loss_zero_rate_returns_zero() -> None:
+    """A storage with no Feed-out rate yet (nothing to feed out from) loses nothing."""
+    loss = calculate_feed_out_loss(
+        dry_matter_fraction=0.35,
+        ndf_fraction=0.40,
+        crude_protein_fraction=0.18,
+        ash_fraction=0.08,
+        is_alfalfa=True,
+        feed_out_rate_kg_dm_per_day=0.0,
+        dry_matter_density_kg_per_m3=180.0,
+        face_area_m2=30.0,
+    )
+    assert loss == pytest.approx(0.0)
+
+
+@pytest.mark.unit
+def test_calculate_feed_out_loss_zero_face_area_returns_zero() -> None:
+    """A missing/zero feedout face area (e.g. unconfigured geometry) loses nothing rather than dividing
+    by zero."""
+    loss = calculate_feed_out_loss(
+        dry_matter_fraction=0.35,
+        ndf_fraction=0.40,
+        crude_protein_fraction=0.18,
+        ash_fraction=0.08,
+        is_alfalfa=True,
+        feed_out_rate_kg_dm_per_day=500.0,
+        dry_matter_density_kg_per_m3=180.0,
+        face_area_m2=0.0,
+    )
+    assert loss == pytest.approx(0.0)
+
+
+@pytest.mark.unit
+def test_calculate_feed_out_loss_zero_dry_matter_fraction_returns_zero() -> None:
+    """A fully wet (0% DM) input loses nothing rather than dividing by zero."""
+    loss = calculate_feed_out_loss(
+        dry_matter_fraction=0.0,
+        ndf_fraction=0.40,
+        crude_protein_fraction=0.18,
+        ash_fraction=0.08,
+        is_alfalfa=True,
+        feed_out_rate_kg_dm_per_day=500.0,
+        dry_matter_density_kg_per_m3=180.0,
+        face_area_m2=30.0,
+    )
+    assert loss == pytest.approx(0.0)
+
+
+@pytest.mark.unit
+def test_calculate_feed_out_loss_full_dry_matter_fraction_returns_zero() -> None:
+    """A 100% DM input (dry_matter_fraction == 1.0) loses nothing rather than dividing by zero in
+    the water-activity term (1.0 - coefficient*DM/(1.0-DM)) — a physically implausible edge, but a
+    genuine ZeroDivisionError if unguarded."""
+    loss = calculate_feed_out_loss(
+        dry_matter_fraction=1.0,
+        ndf_fraction=0.40,
+        crude_protein_fraction=0.18,
+        ash_fraction=0.08,
+        is_alfalfa=True,
+        feed_out_rate_kg_dm_per_day=500.0,
+        dry_matter_density_kg_per_m3=180.0,
+        face_area_m2=30.0,
+    )
+    assert loss == pytest.approx(0.0)
+
+
+@pytest.mark.unit
+def test_calculate_feed_out_loss_positive_and_bounded() -> None:
+    """A normal, realistic scenario produces a small positive loss fraction, well under the
+    respirable-substrate ceiling."""
+    loss = calculate_feed_out_loss(
+        dry_matter_fraction=0.35,
+        ndf_fraction=0.40,
+        crude_protein_fraction=0.18,
+        ash_fraction=0.08,
+        is_alfalfa=True,
+        feed_out_rate_kg_dm_per_day=500.0,
+        dry_matter_density_kg_per_m3=180.0,
+        face_area_m2=30.0,
+    )
+    assert 0.0 < loss < 0.34  # respirable substrate ceiling here is 1 - 0.40 - 0.18 - 0.08 = 0.34
+
+
+@pytest.mark.unit
+def test_calculate_feed_out_loss_alfalfa_loses_faster_than_non_alfalfa() -> None:
+    """Same inputs, only `is_alfalfa` differs: FEEDOUT_LOADER_ALFALFA_COEFFICIENT (1.37) >
+    FEEDOUT_LOADER_NON_ALFALFA_COEFFICIENT (1.18), so alfalfa's face-loss term must be larger."""
+    kwargs: dict[str, float] = dict(
+        dry_matter_fraction=0.35,
+        ndf_fraction=0.40,
+        crude_protein_fraction=0.18,
+        ash_fraction=0.08,
+        feed_out_rate_kg_dm_per_day=500.0,
+        dry_matter_density_kg_per_m3=180.0,
+        face_area_m2=30.0,
+    )
+    alfalfa_loss = calculate_feed_out_loss(is_alfalfa=True, **kwargs)
+    non_alfalfa_loss = calculate_feed_out_loss(is_alfalfa=False, **kwargs)
+    assert alfalfa_loss > non_alfalfa_loss
+
+
+@pytest.mark.unit
+def test_calculate_feed_out_loss_clips_at_rs_ceiling() -> None:
+    """An already-mostly-depleted composition (respirable substrate close to 0) clips the loss at
+    the RS ceiling rather than exceeding it.
+
+    Uses a deliberately tiny `feed_out_rate_kg_dm_per_day` (not a large one): the face-diffusion term
+    is inversely proportional to `face_advance_rate_cm_per_day`, which is itself directly proportional
+    to the Feed-out rate — a slow (near-zero) Feed-out rate means the exposed face advances very
+    slowly, maximizing exposure time and thus loss; a fast rate minimizes it. A large rate was verified
+    (independently, outside this implementation) to leave the loss far under the 0.01 ceiling here
+    (~0.00097), not over it.
+    """
+    loss = calculate_feed_out_loss(
+        dry_matter_fraction=0.35,
+        ndf_fraction=0.55,
+        crude_protein_fraction=0.30,
+        ash_fraction=0.14,
+        is_alfalfa=True,
+        feed_out_rate_kg_dm_per_day=1e-6,  # deliberately tiny to try to exceed the ceiling
+        dry_matter_density_kg_per_m3=180.0,
+        face_area_m2=1.0,
+    )
+    assert loss == pytest.approx(0.01, abs=1e-9)  # 1 - 0.55 - 0.30 - 0.14 = 0.01
+
+
+@pytest.mark.unit
+def test_calculate_feed_out_loss_respirable_substrate_already_zero_returns_zero() -> None:
+    """A composition with zero (or negative) respirable substrate left loses nothing further."""
+    loss = calculate_feed_out_loss(
+        dry_matter_fraction=0.35,
+        ndf_fraction=0.60,
+        crude_protein_fraction=0.30,
+        ash_fraction=0.10,
+        is_alfalfa=True,
+        feed_out_rate_kg_dm_per_day=500.0,
+        dry_matter_density_kg_per_m3=180.0,
+        face_area_m2=30.0,
+    )
+    # 1.0 - 0.60 - 0.30 - 0.10 is not exactly representable in IEEE-754 double precision (it lands a
+    # few ULPs off zero), so the RS ceiling guard sees a vanishingly small positive value rather than
+    # exactly 0.0 and the clipped result carries that same ~1e-17 residue through — pytest.approx per
+    # tests/CLAUDE.md's "never == for floats, even literal-zero" rule, not a strict equality.
+    assert loss == pytest.approx(0.0, abs=1e-9)
+
+
+@pytest.mark.unit
+def test_calculate_feed_out_loss_near_max_density_does_not_zero_face_loss() -> None:
+    """At maximum packed density (relative_density == max_relative_density), porosity reaches its own
+    floor of 0.035 (FEEDOUT_PHI_SCALE*(1-FEEDOUT_PHI_LOADER_COEFFICIENT)) — still above
+    FEEDOUT_MIN_PHI (0.01), so FEEDOUT_MIN_PHI's face-diffusion gate is never triggered, even at this
+    density ceiling. This test proves that directly — loss stays positive and finite at the density
+    ceiling."""
+    dry_matter_fraction = 0.35
+    max_relative_density = 3.0 / (3.0 - dry_matter_fraction)  # PRESEAL_MAX_RELATIVE_DENSITY_NUMERATOR/(...)
+    wet_density_at_cap = max_relative_density / 0.001  # relative_density * 1000, inverting *0.001 step
+    dry_matter_density_kg_per_m3 = wet_density_at_cap * dry_matter_fraction
+
+    loss = calculate_feed_out_loss(
+        dry_matter_fraction=dry_matter_fraction,
+        ndf_fraction=0.40,
+        crude_protein_fraction=0.18,
+        ash_fraction=0.08,
+        is_alfalfa=True,
+        feed_out_rate_kg_dm_per_day=500.0,
+        dry_matter_density_kg_per_m3=dry_matter_density_kg_per_m3,
+        face_area_m2=30.0,
+    )
+    assert 0.0 < loss <= 1.0  # positive and RS-ceiling-bounded; not zeroed by the unreachable gate
+
+
+@pytest.mark.unit
+def test_calculate_feed_out_loss_numeric_oracle() -> None:
+    """Independent numeric oracle: hand-computes the same scenario term-by-term outside the
+    implementation, to catch a transcription error in the dense equation chain that a mock-heavy or
+    trivial-input test would not."""
+    dry_matter_fraction = 0.35
+    ndf_fraction = 0.40
+    crude_protein_fraction = 0.18
+    ash_fraction = 0.08
+    feed_out_rate_kg_dm_per_day = 500.0
+    dry_matter_density_kg_per_m3 = 180.0
+    face_area_m2 = 30.0
+
+    wet_density = dry_matter_density_kg_per_m3 / dry_matter_fraction
+    max_relative_density = 3.0 / (3.0 - dry_matter_fraction)
+    relative_density = min(max_relative_density, wet_density * 0.001)
+    porosity = 0.7 * (1.0 - 0.95 * relative_density / max_relative_density)
+    assert porosity >= 0.01  # sanity: this scenario must exercise the face-loss branch
+
+    diffusion_coefficient = 0.0086 * (273.0 + 18.0) ** 2
+    face_advance_rate_cm_per_day = (
+        100.0 * (feed_out_rate_kg_dm_per_day / dry_matter_fraction) / (wet_density * face_area_m2)
+    )
+    mumax = 0.88 * dry_matter_fraction
+    water_activity = 1.0 - 0.03 * dry_matter_fraction / (1.0 - dry_matter_fraction)
+    assert 0.9233 <= water_activity <= 0.9931  # sanity: this scenario exercises the mid branch of FD
+    water_activity_factor = 14.306 * water_activity - 13.208
+    import math as _math
+
+    temperature_factor = _math.exp(36.1 - 10830.0 / 291.0)
+    respiration_rate = mumax * water_activity_factor * temperature_factor
+
+    gamma = (
+        relative_density
+        * respiration_rate
+        * (0.00145 + 0.21)
+        * 1.0
+        / (diffusion_coefficient * porosity * (2.0 / 3.0) * 0.21)
+    )
+    c = max(0.01, _math.sqrt(9.0 * gamma))
+    average_respiration_rate = (
+        -respiration_rate
+        * 1.0
+        * (0.00145 + 0.21)
+        * (_math.log(0.00145 + 0.21 * _math.exp(-c * 300.0)) - _math.log(0.00145 + 0.21))
+        / (0.21 * c * 300.0)
+    )
+    face_loss_fraction = (
+        1.37 * 0.0299 * average_respiration_rate * 300.0 / (face_advance_rate_cm_per_day * dry_matter_fraction)
+    )
+    bunk_loss_fraction = 0.0299 * respiration_rate * 0.125 / dry_matter_fraction
+    expected = min(1.0 - ndf_fraction - crude_protein_fraction - ash_fraction, face_loss_fraction + bunk_loss_fraction)
+
+    actual = calculate_feed_out_loss(
+        dry_matter_fraction=dry_matter_fraction,
+        ndf_fraction=ndf_fraction,
+        crude_protein_fraction=crude_protein_fraction,
+        ash_fraction=ash_fraction,
+        is_alfalfa=True,
+        feed_out_rate_kg_dm_per_day=feed_out_rate_kg_dm_per_day,
+        dry_matter_density_kg_per_m3=dry_matter_density_kg_per_m3,
+        face_area_m2=face_area_m2,
+    )
+    assert actual == pytest.approx(expected, rel=1e-9)
+
+
+@pytest.mark.unit
+def test_build_feed_out_sections_empty_storage_returns_empty_list() -> None:
+    assert build_feed_out_sections([], feed_out_rate_kg_dm_per_day=100.0) == []
+
+
+@pytest.mark.unit
+def test_build_feed_out_sections_single_crop_returns_one_section(harvested_crop: HarvestedCrop) -> None:
+    sections: list[FeedOutSection] = build_feed_out_sections([harvested_crop], feed_out_rate_kg_dm_per_day=1.0)
+
+    assert len(sections) == 1
+    assert sections[0].crops == [harvested_crop]
+    assert sections[0].dry_matter_mass_kg == pytest.approx(harvested_crop.dry_matter_mass)
+
+
+@pytest.mark.unit
+def test_build_feed_out_sections_zero_rate_returns_one_section(harvested_crop: HarvestedCrop) -> None:
+    """No Feed-out rate yet (storage hasn't been assigned one) — treat everything as a single section
+    rather than dividing by zero computing NVS."""
+    second_crop = copy.deepcopy(harvested_crop)
+    sections = build_feed_out_sections([harvested_crop, second_crop], feed_out_rate_kg_dm_per_day=0.0)
+
+    assert len(sections) == 1
+    assert sections[0].crops == [harvested_crop, second_crop]
+
+
+@pytest.mark.unit
+def test_build_feed_out_sections_groups_multiple_crops_by_target_mass(harvested_crop: HarvestedCrop) -> None:
+    """4 crops of 100 kg DM each (400 kg total), rate chosen so NVS = floor(400/(10*20)) = 2 — the 4
+    crops must be grouped into exactly 2 sections, not left as 4 or collapsed to 1."""
+    crops = [copy.deepcopy(harvested_crop) for _ in range(4)]
+    for crop in crops:
+        crop.dry_matter_mass = 100.0
+
+    sections = build_feed_out_sections(crops, feed_out_rate_kg_dm_per_day=20.0)
+
+    assert len(sections) == 2
+    assert sum(len(section.crops) for section in sections) == 4
+    assert sum(section.dry_matter_mass_kg for section in sections) == pytest.approx(400.0)
+
+
+@pytest.mark.unit
+def test_build_feed_out_sections_mass_weighted_average_composition() -> None:
+    """Two crops of different mass and composition in one section: the section's ndf_fraction must be
+    the *mass-weighted* average, not a plain (unweighted) average — proves the weighting is real."""
+    light_crop = HarvestedCrop(**(sample_crop_data | {"dry_matter_mass": 10.0, "ndf": 10.0}))
+    heavy_crop = HarvestedCrop(**(sample_crop_data | {"dry_matter_mass": 90.0, "ndf": 50.0}))
+
+    # rate=0 forces a single section containing both crops (see the zero-rate test above).
+    sections = build_feed_out_sections([light_crop, heavy_crop], feed_out_rate_kg_dm_per_day=0.0)
+
+    assert len(sections) == 1
+    plain_average = (10.0 + 50.0) / 2.0 * 0.01
+    mass_weighted_average = (10.0 * 10.0 + 90.0 * 50.0) / 100.0 * 0.01
+    assert sections[0].ndf_fraction == pytest.approx(mass_weighted_average)
+    assert sections[0].ndf_fraction != pytest.approx(plain_average)
+
+
+@pytest.mark.unit
+def test_build_feed_out_sections_dry_matter_fraction_uses_total_dm_over_total_wet_mass() -> None:
+    """`dry_matter_fraction` is NOT a mass-weighted average of each crop's own DM fraction — it is
+    `total_DM / total_wet_mass` (Silostg.for:899,909). This test uses two crops with different DM%
+    specifically to distinguish the two formulas."""
+    # 10 kg DM @ 10% DM -> 100 kg wet; 90 kg DM @ 50% DM -> 180 kg wet.
+    light_crop = HarvestedCrop(**(sample_crop_data | {"dry_matter_mass": 10.0, "dry_matter_percentage": 10.0}))
+    heavy_crop = HarvestedCrop(**(sample_crop_data | {"dry_matter_mass": 90.0, "dry_matter_percentage": 50.0}))
+
+    sections = build_feed_out_sections([light_crop, heavy_crop], feed_out_rate_kg_dm_per_day=0.0)
+
+    naive_mass_weighted_average = (10.0 * 0.10 + 90.0 * 0.50) / 100.0  # the WRONG formula -> 0.46
+    correct_total_over_total_wet = 100.0 / (100.0 + 180.0)  # the source's own formula -> ~0.3571
+    assert sections[0].dry_matter_fraction == pytest.approx(correct_total_over_total_wet)
+    assert sections[0].dry_matter_fraction != pytest.approx(naive_mass_weighted_average)
+
+
+@pytest.mark.unit
+def test_build_feed_out_sections_zero_fresh_mass_does_not_raise() -> None:
+    """A crop with dry_matter_mass > 0 but dry_matter_percentage == 0 (an inconsistent but
+    constructible HarvestedCrop state) makes `fresh_mass` return 0.0 — `dry_matter_fraction` must
+    fall back to 0.0 rather than raising ZeroDivisionError."""
+    degenerate_crop = HarvestedCrop(**(sample_crop_data | {"dry_matter_mass": 10.0, "dry_matter_percentage": 0.0}))
+
+    sections = build_feed_out_sections([degenerate_crop], feed_out_rate_kg_dm_per_day=0.0)
+
+    assert sections[0].dry_matter_fraction == 0.0
+
+
+@pytest.mark.unit
+def test_build_feed_out_sections_is_alfalfa_matches_section_own_first_crop() -> None:
+    """A single section's crop-type flag matches its own first crop, not a majority vote or the last
+    crop."""
+    alfalfa_crop = HarvestedCrop(**(sample_crop_data | {"config_name": "alfalfa_data", "dry_matter_mass": 10.0}))
+    corn_crop = HarvestedCrop(**(sample_crop_data | {"config_name": "corn_data", "dry_matter_mass": 90.0}))
+
+    sections = build_feed_out_sections([alfalfa_crop, corn_crop], feed_out_rate_kg_dm_per_day=0.0)
+
+    assert sections[0].is_alfalfa is True
+
+
+@pytest.mark.unit
+def test_build_feed_out_sections_is_alfalfa_is_per_section_not_storage_wide() -> None:
+    """A storage refilled with a different crop type over time, split into 2+ sections, must give
+    EACH section its OWN first crop's type — not `Silostg.for:923`'s literal behavior of stamping
+    every section with the storage's single very-first crop (a deliberate, documented design-spec
+    deviation). 4 corn crops (100 kg DM each) then 4 alfalfa crops (100 kg DM each), rate chosen so
+    NVS = floor(800/(10*40)) = 2 — the corn crops must group into the first section and the alfalfa
+    crops into the second, giving each section a DIFFERENT is_alfalfa, not both False (which
+    storage-wide first-crop typing would produce)."""
+    corn_crops = [
+        HarvestedCrop(**(sample_crop_data | {"config_name": "corn_data", "dry_matter_mass": 100.0})) for _ in range(4)
+    ]
+    alfalfa_crops = [
+        HarvestedCrop(**(sample_crop_data | {"config_name": "alfalfa_data", "dry_matter_mass": 100.0}))
+        for _ in range(4)
+    ]
+
+    sections = build_feed_out_sections(corn_crops + alfalfa_crops, feed_out_rate_kg_dm_per_day=40.0)
+
+    assert len(sections) == 2
+    assert sections[0].is_alfalfa is False
+    assert sections[1].is_alfalfa is True
+
+
+@pytest.mark.unit
+def test_build_feed_out_sections_trailing_zero_mass_crop_does_not_spawn_extra_section(
+    harvested_crop: HarvestedCrop,
+) -> None:
+    """A depleted crop (dry_matter_mass == 0.0 — e.g. already fully fed out via
+    `remove_dry_matter_mass` but not yet purged from `self.stored`) sitting after the last real
+    section boundary must not spawn its own spurious extra section. This is exactly what the
+    `len(sections) < number_of_sections - 1` guard in `build_feed_out_sections` exists to prevent —
+    a test that only checks total section count for zero-mass-free inputs would not catch that guard
+    being deleted."""
+    first_crop = copy.deepcopy(harvested_crop)
+    first_crop.dry_matter_mass = 100.0
+    second_crop = copy.deepcopy(harvested_crop)
+    second_crop.dry_matter_mass = 100.0
+    depleted_crop = copy.deepcopy(harvested_crop)
+    depleted_crop.dry_matter_mass = 0.0
+
+    sections = build_feed_out_sections([first_crop, second_crop, depleted_crop], feed_out_rate_kg_dm_per_day=10.0)
+
+    assert len(sections) == 2
+    assert sections[0].crops == [first_crop]
+    assert sections[1].crops == [second_crop, depleted_crop]
+
+
 @pytest.mark.component
 @pytest.mark.parametrize(
     "storage_class,extra_config",
@@ -1133,3 +1552,232 @@ def test_full_ensiling_chain_stays_under_total_dry_matter(
 
     assert 0.0 < first_crop.dry_matter_mass < initial_mass
     assert first_crop.infiltration_cumulative_loss_kg > 0.0
+
+
+@pytest.mark.unit
+def test_get_or_compute_feed_out_rate_empty_storage_returns_zero_and_does_not_cache(silage: Silage) -> None:
+    """An empty storage has no Feed-out rate yet — returns 0.0 without permanently freezing at 0.0,
+    so a later call (once crops exist) can still compute a real rate."""
+    assert silage.stored == []
+
+    rate = silage._get_or_compute_feed_out_rate_kg_dm_per_day()
+
+    assert rate == 0.0
+    assert silage._feed_out_rate_kg_dm_per_day is None
+
+
+@pytest.mark.unit
+def test_get_or_compute_feed_out_rate_computes_total_over_365(silage: Silage, harvested_crop: HarvestedCrop) -> None:
+    """Silostg.for:233,242 — FDRTE = total stored DM / 365."""
+    silage.stored = [harvested_crop]
+
+    rate = silage._get_or_compute_feed_out_rate_kg_dm_per_day()
+
+    assert rate == pytest.approx(harvested_crop.dry_matter_mass / 365.0)
+
+
+@pytest.mark.unit
+def test_get_or_compute_feed_out_rate_held_fixed_after_first_call(
+    silage: Silage, harvested_crop: HarvestedCrop
+) -> None:
+    """Design spec Section 5.3.3: computed once, on first activation, held fixed thereafter — a
+    later change to self.stored (Effluent/Fermentation/Infiltration/a new crop arriving) must NOT
+    change the already-cached rate. This is the mechanism the 'held fixed' design note exists for; a
+    test only checking the first call's value would not catch a silent recompute-every-call bug."""
+    silage.stored = [harvested_crop]
+    first_rate = silage._get_or_compute_feed_out_rate_kg_dm_per_day()
+
+    second_crop = copy.deepcopy(harvested_crop)
+    second_crop.dry_matter_mass = 9999.0
+    silage.stored.append(second_crop)
+    second_rate = silage._get_or_compute_feed_out_rate_kg_dm_per_day()
+
+    assert second_rate == first_rate
+
+
+@pytest.mark.unit
+def test_apply_feed_out_loss_dilutes_both_ndf_and_crude_protein(harvested_crop: HarvestedCrop, silage: Silage) -> None:
+    """Unlike `_apply_infiltration_loss` (which deliberately leaves crude protein unchanged,
+    Silostg.for:871-872,978-979), Feed-out DOES dilute crude protein (Silostg.for:1100) — this test
+    exists specifically to catch the two being conflated."""
+    initial_ndf = harvested_crop.ndf
+    initial_cp = harvested_crop.crude_protein_percent
+    initial_mass = harvested_crop.dry_matter_mass
+
+    silage._apply_feed_out_loss(harvested_crop, loss_fraction=0.05)
+
+    assert harvested_crop.dry_matter_mass == pytest.approx(initial_mass * 0.95)
+    assert harvested_crop.ndf > initial_ndf
+    assert harvested_crop.crude_protein_percent > initial_cp
+
+
+@pytest.mark.unit
+def test_apply_feed_out_loss_zero_fraction_is_a_noop(harvested_crop: HarvestedCrop, silage: Silage) -> None:
+    initial_mass = harvested_crop.dry_matter_mass
+    silage._apply_feed_out_loss(harvested_crop, loss_fraction=0.0)
+    assert harvested_crop.dry_matter_mass == initial_mass
+
+
+@pytest.mark.unit
+def test_process_feed_out_default_raises_not_implemented(silage: Silage) -> None:
+    with pytest.raises(NotImplementedError):
+        silage._process_feed_out()
+
+
+@pytest.mark.unit
+def test_bag_process_feed_out_reduces_mass(harvested_crop: HarvestedCrop) -> None:
+    config: dict[str, str | float | list[str]] = {
+        "name": "bag_silage",
+        "rufas_id": 1,
+        "field_names": ["field_1"],
+        "crop_name": "corn",
+        "initial_storage_dry_matter": 500.0,
+        "capacity": 1_000_000.0,
+        "diameter_m": 3.0,
+        "dry_matter_density_kg_per_m3": 180.0,
+    }
+    bag = Bag(config=config)
+    bag.stored = [harvested_crop]
+    initial_mass = harvested_crop.dry_matter_mass
+
+    bag._process_feed_out()
+
+    assert harvested_crop.dry_matter_mass < initial_mass
+
+
+@pytest.mark.unit
+def test_bag_process_feed_out_skips_when_geometry_missing(harvested_crop: HarvestedCrop) -> None:
+    config: dict[str, str | float | list[str]] = {
+        "name": "bag_silage",
+        "rufas_id": 1,
+        "field_names": ["field_1"],
+        "crop_name": "corn",
+        "initial_storage_dry_matter": 500.0,
+        "capacity": 1_000_000.0,
+    }
+    bag = Bag(config=config)
+    bag.stored = [harvested_crop]
+    initial_mass = harvested_crop.dry_matter_mass
+
+    bag._process_feed_out()
+
+    assert harvested_crop.dry_matter_mass == initial_mass
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("storage_class_name", ["Bunker", "Pile"])
+def test_bunker_process_feed_out_applies_same_fraction_within_a_section(
+    storage_class_name: str, harvested_crop: HarvestedCrop
+) -> None:
+    """Two crops of different mass, grouped into the same section, must lose the same *fraction* of
+    their own dry matter — proves the section-uniform-loss semantics (design spec Section 5.3.2)."""
+    config: dict[str, str | float | list[str]] = {
+        "name": "storage",
+        "rufas_id": 1,
+        "field_names": ["field_1"],
+        "crop_name": "corn",
+        "initial_storage_dry_matter": 500.0,
+        "capacity": 1_000_000.0,
+        "width_m": 10.0,
+        "height_m": 3.0,
+        "dry_matter_density_kg_per_m3": 180.0,
+    }
+    storage_class = Bunker if storage_class_name == "Bunker" else Pile
+    storage = storage_class(config=config)
+    second_crop = copy.deepcopy(harvested_crop)
+    second_crop.dry_matter_mass = 50.0
+    storage.stored = [harvested_crop, second_crop]  # rate is 0 on first call -> one section, both crops
+    initial_first_mass = harvested_crop.dry_matter_mass
+    initial_second_mass = second_crop.dry_matter_mass
+
+    storage._process_feed_out()
+
+    first_fraction_lost = 1.0 - harvested_crop.dry_matter_mass / initial_first_mass
+    second_fraction_lost = 1.0 - second_crop.dry_matter_mass / initial_second_mass
+    assert first_fraction_lost == pytest.approx(second_fraction_lost)
+    assert first_fraction_lost > 0.0
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("storage_class_name", ["Bunker", "Pile"])
+def test_bunker_process_feed_out_skips_when_geometry_missing(
+    storage_class_name: str, harvested_crop: HarvestedCrop
+) -> None:
+    config: dict[str, str | float | list[str]] = {
+        "name": "storage",
+        "rufas_id": 1,
+        "field_names": ["field_1"],
+        "crop_name": "corn",
+        "initial_storage_dry_matter": 500.0,
+        "capacity": 1_000_000.0,
+    }
+    storage_class = Bunker if storage_class_name == "Bunker" else Pile
+    storage = storage_class(config=config)
+    storage.stored = [harvested_crop]
+    initial_mass = harvested_crop.dry_matter_mass
+
+    storage._process_feed_out()
+
+    assert harvested_crop.dry_matter_mass == initial_mass
+
+
+@pytest.mark.unit
+def test_process_degradations_runs_infiltration_before_feed_out(mocker: MockerFixture, silage: Silage) -> None:
+    """Extends the existing Effluent->Fermentation->Infiltration call-order regression test
+    (test_process_degradations_runs_fermentation_before_infiltration) one phase further — Feed-out
+    must run last, after Infiltration, not before or interleaved with it."""
+    mock_weather = mocker.MagicMock(autospec=Weather)
+    mock_time = mocker.MagicMock(autospec=RufasTime)
+    mock_time.simulation_day = 15
+    mocker.patch.object(silage, "_finalize_preseal_loss")
+    mocker.patch.object(silage, "calculate_days_of_effluent_loss_to_process", return_value=0)
+    call_order: list[str] = []
+
+    def _record_fermentation(*args: Any, **kwargs: Any) -> None:
+        call_order.append("fermentation")
+
+    def _record_infiltration(crop: HarvestedCrop, elapsed_days: float) -> float:
+        call_order.append("infiltration")
+        return 0.0
+
+    def _record_feed_out() -> None:
+        call_order.append("feed_out")
+
+    mocker.patch.object(Storage, "process_degradations", side_effect=_record_fermentation)
+    mocker.patch.object(silage, "_process_infiltration", side_effect=_record_infiltration)
+    mocker.patch.object(silage, "_process_feed_out", side_effect=_record_feed_out)
+    silage.stored = [HarvestedCrop(**sample_crop_data)]
+
+    silage.process_degradations(mock_weather, mock_time)
+
+    assert call_order == ["fermentation", "infiltration", "feed_out"]
+
+
+@pytest.mark.component
+def test_process_degradations_full_chain_bag_stays_under_100_percent_loss(mocker: MockerFixture) -> None:
+    """Component test: a small synthetic Bag crop through Preseal -> Effluent -> Fermentation ->
+    Infiltration -> Feed-out, all via process_degradations alone (no FeedManager involved, matching
+    design spec Section 8's revised testing strategy) — total DM loss must stay under 100%."""
+    config: dict[str, str | float | list[str]] = {
+        "name": "bag_silage",
+        "rufas_id": 1,
+        "field_names": ["field_1"],
+        "crop_name": "corn",
+        "initial_storage_dry_matter": 500.0,
+        "capacity": 1_000_000.0,
+        "diameter_m": 3.0,
+        "dry_matter_density_kg_per_m3": 180.0,
+    }
+    bag = Bag(config=config)
+    crop = HarvestedCrop(**sample_crop_data)
+    crop.last_time_degraded = crop.storage_time - timedelta(days=60)
+    bag.stored = [crop]
+    mock_weather = mocker.MagicMock(autospec=Weather)
+    mock_time = mocker.MagicMock(autospec=RufasTime)
+    mock_time.simulation_day = 60
+    mock_time.current_date.date.return_value = crop.storage_time
+    initial_mass = crop.dry_matter_mass
+
+    bag.process_degradations(mock_weather, mock_time)
+
+    assert 0.0 <= crop.dry_matter_mass < initial_mass
