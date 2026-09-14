@@ -172,6 +172,8 @@ def _make_herd_manager(
     hm.beef_replacement_heifers = beef_replacement_heifers
     hm.beef_calves = beef_calves
     hm.beef_bulls = beef_bulls
+    hm.beef_stocker_steers = []
+    hm.beef_stocker_heifers = []
     hm.herd_statistics = HerdStatistics()
     hm.herd_reproduction_statistics = HerdReproductionStatistics()
     return hm

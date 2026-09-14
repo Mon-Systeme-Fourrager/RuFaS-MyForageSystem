@@ -27,6 +27,8 @@ class AnimalCombination(Enum):
         A pen with beef replacement heifers growing toward first calving.
     BEEF_BULL_BATTERY : str
         A pen with bulls outside the breeding season.
+    BEEF_STOCKER : str
+        A pen with stocker/backgrounding animals.
 
     """
 
@@ -41,3 +43,4 @@ class AnimalCombination(Enum):
     BEEF_GESTATING = "beef_gestating"
     BEEF_REPLACEMENT = "beef_replacement"
     BEEF_BULL_BATTERY = "beef_bull_battery"
+    BEEF_STOCKER = "beef_stocker"

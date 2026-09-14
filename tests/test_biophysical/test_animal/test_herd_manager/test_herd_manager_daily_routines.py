@@ -385,6 +385,7 @@ def test_collect_daily_herd_updates(
     herd_manager.beef_cows = [mock_beef_cow]
 
     mock_report_cow_calf = mocker.patch.object(AnimalModuleReporter, "report_cow_calf_performance")
+    mocker.patch.object(AnimalModuleReporter, "report_stocker_performance", return_value=None)
     mock_perform_daily_routines_for_animals = mocker.patch.object(
         herd_manager,
         "_perform_daily_routines_for_animals",
@@ -404,6 +405,8 @@ def test_collect_daily_herd_updates(
             ([], [], [], [], []),  # beef_replacement_heifers
             ([], [], [], [], []),  # beef_calves
             ([], [], [], [], []),  # beef_bulls
+            ([], [], [], [], []),  # beef_stocker_steers
+            ([], [], [], [], []),  # beef_stocker_heifers
         ],
     )
 
@@ -427,6 +430,8 @@ def test_collect_daily_herd_updates(
         call(mock_time, herd_manager.beef_replacement_heifers),
         call(mock_time, herd_manager.beef_calves),
         call(mock_time, herd_manager.beef_bulls),
+        call(mock_time, herd_manager.beef_stocker_steers),
+        call(mock_time, herd_manager.beef_stocker_heifers),
     ]
     assert isinstance(actual_daily_herd_updates, DailyHerdUpdates)
     assert actual_daily_herd_updates.graduated_animals == (
@@ -662,6 +667,8 @@ def test_daily_routines(herd_manager: HerdManager, mock_herd: dict[str, list[Ani
         ([], [], [], [], []),  # beef_replacement_heifers
         ([], [], [], [], []),  # beef_calves
         ([], [], [], [], []),  # beef_bulls
+        ([], [], [], [], []),  # beef_stocker_steers
+        ([], [], [], [], []),  # beef_stocker_heifers
     ]
 
     mock_reset_daily_statistics = mocker.patch.object(herd_manager, "_reset_daily_statistics")
@@ -671,6 +678,7 @@ def test_daily_routines(herd_manager: HerdManager, mock_herd: dict[str, list[Ani
         side_effect=mock_perform_daily_routines_for_animals_side_effect,
     )
     mocker.patch.object(AnimalModuleReporter, "report_cow_calf_performance")
+    mocker.patch.object(AnimalModuleReporter, "report_stocker_performance", return_value=None)
     mock_update_sold_animal_statistics = mocker.patch.object(herd_manager, "_update_sold_animal_statistics")
     mock_check_if_cows_need_to_be_sold = mocker.patch.object(
         herd_manager, "_check_if_cows_need_to_be_sold", return_value=sold_oversupply_heiferIIIs
@@ -707,7 +715,7 @@ def test_daily_routines(herd_manager: HerdManager, mock_herd: dict[str, list[Ani
     herd_manager.execute_daily_routines([mock_feed], mock_time, mock_weather)
 
     mock_reset_daily_statistics.assert_called_once_with()
-    assert mock_perform_daily_routines_for_animals.call_count == 9
+    assert mock_perform_daily_routines_for_animals.call_count == 11
     assert mock_perform_daily_routines_for_animals.call_args_list == [
         call(mock_time, herd_manager.calves),
         call(mock_time, herd_manager.heiferIs),
@@ -718,6 +726,8 @@ def test_daily_routines(herd_manager: HerdManager, mock_herd: dict[str, list[Ani
         call(mock_time, herd_manager.beef_replacement_heifers),
         call(mock_time, herd_manager.beef_calves),
         call(mock_time, herd_manager.beef_bulls),
+        call(mock_time, herd_manager.beef_stocker_steers),
+        call(mock_time, herd_manager.beef_stocker_heifers),
     ]
     mock_update_sold_animal_statistics.assert_called_once_with(
         sold_newborn_calves=[], sold_heiferIIs=sold_heiferIIs, sold_and_died_cows=sold_and_died_cows

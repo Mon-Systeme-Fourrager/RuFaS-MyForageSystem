@@ -1530,3 +1530,44 @@ class AnimalModuleReporter:
             wean_weight,
             dict(info_map, units=MeasurementUnits.KILOGRAMS),
         )
+
+    @classmethod
+    def report_stocker_performance(cls, animal: Animal, simulation_day: int) -> None:
+        """
+        Report stocker exit performance metrics for a single animal.
+
+        Parameters
+        ----------
+        animal : Animal
+            Stocker animal that has exited (sold or transferred to feedlot).
+        simulation_day : int
+            Day the animal exited.
+
+        Notes
+        -----
+        Reported metrics: stocker_days_in_phase, stocker_total_gain_kg, stocker_adg_kg_d,
+        stocker_fcr, stocker_exit_weight_kg, stocker_cumulative_dmi_kg.
+        Called from HerdManager._process_daily_herd_updates, not from animal.py
+        (animal.py sits at a lower layer than the reporter).
+
+        """
+        info_map: dict[str, Any] = {
+            "class": cls.__name__,
+            "function": cls.report_stocker_performance.__name__,
+            "simulation_day": simulation_day,
+        }
+        dof: int = animal.days_in_stocker
+        total_gain: float = animal.body_weight - animal.stocker_entry_weight
+        adg: float = total_gain / dof if dof > 0 else 0.0
+        fcr: float = animal.stocker_cumulative_dmi / total_gain if total_gain > 0 else 0.0
+
+        om.add_variable("stocker_days_in_phase", dof, dict(info_map, units=MeasurementUnits.DAYS))
+        om.add_variable("stocker_total_gain_kg", total_gain, dict(info_map, units=MeasurementUnits.KILOGRAMS))
+        om.add_variable("stocker_adg_kg_d", adg, dict(info_map, units=MeasurementUnits.KILOGRAMS_PER_DAY))
+        om.add_variable("stocker_fcr", fcr, dict(info_map, units=MeasurementUnits.UNITLESS))
+        om.add_variable("stocker_exit_weight_kg", animal.body_weight, dict(info_map, units=MeasurementUnits.KILOGRAMS))
+        om.add_variable(
+            "stocker_cumulative_dmi_kg",
+            animal.stocker_cumulative_dmi,
+            dict(info_map, units=MeasurementUnits.KILOGRAMS),
+        )

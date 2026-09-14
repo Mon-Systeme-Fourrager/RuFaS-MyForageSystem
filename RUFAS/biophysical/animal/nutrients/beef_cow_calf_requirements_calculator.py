@@ -101,6 +101,8 @@ class BeefCowCalfRequirementsCalculator(NutritionRequirementsCalculator):
             or if conceptus weight exceeds shrunk body weight for a pregnant animal.
 
         """
+        if inputs.animal_type.is_beef_stocker:
+            raise NotImplementedError(f"Use BeefStockerRequirementsCalculator for {inputs.animal_type.value}.")
         cls._validate_inputs(inputs)
 
         cbw: float = AnimalModuleConstants.BREED_CBW_KG.get(

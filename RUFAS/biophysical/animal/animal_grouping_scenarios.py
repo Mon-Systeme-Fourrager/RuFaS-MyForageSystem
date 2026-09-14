@@ -42,6 +42,13 @@ class AnimalGroupingScenario(Enum):
         AnimalCombination.BEEF_REPLACEMENT: [AnimalType.BEEF_HEIFER_REPLACEMENT],
         AnimalCombination.BEEF_BULL_BATTERY: [AnimalType.BEEF_BULL],
     }
+
+    BEEF_STOCKER_ONLY = {
+        AnimalCombination.BEEF_STOCKER: [
+            AnimalType.BEEF_STOCKER_STEER,
+            AnimalType.BEEF_STOCKER_HEIFER,
+        ],
+    }
     # BEEF_COW appears in both BEEF_COW_CALF_PAIR and BEEF_GESTATING.
     # The static _animal_combination_by_animal_type dict will map BEEF_COW to BEEF_GESTATING
     # (last write wins). Pen assignment at runtime must use each cow's live reproduction

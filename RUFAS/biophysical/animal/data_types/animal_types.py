@@ -31,6 +31,10 @@ class AnimalType(Enum):
         A mature beef cow in the breeding herd (gestating, lactating, or both).
     BEEF_BULL : str
         A bull in the natural-service breeding herd.
+    BEEF_STOCKER_STEER : str
+        A castrated male beef animal in the stocker/backgrounding phase.
+    BEEF_STOCKER_HEIFER : str
+        A female beef animal in the stocker/backgrounding phase.
 
     """
 
@@ -46,6 +50,8 @@ class AnimalType(Enum):
     BEEF_HEIFER_REPLACEMENT = "BeefHeiferReplacement"
     BEEF_COW = "BeefCow"
     BEEF_BULL = "BeefBull"
+    BEEF_STOCKER_STEER = "BeefStockerSteer"
+    BEEF_STOCKER_HEIFER = "BeefStockerHeifer"
 
     @property
     def is_heifer(self) -> bool:
@@ -71,3 +77,8 @@ class AnimalType(Enum):
             AnimalType.BEEF_COW,
             AnimalType.BEEF_BULL,
         )
+
+    @property
+    def is_beef_stocker(self) -> bool:
+        """True if the animal is in the stocker/backgrounding phase."""
+        return self in (AnimalType.BEEF_STOCKER_STEER, AnimalType.BEEF_STOCKER_HEIFER)
