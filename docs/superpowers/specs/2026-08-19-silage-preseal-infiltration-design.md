@@ -1,6 +1,6 @@
-# Silage Preseal + Infiltration Phases — Design Spec
+# Silage Preseal + Infiltration + Feed-out Phases — Design Spec
 
-Status: Draft, ready for whiteboard/SME + team review (rufas-design-doc gate) — updated 2026-09-11
+Status: Draft, ready for whiteboard/SME + team review (rufas-design-doc gate) — updated 2026-09-14
 Date: 2026-08-19
 Scope: `RUFAS/biophysical/feed_storage/silage.py`, `storage.py`, `crop_soil_to_feed_storage_connection.py`, feed-storage input schema
 
@@ -11,14 +11,43 @@ first). Section 5.2, the Infiltration rows of Sections 3/4/8, and the design dec
 are retained below for context/reuse by that follow-up, but describe work **not** implemented by this
 PR — see Section 9 for the authoritative current scope boundary.
 
+**2026-09-11 (later same day) — Infiltration implemented and merged into this branch's history
+(`PLAN_silage-infiltration-phase.md`, 6 commits `28ed6c973`..`3cb1bbf2f`, plus a phase-ordering
+correction `4e52e3ecd` — Infiltration must run *after* Fermentation, not before; see Section 4). This
+document is now extended to also design **Feed-out**, IFSM's 5th and final ensiling phase (Section
+5.3) — the last of the three phases named in this doc's title. Feed-out is architecturally larger than
+Preseal or Infiltration individually because it requires vertical-section compositing (deferred by
+Infiltration's own Open Decision 3) as a genuine prerequisite — but per a primary-source re-check
+(`Silostg.for` + IFSM Reference Manual, see Section 5.3.3), it does **not** need any new integration
+with `FeedManager`: IFSM's own feed-out rate is a static per-storage constant (total stored DM ÷ 365
+days), computed entirely within the storage, the same way Preseal/Infiltration already work. Per
+`rufas-design-doc`'s ~1-engineer-month threshold, Feed-out still gets the full design-doc process (this
+section), driven by the vertical-section-compositing prerequisite, not by any `FeedManager` integration.
+
+**2026-09-14 — Section 5.3 rewritten to match a literal re-read of `FEEDOUT`/`SILO`/`BUNKER` and the
+Reference Manual's Silo Storage/Feed-Out prose (directive: "just follow IFSM").** Three changes: (1)
+dropped the `FeedManager` rate-integration proposal (5.3.3) — IFSM's `FDRTE` is a static per-storage
+average, so no new cross-module data path is needed; (2) replaced the "single largest unknown"
+framing of vertical-section compositing (5.3.2) with IFSM's actual formula (`NVS =
+floor(total_DM/(10·FDRTE))`, equal-mass split, uniform averaged quality) — a direct translation, not a
+sub-design; (3) **corrected a factual error** in 5.3.4 — `SILTYP.EQ.2` is bottom-unloaded tower, not
+Bag (the glossary at `Silostg.for:83` was previously misread); Bunker and Bag both use `PSIA = 0.21`.
+`CSAF`/`PSIA` sourcing in Section 7 are resolved as a result (derived from existing geometry, not
+looked up). Only the `ISILO` 4/5 (`TSTR`) gap remains genuinely unresolved.
+
 ## 1. Motivation
 
-RuFaS's silage module currently implements 2 of IFSM's 5 documented ensiling phases (Effluent, Fermentation). Preseal, Infiltration, and Feed-out are entirely absent. This spec covers restoring **Preseal** now, with **Infiltration** designed here but implemented in a follow-up PR (see banner above). Effluent and Fermentation are explicitly untouched — they're considered established and out of scope for this work, even though the prior audit (Section 6) found real bugs in them.
+RuFaS's silage module currently implements 2 of IFSM's 5 documented ensiling phases (Effluent, Fermentation). Preseal, Infiltration, and Feed-out are entirely absent. This spec covers restoring **Preseal** now, with **Infiltration** designed here but implemented in a follow-up PR (see banner above), and now **Feed-out** (Section 5.3) as the third and final phase this document plans. Effluent and Fermentation are explicitly untouched — they're considered established and out of scope for this work, even though the prior audit (Section 6) found real bugs in them.
+
+Feed-out is different in degree, not kind, from Preseal/Infiltration: like them, it's a `process_degradations` phase (Section 5.3.3) — IFSM's own feed-out rate is a static per-storage average, not a live removal signal, so this phase does not hook into `FeedManager`'s removal path at all. What Feed-out does need, uniquely among the three phases, is vertical sections (deferred by Infiltration's Open Decision 3) to have a well-defined "face" being fed out at all — that's its real architectural cost.
 
 Sources used to derive this design:
 - `docs/beef_module/` sibling reference pattern (N/A here — see below instead)
 - IFSM Reference Manual: `c:\researchLife\05-dev\msf\fourrager\04_Resources\IFSM Reference Manual.md` (prose description, phase overview, some equations — several equations are only present as stripped images in this file and are **not** authoritative for exact math)
-- **IFSM Fortran source (authoritative for equations)**: `c:\researchLife\05-dev\msf\fourrager\04_Resources\Silostg.for` — subroutines `SILO` (orchestrator, lines 210-631), `PRESEAL` (634-714), `FERMENT` (717-791, reference only, not being changed), `TOWER` (794-876, infiltration — radial), `BUNKER` (879-984, infiltration — vertical section), `EFFLU` (987-1026, reference only, not being changed), `FEEDOUT` (1029-1104, out of scope this round)
+- **IFSM Fortran source (authoritative for equations)**: `c:\researchLife\05-dev\msf\fourrager\04_Resources\Silostg.for` — subroutines `SILO` (orchestrator, lines 210-631), `PRESEAL` (634-714), `FERMENT` (717-791, reference only, not being changed), `TOWER` (794-876, infiltration — radial), `BUNKER` (879-984, infiltration — vertical section), `EFFLU` (987-1026, reference only, not being changed), `FEEDOUT` (1029-1104, designed in Section 5.3, implementation TBD)
+- `Silostg.for:1-95`'s own glossary block (`C PARTIAL GLOSSARY FOR STORAGE MODEL`) — authoritative for `PLOT(I,J)` column meanings, `SILTYP`, `CSAF` vs. `CSA`, `FDRTE`, `NVS`, cited throughout Section 5.3
+- Pitt & Muck (1993), *A Diffusion Model of Aerobic Deterioration at the Exposed Face of Bunker Silos* (`03-literature/pitt-1993-a-diffusion-model-of-aerobic-deteriorati.md`) — the primary mechanistic O₂/heat/yeast diffusion source `FEEDOUT`'s `DML4A` structurally mirrors; Wilkinson (2012) (`00-inbox/silage_pdfs/#Wilkinson2012...pdf`) — review synthesis, empirical benchmarks only (Section 5.3.5)
+- `05-dev/msf/expert-system/scientific review/` (`RuFaS_to_MSF_Silage_Parameter_Mapping.md`, `Silage_Model_Needs_Specification.md`, `Mechanistic_Silage_Model_Architecture.md`, `CA-12_CA-14_Silage_Average_Density_Formula.md`) — a parallel MSF Expert System design track that independently scoped Feed-out (Gaps G-21/G-22/G-23, `fo_plan_feedout`); see Section 5.3's approach-decision note for how this spec's scope relates to that track
 
 All equation references below cite `Silostg.for` line numbers as the source of truth. This spec does not re-derive or restate every line of Fortran arithmetic — it describes structure, data flow, and the decisions made translating an offline/batch model into RuFaS's incremental daily/interval simulation. Implementers should read the cited subroutine directly for exact constants.
 
@@ -61,17 +90,29 @@ These need genuinely different math (front sinking down a column vs. front shrin
 - New per-crop state: temperature, initial pH estimate
 - New per-storage config: geometry (width/height for Bunker/Pile, diameter for Bag) — optional, reference-table fallback
 
-**Designed here, implemented in a follow-up PR (`PLAN_silage-infiltration-phase.md`) — not delivered by this PR:**
+**Designed here, implemented in a follow-up PR (`PLAN_silage-infiltration-phase.md`) — delivered
+2026-09-11 (6 commits `28ed6c973`..`3cb1bbf2f`, phase-order fix `4e52e3ecd`):**
 - Infiltration phase for `Bunker`, `Pile`, `Bag`, with RS conservation as its safety ceiling
 - Permeability: reference-table only, keyed by storage type, no per-farm override
+
+**Designed here (Section 5.3), implementation TBD in its own follow-up (design-doc process, not a
+direct `PLAN_*.md`, per Section 0's banner):**
+- Feed-out phase for `Bunker`, `Pile`, `Bag`, reusing the same RS-conservation ceiling
+- Vertical-section compositing for `Bunker`/`Pile` (a genuine prerequisite, not previously built —
+  Infiltration's Open Decision 3 deferred exactly this)
+- A static per-storage feed-out rate (total stored DM ÷ 365 days), matching IFSM's own `FDRTE` —
+  computed within `Storage` itself, no `FeedManager` integration required (see Section 5.3.3)
 
 **Out of scope (explicitly not touched):**
 - Effluent (`silage.py`, existing) — established, not to be modified
 - Fermentation (`storage.py`, existing, shared base class) — not to be modified
-- Feed-out phase — separate future work
-- Hay, Baleage, Grain storage types — Preseal/Infiltration are ensiling-specific
-- Sourcing the actual reference-table values (geometry defaults, permeability defaults) — blocking prerequisite, tracked separately (Section 7)
+- Hay, Baleage, Grain storage types — Preseal/Infiltration/Feed-out are ensiling-specific
+- Sourcing the actual reference-table values (geometry defaults, permeability defaults, feedout-face
+  area) — blocking prerequisite, tracked separately (Section 7)
 - Fixing the bugs in Effluent/Fermentation identified in the prior audit (Section 6) — documented for awareness only
+- LOADER (unloading-equipment type), `ISILO`/`TSTR` per-silo state-machine tracking, and the
+  large-particle NDF split (`PLOT(I,12)`/`PLOT(I,13)`) — real dimensions of the source's `FEEDOUT`
+  math with no RuFaS analogue yet; see Section 5.3's Open Questions for the proposed simplifications
 
 ## 4. Architecture
 
@@ -89,14 +130,29 @@ Preseal loss for crop N is finalized at the first of:
 
 Once finalized, a crop's preseal loss is computed exactly once and never revisited (matches the source's one-shot-per-plot semantics — `Silostg.for:634-714`).
 
-**Follow-up PR** (`PLAN_silage-infiltration-phase.md`) adds Infiltration to the chain, using whichever of
-`BUNKER` or `TOWER` math applies to the crop's storage class (Section 5.2):
+**Follow-up PR** (`PLAN_silage-infiltration-phase.md`, delivered 2026-09-11) added Infiltration to the
+chain, using whichever of `BUNKER` or `TOWER` math applies to the crop's storage class (Section 5.2):
 
 ```
-process_degradations()  →  existing Effluent (unchanged) → Infiltration (new) → existing Fermentation (unchanged)
+process_degradations()  →  existing Effluent → existing Fermentation → Infiltration (new)
 ```
 
-(That plan places Infiltration between Effluent and Fermentation, not after both — see its Open Decision 6 for why; this differs from this section's original before-the-split ordering.)
+The plan's first delivered version placed Infiltration *before* Fermentation (Open Decision 6 argued
+this was the least-invasive wiring). An SME review after merge (2026-09-11) confirmed this was wrong
+relative to IFSM's actual phase order and it was corrected (`4e52e3ecd`) to run after Fermentation, as
+shown above — this is the order Feed-out (Section 5.3) now builds on.
+
+**Feed-out** (Section 5.3, design only — implementation TBD) slots into the same `process_degradations`
+chain as Infiltration — no `FeedManager` hook needed, per a primary-source re-check (Section 5.3.3):
+
+```
+process_degradations()  →  Effluent → Fermentation → Infiltration → Feed-out (new, last)
+```
+
+Feed-out's rate input is a static per-storage constant IFSM itself computes from total stored DM
+(`FDRTE = total_stored_DM / 365`, `Silostg.for:233,242`) — this design follows that literally rather
+than introducing a new `FeedManager` integration point (see Section 5.3.3 for the reasoning and the
+recomputation-cadence question that remains genuinely open).
 
 ## 5. Component design
 
@@ -152,6 +208,217 @@ Both implementations:
 4. Update NDF/CP/DM-content by dilution, same pattern as Preseal and existing Fermentation.
 
 `Bunker`/`Pile` additionally require compositing plot quality into vertical sections before infiltration, since a bunker isn't emptied one plot at a time (`Silostg.for:889-916`) — the existing `Storage.stored` list of individual crops needs a bunker-specific aggregation step before this phase runs, distinct from how `Bag`/tower-style storage tracks per-plot infiltration individually.
+
+**2026-09-11 status: Infiltration's own vertical-section compositing was deferred (Open Decision 3 of
+`PLAN_silage-infiltration-phase.md`) — it shipped treating each stored crop as its own infiltration
+column, explicitly *not* building sections "given Feed-out isn't scoped." Section 5.3 below is that
+scoping, and now builds sections for real.**
+
+### 5.3 Feed-out
+
+Translates `FEEDOUT` (`Silostg.for:1029-1104`). This is IFSM's 5th and final ensiling phase, and the
+last one RuFaS is missing. Unlike Preseal/Infiltration, it does not slot cleanly into
+`process_degradations` alone — see the architecture diagram in Section 4.
+
+**Approach decision (SME-confirmed 2026-09-11): use the full IFSM `FEEDOUT` backbone as v1, keep the
+objective simple.** A separate, more mature design track — the MSF Expert System's own scientific
+review (`05-dev/msf/expert-system/scientific review/`) — has already scoped Feed-out formally as Gaps
+G-21/G-22/G-23 in `RuFaS_to_MSF_Silage_Parameter_Mapping.md`, with a farmer-facing MCP tool
+(`fo_plan_feedout`) and two new reference tables (RT-23 aerobic stability, RT-24 feed-out DM-loss
+factors). That track's own design principle (`Silage_Model_Needs_Specification.md`, "the fit-for-
+purpose test") argues explicitly *against* full mechanistic simulation for the farmer-facing question
+`fo_plan_feedout` answers — "Pitt & Muck (1993) already reports ~3% DM loss at the recommended
+15 cm/day face-removal rate, rising to ~9% at one-third that rate... Simulation adds cost, not
+information" — favoring a literature-calibrated lookup (RT-24) instead. **This spec deliberately
+diverges from that recommendation for RuFaS itself**: RuFaS's own purpose here isn't answering one
+farmer-facing advisory question, it's giving the whole-farm simulation accurate day-by-day mass/
+composition state, the same way the other four phases do — a lookup table would satisfy
+`fo_plan_feedout`'s narrower question but wouldn't give RuFaS the same kind of tracked state Preseal/
+Effluent/Fermentation/Infiltration already produce. Translating the actual `FEEDOUT` equations (same
+precedent as those four phases) is the more consistent choice for RuFaS specifically. "Keep the
+objective simple" carries into Section 5.3.4's Open Questions: each proposes the simplest viable
+default (hard-coded `LOADER`, deferred `TSTR` investigation, aggregate-`ndf` dilution over the large-
+particle split) rather than fully resolving every dimension of the source model — same scope discipline
+Preseal/Infiltration already used (flat density, no packing-factor submodel, reference-table-only
+permeability).
+
+**Cross-project synergy, not duplication.** Shipping this closes Gap G-21 in
+`RuFaS_to_MSF_Silage_Parameter_Mapping.md` (currently "not in RuFaS") and gives `fo_plan_feedout`/
+`fo_calculate_inventory` a real RuFaS-provided feed-out signal to consume, rather than requiring RT-24
+to stand entirely alone. `Mechanistic_Silage_Model_Architecture.md` independently reached the same
+"vertical sections" conclusion as Section 5.3.2 below (a layer at the bunker base can still be
+fermenting while the top layer near the face is aerobically spoiling — "the same spatial layers at
+different times, not sequential stages of one pipeline") — worth reading before finalizing 5.3.2's
+shape, since that document already worked through why a simple pipeline structure breaks down here.
+
+#### 5.3.1 What `FEEDOUT` actually computes
+
+Surface-spoilage dry-matter loss (`DML4` in the source) during active removal, split into two additive
+terms, both floored/ceilinged the same way as Infiltration:
+
+- **`DML4A`** — diffusion-driven loss through the exposed feedout face, structurally parallel to
+  Infiltration's front-tracking math (`GAMMA`/`C`/`MUBAR` terms mirror `TOWER`/`BUNKER`'s own
+  diffusion-front derivation), but driven by `DF = 100*(FDRTE/DM)/(DENS*CSAF)` — a **feed-out rate**
+  term Infiltration never needed. `CSAF` ("cross-sectional area of feedout **surface**",
+  `Silostg.for:34`) is a *different* area than Infiltration's `top_area_m2`/`front_radius_m` geometry —
+  it's the exposed face being actively unloaded, not the storage's static top or radial front.
+  `MUTAU`/`FD`/`FT` mirror Preseal's own respiration-rate structure (piecewise water-activity and
+  temperature factors), matching this spec's Section 5.1 more than Section 5.2's math — worth noting
+  since it means Feed-out reuses Preseal's respiration submodel *shape*, but with different constants
+  (per Section 9's non-goal note: "not assumed reusable without its own design pass" — that pass is
+  this section).
+- **`DML4B`** — a fixed "0.125 days bunk time" loss (`0.0299*MUTAU*0.125/DM`), applied regardless of
+  `FDRTE`/`CSAF` — models spoilage in the feed bunk after removal, not in the silo. Structurally the
+  simplest term to translate (no geometry dependency at all).
+- **`DML4 = min(DML4A + DML4B, RS)`** — same respirable-substrate ceiling pattern as Preseal/Infiltration
+  (`Silostg.for:1097`, `RS = 1 - PLOT(NN,4) - PLOT(NN,5) - ASH`, identical form to
+  `calculate_respirable_substrate_fraction` — **reuse it directly, do not re-derive**).
+- Applies to `PLOT(NN,11)` (stored DM mass — matches `crop.dry_matter_mass`), `PLOT(NN,4)`/`PLOT(NN,5)`
+  (NDF/CP — matches `crop.ndf`/`crop.crude_protein_percent`, diluted the same way as every other phase),
+  and `PLOT(NN,12)` (NDF content **of large particles specifically** — no RuFaS analogue; see Open
+  Questions below).
+
+`PLOT(NN,1)` gating (`Silostg.for:1084,1097`) is **not** a section-count or plot-index threshold — per
+the glossary (`Silostg.for:54-56`), `PLOT(I,1)` is the **crop type code** (1=corn, 2=small grain,
+4=alfalfa, 5=grass). The `.GE.4` branch is "if this plot's crop is alfalfa or grass" (haylage), not a
+section/geometry condition — a crop-type-dependent loss coefficient, same pattern as Preseal's
+alfalfa-vs-corn `MUMAX` split (Section 5.1).
+
+#### 5.3.2 Vertical-section compositing
+
+Per Section 5.2's status note above, this is being built now, not deferred again. `Bunker`/`Pile`
+storage in the source is a stack of `PLOT` rows composited into `NVS` vertical sections
+(`Silostg.for:889-916`, called from `BUNKER`); Feed-out consumes those sections from the open top down,
+one at a time, as `FDRTE` empties them (`Silostg.for:1029` is called per-section, `NN` indexing into
+the section, not the raw per-fill `PLOT` row).
+
+**IFSM's actual method is a literal, fully-specified formula, not an open architectural question:**
+`NVS = floor(total_stored_DM / (10 * FDRTE))`, floored at a minimum of 1 section (`Silostg.for:920-921`)
+— i.e., "how many 10-day chunks will it take to feed out everything currently in the silo." Each
+section then gets **exactly** `total_stored_DM / NVS` (`:930`) and the **mass-weighted average quality
+of every currently-stored plot** (`:922-933`, `CNDF`/`CCP`/`CNPN`/`AVGT`/`AVGPH` computed once across
+all of `self.stored`, then copied identically onto every section) — there is no depth-quality gradient
+between sections, only a difference in *when* each section gets fed out. This drops the earlier framing
+of this as "the single largest unknown": it's a direct translation, not a sub-design.
+
+Proposed RuFaS shape: a storage-level `_sections: list[...]` attribute on `Bunker`/`Pile` only (not
+`Bag`, which stays per-crop like Infiltration's radial front — a bag has no vertical stack), built by
+(1) computing `NVS` from current `total_dry_matter_mass` and the storage's Feed-out rate (Section 5.3.3),
+(2) computing the mass-weighted average of `ndf`/`crude_protein_percent`/`npn`/`temperature`/`ph` across
+`self.stored`, and (3) splitting `total_dry_matter_mass` into `NVS` equal shares carrying that averaged
+composition. Real open question, scoped down from the prior framing: exactly when to recompute the
+section list as `self.stored` changes (IFSM recomputes once per silo-emptying cycle in a batch model;
+RuFaS's day-by-day loop needs an explicit recomputation trigger) — flagged in Section 5.3.4.
+
+#### 5.3.3 Feed-out rate — a static per-storage constant, matching IFSM literally
+
+`FDRTE` in the source is a crude annualized average (`Silostg.for:233`,
+`FDRTE = 1000.*(TMSTO(1)+TMSTO(2))/365.` — total stored mass for the year, divided by 365), computed
+once per silo-emptying cycle from the *entire* stored mass, then deflated at the end of that cycle by
+the cycle's total loss fraction (`FDRTE = FDRTE*(1.-SDML)`, `:624`). It is not derived from any daily
+withdrawal amount — the Fortran model runs as an offline batch simulation with no concept of "today's
+actual request," and nothing in `FEEDOUT`, `BUNKER`, or the `SILO` orchestrator ever reads a per-day
+removal quantity from anywhere else.
+
+**Revised direction (supersedes the 2026-09-11 `FeedManager`-integration proposal): follow IFSM
+literally — use the same static per-storage rate, computed entirely within `Storage`/`Silage`, not from
+`FeedManager`.** A primary-source re-check found no live "today's request" signal anywhere in IFSM's own
+feed-out math to justify deviating from it; `FeedManager.manage_daily_feed_request` →
+`_deduct_from_storage` remains completely untouched by this design. Concretely:
+`feed_out_rate_kg_dm_per_day = total_dry_matter_mass / 365`, computed from `self.stored` the same way
+`NVS` is (Section 5.3.2) — no new cross-module data path, no new integration point between
+`FeedManager` and `Storage.process_degradations`.
+
+**Remaining open question (scoped down from "needs SME sign-off on a new integration," to just a
+recomputation-cadence choice):** IFSM computes this rate once per silo-emptying cycle in a batch model;
+RuFaS's day-by-day loop needs an explicit trigger for when to recompute it as `self.stored` grows or
+shrinks (e.g., once when Feed-out first activates for a storage vs. recomputed every
+`process_degradations` call). Candidate default: compute once, on first Feed-out activation for a given
+storage, and hold it fixed thereafter — closest behavioral match to IFSM's own once-per-cycle
+semantics — but this is a genuinely small decision now, not the structural integration question the
+prior draft posed.
+
+#### 5.3.4 Open Questions (for team review, not resolved by this section)
+
+- **LOADER — RESOLVED, confirmed by source, not just a proposed simplification.** `Silostg.for:1039`,
+  `DATA LOADER/0/` — the source itself hardcodes skid-steer (`LOADER=0`) with no branch anywhere in
+  `FEEDOUT` that ever sets it otherwise. RuFaS's `LOADER=0` default is a literal translation of IFSM's
+  own behavior, not a RuFaS-side simplification away from it.
+- **`TSTR`/`ISILO` — partially resolved.** `TSTR = ISILO(NSILO)` is not a per-silo lifecycle/state
+  machine; it's the same static silo-type configuration code used throughout `SILO` (`ISILO(NSILO)`:
+  1 = top-unloaded tower, 2 = bottom-unloaded tower, 3 = bunker, per the glossary at `Silostg.for:83`),
+  assigned once and constant for the run — maps directly onto RuFaS's `StorageType`. **Still genuinely
+  open:** `TSTR.EQ.5` zeroes `DML4A` entirely, but `ISILO` values 4/5 are never defined in this file, its
+  glossary, or the IFSM Reference Manual excerpt available in this repo (the `.BLK` include files that
+  might define them aren't present). Since RuFaS's `StorageType` enum has no 4th/5th-type analogue,
+  proposed resolution: treat `TSTR=5` as never-applicable to RuFaS's storage types rather than chasing
+  the undefined code further.
+- **Large-particle NDF split** — unchanged from the prior draft; no primary source resolves this
+  further. `PLOT(I,12)`/`PLOT(I,13)` ("NDF content of large particles" / "portion of large particles")
+  have no RuFaS analogue. Proposed: apply Feed-out's NDF dilution to the aggregate `crop.ndf` directly
+  (same as every other phase) — needs SME sign-off, since it means Feed-out's fiber-concentration
+  accuracy is intentionally coarser than the source for this one term.
+- **Bag/`PSIA` — CORRECTION to the prior draft, now resolved, no sourcing pass needed.** The prior
+  version of this bullet misread the source: `SILTYP.EQ.2` (`Silostg.for:1072`) is **bottom-unloaded
+  tower** per the glossary (`:83`), not Bag. Bunker (`SILTYP=3`) falls into the `ELSE` branch → `PSIA
+  = 0.21`. The Reference Manual states bags/bales are "simulated using the tower silo relationships"
+  generally, which — combined with Bag having a single opened end rather than a bottom-unload
+  mechanism — means Bag is best coded as the top-unload-tower branch (`SILTYP=1`), also giving
+  `PSIA = 0.21`. **Resolved reading: Bunker and Bag both use `PSIA = 0.21`; only bottom-unloaded tower
+  (a type RuFaS doesn't have) uses `0.105`.** No literature-sourcing pass is needed — this falls out of
+  the existing branch logic, not a table lookup.
+
+#### 5.3.5 Empirical plausibility benchmarks (literature + the MSF Expert System's own reference work)
+
+Wilkinson, M. (2012), *The aerobic stability of silage: key findings and recent developments*, Grass
+and Forage Science 68:1-19 (`00-inbox/silage_pdfs/#Wilkinson2012...pdf`) — a review paper, not a
+primary equation source (it does not give `FEEDOUT`-equivalent constants for `LOADER`/`TSTR`/`PSIA`
+above), but it does give real farm-scale numbers useful as **plausibility checks** on whatever
+Section 5.3.3's annualized-average rate produces, and as component-test sanity targets. Pitt & Muck
+(1993) — cited directly by name in `05-dev/msf/expert-system/scientific review/Silage_Model_Needs_
+Specification.md` as the numeric backbone for `fo_plan_feedout` itself — is the actual mechanistic
+diffusion-model source `FEEDOUT`'s `DML4A` structurally resembles (O₂/heat/yeast diffusion at the
+exposed face; `00-inbox`/`03-literature` note: `pitt-1993-a-diffusion-model-of-aerobic-deteriorati.md`).
+
+- **Feed-out face-removal rate, recommended vs. real-world vs. dose-response.** Wilkinson (2005)'s own
+  recommended target is 1-2 m of exposed face consumed per week (0.15-0.3 m/24h in winter, double that
+  in summer) — at 1 m/week, silage is never exposed more than 168 h before removal. Real farm data (54
+  commercial farms, Italy — Borreani & Tabacco 2010) ranged 0.07-0.25 m/24h in winter and 0.08-0.33 m/
+  24h in summer — real farms often move *slower* than the recommended target. **Pitt & Muck (1993)
+  gives the actual dose-response this drives**: only ~3% DM loss at the recommended 15 cm/day removal
+  rate, rising to ~9% at one-third that rate (5 cm/day) — this is the same 15 cm/day figure the MSF
+  Expert System's own `Silage_Model_Needs_Specification.md` already treats as sufficient evidence for
+  its `fo_plan_feedout` advisory tool, so it's a doubly-anchored number. **For Bag specifically**, MSF's
+  own `CA-12_CA-14_Silage_Average_Density_Formula.md` gives a distinct real-world threshold: "< 18
+  inches/day (≈0.46 m/day) → consider increasing feedout rate." **Use all of this as a sanity check**:
+  convert the annualized kg-DM/day rate (Section 5.3.3) into an equivalent face-advance rate
+  (via `dry_matter_density_kg_per_m3` × the storage's cross-sectional area) and confirm both that it
+  falls in a plausible real-world band and that the resulting `DML4` lands near the 3%/9% dose-response
+  anchor for at least one component-test scenario — a rate or loss wildly outside these ranges would
+  indicate a unit-conversion bug rather than a genuinely fast/slow farm.
+- **Density effect on loss, from the same primary source**: raising silage density from 480 to
+  960 kg/m³ shrinks the 24-h heated zone from 0.35 to 0.15 m and cuts 24-h losses from 0.93 to
+  0.85 kg DM per m² of *face area* — note this is normalized per unit face area (matching `CSAF`
+  directly), not per whole-silo mass, making it a more direct calibration target for `DML4A` than a
+  whole-silo percentage would be.
+- **Air penetration depth into the feed-out face**: 1-2 m (Honig 1991; Weinberg & Ashbell 1994) —
+  plausibility bound for how deep Feed-out's diffusion front should reach; a design analogous to
+  Infiltration's `front_radius_m`/`front_depth_cm` should stay within this order of magnitude for
+  typical storage geometries.
+- **A concrete DM-loss anchor**: silage 0.2-0.5 m behind the face that feels warm to the touch has "most
+  likely been exposed to air for more than 48 h and has probably lost about 5% of its total DM." Useful
+  as a rough component-test expectation (e.g., "≈5% DM loss after 2 days' exposure at a typical
+  removal rate" is plausible; "50% after 2 days" would not be).
+- **Recommended silage density at feed-out**: 170-180 kg DM/m³ for lower-DM crops (250 g DM/kg FW) up
+  to 240-250 kg DM/m³ for higher-DM crops (450 g DM/kg FW) (Spiekers et al. 2009); 240 kg DM/m³ with
+  max porosity 0.4 proposed for maize/whole-crop wheat (Holmes & Muck 2007). Corroborates (does not
+  replace) the existing `dry_matter_density_kg_per_m3` config field already shipped with
+  Preseal/Infiltration — a secondary literature source for realistic test-fixture values.
+- **Not directly reusable for Feed-out, but worth banking for Infiltration's own future validation
+  effort**: cover-film oxygen permeability measured directly against DM loss — 10% loss in the upper
+  40 cm layer under a low-permeability co-extruded film vs. 37% under conventional polyethylene film,
+  same maize crop, same conditions (Borreani et al. 2007). A real external data point if/when
+  Infiltration's shipped output ever needs a literature sanity check.
 
 ## 6. Known bugs from the prior audit (context, not fixed by this spec)
 
@@ -245,6 +512,22 @@ tracking, is unaffected). A *present but invalid* value (non-numeric, zero, nega
 who does configure Preseal; it's absence, not garbage, that's now tolerated. This is strictly
 opt-in: no existing farm config is required to change.
 
+**2026-09-11 — prerequisites for Feed-out (Section 5.3), updated after a primary-source re-check:**
+- **`CSAF`/feedout-face area — RESOLVED, derived not sourced.** Distinct from Infiltration's
+  `top_area_m2`/`front_radius_m`, but not a value needing literature/reference-table sourcing: IFSM
+  derives it from existing geometry plus the packing factor already in this design (Tower:
+  `π·(width/2)²`; Bunker: `width × settled_height`, where `settled_height = (0.70 + 0.25·PACK) ×
+  configured_height`, `Silostg.for:567-571`). No new blocking prerequisite.
+- **`PSIA` constant for Feed-out — RESOLVED, see Section 5.3.4's corrected Bag/`PSIA` bullet.**
+  Bunker and Bag both use `0.21`; only bottom-unloaded tower (no RuFaS analogue) uses `0.105`. No
+  literature-sourcing pass needed.
+- **Vertical-section compositing** (Section 5.3.2) remains a genuine prerequisite for Feed-out's
+  `Bunker`/`Pile` math — Feed-out cannot ship before sections exist, unlike Infiltration, which shipped
+  without them via a documented scope reduction — but per Section 5.3.2's update, the compositing
+  formula itself is now a direct translation, not an open architectural question. The real remaining
+  work is implementation (building `_sections` and wiring `receive_crop`/`remove_empty_crops`), not
+  further design.
+
 ## 8. Testing strategy
 
 **This PR (Preseal):**
@@ -252,16 +535,38 @@ opt-in: no existing farm config is required to change.
 - Component test: small synthetic silo (a few plots) through Preseal → existing Effluent/Fermentation (unmodified), asserting total DM loss stays under 100% and matches a hand-calculated expectation for at least one case.
 - Follows existing repo convention: `unit`/`component` pytest markers (`tests/CLAUDE.md`).
 
-**Follow-up PR (Infiltration, `PLAN_silage-infiltration-phase.md`):**
+**Delivered 2026-09-11 (Infiltration, `PLAN_silage-infiltration-phase.md`):**
 - Unit tests per new function: normal case, zero-exposure edge case, RS-ceiling-triggered case.
-- Component test: small synthetic silo (a few plots) through Preseal → existing Effluent/Fermentation (unmodified) → Infiltration, for one `Bunker` and one `Bag` case, asserting total DM loss stays under 100% and matches a hand-calculated expectation for at least one case.
+- Component test: small synthetic silo (a few plots) through Preseal → Effluent → Fermentation →
+  Infiltration, for one `Bunker` and one `Bag` case, asserting total DM loss stays under 100%.
+- A dedicated call-order regression test (`test_process_degradations_runs_fermentation_before_infiltration`)
+  was added *after* the phase-ordering bug (Section 4) — asserting actual call order, not just that both
+  phases eventually ran, since a presence-only test would not have caught that bug.
+
+**Follow-up (Feed-out, Section 5.3 — design only, implementation TBD):**
+- Unit tests per new function, same normal/zero/RS-ceiling-edge pattern as Infiltration.
+- A call-order regression test analogous to the one above is non-negotiable here too — Feed-out is the
+  4th phase-ordering integration point in a row (after Preseal, Infiltration, and Infiltration's own
+  order-fix), and this design's Section 4 architecture diagram makes the intended order explicit
+  (`Effluent → Fermentation → Infiltration → Feed-out`) precisely so a test can assert it directly.
+- Component test: small synthetic silo through Preseal → Effluent → Fermentation → Infiltration →
+  Feed-out via `process_degradations` alone (matching Section 4's revised diagram) — `FeedManager` is
+  untouched by this design, so no test needs to drive `manage_daily_feed_request` for Feed-out coverage.
+- Vertical-section compositing (Section 5.3.2) needs its own unit tests independent of Feed-out's loss
+  math — section-count formula (`NVS`), mass-weighted compositing, and interaction with `receive_crop`/
+  `remove_empty_crops` are all independently testable before any `FEEDOUT` math is wired to them.
 
 ## 9. Non-goals
 
 **Not delivered by this PR (tracked separately):**
-- Infiltration phase (Section 5.2) — designed here, implemented in `PLAN_silage-infiltration-phase.md`
+- Infiltration phase (Section 5.2) — designed here, implemented 2026-09-11 (`PLAN_silage-infiltration-phase.md`, phase-order corrected in `4e52e3ecd`)
+- Feed-out phase (Section 5.3) — designed here 2026-09-11, implementation not yet started; needs
+  vertical-section compositing as a prerequisite and its own `PLAN_*.md`/team-review cycle once this
+  section is written up and signed off
 
-**Non-goals of this whole design line (Preseal + the Infiltration follow-up):**
-- Feed-out phase (separate future work, shares Preseal's respiration submodel structurally but with different constants — not assumed reusable without its own design pass)
+**Non-goals of this whole design line (Preseal + Infiltration + Feed-out):**
 - Fixing Effluent/Fermentation bugs (Section 6)
 - Corn silage kernel-processing density/NEL adjustments (`CSSILO`, `Silostg.for:1107+`) — not reviewed as part of this design
+- Equipment-type modeling (`LOADER`), per-silo lifecycle state tracking (`TSTR`/`ISILO`), and
+  large/small-particle NDF fractionation (`PLOT(I,12)`/`PLOT(I,13)`) — flagged as open questions in
+  Section 5.3.4, proposed as hard-coded simplifications rather than modeled, pending SME sign-off
