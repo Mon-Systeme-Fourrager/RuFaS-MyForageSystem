@@ -8,6 +8,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 from RUFAS.data_structures.crop_soil_to_feed_storage_connection import HarvestedCrop
+from RUFAS.general_constants import GeneralConstants
 from RUFAS.output_manager import OutputManager
 from RUFAS.biophysical.feed_storage.silage import (
     Bag,
@@ -883,12 +884,24 @@ def test_calculate_respirable_substrate_fraction_fully_depleted() -> None:
 
 
 @pytest.mark.unit
+def test_respirable_substrate_fraction_matches_hand_calculation() -> None:
+    """Pins `_respirable_substrate_fraction`'s output against a hand-computed literal, using three
+    distinct argument values so an argument-order bug (e.g. ndf/crude-protein swapped) would be
+    caught — `1 - a - b - c` only distinguishes argument position when a, b, c actually differ, so
+    equal or symmetric inputs (as in the wrapper-equivalence test below) can't catch that class of
+    wiring bug on their own."""
+    result = _respirable_substrate_fraction(ndf_fraction=0.40, crude_protein_fraction=0.18, ash_fraction=0.08)
+    assert result == pytest.approx(1.0 - 0.40 - 0.18 - 0.08)
+
+
+@pytest.mark.unit
 def test_respirable_substrate_fraction_matches_public_wrapper(harvested_crop: HarvestedCrop) -> None:
-    """The new private helper and the existing public `calculate_respirable_substrate_fraction`
-    (still `HarvestedCrop`-typed) must agree for the same composition."""
-    ndf_fraction = harvested_crop.ndf * 0.01
-    crude_protein_fraction = harvested_crop.crude_protein_percent * 0.01
-    ash_fraction = harvested_crop.ash * 0.01
+    """The private helper and the existing public `calculate_respirable_substrate_fraction` (still
+    `HarvestedCrop`-typed) must agree for the same composition. Uses the named unit-conversion
+    constant rather than a hardcoded `0.01`, so a future change to it stays reflected here."""
+    ndf_fraction = harvested_crop.ndf * GeneralConstants.PERCENTAGE_TO_FRACTION
+    crude_protein_fraction = harvested_crop.crude_protein_percent * GeneralConstants.PERCENTAGE_TO_FRACTION
+    ash_fraction = harvested_crop.ash * GeneralConstants.PERCENTAGE_TO_FRACTION
 
     assert _respirable_substrate_fraction(ndf_fraction, crude_protein_fraction, ash_fraction) == pytest.approx(
         calculate_respirable_substrate_fraction(harvested_crop)
