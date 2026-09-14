@@ -107,6 +107,7 @@ def test_process_degradations(
         silage, "calculate_days_of_effluent_loss_to_process", return_value=days_of_loss
     )
     mocker.patch.object(silage, "_process_infiltration", return_value=0.0)
+    mocker.patch.object(silage, "_process_feed_out")
     dry_loss = mocker.patch.object(silage, "calculate_dry_matter_loss_to_effluent", return_value=10.0)
     moisture_loss = mocker.patch.object(silage, "calculate_moisture_loss_to_effluent", return_value=20.0)
     npn_coefficient = mocker.patch.object(
@@ -512,6 +513,7 @@ def test_process_degradations_finalizes_newest_crop_with_fallback(
     finalize = mocker.patch.object(silage, "_finalize_preseal_loss")
     mocker.patch.object(silage, "calculate_days_of_effluent_loss_to_process", return_value=0)
     mocker.patch.object(silage, "_process_infiltration", return_value=0.0)
+    mocker.patch.object(silage, "_process_feed_out")
     mocker.patch.object(Storage, "process_degradations")
     silage.stored = [harvested_crop]
 
@@ -536,6 +538,7 @@ def test_process_degradations_skips_already_finalized_crop(
     finalize = mocker.patch.object(silage, "_finalize_preseal_loss")
     mocker.patch.object(silage, "calculate_days_of_effluent_loss_to_process", return_value=0)
     mocker.patch.object(silage, "_process_infiltration", return_value=0.0)
+    mocker.patch.object(silage, "_process_feed_out")
     mocker.patch.object(Storage, "process_degradations")
     silage.stored = [harvested_crop]
 
@@ -569,6 +572,7 @@ def test_process_degradations_runs_fermentation_before_infiltration(
         return 0.0
 
     mocker.patch.object(silage, "_process_infiltration", side_effect=_record_infiltration)
+    mocker.patch.object(silage, "_process_feed_out")
     second_crop = copy.deepcopy(harvested_crop)
     silage.stored = [harvested_crop, second_crop]
 
@@ -602,6 +606,7 @@ def test_process_degradations_infiltration_elapsed_days_survives_fermentation(
 
     mocker.patch.object(Storage, "process_degradations", side_effect=_fake_fermentation)
     infiltration = mocker.patch.object(silage, "_process_infiltration", return_value=0.0)
+    mocker.patch.object(silage, "_process_feed_out")
     silage.stored = [harvested_crop]
 
     silage.process_degradations(mock_weather, mock_time)
@@ -1588,3 +1593,191 @@ def test_get_or_compute_feed_out_rate_held_fixed_after_first_call(
     second_rate = silage._get_or_compute_feed_out_rate_kg_dm_per_day()
 
     assert second_rate == first_rate
+
+
+@pytest.mark.unit
+def test_apply_feed_out_loss_dilutes_both_ndf_and_crude_protein(harvested_crop: HarvestedCrop, silage: Silage) -> None:
+    """Unlike `_apply_infiltration_loss` (which deliberately leaves crude protein unchanged,
+    Silostg.for:871-872,978-979), Feed-out DOES dilute crude protein (Silostg.for:1100) — this test
+    exists specifically to catch the two being conflated."""
+    initial_ndf = harvested_crop.ndf
+    initial_cp = harvested_crop.crude_protein_percent
+    initial_mass = harvested_crop.dry_matter_mass
+
+    silage._apply_feed_out_loss(harvested_crop, loss_fraction=0.05)
+
+    assert harvested_crop.dry_matter_mass == pytest.approx(initial_mass * 0.95)
+    assert harvested_crop.ndf > initial_ndf
+    assert harvested_crop.crude_protein_percent > initial_cp
+
+
+@pytest.mark.unit
+def test_apply_feed_out_loss_zero_fraction_is_a_noop(harvested_crop: HarvestedCrop, silage: Silage) -> None:
+    initial_mass = harvested_crop.dry_matter_mass
+    silage._apply_feed_out_loss(harvested_crop, loss_fraction=0.0)
+    assert harvested_crop.dry_matter_mass == initial_mass
+
+
+@pytest.mark.unit
+def test_process_feed_out_default_raises_not_implemented(silage: Silage) -> None:
+    with pytest.raises(NotImplementedError):
+        silage._process_feed_out()
+
+
+@pytest.mark.unit
+def test_bag_process_feed_out_reduces_mass(harvested_crop: HarvestedCrop) -> None:
+    config: dict[str, str | float | list[str]] = {
+        "name": "bag_silage",
+        "rufas_id": 1,
+        "field_names": ["field_1"],
+        "crop_name": "corn",
+        "initial_storage_dry_matter": 500.0,
+        "capacity": 1_000_000.0,
+        "diameter_m": 3.0,
+        "dry_matter_density_kg_per_m3": 180.0,
+    }
+    bag = Bag(config=config)
+    bag.stored = [harvested_crop]
+    initial_mass = harvested_crop.dry_matter_mass
+
+    bag._process_feed_out()
+
+    assert harvested_crop.dry_matter_mass < initial_mass
+
+
+@pytest.mark.unit
+def test_bag_process_feed_out_skips_when_geometry_missing(harvested_crop: HarvestedCrop) -> None:
+    config: dict[str, str | float | list[str]] = {
+        "name": "bag_silage",
+        "rufas_id": 1,
+        "field_names": ["field_1"],
+        "crop_name": "corn",
+        "initial_storage_dry_matter": 500.0,
+        "capacity": 1_000_000.0,
+    }
+    bag = Bag(config=config)
+    bag.stored = [harvested_crop]
+    initial_mass = harvested_crop.dry_matter_mass
+
+    bag._process_feed_out()
+
+    assert harvested_crop.dry_matter_mass == initial_mass
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("storage_class_name", ["Bunker", "Pile"])
+def test_bunker_process_feed_out_applies_same_fraction_within_a_section(
+    storage_class_name: str, harvested_crop: HarvestedCrop
+) -> None:
+    """Two crops of different mass, grouped into the same section, must lose the same *fraction* of
+    their own dry matter — proves the section-uniform-loss semantics (design spec Section 5.3.2)."""
+    config: dict[str, str | float | list[str]] = {
+        "name": "storage",
+        "rufas_id": 1,
+        "field_names": ["field_1"],
+        "crop_name": "corn",
+        "initial_storage_dry_matter": 500.0,
+        "capacity": 1_000_000.0,
+        "width_m": 10.0,
+        "height_m": 3.0,
+        "dry_matter_density_kg_per_m3": 180.0,
+    }
+    storage_class = Bunker if storage_class_name == "Bunker" else Pile
+    storage = storage_class(config=config)
+    second_crop = copy.deepcopy(harvested_crop)
+    second_crop.dry_matter_mass = 50.0
+    storage.stored = [harvested_crop, second_crop]  # rate is 0 on first call -> one section, both crops
+    initial_first_mass = harvested_crop.dry_matter_mass
+    initial_second_mass = second_crop.dry_matter_mass
+
+    storage._process_feed_out()
+
+    first_fraction_lost = 1.0 - harvested_crop.dry_matter_mass / initial_first_mass
+    second_fraction_lost = 1.0 - second_crop.dry_matter_mass / initial_second_mass
+    assert first_fraction_lost == pytest.approx(second_fraction_lost)
+    assert first_fraction_lost > 0.0
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("storage_class_name", ["Bunker", "Pile"])
+def test_bunker_process_feed_out_skips_when_geometry_missing(
+    storage_class_name: str, harvested_crop: HarvestedCrop
+) -> None:
+    config: dict[str, str | float | list[str]] = {
+        "name": "storage",
+        "rufas_id": 1,
+        "field_names": ["field_1"],
+        "crop_name": "corn",
+        "initial_storage_dry_matter": 500.0,
+        "capacity": 1_000_000.0,
+    }
+    storage_class = Bunker if storage_class_name == "Bunker" else Pile
+    storage = storage_class(config=config)
+    storage.stored = [harvested_crop]
+    initial_mass = harvested_crop.dry_matter_mass
+
+    storage._process_feed_out()
+
+    assert harvested_crop.dry_matter_mass == initial_mass
+
+
+@pytest.mark.unit
+def test_process_degradations_runs_infiltration_before_feed_out(mocker: MockerFixture, silage: Silage) -> None:
+    """Extends the existing Effluent->Fermentation->Infiltration call-order regression test
+    (test_process_degradations_runs_fermentation_before_infiltration) one phase further — Feed-out
+    must run last, after Infiltration, not before or interleaved with it."""
+    mock_weather = mocker.MagicMock(autospec=Weather)
+    mock_time = mocker.MagicMock(autospec=RufasTime)
+    mock_time.simulation_day = 15
+    mocker.patch.object(silage, "_finalize_preseal_loss")
+    mocker.patch.object(silage, "calculate_days_of_effluent_loss_to_process", return_value=0)
+    call_order: list[str] = []
+
+    def _record_fermentation(*args: Any, **kwargs: Any) -> None:
+        call_order.append("fermentation")
+
+    def _record_infiltration(crop: HarvestedCrop, elapsed_days: float) -> float:
+        call_order.append("infiltration")
+        return 0.0
+
+    def _record_feed_out() -> None:
+        call_order.append("feed_out")
+
+    mocker.patch.object(Storage, "process_degradations", side_effect=_record_fermentation)
+    mocker.patch.object(silage, "_process_infiltration", side_effect=_record_infiltration)
+    mocker.patch.object(silage, "_process_feed_out", side_effect=_record_feed_out)
+    silage.stored = [HarvestedCrop(**sample_crop_data)]
+
+    silage.process_degradations(mock_weather, mock_time)
+
+    assert call_order == ["fermentation", "infiltration", "feed_out"]
+
+
+@pytest.mark.component
+def test_process_degradations_full_chain_bag_stays_under_100_percent_loss(mocker: MockerFixture) -> None:
+    """Component test: a small synthetic Bag crop through Preseal -> Effluent -> Fermentation ->
+    Infiltration -> Feed-out, all via process_degradations alone (no FeedManager involved, matching
+    design spec Section 8's revised testing strategy) — total DM loss must stay under 100%."""
+    config: dict[str, str | float | list[str]] = {
+        "name": "bag_silage",
+        "rufas_id": 1,
+        "field_names": ["field_1"],
+        "crop_name": "corn",
+        "initial_storage_dry_matter": 500.0,
+        "capacity": 1_000_000.0,
+        "diameter_m": 3.0,
+        "dry_matter_density_kg_per_m3": 180.0,
+    }
+    bag = Bag(config=config)
+    crop = HarvestedCrop(**sample_crop_data)
+    crop.last_time_degraded = crop.storage_time - timedelta(days=60)
+    bag.stored = [crop]
+    mock_weather = mocker.MagicMock(autospec=Weather)
+    mock_time = mocker.MagicMock(autospec=RufasTime)
+    mock_time.simulation_day = 60
+    mock_time.current_date.date.return_value = crop.storage_time
+    initial_mass = crop.dry_matter_mass
+
+    bag.process_degradations(mock_weather, mock_time)
+
+    assert 0.0 <= crop.dry_matter_mass < initial_mass

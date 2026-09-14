@@ -1030,6 +1030,59 @@ class Silage(Storage):
         crop.dry_matter_mass = mass_values["dry_matter_mass"]
         crop.dry_matter_percentage = mass_values["dry_matter_percentage"]
 
+    def _apply_feed_out_loss(self, crop: HarvestedCrop, loss_fraction: float) -> None:
+        """
+        Applies a computed Feed-out dry-matter loss fraction to a crop's mass and composition.
+
+        Parameters
+        ----------
+        crop : HarvestedCrop
+            The crop to update in place.
+        loss_fraction : float
+            Fraction of this crop's current dry matter lost to Feed-out this step (already clipped
+            at the respirable-substrate ceiling by `calculate_feed_out_loss`).
+
+        Notes
+        -----
+        Unlike `_apply_infiltration_loss`, crude protein IS diluted here — `Silostg.for:1100` dilutes
+        `PLOT(NN,5)` (CP) the same way as `PLOT(NN,4)` (NDF), unlike `BUNKER`'s commented-out CP
+        dilution line. `moisture_loss=0.0` is deliberate, matching Infiltration — Feed-out is
+        gaseous respirable-substrate loss, no moisture-retention term.
+
+        References
+        ----------
+        Feed Storage Scientific Documentation, equation FS.NUT.1.
+
+        """
+        if loss_fraction <= 0.0:
+            return
+        dry_matter_loss_kg = crop.dry_matter_mass * loss_fraction
+        crop.ndf = self.recalculate_nutrient_percentage(crop.ndf, 0.0, dry_matter_loss_kg, crop.dry_matter_mass)
+        crop.crude_protein_percent = self.recalculate_nutrient_percentage(
+            crop.crude_protein_percent, 0.0, dry_matter_loss_kg, crop.dry_matter_mass
+        )
+        mass_values = self._calculate_mass_attributes_after_loss(crop, dry_matter_loss_kg, moisture_loss=0.0)
+        crop.dry_matter_mass = mass_values["dry_matter_mass"]
+        crop.dry_matter_percentage = mass_values["dry_matter_percentage"]
+
+    def _process_feed_out(self) -> None:
+        """
+        Calculates and applies this storage's Feed-out dry-matter loss for every currently-stored
+        crop.
+
+        Raises
+        ------
+        NotImplementedError
+            If called on a `Silage` subclass that has not defined its own Feed-out geometry.
+
+        """
+        self.om.add_error(
+            "Missing Feed-out geometry error",
+            f"{self.__class__.__name__} has no _process_feed_out implementation.",
+            info_map={"class": self.__class__.__name__, "function": self._process_feed_out.__name__},
+        )
+        raise NotImplementedError(f"{self.__class__.__name__} must implement _process_feed_out.")
+
     def _get_or_compute_feed_out_rate_kg_dm_per_day(self) -> float:
         """
         Fixes this storage's Feed-out rate the first time it is needed, and returns that fixed value
@@ -1059,8 +1112,8 @@ class Silage(Storage):
 
     def process_degradations(self, weather: Weather, time: RufasTime) -> None:
         """
-        Processes the ensiled crops' three degradation stages in order — Effluent, then Fermentation
-        (the parent ``process_degradations`` implementation), then Infiltration.
+        Processes the ensiled crops' four degradation stages in order — Effluent, then Fermentation
+        (the parent ``process_degradations`` implementation), then Infiltration, then Feed-out.
 
         Any crop that has not yet had its Preseal loss finalized (i.e. has not yet been superseded by a
         newer crop via ``receive_crop``) is finalized here first, using the fallback exposure time
@@ -1121,6 +1174,8 @@ class Silage(Storage):
         for crop, elapsed_days in zip(self.stored, infiltration_elapsed_days):
             infiltration_loss_kg = self._process_infiltration(crop, elapsed_days)
             self._apply_infiltration_loss(crop, infiltration_loss_kg)
+
+        self._process_feed_out()
 
     def project_degradations(
         self, crops: list[HarvestedCrop], weather: Weather, time: RufasTime
@@ -1465,6 +1520,38 @@ class Bunker(Silage):
             crop, elapsed_days, self.__class__.__name__, self.width_m, self.height_m, self.dry_matter_density_kg_per_m3
         )
 
+    def _process_feed_out(self) -> None:
+        """See `Silage._process_feed_out`. Composites `self.stored` into vertical sections (design
+        spec Section 5.3.2), computes one Feed-out loss fraction per section, then applies that same
+        fraction to every crop in the section — achieving `Silostg.for:922-933`'s section-uniform-
+        quality semantics without discarding RuFaS's individual-crop tracking (Task 4's Open
+        Decision: sections are rebuilt fresh from `self.stored` every call, never cached).
+
+        **Known, cited simplification (design spec Section 7):** uses the flat, unscaled
+        `width_m * height_m` for `CSAF`, not `Silostg.for:567-571`'s `width * settled_height`
+        (`settled_height = (0.70 + 0.25*PACK) * height`) — RuFaS has no `PACK` (packing factor)
+        concept anywhere, matching Infiltration's own already-established "no packing-factor
+        submodel" precedent for this identical geometry problem. This overstates face-diffusion loss
+        by roughly 5-43% depending on the unmodeled `PACK` value; not silently dropped, flagged for
+        SME awareness."""
+        if self.width_m is None or self.height_m is None or self.dry_matter_density_kg_per_m3 is None:
+            return
+        face_area_m2 = self.width_m * self.height_m
+        feed_out_rate = self._get_or_compute_feed_out_rate_kg_dm_per_day()
+        for section in build_feed_out_sections(self.stored, feed_out_rate):
+            loss_fraction = calculate_feed_out_loss(
+                section.dry_matter_fraction,
+                section.ndf_fraction,
+                section.crude_protein_fraction,
+                section.ash_fraction,
+                section.is_alfalfa,
+                feed_out_rate,
+                self.dry_matter_density_kg_per_m3,
+                face_area_m2,
+            )
+            for crop in section.crops:
+                self._apply_feed_out_loss(crop, loss_fraction)
+
 
 class Pile(Silage):
     """
@@ -1535,6 +1622,38 @@ class Pile(Silage):
             crop, elapsed_days, self.__class__.__name__, self.width_m, self.height_m, self.dry_matter_density_kg_per_m3
         )
 
+    def _process_feed_out(self) -> None:
+        """See `Silage._process_feed_out`. Composites `self.stored` into vertical sections (design
+        spec Section 5.3.2), computes one Feed-out loss fraction per section, then applies that same
+        fraction to every crop in the section — achieving `Silostg.for:922-933`'s section-uniform-
+        quality semantics without discarding RuFaS's individual-crop tracking (Task 4's Open
+        Decision: sections are rebuilt fresh from `self.stored` every call, never cached).
+
+        **Known, cited simplification (design spec Section 7):** uses the flat, unscaled
+        `width_m * height_m` for `CSAF`, not `Silostg.for:567-571`'s `width * settled_height`
+        (`settled_height = (0.70 + 0.25*PACK) * height`) — RuFaS has no `PACK` (packing factor)
+        concept anywhere, matching Infiltration's own already-established "no packing-factor
+        submodel" precedent for this identical geometry problem. This overstates face-diffusion loss
+        by roughly 5-43% depending on the unmodeled `PACK` value; not silently dropped, flagged for
+        SME awareness."""
+        if self.width_m is None or self.height_m is None or self.dry_matter_density_kg_per_m3 is None:
+            return
+        face_area_m2 = self.width_m * self.height_m
+        feed_out_rate = self._get_or_compute_feed_out_rate_kg_dm_per_day()
+        for section in build_feed_out_sections(self.stored, feed_out_rate):
+            loss_fraction = calculate_feed_out_loss(
+                section.dry_matter_fraction,
+                section.ndf_fraction,
+                section.crude_protein_fraction,
+                section.ash_fraction,
+                section.is_alfalfa,
+                feed_out_rate,
+                self.dry_matter_density_kg_per_m3,
+                face_area_m2,
+            )
+            for crop in section.crops:
+                self._apply_feed_out_loss(crop, loss_fraction)
+
 
 class Bag(Silage):
     """
@@ -1598,3 +1717,29 @@ class Bag(Silage):
         if self.diameter_m is None or self.dry_matter_density_kg_per_m3 is None:
             return 0.0
         return calculate_bag_infiltration_loss(crop, elapsed_days, self.diameter_m, self.dry_matter_density_kg_per_m3)
+
+    def _process_feed_out(self) -> None:
+        """See `Silage._process_feed_out`. Applies Feed-out per crop directly — a `Bag` has no
+        vertical stack, so it needs no section compositing (design spec Section 5.2/5.3.2). Reuses
+        `_preseal_exposed_area_m2` for the feedout face area — both are the bag's circular
+        cross-section, `pi * radius**2` (Silostg.for:310-313, `CSAF = CSA` for the tower branch bags
+        reuse)."""
+        if self.diameter_m is None or self.dry_matter_density_kg_per_m3 is None:
+            return
+        face_area_m2 = self._preseal_exposed_area_m2()
+        if face_area_m2 is None:
+            return
+        feed_out_rate = self._get_or_compute_feed_out_rate_kg_dm_per_day()
+        for crop in self.stored:
+            dry_matter_fraction = crop.dry_matter_percentage * GeneralConstants.PERCENTAGE_TO_FRACTION
+            loss_fraction = calculate_feed_out_loss(
+                dry_matter_fraction,
+                crop.ndf * GeneralConstants.PERCENTAGE_TO_FRACTION,
+                crop.crude_protein_percent * GeneralConstants.PERCENTAGE_TO_FRACTION,
+                crop.ash * GeneralConstants.PERCENTAGE_TO_FRACTION,
+                crop.is_alfalfa,
+                feed_out_rate,
+                self.dry_matter_density_kg_per_m3,
+                face_area_m2,
+            )
+            self._apply_feed_out_loss(crop, loss_fraction)
