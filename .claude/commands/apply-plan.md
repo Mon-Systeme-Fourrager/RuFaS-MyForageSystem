@@ -234,10 +234,12 @@ Print exactly:
   errors vs `dev`.
 - **flake8 complexity ≤ 10** — refactor rather than suppress.
 - **Tests mirror `RUFAS/`** under `tests/` (`test_<module>.py`, `test_<pkg>/`);
-  `pytest-mock`, fixtures, `freezegun` for time. See `tests/CLAUDE.md`.
+  `pytest-mock`, pytest fixtures, `freezegun` for time. Test files are freely
+  editable — nothing protects them. See `tests/CLAUDE.md`.
 - **Constants over magic numbers** — use the relevant `*_constants.py`.
-- **Protected inputs** — never edit `example_*`/`no_*` fixtures
-  (`.claude/rules/protected-inputs.md`).
+- **Protected inputs** — never edit the `example_*.json` / `no_*.json` input
+  files under `input/` (`.claude/rules/protected-inputs.md`). Input JSON only,
+  never `tests/`.
 - **`changelog.md` mandatory** on the PR.
 - **Pre-commit hooks respected** — never `--no-verify`. Fix the root cause.
 - **Commit hygiene** — never `git add .`/`git add -A`. Stage by explicit name.

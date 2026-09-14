@@ -81,8 +81,9 @@ untouched sections or add a "summary of changes" block.
 - Cited paths/symbols exist (verify with Read/Grep/graphify).
 - YAGNI still respected.
 - `CLAUDE.md` respected: full type hints (mypy strict), flake8 complexity ≤ 10,
-  Black 120, constants over magic numbers, tests mirror `RUFAS/`, `pip`/`pytest`,
-  no edit to protected input fixtures.
+  Black 120, constants over magic numbers, tests mirror `RUFAS/`, `pip`/`pytest`.
+- No edit to the protected `example_*.json` / `no_*.json` input files under
+  `input/` (input JSON only — never `tests/`).
 - Every task carries an `**EDITS**:` line with ≥ 1 path that resolves on disk
   (or appears under a `✨`/`🧪` creation marker). A dangling path is blocking.
 - For each `**PARALLEL_GROUP**: X`, the `EDITS` across tasks with that letter are

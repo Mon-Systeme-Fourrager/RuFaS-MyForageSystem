@@ -39,6 +39,23 @@ Each has its own `CLAUDE.md`.
   `InputManager()`, `OutputManager()`); follow the surrounding pattern.
 - Keep functions under flake8 complexity 10 — these modules are already large,
   so prefer extracting helpers over growing a method.
+- **Extend existing structures, never add parallel ones** — when a dispatch
+  table, registration list, group loop, or config parser already handles the
+  family you're adding to, add your entry INTO it. A second near-identical
+  loop or `if` chain beside the existing one is a review blocker.
+- **`dataclasses.replace()` re-runs `__post_init__`** — every `field(init=False)`
+  is silently recomputed from the *new* values, so derived and "initial" state is
+  lost. Before calling `replace(x, ...)`, run `grep -rn "init=False" RUFAS/`
+  (10 fields across 3 classes today): if the class appears, either restore
+  **every** such field right after the call, or mutate in place instead
+  (`biophysical/feed_storage/storage.py:204-217` is the clean pattern). Restoring
+  only some of them is a review blocker — it is how derived state silently
+  reverts to its as-newly-created value.
+- **New input blocks mirror the nearest sibling block's key naming** — before
+  inventing JSON keys for a new config/input section, read the `.get("...")`
+  keys of the closest existing block (same file or same domain) and reuse its
+  conventions (e.g. `num_<type>` for counts). The user-facing input schema
+  must stay uniform; it is expensive to change after merge.
 
 ## Reference docs (RuFaS wiki)
 

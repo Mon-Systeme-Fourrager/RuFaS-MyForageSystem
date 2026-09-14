@@ -25,7 +25,8 @@ compression can drop nuance that matters:
 - Biophysical model logic and scientific equations (animal, field/soil/crop,
   manure, EEE) — correctness and unit/mass-balance integrity come first.
 - mypy-strict typing work (CI ratchets the error count against `dev`).
-- Protected input fixtures (`.claude/rules/protected-inputs.md`).
+- Protected input JSON files under `input/` (`.claude/rules/protected-inputs.md`)
+  — input JSON only, never `tests/`.
 - Anything that changes numeric model outputs.
 
 ## Commits & PRs
