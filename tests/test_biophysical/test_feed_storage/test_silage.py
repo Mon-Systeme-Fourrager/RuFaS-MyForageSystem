@@ -24,6 +24,8 @@ from RUFAS.biophysical.feed_storage.silage import (
     calculate_bag_infiltration_loss,
     calculate_bunker_infiltration_loss,
     calculate_feed_out_loss,
+    FeedOutSection,
+    build_feed_out_sections,
 )
 from RUFAS.biophysical.feed_storage.silage_constants import (
     PRESEAL_FALLBACK_EXPOSURE_DAYS,
@@ -1360,6 +1362,128 @@ def test_calculate_feed_out_loss_numeric_oracle() -> None:
         face_area_m2=face_area_m2,
     )
     assert actual == pytest.approx(expected, rel=1e-9)
+
+
+@pytest.mark.unit
+def test_build_feed_out_sections_empty_storage_returns_empty_list() -> None:
+    assert build_feed_out_sections([], feed_out_rate_kg_dm_per_day=100.0) == []
+
+
+@pytest.mark.unit
+def test_build_feed_out_sections_single_crop_returns_one_section(harvested_crop: HarvestedCrop) -> None:
+    sections: list[FeedOutSection] = build_feed_out_sections([harvested_crop], feed_out_rate_kg_dm_per_day=1.0)
+
+    assert len(sections) == 1
+    assert sections[0].crops == [harvested_crop]
+    assert sections[0].dry_matter_mass_kg == pytest.approx(harvested_crop.dry_matter_mass)
+
+
+@pytest.mark.unit
+def test_build_feed_out_sections_zero_rate_returns_one_section(harvested_crop: HarvestedCrop) -> None:
+    """No Feed-out rate yet (storage hasn't been assigned one) — treat everything as a single section
+    rather than dividing by zero computing NVS."""
+    second_crop = copy.deepcopy(harvested_crop)
+    sections = build_feed_out_sections([harvested_crop, second_crop], feed_out_rate_kg_dm_per_day=0.0)
+
+    assert len(sections) == 1
+    assert sections[0].crops == [harvested_crop, second_crop]
+
+
+@pytest.mark.unit
+def test_build_feed_out_sections_groups_multiple_crops_by_target_mass(harvested_crop: HarvestedCrop) -> None:
+    """4 crops of 100 kg DM each (400 kg total), rate chosen so NVS = floor(400/(10*20)) = 2 — the 4
+    crops must be grouped into exactly 2 sections, not left as 4 or collapsed to 1."""
+    crops = [copy.deepcopy(harvested_crop) for _ in range(4)]
+    for crop in crops:
+        crop.dry_matter_mass = 100.0
+
+    sections = build_feed_out_sections(crops, feed_out_rate_kg_dm_per_day=20.0)
+
+    assert len(sections) == 2
+    assert sum(len(section.crops) for section in sections) == 4
+    assert sum(section.dry_matter_mass_kg for section in sections) == pytest.approx(400.0)
+
+
+@pytest.mark.unit
+def test_build_feed_out_sections_mass_weighted_average_composition() -> None:
+    """Two crops of different mass and composition in one section: the section's ndf_fraction must be
+    the *mass-weighted* average, not a plain (unweighted) average — proves the weighting is real."""
+    light_crop = HarvestedCrop(**(sample_crop_data | {"dry_matter_mass": 10.0, "ndf": 10.0}))
+    heavy_crop = HarvestedCrop(**(sample_crop_data | {"dry_matter_mass": 90.0, "ndf": 50.0}))
+
+    # rate=0 forces a single section containing both crops (see the zero-rate test above).
+    sections = build_feed_out_sections([light_crop, heavy_crop], feed_out_rate_kg_dm_per_day=0.0)
+
+    assert len(sections) == 1
+    plain_average = (10.0 + 50.0) / 2.0 * 0.01
+    mass_weighted_average = (10.0 * 10.0 + 90.0 * 50.0) / 100.0 * 0.01
+    assert sections[0].ndf_fraction == pytest.approx(mass_weighted_average)
+    assert sections[0].ndf_fraction != pytest.approx(plain_average)
+
+
+@pytest.mark.unit
+def test_build_feed_out_sections_dry_matter_fraction_uses_total_dm_over_total_wet_mass() -> None:
+    """`dry_matter_fraction` is NOT a mass-weighted average of each crop's own DM fraction — it is
+    `total_DM / total_wet_mass` (Silostg.for:899,909). This test uses two crops with different DM%
+    specifically to distinguish the two formulas."""
+    # 10 kg DM @ 10% DM -> 100 kg wet; 90 kg DM @ 50% DM -> 180 kg wet.
+    light_crop = HarvestedCrop(**(sample_crop_data | {"dry_matter_mass": 10.0, "dry_matter_percentage": 10.0}))
+    heavy_crop = HarvestedCrop(**(sample_crop_data | {"dry_matter_mass": 90.0, "dry_matter_percentage": 50.0}))
+
+    sections = build_feed_out_sections([light_crop, heavy_crop], feed_out_rate_kg_dm_per_day=0.0)
+
+    naive_mass_weighted_average = (10.0 * 0.10 + 90.0 * 0.50) / 100.0  # the WRONG formula -> 0.46
+    correct_total_over_total_wet = 100.0 / (100.0 + 180.0)  # the source's own formula -> ~0.3571
+    assert sections[0].dry_matter_fraction == pytest.approx(correct_total_over_total_wet)
+    assert sections[0].dry_matter_fraction != pytest.approx(naive_mass_weighted_average)
+
+
+@pytest.mark.unit
+def test_build_feed_out_sections_zero_fresh_mass_does_not_raise() -> None:
+    """A crop with dry_matter_mass > 0 but dry_matter_percentage == 0 (an inconsistent but
+    constructible HarvestedCrop state) makes `fresh_mass` return 0.0 — `dry_matter_fraction` must
+    fall back to 0.0 rather than raising ZeroDivisionError."""
+    degenerate_crop = HarvestedCrop(**(sample_crop_data | {"dry_matter_mass": 10.0, "dry_matter_percentage": 0.0}))
+
+    sections = build_feed_out_sections([degenerate_crop], feed_out_rate_kg_dm_per_day=0.0)
+
+    assert sections[0].dry_matter_fraction == 0.0
+
+
+@pytest.mark.unit
+def test_build_feed_out_sections_is_alfalfa_matches_section_own_first_crop() -> None:
+    """A single section's crop-type flag matches its own first crop, not a majority vote or the last
+    crop."""
+    alfalfa_crop = HarvestedCrop(**(sample_crop_data | {"config_name": "alfalfa_data", "dry_matter_mass": 10.0}))
+    corn_crop = HarvestedCrop(**(sample_crop_data | {"config_name": "corn_data", "dry_matter_mass": 90.0}))
+
+    sections = build_feed_out_sections([alfalfa_crop, corn_crop], feed_out_rate_kg_dm_per_day=0.0)
+
+    assert sections[0].is_alfalfa is True
+
+
+@pytest.mark.unit
+def test_build_feed_out_sections_is_alfalfa_is_per_section_not_storage_wide() -> None:
+    """A storage refilled with a different crop type over time, split into 2+ sections, must give
+    EACH section its OWN first crop's type — not `Silostg.for:923`'s literal behavior of stamping
+    every section with the storage's single very-first crop (a deliberate, documented design-spec
+    deviation). 4 corn crops (100 kg DM each) then 4 alfalfa crops (100 kg DM each), rate chosen so
+    NVS = floor(800/(10*40)) = 2 — the corn crops must group into the first section and the alfalfa
+    crops into the second, giving each section a DIFFERENT is_alfalfa, not both False (which
+    storage-wide first-crop typing would produce)."""
+    corn_crops = [
+        HarvestedCrop(**(sample_crop_data | {"config_name": "corn_data", "dry_matter_mass": 100.0})) for _ in range(4)
+    ]
+    alfalfa_crops = [
+        HarvestedCrop(**(sample_crop_data | {"config_name": "alfalfa_data", "dry_matter_mass": 100.0}))
+        for _ in range(4)
+    ]
+
+    sections = build_feed_out_sections(corn_crops + alfalfa_crops, feed_out_rate_kg_dm_per_day=40.0)
+
+    assert len(sections) == 2
+    assert sections[0].is_alfalfa is False
+    assert sections[1].is_alfalfa is True
 
 
 @pytest.mark.component

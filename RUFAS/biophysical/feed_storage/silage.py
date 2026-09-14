@@ -1,5 +1,5 @@
 import math
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from typing import Any
 
 from RUFAS.general_constants import GeneralConstants
@@ -66,6 +66,7 @@ from .silage_constants import (
     FEEDOUT_LOADER_ALFALFA_COEFFICIENT,
     FEEDOUT_LOADER_NON_ALFALFA_COEFFICIENT,
     FEEDOUT_BUNK_TIME_DAYS,
+    FEEDOUT_SECTION_WINDOW_DAYS,
 )
 
 """Fraction of effluent that is dry matter by mass."""
@@ -666,6 +667,149 @@ def calculate_feed_out_loss(
         )
 
     return min(respirable_substrate_fraction, face_loss_fraction + bunk_loss_fraction)
+
+
+@dataclass(frozen=True)
+class FeedOutSection:
+    """
+    One `Bunker`/`Pile` vertical section for Feed-out — a mass-weighted composite over a contiguous
+    run of `self.stored`, rebuilt fresh every `process_degradations` call (Task 4's Open Decision:
+    never cached, so it can never go stale relative to `self.stored`'s current, mutated state).
+
+    Attributes
+    ----------
+    crops : list[HarvestedCrop]
+        The stored crops composited into this section, in `self.stored` order.
+    dry_matter_fraction : float
+        Dry-matter content (fraction), computed as `total_dry_matter_mass / total_fresh_mass` across
+        `crops` (`Silostg.for:899,909` — NOT a mass-weighted average of each crop's own fraction;
+        those two only coincide when every crop has identical DM%).
+    ndf_fraction : float
+        Mass-weighted average NDF content (fraction of dry matter) across `crops`.
+    crude_protein_fraction : float
+        Mass-weighted average crude protein content (fraction of dry matter) across `crops`.
+    ash_fraction : float
+        Mass-weighted average ash content (fraction of dry matter) across `crops`.
+    is_alfalfa : bool
+        `crops[0].is_alfalfa` — **this section's own** first crop, not necessarily the whole
+        storage's very first crop. A deliberate deviation from `Silostg.for:923`'s
+        `PLOT(IVS,1) = PLOT(1,1)`, which gives *every* section the storage's single first-ever
+        plot's crop type, uniformly. RuFaS's per-section choice is more faithful to a storage that
+        has actually been refilled with a different crop over time — since RuFaS (unlike IFSM) keeps
+        individual crops distinguishable rather than treating a sealed bunker as uniform,
+        section-local typing is the more sensible RuFaS-side translation, not a bug.
+        ``[FS.SIL.18]``.
+
+    """
+
+    crops: list[HarvestedCrop]
+    dry_matter_fraction: float
+    ndf_fraction: float
+    crude_protein_fraction: float
+    ash_fraction: float
+    is_alfalfa: bool
+
+    @property
+    def dry_matter_mass_kg(self) -> float:
+        """Total dry-matter mass of this section's crops (kg)."""
+        return sum(crop.dry_matter_mass for crop in self.crops)
+
+
+def _composite_feed_out_section(crops: list[HarvestedCrop]) -> FeedOutSection:
+    """Builds one `FeedOutSection` as the mass-weighted average of `crops` (`Silostg.for:909-916`).
+    NDF/CP/ash use a straightforward DM-mass-weighted average (`ANDF/SWT`-style, `:900-904`);
+    `dry_matter_fraction` uses the source's own distinct `DM = SWT/SWETWT` form (`:899,909` — total
+    dry mass over total *wet* mass), not a weighted average of each crop's own DM fraction — the two
+    only coincide when every crop in the group has identical DM%."""
+    total_mass_kg = sum(crop.dry_matter_mass for crop in crops)
+    if total_mass_kg <= 0.0:
+        return FeedOutSection(crops, 0.0, 0.0, 0.0, 0.0, crops[0].is_alfalfa)
+
+    def _weighted_average_fraction(nutrient_percent_attr: str) -> float:
+        return (
+            sum(
+                crop.dry_matter_mass
+                * float(getattr(crop, nutrient_percent_attr))
+                * GeneralConstants.PERCENTAGE_TO_FRACTION
+                for crop in crops
+            )
+            / total_mass_kg
+        )
+
+    # NOT a mass-weighted average of each crop's own dry_matter_percentage (that would compute
+    # sum(DM_i * DMfrac_i)/sum(DM_i), which only coincides with the source's own formula when
+    # every crop has identical DM%). Silostg.for:899,909 computes DM = total_DM / total_WET_mass
+    # instead; `HarvestedCrop.fresh_mass` is already `dry_matter_mass / dry_matter_percentage_fraction`,
+    # so this is that formula directly.
+    # Guarded against total_fresh_mass_kg == 0.0 (possible if a crop has dry_matter_percentage == 0
+    # while dry_matter_mass > 0 — an inconsistent but not type-impossible HarvestedCrop state):
+    # falls back to 0.0 rather than raising.
+    total_fresh_mass_kg = sum(crop.fresh_mass for crop in crops)
+    dry_matter_fraction = total_mass_kg / total_fresh_mass_kg if total_fresh_mass_kg > 0.0 else 0.0
+
+    return FeedOutSection(
+        crops=crops,
+        dry_matter_fraction=dry_matter_fraction,
+        ndf_fraction=_weighted_average_fraction("ndf"),
+        crude_protein_fraction=_weighted_average_fraction("crude_protein_percent"),
+        ash_fraction=_weighted_average_fraction("ash"),
+        is_alfalfa=crops[0].is_alfalfa,
+    )
+
+
+def build_feed_out_sections(stored: list[HarvestedCrop], feed_out_rate_kg_dm_per_day: float) -> list[FeedOutSection]:
+    """
+    Groups currently-stored crops into `Bunker`/`Pile` Feed-out vertical sections.
+
+    Parameters
+    ----------
+    stored : list[HarvestedCrop]
+        The storage's currently-stored crops, oldest first (`self.stored` order).
+    feed_out_rate_kg_dm_per_day : float
+        This storage's Feed-out rate (kg DM/day) — sizes each section to roughly
+        `FEEDOUT_SECTION_WINDOW_DAYS` worth of feed-out.
+
+    Returns
+    -------
+    list[FeedOutSection]
+        One or more sections, each a contiguous run of whole crops — never splitting a single crop's
+        mass across two sections (Task 4's Open Decision). Empty if `stored` is empty; a single
+        section containing everything if `feed_out_rate_kg_dm_per_day` is non-positive (no rate yet
+        to derive a section count from).
+
+    Notes
+    -----
+    ``NVS = floor(total_stored_DM / (10 * FDRTE))``, floored at a minimum of 1
+    (``Silostg.for:920-921``). ``[FS.SIL.18]``.
+
+    """
+    if not stored:
+        return []
+
+    total_dry_matter_mass_kg = sum(crop.dry_matter_mass for crop in stored)
+    if total_dry_matter_mass_kg <= 0.0 or feed_out_rate_kg_dm_per_day <= 0.0:
+        return [_composite_feed_out_section(stored)]
+
+    number_of_sections = max(
+        1,
+        math.floor(total_dry_matter_mass_kg / (FEEDOUT_SECTION_WINDOW_DAYS * feed_out_rate_kg_dm_per_day)),
+    )
+    target_mass_per_section_kg = total_dry_matter_mass_kg / number_of_sections
+
+    sections: list[FeedOutSection] = []
+    current_group: list[HarvestedCrop] = []
+    current_group_mass_kg = 0.0
+    for crop in stored:
+        current_group.append(crop)
+        current_group_mass_kg += crop.dry_matter_mass
+        if current_group_mass_kg >= target_mass_per_section_kg and len(sections) < number_of_sections - 1:
+            sections.append(_composite_feed_out_section(current_group))
+            current_group = []
+            current_group_mass_kg = 0.0
+    if current_group:
+        sections.append(_composite_feed_out_section(current_group))
+
+    return sections
 
 
 class Silage(Storage):
