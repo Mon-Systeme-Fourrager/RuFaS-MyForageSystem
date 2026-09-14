@@ -45,6 +45,27 @@ from .silage_constants import (
     PRESEAL_TEMPERATURE_RISE_HEAT_RETENTION_FRACTION,
     PRESEAL_TEMPERATURE_RISE_DENOMINATOR_COEFFICIENT_A,
     PRESEAL_TEMPERATURE_RISE_DENOMINATOR_COEFFICIENT_B,
+    FEEDOUT_KM,
+    FEEDOUT_FC,
+    FEEDOUT_THICK_CM,
+    FEEDOUT_PSIA,
+    FEEDOUT_MIN_DIFFUSION_C,
+    FEEDOUT_MIN_PHI,
+    FEEDOUT_PHI_SCALE,
+    FEEDOUT_PHI_LOADER_COEFFICIENT,
+    FEEDOUT_MUMAX_COEFFICIENT,
+    FEEDOUT_WATER_ACTIVITY_COEFFICIENT,
+    FEEDOUT_WATER_ACTIVITY_LOW_THRESHOLD,
+    FEEDOUT_WATER_ACTIVITY_HIGH_THRESHOLD,
+    FEEDOUT_WATER_ACTIVITY_HIGH_INTERCEPT,
+    FEEDOUT_WATER_ACTIVITY_HIGH_SLOPE,
+    FEEDOUT_WATER_ACTIVITY_MID_SLOPE,
+    FEEDOUT_WATER_ACTIVITY_MID_INTERCEPT,
+    FEEDOUT_TEMPERATURE_C,
+    FEEDOUT_TEMPERATURE_FACTOR,
+    FEEDOUT_LOADER_ALFALFA_COEFFICIENT,
+    FEEDOUT_LOADER_NON_ALFALFA_COEFFICIENT,
+    FEEDOUT_BUNK_TIME_DAYS,
 )
 
 """Fraction of effluent that is dry matter by mass."""
@@ -505,6 +526,146 @@ def calculate_bunker_infiltration_loss(
     loss_this_step_kg = total_loss_kg - crop.infiltration_cumulative_loss_kg
     crop.infiltration_cumulative_loss_kg = total_loss_kg
     return loss_this_step_kg
+
+
+def calculate_feed_out_loss(
+    dry_matter_fraction: float,
+    ndf_fraction: float,
+    crude_protein_fraction: float,
+    ash_fraction: float,
+    is_alfalfa: bool,
+    feed_out_rate_kg_dm_per_day: float,
+    dry_matter_density_kg_per_m3: float,
+    face_area_m2: float,
+) -> float:
+    """
+    Calculates the fraction of dry matter lost to Feed-out surface spoilage — in-silo diffusion loss
+    at the exposed face, plus a fixed feed-bunk loss — for one `Bag` crop or one `Bunker`/`Pile`
+    Feed-out section.
+
+    Parameters
+    ----------
+    dry_matter_fraction : float
+        Dry-matter content as a fraction (0-1) — the crop's own value for `Bag`, or a section's
+        mass-weighted average for `Bunker`/`Pile` (Task 4).
+    ndf_fraction : float
+        NDF content as a fraction of dry matter.
+    crude_protein_fraction : float
+        Crude protein content as a fraction of dry matter.
+    ash_fraction : float
+        Ash content as a fraction of dry matter.
+    is_alfalfa : bool
+        Whether this material is alfalfa/grass (`Silostg.for` `PLOT(NN,1).GE.4`) vs. corn/small
+        grain — selects `FEEDOUT_LOADER_ALFALFA_COEFFICIENT` vs.
+        `FEEDOUT_LOADER_NON_ALFALFA_COEFFICIENT`.
+    feed_out_rate_kg_dm_per_day : float
+        This storage's static Feed-out rate (design spec Section 5.3.3).
+    dry_matter_density_kg_per_m3 : float
+        Packed dry-matter density of the storage (kg DM / m3).
+    face_area_m2 : float
+        Exposed feedout face area (m2) — `CSAF` (design spec Section 5.3.1).
+
+    Returns
+    -------
+    float
+        Dry-matter loss fraction for this step, already clipped at the respirable-substrate ceiling.
+
+    Notes
+    -----
+    Translated from ``Silostg.for:1029-1104`` (``FEEDOUT``). ``FDTMP`` is fixed at
+    `FEEDOUT_TEMPERATURE_C` (``Silostg.for:295``, a silo-level constant, not per-crop); ``LOADER`` is
+    fixed at 0 (``Silostg.for:1039``, "skid steer", the source's own only value in this subroutine);
+    ``PSIA`` is `FEEDOUT_PSIA` for every RuFaS storage type (design spec Section 5.3.4's corrected
+    reading — no RuFaS-relevant branch uses ``0.105``). Only ``DML4A`` (the face-diffusion term) is
+    gated by ``PHI.LT.0.01`` (``Silostg.for:1081-1083``) — ``DML4B`` (the feed-bunk term) is computed
+    unconditionally; see `FEEDOUT_MIN_PHI`'s own docstring for why this gate is mathematically
+    unreachable given `LOADER=0`, and is kept anyway for literal parity with the source. Reuses
+    `PRESEAL_K`/`PRESEAL_TORTUOSITY`/`PRESEAL_LOSS_PER_DAY_COEFFICIENT`/
+    `PRESEAL_MAX_RELATIVE_DENSITY_NUMERATOR`/`PRESEAL_DENSITY_KG_PER_M3_TO_G_PER_CM3`/
+    `PRESEAL_DIFFUSION_COEFFICIENT_FACTOR`/`PRESEAL_DIFFUSION_TEMPERATURE_OFFSET_C`/
+    `PRESEAL_DEPTH_M_TO_CM` — verified algebraically identical to `FEEDOUT`'s own ``K``/``TAU``/
+    ``0.0299``/``RHOMAX``-numerator/density-unit-conversion/``D``/``100.`` terms
+    (``Silostg.for:1038,1045,1048-1049,1077-1080,1085,1087``), not a coincidental reuse. The feed-bunk
+    term's own ``0.125`` (``Silostg.for:1092``, "0.125 DAYS BUNK TIME ASSUMED") is **not** the same
+    constant as `PRESEAL_FALLBACK_EXPOSURE_DAYS` (`Silostg.for:261`, a different subroutine's plot-
+    exposure fallback) despite the equal numeric value; `FEEDOUT_BUNK_TIME_DAYS` is its own constant.
+    ``[FS.SIL.16]``. `dry_matter_fraction >= 1.0` returns ``0.0`` rather than computing
+    `water_activity`'s `1.0 - ... / (1.0 - dry_matter_fraction)` term, which divides by zero at
+    exactly ``1.0`` — a physically implausible input (100% dry matter), not a realistic scenario this
+    needs to model.
+
+    """
+    if not (0.0 < dry_matter_fraction < 1.0) or feed_out_rate_kg_dm_per_day <= 0.0 or face_area_m2 <= 0.0:
+        return 0.0
+
+    respirable_substrate_fraction = _respirable_substrate_fraction(ndf_fraction, crude_protein_fraction, ash_fraction)
+    if respirable_substrate_fraction <= 0.0:
+        return 0.0
+
+    wet_density_kg_per_m3 = dry_matter_density_kg_per_m3 / dry_matter_fraction
+    max_relative_density = PRESEAL_MAX_RELATIVE_DENSITY_NUMERATOR / (
+        PRESEAL_MAX_RELATIVE_DENSITY_NUMERATOR - dry_matter_fraction
+    )
+    relative_density = min(max_relative_density, wet_density_kg_per_m3 * PRESEAL_DENSITY_KG_PER_M3_TO_G_PER_CM3)
+    porosity = FEEDOUT_PHI_SCALE * (1.0 - FEEDOUT_PHI_LOADER_COEFFICIENT * relative_density / max_relative_density)
+
+    max_respiration_rate = FEEDOUT_MUMAX_COEFFICIENT * dry_matter_fraction
+    water_activity = 1.0 - FEEDOUT_WATER_ACTIVITY_COEFFICIENT * dry_matter_fraction / (1.0 - dry_matter_fraction)
+    if water_activity < FEEDOUT_WATER_ACTIVITY_LOW_THRESHOLD:
+        water_activity_factor = 0.0
+    elif water_activity > FEEDOUT_WATER_ACTIVITY_HIGH_THRESHOLD:
+        water_activity_factor = (
+            FEEDOUT_WATER_ACTIVITY_HIGH_INTERCEPT - FEEDOUT_WATER_ACTIVITY_HIGH_SLOPE * water_activity
+        )
+    else:
+        water_activity_factor = FEEDOUT_WATER_ACTIVITY_MID_SLOPE * water_activity - FEEDOUT_WATER_ACTIVITY_MID_INTERCEPT
+    respiration_rate = max_respiration_rate * water_activity_factor * FEEDOUT_TEMPERATURE_FACTOR
+
+    bunk_loss_fraction = (
+        PRESEAL_LOSS_PER_DAY_COEFFICIENT * respiration_rate * FEEDOUT_BUNK_TIME_DAYS / dry_matter_fraction
+    )
+
+    if porosity < FEEDOUT_MIN_PHI:
+        face_loss_fraction = 0.0
+    else:
+        diffusion_coefficient = (
+            PRESEAL_DIFFUSION_COEFFICIENT_FACTOR * (PRESEAL_DIFFUSION_TEMPERATURE_OFFSET_C + FEEDOUT_TEMPERATURE_C) ** 2
+        )
+        face_advance_rate_cm_per_day = (
+            PRESEAL_DEPTH_M_TO_CM
+            * (feed_out_rate_kg_dm_per_day / dry_matter_fraction)
+            / (wet_density_kg_per_m3 * face_area_m2)
+        )
+        gamma = (
+            relative_density
+            * respiration_rate
+            * (FEEDOUT_KM + FEEDOUT_PSIA)
+            * FEEDOUT_FC
+            / (diffusion_coefficient * porosity * PRESEAL_TORTUOSITY * FEEDOUT_PSIA)
+        )
+        c = max(FEEDOUT_MIN_DIFFUSION_C, math.sqrt(PRESEAL_K * gamma))
+        average_respiration_rate = (
+            -respiration_rate
+            * FEEDOUT_FC
+            * (FEEDOUT_KM + FEEDOUT_PSIA)
+            * (
+                math.log(FEEDOUT_KM + FEEDOUT_PSIA * math.exp(-c * FEEDOUT_THICK_CM))
+                - math.log(FEEDOUT_KM + FEEDOUT_PSIA)
+            )
+            / (FEEDOUT_PSIA * c * FEEDOUT_THICK_CM)
+        )
+        loader_coefficient = (
+            FEEDOUT_LOADER_ALFALFA_COEFFICIENT if is_alfalfa else FEEDOUT_LOADER_NON_ALFALFA_COEFFICIENT
+        )
+        face_loss_fraction = (
+            loader_coefficient
+            * PRESEAL_LOSS_PER_DAY_COEFFICIENT
+            * average_respiration_rate
+            * FEEDOUT_THICK_CM
+            / (face_advance_rate_cm_per_day * dry_matter_fraction)
+        )
+
+    return min(respirable_substrate_fraction, face_loss_fraction + bunk_loss_fraction)
 
 
 class Silage(Storage):

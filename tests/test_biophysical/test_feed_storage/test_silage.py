@@ -23,6 +23,7 @@ from RUFAS.biophysical.feed_storage.silage import (
     _get_or_initialize_infiltration_ceiling_kg,
     calculate_bag_infiltration_loss,
     calculate_bunker_infiltration_loss,
+    calculate_feed_out_loss,
 )
 from RUFAS.biophysical.feed_storage.silage_constants import (
     PRESEAL_FALLBACK_EXPOSURE_DAYS,
@@ -1121,6 +1122,244 @@ def test_calculate_bunker_infiltration_loss_at_ceiling_returns_zero(storage_clas
     )
 
     assert loss == 0.0
+
+
+@pytest.mark.unit
+def test_calculate_feed_out_loss_zero_rate_returns_zero() -> None:
+    """A storage with no Feed-out rate yet (nothing to feed out from) loses nothing."""
+    loss = calculate_feed_out_loss(
+        dry_matter_fraction=0.35,
+        ndf_fraction=0.40,
+        crude_protein_fraction=0.18,
+        ash_fraction=0.08,
+        is_alfalfa=True,
+        feed_out_rate_kg_dm_per_day=0.0,
+        dry_matter_density_kg_per_m3=180.0,
+        face_area_m2=30.0,
+    )
+    assert loss == 0.0
+
+
+@pytest.mark.unit
+def test_calculate_feed_out_loss_zero_face_area_returns_zero() -> None:
+    """A missing/zero feedout face area (e.g. unconfigured geometry) loses nothing rather than dividing
+    by zero."""
+    loss = calculate_feed_out_loss(
+        dry_matter_fraction=0.35,
+        ndf_fraction=0.40,
+        crude_protein_fraction=0.18,
+        ash_fraction=0.08,
+        is_alfalfa=True,
+        feed_out_rate_kg_dm_per_day=500.0,
+        dry_matter_density_kg_per_m3=180.0,
+        face_area_m2=0.0,
+    )
+    assert loss == 0.0
+
+
+@pytest.mark.unit
+def test_calculate_feed_out_loss_zero_dry_matter_fraction_returns_zero() -> None:
+    """A fully wet (0% DM) input loses nothing rather than dividing by zero."""
+    loss = calculate_feed_out_loss(
+        dry_matter_fraction=0.0,
+        ndf_fraction=0.40,
+        crude_protein_fraction=0.18,
+        ash_fraction=0.08,
+        is_alfalfa=True,
+        feed_out_rate_kg_dm_per_day=500.0,
+        dry_matter_density_kg_per_m3=180.0,
+        face_area_m2=30.0,
+    )
+    assert loss == 0.0
+
+
+@pytest.mark.unit
+def test_calculate_feed_out_loss_full_dry_matter_fraction_returns_zero() -> None:
+    """A 100% DM input (dry_matter_fraction == 1.0) loses nothing rather than dividing by zero in
+    the water-activity term (1.0 - coefficient*DM/(1.0-DM)) — a physically implausible edge, but a
+    genuine ZeroDivisionError if unguarded."""
+    loss = calculate_feed_out_loss(
+        dry_matter_fraction=1.0,
+        ndf_fraction=0.40,
+        crude_protein_fraction=0.18,
+        ash_fraction=0.08,
+        is_alfalfa=True,
+        feed_out_rate_kg_dm_per_day=500.0,
+        dry_matter_density_kg_per_m3=180.0,
+        face_area_m2=30.0,
+    )
+    assert loss == 0.0
+
+
+@pytest.mark.unit
+def test_calculate_feed_out_loss_positive_and_bounded() -> None:
+    """A normal, realistic scenario produces a small positive loss fraction, well under the
+    respirable-substrate ceiling."""
+    loss = calculate_feed_out_loss(
+        dry_matter_fraction=0.35,
+        ndf_fraction=0.40,
+        crude_protein_fraction=0.18,
+        ash_fraction=0.08,
+        is_alfalfa=True,
+        feed_out_rate_kg_dm_per_day=500.0,
+        dry_matter_density_kg_per_m3=180.0,
+        face_area_m2=30.0,
+    )
+    assert 0.0 < loss < 0.34  # respirable substrate ceiling here is 1 - 0.40 - 0.18 - 0.08 = 0.34
+
+
+@pytest.mark.unit
+def test_calculate_feed_out_loss_alfalfa_loses_faster_than_non_alfalfa() -> None:
+    """Same inputs, only `is_alfalfa` differs: FEEDOUT_LOADER_ALFALFA_COEFFICIENT (1.37) >
+    FEEDOUT_LOADER_NON_ALFALFA_COEFFICIENT (1.18), so alfalfa's face-loss term must be larger."""
+    kwargs: dict[str, float] = dict(
+        dry_matter_fraction=0.35,
+        ndf_fraction=0.40,
+        crude_protein_fraction=0.18,
+        ash_fraction=0.08,
+        feed_out_rate_kg_dm_per_day=500.0,
+        dry_matter_density_kg_per_m3=180.0,
+        face_area_m2=30.0,
+    )
+    alfalfa_loss = calculate_feed_out_loss(is_alfalfa=True, **kwargs)
+    non_alfalfa_loss = calculate_feed_out_loss(is_alfalfa=False, **kwargs)
+    assert alfalfa_loss > non_alfalfa_loss
+
+
+@pytest.mark.unit
+def test_calculate_feed_out_loss_clips_at_rs_ceiling() -> None:
+    """An already-mostly-depleted composition (respirable substrate close to 0) clips the loss at
+    the RS ceiling rather than exceeding it.
+
+    Uses a deliberately tiny `feed_out_rate_kg_dm_per_day` (not a large one): the face-diffusion term
+    is inversely proportional to `face_advance_rate_cm_per_day`, which is itself directly proportional
+    to the Feed-out rate — a slow (near-zero) Feed-out rate means the exposed face advances very
+    slowly, maximizing exposure time and thus loss; a fast rate minimizes it. A large rate was verified
+    (independently, outside this implementation) to leave the loss far under the 0.01 ceiling here
+    (~0.00097), not over it.
+    """
+    loss = calculate_feed_out_loss(
+        dry_matter_fraction=0.35,
+        ndf_fraction=0.55,
+        crude_protein_fraction=0.30,
+        ash_fraction=0.14,
+        is_alfalfa=True,
+        feed_out_rate_kg_dm_per_day=1e-6,  # deliberately tiny to try to exceed the ceiling
+        dry_matter_density_kg_per_m3=180.0,
+        face_area_m2=1.0,
+    )
+    assert loss == pytest.approx(0.01, abs=1e-9)  # 1 - 0.55 - 0.30 - 0.14 = 0.01
+
+
+@pytest.mark.unit
+def test_calculate_feed_out_loss_respirable_substrate_already_zero_returns_zero() -> None:
+    """A composition with zero (or negative) respirable substrate left loses nothing further."""
+    loss = calculate_feed_out_loss(
+        dry_matter_fraction=0.35,
+        ndf_fraction=0.60,
+        crude_protein_fraction=0.30,
+        ash_fraction=0.10,
+        is_alfalfa=True,
+        feed_out_rate_kg_dm_per_day=500.0,
+        dry_matter_density_kg_per_m3=180.0,
+        face_area_m2=30.0,
+    )
+    # 1.0 - 0.60 - 0.30 - 0.10 is not exactly representable in IEEE-754 double precision (it lands a
+    # few ULPs off zero), so the RS ceiling guard sees a vanishingly small positive value rather than
+    # exactly 0.0 and the clipped result carries that same ~1e-17 residue through — pytest.approx per
+    # tests/CLAUDE.md's "never == for floats, even literal-zero" rule, not a strict equality.
+    assert loss == pytest.approx(0.0, abs=1e-9)
+
+
+@pytest.mark.unit
+def test_calculate_feed_out_loss_near_max_density_does_not_zero_face_loss() -> None:
+    """At maximum packed density (relative_density == max_relative_density), porosity reaches its own
+    floor of 0.035 (FEEDOUT_PHI_SCALE*(1-FEEDOUT_PHI_LOADER_COEFFICIENT)) — still above
+    FEEDOUT_MIN_PHI (0.01), so FEEDOUT_MIN_PHI's face-diffusion gate is never triggered, even at this
+    density ceiling. This test proves that directly — loss stays positive and finite at the density
+    ceiling."""
+    dry_matter_fraction = 0.35
+    max_relative_density = 3.0 / (3.0 - dry_matter_fraction)  # PRESEAL_MAX_RELATIVE_DENSITY_NUMERATOR/(...)
+    wet_density_at_cap = max_relative_density / 0.001  # relative_density * 1000, inverting *0.001 step
+    dry_matter_density_kg_per_m3 = wet_density_at_cap * dry_matter_fraction
+
+    loss = calculate_feed_out_loss(
+        dry_matter_fraction=dry_matter_fraction,
+        ndf_fraction=0.40,
+        crude_protein_fraction=0.18,
+        ash_fraction=0.08,
+        is_alfalfa=True,
+        feed_out_rate_kg_dm_per_day=500.0,
+        dry_matter_density_kg_per_m3=dry_matter_density_kg_per_m3,
+        face_area_m2=30.0,
+    )
+    assert 0.0 < loss <= 1.0  # positive and RS-ceiling-bounded; not zeroed by the unreachable gate
+
+
+@pytest.mark.unit
+def test_calculate_feed_out_loss_numeric_oracle() -> None:
+    """Independent numeric oracle: hand-computes the same scenario term-by-term outside the
+    implementation, to catch a transcription error in the dense equation chain that a mock-heavy or
+    trivial-input test would not."""
+    dry_matter_fraction = 0.35
+    ndf_fraction = 0.40
+    crude_protein_fraction = 0.18
+    ash_fraction = 0.08
+    feed_out_rate_kg_dm_per_day = 500.0
+    dry_matter_density_kg_per_m3 = 180.0
+    face_area_m2 = 30.0
+
+    wet_density = dry_matter_density_kg_per_m3 / dry_matter_fraction
+    max_relative_density = 3.0 / (3.0 - dry_matter_fraction)
+    relative_density = min(max_relative_density, wet_density * 0.001)
+    porosity = 0.7 * (1.0 - 0.95 * relative_density / max_relative_density)
+    assert porosity >= 0.01  # sanity: this scenario must exercise the face-loss branch
+
+    diffusion_coefficient = 0.0086 * (273.0 + 18.0) ** 2
+    face_advance_rate_cm_per_day = (
+        100.0 * (feed_out_rate_kg_dm_per_day / dry_matter_fraction) / (wet_density * face_area_m2)
+    )
+    mumax = 0.88 * dry_matter_fraction
+    water_activity = 1.0 - 0.03 * dry_matter_fraction / (1.0 - dry_matter_fraction)
+    assert 0.9233 <= water_activity <= 0.9931  # sanity: this scenario exercises the mid branch of FD
+    water_activity_factor = 14.306 * water_activity - 13.208
+    import math as _math
+
+    temperature_factor = _math.exp(36.1 - 10830.0 / 291.0)
+    respiration_rate = mumax * water_activity_factor * temperature_factor
+
+    gamma = (
+        relative_density
+        * respiration_rate
+        * (0.00145 + 0.21)
+        * 1.0
+        / (diffusion_coefficient * porosity * (2.0 / 3.0) * 0.21)
+    )
+    c = max(0.01, _math.sqrt(9.0 * gamma))
+    average_respiration_rate = (
+        -respiration_rate
+        * 1.0
+        * (0.00145 + 0.21)
+        * (_math.log(0.00145 + 0.21 * _math.exp(-c * 300.0)) - _math.log(0.00145 + 0.21))
+        / (0.21 * c * 300.0)
+    )
+    face_loss_fraction = (
+        1.37 * 0.0299 * average_respiration_rate * 300.0 / (face_advance_rate_cm_per_day * dry_matter_fraction)
+    )
+    bunk_loss_fraction = 0.0299 * respiration_rate * 0.125 / dry_matter_fraction
+    expected = min(1.0 - ndf_fraction - crude_protein_fraction - ash_fraction, face_loss_fraction + bunk_loss_fraction)
+
+    actual = calculate_feed_out_loss(
+        dry_matter_fraction=dry_matter_fraction,
+        ndf_fraction=ndf_fraction,
+        crude_protein_fraction=crude_protein_fraction,
+        ash_fraction=ash_fraction,
+        is_alfalfa=True,
+        feed_out_rate_kg_dm_per_day=feed_out_rate_kg_dm_per_day,
+        dry_matter_density_kg_per_m3=dry_matter_density_kg_per_m3,
+        face_area_m2=face_area_m2,
+    )
+    assert actual == pytest.approx(expected, rel=1e-9)
 
 
 @pytest.mark.component
