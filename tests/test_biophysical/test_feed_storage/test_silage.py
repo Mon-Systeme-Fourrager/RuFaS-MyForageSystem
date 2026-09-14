@@ -1486,6 +1486,30 @@ def test_build_feed_out_sections_is_alfalfa_is_per_section_not_storage_wide() ->
     assert sections[1].is_alfalfa is True
 
 
+@pytest.mark.unit
+def test_build_feed_out_sections_trailing_zero_mass_crop_does_not_spawn_extra_section(
+    harvested_crop: HarvestedCrop,
+) -> None:
+    """A depleted crop (dry_matter_mass == 0.0 — e.g. already fully fed out via
+    `remove_dry_matter_mass` but not yet purged from `self.stored`) sitting after the last real
+    section boundary must not spawn its own spurious extra section. This is exactly what the
+    `len(sections) < number_of_sections - 1` guard in `build_feed_out_sections` exists to prevent —
+    a test that only checks total section count for zero-mass-free inputs would not catch that guard
+    being deleted."""
+    first_crop = copy.deepcopy(harvested_crop)
+    first_crop.dry_matter_mass = 100.0
+    second_crop = copy.deepcopy(harvested_crop)
+    second_crop.dry_matter_mass = 100.0
+    depleted_crop = copy.deepcopy(harvested_crop)
+    depleted_crop.dry_matter_mass = 0.0
+
+    sections = build_feed_out_sections([first_crop, second_crop, depleted_crop], feed_out_rate_kg_dm_per_day=10.0)
+
+    assert len(sections) == 2
+    assert sections[0].crops == [first_crop]
+    assert sections[1].crops == [second_crop, depleted_crop]
+
+
 @pytest.mark.component
 @pytest.mark.parametrize(
     "storage_class,extra_config",

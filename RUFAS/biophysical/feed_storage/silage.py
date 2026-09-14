@@ -802,6 +802,12 @@ def build_feed_out_sections(stored: list[HarvestedCrop], feed_out_rate_kg_dm_per
     for crop in stored:
         current_group.append(crop)
         current_group_mass_kg += crop.dry_matter_mass
+        # The len(sections) < number_of_sections - 1 guard reserves the *last* section for the
+        # trailing if current_group: flush below, rather than closing it here. Without it, a
+        # depleted crop (dry_matter_mass == 0.0 — remove_dry_matter_mass can leave one in
+        # self.stored without purging it) sitting after the true last boundary would spawn its own
+        # spurious extra section, since it never itself contributes enough mass to be absorbed into
+        # the section that closed just before it.
         if current_group_mass_kg >= target_mass_per_section_kg and len(sections) < number_of_sections - 1:
             sections.append(_composite_feed_out_section(current_group))
             current_group = []
