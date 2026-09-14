@@ -513,11 +513,19 @@ who does configure Preseal; it's absence, not garbage, that's now tolerated. Thi
 opt-in: no existing farm config is required to change.
 
 **2026-09-11 — prerequisites for Feed-out (Section 5.3), updated after a primary-source re-check:**
-- **`CSAF`/feedout-face area — RESOLVED, derived not sourced.** Distinct from Infiltration's
-  `top_area_m2`/`front_radius_m`, but not a value needing literature/reference-table sourcing: IFSM
-  derives it from existing geometry plus the packing factor already in this design (Tower:
-  `π·(width/2)²`; Bunker: `width × settled_height`, where `settled_height = (0.70 + 0.25·PACK) ×
-  configured_height`, `Silostg.for:567-571`). No new blocking prerequisite.
+- **`CSAF`/feedout-face area — geometry-only, `PACK` deliberately not modeled (`/challenge-plan`
+  round-1 correction, 2026-09-14).** IFSM's own formula (Tower: `π·(width/2)²`; Bunker/Pile: `width ×
+  settled_height`, where `settled_height = (0.70 + 0.25·PACK) × configured_height`,
+  `Silostg.for:567-571`) depends on a packing factor RuFaS has never modeled anywhere (no `PACK`
+  config on any storage, no packing-time/tractor-mass inputs). An earlier version of this section
+  marked the settled-height formula "RESOLVED, derived not sourced" — that was premature: the shipped
+  implementation uses the flat, unscaled `width × height` for Bunker/Pile (and the unchanged
+  `π·(width/2)²` for Tower/`Bag`), matching Infiltration's own already-established "no packing-factor
+  submodel" precedent for the identical geometry problem. This is a **known, cited bias**: using the
+  unscaled area overstates Bunker/Pile face-diffusion loss by roughly 5–43% depending on the
+  (unmodeled) `PACK` value that would have shrunk it. Flagged for SME awareness, not silently
+  corrected — implementing the settled-height scaling would require a new `pack_factor` config field,
+  a real scope increase deferred to a future PR if the bias proves material.
 - **`PSIA` constant for Feed-out — RESOLVED, see Section 5.3.4's corrected Bag/`PSIA` bullet.**
   Bunker and Bag both use `0.21`; only bottom-unloaded tower (no RuFaS analogue) uses `0.105`. No
   literature-sourcing pass needed.
