@@ -1137,7 +1137,7 @@ def test_calculate_feed_out_loss_zero_rate_returns_zero() -> None:
         dry_matter_density_kg_per_m3=180.0,
         face_area_m2=30.0,
     )
-    assert loss == 0.0
+    assert loss == pytest.approx(0.0)
 
 
 @pytest.mark.unit
@@ -1154,7 +1154,7 @@ def test_calculate_feed_out_loss_zero_face_area_returns_zero() -> None:
         dry_matter_density_kg_per_m3=180.0,
         face_area_m2=0.0,
     )
-    assert loss == 0.0
+    assert loss == pytest.approx(0.0)
 
 
 @pytest.mark.unit
@@ -1170,7 +1170,7 @@ def test_calculate_feed_out_loss_zero_dry_matter_fraction_returns_zero() -> None
         dry_matter_density_kg_per_m3=180.0,
         face_area_m2=30.0,
     )
-    assert loss == 0.0
+    assert loss == pytest.approx(0.0)
 
 
 @pytest.mark.unit
@@ -1188,7 +1188,7 @@ def test_calculate_feed_out_loss_full_dry_matter_fraction_returns_zero() -> None
         dry_matter_density_kg_per_m3=180.0,
         face_area_m2=30.0,
     )
-    assert loss == 0.0
+    assert loss == pytest.approx(0.0)
 
 
 @pytest.mark.unit
