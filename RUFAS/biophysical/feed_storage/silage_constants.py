@@ -1,7 +1,8 @@
 """
 Domain constants and equation coefficients for the Silage Preseal phase (Silostg.for's ``PRESEAL``
-subroutine, lines 634-714), kept out of ``silage.py`` per ``RUFAS/biophysical/CLAUDE.md``'s "Constants
-must live in dedicated *_constants.py modules per domain; do not inline magic numbers" rule.
+subroutine, lines 634-714) and Feed-out phase (Silostg.for's ``FEEDOUT`` subroutine, lines 1029-1104),
+kept out of ``silage.py`` per ``RUFAS/biophysical/CLAUDE.md``'s "Constants must live in dedicated
+*_constants.py modules per domain; do not inline magic numbers" rule.
 
 """
 
