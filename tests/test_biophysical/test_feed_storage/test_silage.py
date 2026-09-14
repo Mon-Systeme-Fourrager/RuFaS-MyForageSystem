@@ -1547,3 +1547,44 @@ def test_full_ensiling_chain_stays_under_total_dry_matter(
 
     assert 0.0 < first_crop.dry_matter_mass < initial_mass
     assert first_crop.infiltration_cumulative_loss_kg > 0.0
+
+
+@pytest.mark.unit
+def test_get_or_compute_feed_out_rate_empty_storage_returns_zero_and_does_not_cache(silage: Silage) -> None:
+    """An empty storage has no Feed-out rate yet — returns 0.0 without permanently freezing at 0.0,
+    so a later call (once crops exist) can still compute a real rate."""
+    assert silage.stored == []
+
+    rate = silage._get_or_compute_feed_out_rate_kg_dm_per_day()
+
+    assert rate == 0.0
+    assert silage._feed_out_rate_kg_dm_per_day is None
+
+
+@pytest.mark.unit
+def test_get_or_compute_feed_out_rate_computes_total_over_365(silage: Silage, harvested_crop: HarvestedCrop) -> None:
+    """Silostg.for:233,242 — FDRTE = total stored DM / 365."""
+    silage.stored = [harvested_crop]
+
+    rate = silage._get_or_compute_feed_out_rate_kg_dm_per_day()
+
+    assert rate == pytest.approx(harvested_crop.dry_matter_mass / 365.0)
+
+
+@pytest.mark.unit
+def test_get_or_compute_feed_out_rate_held_fixed_after_first_call(
+    silage: Silage, harvested_crop: HarvestedCrop
+) -> None:
+    """Design spec Section 5.3.3: computed once, on first activation, held fixed thereafter — a
+    later change to self.stored (Effluent/Fermentation/Infiltration/a new crop arriving) must NOT
+    change the already-cached rate. This is the mechanism the 'held fixed' design note exists for; a
+    test only checking the first call's value would not catch a silent recompute-every-call bug."""
+    silage.stored = [harvested_crop]
+    first_rate = silage._get_or_compute_feed_out_rate_kg_dm_per_day()
+
+    second_crop = copy.deepcopy(harvested_crop)
+    second_crop.dry_matter_mass = 9999.0
+    silage.stored.append(second_crop)
+    second_rate = silage._get_or_compute_feed_out_rate_kg_dm_per_day()
+
+    assert second_rate == first_rate

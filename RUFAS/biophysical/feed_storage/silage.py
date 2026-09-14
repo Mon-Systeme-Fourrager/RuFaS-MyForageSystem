@@ -67,6 +67,7 @@ from .silage_constants import (
     FEEDOUT_LOADER_NON_ALFALFA_COEFFICIENT,
     FEEDOUT_BUNK_TIME_DAYS,
     FEEDOUT_SECTION_WINDOW_DAYS,
+    FEEDOUT_RATE_DENOMINATOR_DAYS,
 )
 
 """Fraction of effluent that is dry matter by mass."""
@@ -837,6 +838,7 @@ class Silage(Storage):
     def __init__(self, config: dict[str, str | float | list[str]]) -> None:
         super().__init__(config)
         self.om = OutputManager()
+        self._feed_out_rate_kg_dm_per_day: float | None = None
 
     def receive_crop(self, crop: HarvestedCrop, simulation_day: int) -> None:
         """
@@ -1027,6 +1029,33 @@ class Silage(Storage):
         mass_values = self._calculate_mass_attributes_after_loss(crop, dry_matter_loss_kg, moisture_loss=0.0)
         crop.dry_matter_mass = mass_values["dry_matter_mass"]
         crop.dry_matter_percentage = mass_values["dry_matter_percentage"]
+
+    def _get_or_compute_feed_out_rate_kg_dm_per_day(self) -> float:
+        """
+        Fixes this storage's Feed-out rate the first time it is needed, and returns that fixed value
+        on every later call.
+
+        Returns
+        -------
+        float
+            This storage's Feed-out rate (kg DM/day), or ``0.0`` if there is no stored dry matter yet
+            (not cached in that case, so a later call can still compute a real rate once crops exist).
+
+        Notes
+        -----
+        Matches IFSM's own ``FDRTE`` (``Silostg.for:233,242``, total stored mass for the year divided
+        by 365) — a static per-storage average, not derived from `FeedManager`'s daily withdrawal
+        (design spec Section 5.3.3, supersedes an earlier `FeedManager`-integration proposal).
+        Computed once, on first activation, and held fixed thereafter — the closest behavioral match
+        to IFSM's own once-per-cycle semantics. ``[FS.SIL.17]``.
+
+        """
+        if self._feed_out_rate_kg_dm_per_day is None:
+            total_dry_matter_mass_kg = sum(crop.dry_matter_mass for crop in self.stored)
+            if total_dry_matter_mass_kg <= 0.0:
+                return 0.0
+            self._feed_out_rate_kg_dm_per_day = total_dry_matter_mass_kg / FEEDOUT_RATE_DENOMINATOR_DAYS
+        return self._feed_out_rate_kg_dm_per_day
 
     def process_degradations(self, weather: Weather, time: RufasTime) -> None:
         """
