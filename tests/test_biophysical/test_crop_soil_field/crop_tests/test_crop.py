@@ -244,7 +244,9 @@ def test_manage_crop_harvest(mocker: MockerFixture, mock_crop_data: CropData) ->
 
     actual = crop.manage_crop_harvest(mock_harvest_op, field_name, field_size, mock_time, mock_soil_data)
 
-    manage_harvest_mock.assert_called_once_with(mock_harvest_op, field_name, field_size, mock_time, mock_soil_data)
+    manage_harvest_mock.assert_called_once_with(
+        mock_harvest_op, field_name, field_size, mock_time, mock_soil_data, None
+    )
     assert actual == mock_crop_harvest
 
 

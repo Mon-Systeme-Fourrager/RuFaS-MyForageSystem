@@ -1,9 +1,11 @@
+from datetime import datetime, timedelta
 from math import exp
 
 import pytest
 from unittest.mock import MagicMock, PropertyMock, patch
 from pytest_mock import MockerFixture
 
+from RUFAS.current_day_conditions import CurrentDayConditions
 from RUFAS.output_manager import OutputManager
 from RUFAS.data_structures.crop_soil_to_feed_storage_connection import (
     HarvestedCrop,
@@ -15,6 +17,7 @@ from RUFAS.biophysical.field.soil.layer_data import LayerData
 from RUFAS.biophysical.field.soil.soil_data import SoilData
 from RUFAS.rufas_time import RufasTime
 from RUFAS.units import MeasurementUnits
+from RUFAS.weather import Weather
 
 from tests.test_biophysical.test_crop_soil_field.sample_crop_configuration import SAMPLE_CROP_CONFIGURATION
 
@@ -378,6 +381,98 @@ def test_store_harvested_crop(
     assert actual.lignin == expected_harvest_crop.lignin
     assert actual.ash == expected_harvest_crop.ash
     assert actual.last_time_degraded == expected_harvest_crop.last_time_degraded
+
+
+@pytest.mark.unit
+def test_get_harvested_crop_wilt_days_zero_matches_current_behavior(
+    mocker: MockerFixture, mock_crop_data: CropData
+) -> None:
+    """Regression: wilt_days=0 (default) must produce byte-identical behavior to before the field-curing
+    phase existed -- harvest_time == storage_time, DM mass/composition unchanged."""
+    add_variable = mocker.patch.object(OutputManager, "add_variable")
+    add_error = mocker.patch.object(OutputManager, "add_error")
+
+    mock_time = MagicMock(spec=RufasTime)
+    mock_time.current_date = datetime(2024, 6, 15)
+    field_size = 2.0
+    crop_management = CropManagement(crop_data=mock_crop_data, dry_matter_yield_collected=1000.0)
+
+    actual = crop_management._get_harvested_crop(mock_time, field_size, "mock_field")
+
+    assert actual.harvest_time == actual.storage_time == mock_time.current_date.date()
+    assert actual.dry_matter_mass == pytest.approx(1000.0 * field_size)
+    assert actual.dry_matter_percentage == pytest.approx(mock_crop_data.dry_matter_percentage)
+    assert actual.crude_protein_percent == pytest.approx(mock_crop_data.crude_protein_percent_at_harvest)
+    assert actual.ndf == pytest.approx(mock_crop_data.ndf_at_harvest)
+    add_variable.assert_not_called()
+    add_error.assert_not_called()
+
+
+@pytest.mark.unit
+def test_get_harvested_crop_with_wilt_days_applies_curing(mocker: MockerFixture, mock_crop_data: CropData) -> None:
+    """wilt_days=2 with a synthetic weather fixture must push storage_time 2 days past harvest_time and
+    decrease DM mass via the opt-in field-curing calculation."""
+    add_variable = mocker.patch.object(OutputManager, "add_variable")
+
+    mock_crop_data.wilt_days = 2
+    mock_time = MagicMock(spec=RufasTime)
+    mock_time.current_date = datetime(2024, 6, 15)
+    field_size = 2.0
+    crop_management = CropManagement(crop_data=mock_crop_data, dry_matter_yield_collected=1000.0)
+
+    daily_weather = [
+        CurrentDayConditions(
+            incoming_light=20.0, min_air_temperature=10.0, mean_air_temperature=20.0, max_air_temperature=28.0
+        ),
+        CurrentDayConditions(
+            incoming_light=20.0, min_air_temperature=10.0, mean_air_temperature=20.0, max_air_temperature=28.0
+        ),
+    ]
+    weather = mocker.Mock(spec=Weather)
+    weather.get_conditions_series = mocker.Mock(return_value=daily_weather)
+
+    actual = crop_management._get_harvested_crop(mock_time, field_size, "mock_field", weather)
+
+    weather.get_conditions_series.assert_called_once_with(time=mock_time, starting_offset=0, ending_offset=1)
+    assert actual.harvest_time == mock_time.current_date.date()
+    assert actual.storage_time == mock_time.current_date.date() + timedelta(days=2)
+    assert actual.dry_matter_mass < 1000.0 * field_size
+    add_variable.assert_called_once_with(
+        "field_curing_total_loss_fraction",
+        mocker.ANY,
+        {
+            "class": "CropManagement",
+            "function": "_determine_harvest_composition",
+            "suffix": "field='mock_field'",
+            "units": MeasurementUnits.FRACTION,
+        },
+    )
+
+
+@pytest.mark.unit
+def test_get_harvested_crop_wilt_days_set_but_weather_none_is_noop(
+    mocker: MockerFixture, mock_crop_data: CropData
+) -> None:
+    """wilt_days=2 but weather=None (caller didn't pass one) must behave exactly like wilt_days=0 -- no
+    crash, no curing applied, since the gate is `wilt_days > 0 and weather is not None`."""
+    add_variable = mocker.patch.object(OutputManager, "add_variable")
+    add_error = mocker.patch.object(OutputManager, "add_error")
+
+    mock_crop_data.wilt_days = 2
+    mock_time = MagicMock(spec=RufasTime)
+    mock_time.current_date = datetime(2024, 6, 15)
+    field_size = 2.0
+    crop_management = CropManagement(crop_data=mock_crop_data, dry_matter_yield_collected=1000.0)
+
+    actual = crop_management._get_harvested_crop(mock_time, field_size, "mock_field", None)
+
+    assert actual.harvest_time == actual.storage_time == mock_time.current_date.date()
+    assert actual.dry_matter_mass == pytest.approx(1000.0 * field_size)
+    assert actual.dry_matter_percentage == pytest.approx(mock_crop_data.dry_matter_percentage)
+    assert actual.crude_protein_percent == pytest.approx(mock_crop_data.crude_protein_percent_at_harvest)
+    assert actual.ndf == pytest.approx(mock_crop_data.ndf_at_harvest)
+    add_variable.assert_not_called()
+    add_error.assert_not_called()
 
 
 @pytest.mark.parametrize(

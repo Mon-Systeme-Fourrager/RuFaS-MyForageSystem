@@ -143,7 +143,7 @@ def test_manage_field(mocker: MockerFixture) -> None:
     mock_execute_daily_processes.assert_called_once_with(mocked_weather, mocked_time)
     mock_assess_dormancy.assert_called_once_with(12, 3.0)
     mock_check_crop_planting_sched.assert_called_once_with(mocked_time)
-    mock_check_crop_harvest_sched.assert_called_once_with(mocked_time, mocked_weather)
+    mock_check_crop_harvest_sched.assert_called_once_with(mocked_time, mocked_weather, None)
     mock_remove_dead_crops.assert_called_once()
     mock_reset_crop_field_coverage_fractions.assert_called_once()
 
@@ -537,7 +537,7 @@ def test_check_crop_harvest_schedule(
 
     harvest_crop_calls = []
     for event in current_harvest_events:
-        new_call = call(event.crop_reference, event.operation, mocked_time, mock_conditions)
+        new_call = call(event.crop_reference, event.operation, mocked_time, mock_conditions, None)
         harvest_crop_calls.append(new_call)
 
     actual = field._check_crop_harvest_schedule(mocked_time, mock_conditions)
@@ -594,6 +594,7 @@ def test_harvest_heat_scheduled_crops(
                 mock_field_data.field_size,
                 mock_time,
                 field.soil.data,
+                None,
             )
             actual_harvest_count += 1
         else:
@@ -879,6 +880,7 @@ def test_harvest_crop(
                 mock_field_data.field_size,
                 mock_time,
                 field.soil.data,
+                None,
             )
 
     add_residue.assert_called_once()
@@ -935,6 +937,7 @@ def test_harvest_crop_warnings(
                 mock_field_data.field_size,
                 mock_time,
                 field.soil.data,
+                None,
             )
         assert add_residue.call_count == len(crops)
         actual = field.om.warnings_pool[f"Field._harvest_crop.harvest_warning.field='{mock_field_data.name}'"]
