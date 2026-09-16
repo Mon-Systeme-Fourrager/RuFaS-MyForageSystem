@@ -1,0 +1,27 @@
+# Environment files
+.env
+.env.*
+*.env
+# Template with placeholder values only; must stay committable
+!.env.example
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# Scratchpad and IDE
+scratchpad/
+.idea/
+.vscode/
+
+# Old backup CSVs (keep only latest)
+*_v1_backup.csv
+*_v2_backup.csv

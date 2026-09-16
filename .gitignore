@@ -73,3 +73,14 @@ graphify-out/cache/
 graphify-out/exports/
 graphify-out/memory/
 graphify-out/.graphify_root
+
+# Environment files (added 2026-09-16 for security)
+.env
+.env.*
+*.env
+.envrc
+# Template with placeholder values only; must stay committable
+!.env.example
+
+# Additional caches
+.venv/
