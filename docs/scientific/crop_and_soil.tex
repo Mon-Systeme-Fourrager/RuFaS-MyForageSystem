@@ -5564,7 +5564,7 @@ The full field-curing simulation (\texttt{simulate\_field\_curing}) iterates \te
             {\raggedleft \textbf{[SC.CRP.85]}\par}
             \vspace{0.5cm}
 
-Two known limitations, both documented in \texttt{field\_curing.py}'s module docstring: day/night respiration periods are approximated using RuFaS's daily maximum/minimum temperature rather than true 12-hour period averages, and quality (crude protein/NDF) concentration is only modeled under leaching, not under respiration alone, since DAFOSYM's respiration-driven quality equation is out of scope for this phase.
+Documented limitations (all stated in \texttt{field\_curing.py}'s module docstring): day/night respiration periods are approximated using RuFaS's daily maximum/minimum temperature rather than true 12-hour period averages; quality (crude protein/NDF) concentration is only modeled under leaching, not under respiration alone, since DAFOSYM's respiration-driven quality equation is out of scope for this phase; and microbial-activity, tedding, and mechanical/machine-operation losses are out of scope for this phase entirely.
 
 \phantomsection
 \begin{refsection}

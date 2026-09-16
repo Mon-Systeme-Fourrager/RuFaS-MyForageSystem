@@ -4,19 +4,39 @@ Implements the swath drying-rate/moisture model of Rotz & Chen (1985) and the
 DAFOSYM respiration/rain-loss/quality-shift terms of Rotz, Black, Mertens &
 Buckmaster (1989), at RuFaS's daily weather resolution
 (``CurrentDayConditions`` via ``Weather.get_conditions_series``). See
-``PLAN_add-preharvest-field-curing-phase.md`` for the full derivation and
-``field_curing_constants.py`` for every named coefficient's provenance.
+``field_curing_constants.py`` for every named coefficient's provenance and
+``docs/scientific/crop_and_soil.tex`` (tags SC.CRP.79-85) for the full
+equation registry.
 
-Documented limitation (day/night temperature mapping): DAFOSYM's respiration
-term (Eq.7) is defined over 12-hour day/night periods, each driven by that
-period's *average* temperature. RuFaS's weather is daily-resolution only and
-carries no true 12h-average split, so this module stands in
-``CurrentDayConditions.max_air_temperature`` for the day period and
-``CurrentDayConditions.min_air_temperature`` for the night period. Using
-extremes instead of averages systematically biases day-period respiration
-loss upward and night-period respiration loss downward -- a real
-approximation, not a neutral one, accepted here because no true within-day
-average is available from RuFaS's daily weather.
+Documented limitations:
+
+1. Day/night temperature mapping -- DAFOSYM's respiration term (Eq.7) is
+   defined over 12-hour day/night periods, each driven by that period's
+   *average* temperature. RuFaS's weather is daily-resolution only and
+   carries no true 12h-average split, so this module stands in
+   ``CurrentDayConditions.max_air_temperature`` for the day period and
+   ``CurrentDayConditions.min_air_temperature`` for the night period. Using
+   extremes instead of averages systematically biases day-period respiration
+   loss upward and night-period respiration loss downward -- a real
+   approximation, not a neutral one, accepted here because no true within-day
+   average is available from RuFaS's daily weather.
+
+2. Quality (CP/NDF) concentration is only modeled under leaching
+   (`apply_leaching_quality_shift`, DAFOSYM Eq.11/12) -- DAFOSYM's
+   respiration-driven quality-concentration equation (its own Eq.8,
+   Qf = Qi/(1-RL), applied alongside Eq.7 each period) is deliberately out
+   of scope for this phase. A rain-free wilt window therefore reduces DM
+   mass via respiration without changing CP/NDF percentages at all, even
+   though the real crop's quality would concentrate somewhat as mass is
+   lost. Not implemented here; a documented scope limit, not an oversight.
+
+3. Microbial-activity and tedding DM loss (SimForQ, Barr et al. 1994/95)
+   and mechanical/machine-operation losses (mowing/raking/baler, Rotz 1995)
+   are out of scope for this phase entirely -- SimForQ is hourly-native and
+   RuFaS's weather is daily-only (using it would require an unsourced
+   diurnal disaggregation); mechanical losses are sourced elsewhere but held
+   for a separate follow-up. Only DAFOSYM respiration/rain-leaf/leaching and
+   the Rotz & Chen (1985) drying curve are implemented here.
 """
 
 import math

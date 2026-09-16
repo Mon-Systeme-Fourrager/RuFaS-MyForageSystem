@@ -66,12 +66,11 @@ FIELD_CURING_LEACHING_CP_MULTIPLIER: float = 1.2
 Mertens & Buckmaster (1989), DAFOSYM, Eq.11, p.86."""
 
 FIELD_CURING_RNL_MAX: float = 0.99
-"""Numerical guard, not a DAFOSYM threshold (`/challenge-plan` cycle-3 🟠
-finding 3): CPf = CPi*(1-1.2*RNL)/(1-RNL) (Eq.11) has a division singularity
-as RNL -> 1 (possible for a low-NDF crop under heavy accumulated rain). RNL
-is clamped to this value before use in Eq.11/Eq.12, exactly the same
-"numerical guard, not a scientific threshold" pattern as
-`BEEF_DMI_MIN_NE_CONCENTRATION` (RUFAS/biophysical/CLAUDE.md's own cited
+"""Numerical guard, not a DAFOSYM threshold: CPf = CPi*(1-1.2*RNL)/(1-RNL)
+(Eq.11) has a division singularity as RNL -> 1 (possible for a low-NDF crop
+under heavy accumulated rain). RNL is clamped to this value before use in
+Eq.11/Eq.12, the same "numerical guard, not a scientific threshold" pattern
+as `BEEF_DMI_MIN_NE_CONCENTRATION` (RUFAS/biophysical/CLAUDE.md's own cited
 example)."""
 
 DRYING_RATE_SOLAR_APPLICATION_COEFFICIENT: float = 9.30
@@ -92,16 +91,20 @@ DRYING_RATE_DRY_BULB_COEFFICIENT: float = 5.42
 DRYING_RATE_SOLAR_APPLICATION_COEFFICIENT above for the full equation and
 citation.
 
-**OPEN VERIFICATION ITEM (not yet resolved -- resolve before implementing
-Task 3's `dry_bulb_drying_rate`)**: DB's units in Rotz & Chen (1985)'s own
-Eq.5 are not independently confirmed here. `Curing_DRAFT_Rotz1985_1995.md`'s
-glossary (05-dev/msf/fourrager/04_Resources/) states "DB DRY BULB
-TEMPERATURE, DEG C" for this same equation, but that file is itself a
-secondary reconstruction, not the primary paper's own stated units (Table 2's
-OCR extraction was garbled, per 2026-09-16 session notes). Re-read
-`00-inbox/silage_pdfs/Rotz1985.pdf`'s Notation/Methods section directly for
-DB's stated units before finalizing whether a C-to-F conversion is needed
-here too, alongside the confirmed DAFOSYM (Eq.7/9/10) conversions above."""
+**OPEN VERIFICATION ITEM (deliberately left open, not resolved by this
+change)**: DB's units in Rotz & Chen (1985)'s own Eq.5 are not
+independently confirmed here -- `dry_bulb_drying_rate` (field_curing.py)
+passes `dry_bulb_temp_c` through as Celsius, unconverted, pending this.
+`Curing_DRAFT_Rotz1985_1995.md`'s glossary
+(05-dev/msf/fourrager/04_Resources/) states "DB DRY BULB TEMPERATURE, DEG C"
+for this same equation, but that file is itself a secondary reconstruction,
+not the primary paper's own stated units (a prior OCR extraction of
+Rotz1985.pdf's own Table 2 was garbled and inconclusive on this point).
+Re-read `00-inbox/silage_pdfs/Rotz1985.pdf`'s Notation/Methods section
+directly for DB's stated units before treating this as resolved -- if it
+turns out to need Fahrenheit, convert at the call site using
+`CELSIUS_TO_FAHRENHEIT_SCALE`/`_OFFSET` above, alongside the confirmed
+DAFOSYM (Eq.7/9/10) conversions."""
 
 DRYING_RATE_SOIL_MOISTURE_COEFFICIENT: float = 66.4
 """Soil-moisture (SM) coefficient of Eq.5's denominator -- see
@@ -137,18 +140,16 @@ MJ_PER_M2_DAY_TO_W_PER_M2: float = 1_000_000.0 / 86_400.0
 """Converts RuFaS's `CurrentDayConditions.incoming_light` (MJ/m2 -- the
 dataclass's own docstring says only "Incoming light radiation energy
 (MJ/m^2)", not explicitly "daily total"; treating it as one is a reasonable
-but not literally-confirmed inference from context, `/challenge-plan`
-cycle-3 🟡 finding, corrected wording) into the average W/m2
+but not literally-confirmed inference from context) into the average W/m2
 (instantaneous power flux) that Rotz & Chen (1985) states `SI` is measured in
 (confirmed directly in the paper's own parameter list, 'SI = solar
 insolation, W/m2'). Standard J/s <-> J/day identity (1e6 J/MJ / 86400 s/day),
 not an invented equation -- but note this yields a *daily-average* SI, and
-the paper's own field methodology for what SI value they used per data point
-was not independently re-verified this session (`/challenge-plan` cycle-2
-🟠 finding 3, 2026-09-16 -- fixed the missing conversion; the
+the paper's own field methodology for what SI value they used per data
+point was never independently verified. **OPEN VERIFICATION ITEM**: the
 methodological match between "daily average" and what Rotz & Chen actually
-measured remains an open, lower-priority verification item, same class as
-the DB-units item above)."""
+measured remains open, lower-priority, same class as the DB-units item
+above."""
 
 SWATH_MOISTURE_EQUILIBRIUM_FRACTION: float = 0.0
 """Equilibrium moisture content, set to zero per Rotz & Chen (1985)'s own
