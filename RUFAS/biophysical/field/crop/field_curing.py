@@ -100,16 +100,15 @@ def dry_bulb_drying_rate(
 
     Notes
     -----
-    Equation [SC.CRP.79]:
     DR = [SI*(1+9.30*AR) + 5.42*DB] /
          [66.4*SM + SD*(2.06-0.97*DAY)*(1.55+21.9*AR) + 3037]
 
     References
     ----------
-    Rotz & Chen (1985), "Alfalfa Drying Model for the Field Environment,"
-    Trans. ASAE 28(5):1686-1691, Eq.5 (dry-bulb-temperature form, chosen
-    over the paper's Eq.4 VPD form because RuFaS tracks no humidity/VPD
-    anywhere).
+    [SC.CRP.79] Rotz & Chen (1985), "Alfalfa Drying Model for the Field
+    Environment," Trans. ASAE 28(5):1686-1691, Eq.5 (dry-bulb-temperature
+    form, chosen over the paper's Eq.4 VPD form because RuFaS tracks no
+    humidity/VPD anywhere).
 
     """
     day_term = _DRYING_RATE_DAY_TERM_MOWING_DAY if is_mowing_day else _DRYING_RATE_DAY_TERM_SUBSEQUENT_DAY
@@ -152,11 +151,11 @@ def swath_moisture_content(
 
     Notes
     -----
-    Equation [SC.CRP.80]: M = M0*exp(-DR*T), equilibrium moisture 0.
+    M = M0*exp(-DR*T), equilibrium moisture 0.
 
     References
     ----------
-    Rotz & Chen (1985), Trans. ASAE 28(5):1686-1691, Eq.2.
+    [SC.CRP.80] Rotz & Chen (1985), Trans. ASAE 28(5):1686-1691, Eq.2.
 
     """
     equilibrium = fcc.SWATH_MOISTURE_EQUILIBRIUM_FRACTION
@@ -182,12 +181,12 @@ def respiration_dm_loss_fraction(avg_moisture_wet_basis_fraction: float, avg_tem
 
     Notes
     -----
-    Equation [SC.CRP.81]: RL = 0.00239*(AMC-0.27)*exp(0.038*AT), zero for
-    AMC <= 0.27.
+    RL = 0.00239*(AMC-0.27)*exp(0.038*AT), zero for AMC <= 0.27.
 
     References
     ----------
-    Rotz, Black, Mertens & Buckmaster (1989), "DAFOSYM," Eq.7, p.86.
+    [SC.CRP.81] Rotz, Black, Mertens & Buckmaster (1989), "DAFOSYM," Eq.7,
+    p.86.
 
     """
     if avg_moisture_wet_basis_fraction <= fcc.FIELD_CURING_RESPIRATION_MOISTURE_THRESHOLD:
@@ -217,11 +216,12 @@ def rain_leaf_loss_fraction(rainfall_in: float) -> float:
 
     Notes
     -----
-    Equation [SC.CRP.82]: RNLL = 0.094*RAIN_IN.
+    RNLL = 0.094*RAIN_IN.
 
     References
     ----------
-    Rotz, Black, Mertens & Buckmaster (1989), "DAFOSYM," Eq.9, p.86.
+    [SC.CRP.82] Rotz, Black, Mertens & Buckmaster (1989), "DAFOSYM," Eq.9,
+    p.86.
 
     """
     return fcc.FIELD_CURING_RAIN_LEAF_LOSS_COEFFICIENT * rainfall_in
@@ -249,14 +249,14 @@ def rain_leaching_loss_fraction(rainfall_in: float, ndf_pct: float) -> float:
 
     Notes
     -----
-    Equation [SC.CRP.83]: RNL = (1-NDF)*(1-exp(-0.28*RAIN_IN)), where NDF is
-    the 0-1 fraction (``ndf_pct * GeneralConstants.PERCENTAGE_TO_FRACTION``
-    -- the existing codebase idiom for this conversion, not an inline
-    ``/100``).
+    RNL = (1-NDF)*(1-exp(-0.28*RAIN_IN)), where NDF is the 0-1 fraction
+    (``ndf_pct * GeneralConstants.PERCENTAGE_TO_FRACTION`` -- the existing
+    codebase idiom for this conversion, not an inline ``/100``).
 
     References
     ----------
-    Rotz, Black, Mertens & Buckmaster (1989), "DAFOSYM," Eq.10, p.86.
+    [SC.CRP.83] Rotz, Black, Mertens & Buckmaster (1989), "DAFOSYM," Eq.10,
+    p.86.
 
     """
     ndf_fraction = ndf_pct * GeneralConstants.PERCENTAGE_TO_FRACTION
@@ -291,13 +291,12 @@ def apply_leaching_quality_shift(
 
     Notes
     -----
-    Equations [SC.CRP.84]:
     CPf = CPi*(1-1.2*RNL)/(1-RNL); NDFf = NDFi/(1-RNL).
 
     References
     ----------
-    Rotz, Black, Mertens & Buckmaster (1989), "DAFOSYM," Eq.11 (CP) and
-    Eq.12 (NDF), p.86.
+    [SC.CRP.84] Rotz, Black, Mertens & Buckmaster (1989), "DAFOSYM," Eq.11
+    (CP) and Eq.12 (NDF), p.86.
 
     """
     if leaching_loss_fraction <= 0.0:
@@ -533,8 +532,8 @@ def simulate_field_curing(
 
     Notes
     -----
-    Equation [SC.CRP.85]: iterates [SC.CRP.79]-[SC.CRP.84] once per day.
-    Each day: compute that day's drying-rate DR from that day's weather;
+    Iterates [SC.CRP.79]-[SC.CRP.84] once per day. Each day: compute that
+    day's drying-rate DR from that day's weather;
     compute respiration ([SC.CRP.81], day-period + night-period) and rain
     losses ([SC.CRP.82]/[SC.CRP.83]) using the moisture at the START of the
     day (before that day's drying is applied) -- this matches the primary
@@ -574,8 +573,9 @@ def simulate_field_curing(
 
     References
     ----------
-    Rotz & Chen (1985), Trans. ASAE 28(5):1686-1691 (drying curve); Rotz,
-    Black, Mertens & Buckmaster (1989), "DAFOSYM" (DM-loss terms).
+    [SC.CRP.85] Rotz & Chen (1985), Trans. ASAE 28(5):1686-1691 (drying
+    curve); Rotz, Black, Mertens & Buckmaster (1989), "DAFOSYM" (DM-loss
+    terms).
 
     """
     if not daily_weather:
