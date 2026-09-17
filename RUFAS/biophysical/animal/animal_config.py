@@ -429,6 +429,7 @@ class AnimalConfig:
     stocker_max_days: int = AnimalModuleConstants.STOCKER_MAX_DAYS
     stocker_target_adg: float = AnimalModuleConstants.STOCKER_TARGET_ADG_KG_D
     stocker_diet_system: StockerDietSystem = StockerDietSystem.PASTURE
+    stocker_limit_feed_pct: float = AnimalModuleConstants.STOCKER_DEFAULT_LIMIT_FEED_PCT
 
     # ── COW-CALF PARAMETERS (defaults; overridden by initialize_animal_config) ─
     beef_breeding_season_start_day: int = 90
@@ -687,6 +688,8 @@ class AnimalConfig:
             cls.stocker_target_adg = float(target_adg)
         if (raw := stocker_cfg.get("stocker_diet_system")) is not None:
             cls.stocker_diet_system = StockerDietSystem(str(raw))
+        if (limit_feed_pct := stocker_cfg.get("limit_feed_pct")) is not None:
+            cls.stocker_limit_feed_pct = float(limit_feed_pct)
 
     @classmethod
     def _merge_beef_defaults(cls, beef_cfg: dict[str, Any]) -> dict[str, Any]:

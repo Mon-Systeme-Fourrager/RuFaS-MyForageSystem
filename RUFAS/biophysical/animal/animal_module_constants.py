@@ -628,6 +628,14 @@ class AnimalModuleConstants:
     STOCKER_MAX_DAYS: int = 210
     """Maximum backgrounding days before forced exit."""
 
+    STOCKER_DEFAULT_LIMIT_FEED_PCT: float = 85.0
+    """
+    Default dry matter intake ceiling when the stocker diet system is limit-feeding,
+    as a percentage of ad libitum intake. BeefGEM source document; not an NRC 2016
+    threshold. Limit-feeding programmes in the literature span roughly 80-90% of
+    ad libitum, and 85% is the midpoint of that range.
+    """
+
     BEEF_MUD_CONDITION_NONE: str = "none"
     """NRC 2016 mud condition: no mud, multiplier = 1.00 (MUD_NEm_MULTIPLIER_NONE)."""
 

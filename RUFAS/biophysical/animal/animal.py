@@ -11,7 +11,13 @@ from RUFAS.biophysical.animal import animal_constants
 from RUFAS.biophysical.animal.animal_config import AnimalConfig
 from RUFAS.biophysical.animal.animal_genetics.animal_genetics import Genetics
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
-from RUFAS.biophysical.animal.data_types.animal_enums import AnimalStatus, BeefPostWeaningDestination, Breed, Sex
+from RUFAS.biophysical.animal.data_types.animal_enums import (
+    AnimalStatus,
+    BeefPostWeaningDestination,
+    Breed,
+    Sex,
+    StockerDietSystem,
+)
 from RUFAS.biophysical.animal.data_types.animal_events import AnimalEvents
 from RUFAS.biophysical.animal.data_types.body_weight_history import BodyWeightHistory
 from RUFAS.biophysical.animal.data_types.daily_routines_output import DailyRoutinesOutput
@@ -1460,6 +1466,8 @@ class Animal:
         self.days_in_stocker = int(args.get("days_in_stocker", 0))
         self.stocker_entry_weight = self.body_weight
         self.stocker_cumulative_dmi = 0.0
+        self.days_on_restricted_intake = 0
+        self.is_on_restricted_intake = False
 
     def _initialize_beef_cow_calf_animal(self, args: Any) -> None:
         """
@@ -2044,6 +2052,10 @@ class Animal:
 
         if self.nutrition_supply is not None and self.nutrition_supply.dry_matter > 0:
             self.stocker_cumulative_dmi += self.nutrition_supply.dry_matter
+
+        self.is_on_restricted_intake = AnimalConfig.stocker_diet_system is StockerDietSystem.LIMIT_FEED
+        if self.is_on_restricted_intake:
+            self.days_on_restricted_intake += 1
 
         animal_status, _ = self.animal_life_stage_update(time)
 
@@ -3266,6 +3278,8 @@ class Animal:
                     target_adg=AnimalConfig.stocker_target_adg,
                     temperature_c=previous_temperature,
                     ne_diet_concentration=ne_conc_sk,
+                    diet_system=AnimalConfig.stocker_diet_system,
+                    limit_feed_pct=AnimalConfig.stocker_limit_feed_pct,
                 )
             )
 

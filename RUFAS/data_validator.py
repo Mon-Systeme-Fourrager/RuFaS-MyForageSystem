@@ -1904,6 +1904,14 @@ class DataValidator:
                 raise ValueError(f"stocker_diet_system must be one of {sorted(valid)}, got '{system}'")
 
     @staticmethod
+    def _validate_stocker_limit_feed_pct(config: dict[str, Any]) -> None:
+        """Raise ValueError if limit_feed_pct is outside (0, 100] or non-finite."""
+        if "limit_feed_pct" in config and config["limit_feed_pct"] is not None:
+            pct = float(config["limit_feed_pct"])
+            if not math.isfinite(pct) or pct <= 0.0 or pct > 100.0:
+                raise ValueError(f"limit_feed_pct must be in (0, 100] and finite, got {pct}")
+
+    @staticmethod
     def validate_beef_stocker_config(config: dict[str, Any]) -> None:
         """
         Validate beef stocker configuration business rules.
@@ -1940,6 +1948,7 @@ class DataValidator:
                 raise ValueError(f"max_days must be > 0, got {d}")
 
         DataValidator._validate_stocker_diet_system(config)
+        DataValidator._validate_stocker_limit_feed_pct(config)
 
         if "target_adg" in config and config["target_adg"] is not None:
             adg = float(config["target_adg"])

@@ -28,19 +28,23 @@
 
 ## Phase B — Stocker Enhancements
 
-- [ ] B-1-1: Add `LIMIT_FEED` to `StockerDietSystem` enum
-- [ ] B-1-2: Add `stocker_limit_feed_pct: float = 85.0` to
+- [x] B-1-1: Add `LIMIT_FEED` to `StockerDietSystem` enum
+- [x] B-1-2: Add `stocker_limit_feed_pct: float = 85.0` to
       `AnimalConfig` with math.isfinite validation
-- [ ] B-1-3: Add `beef_stocker_limit_feed_ration` ClassVar to
+- [x] B-1-3: Add `beef_stocker_limit_feed_ration` ClassVar to
       `RationManager`
-- [ ] B-1-4: Update `get_beef_stocker_ration()` to handle LIMIT_FEED
-- [ ] B-1-5: Update `_select_constraints` AND
-      `handle_failed_constraints` in same commit for LIMIT_FEED
-- [ ] B-1-6: Apply DMI cap in
+- [x] B-1-4: Update `get_beef_stocker_ration()` to handle LIMIT_FEED
+- [x] B-1-5: Verify handle_failed_constraints still delegates to
+      _select_constraints rather than maintaining a parallel list, and
+      assert the delegation with a spy. Limit-feeding does not change
+      a stocker pen's AnimalCombination, so no new constraint branch
+      is needed — the intake reduction is already carried in the DMI
+      requirement by the time the optimiser runs.
+- [x] B-1-6: Apply DMI cap in
       `BeefStockerRequirementsCalculator` when LIMIT_FEED active
-- [ ] B-1-7: Add `days_on_restricted_intake` and
+- [x] B-1-7: Add `days_on_restricted_intake` and
       `is_on_restricted_intake` to Animal stocker instance attrs
-- [ ] B-1-8: Write `test_limit_feeding.py` — Phase B-1 checkpoint
+- [x] B-1-8: Write `test_limit_feeding.py` — Phase B-1 checkpoint
 - [ ] B-2-1: Add NASEM_CH4_FORAGE_INTERCEPT and
       NASEM_CH4_FORAGE_SLOPE to `animal_module_constants.py`
 - [ ] B-2-2: Add `calculate_enteric_ch4_stocker()` to

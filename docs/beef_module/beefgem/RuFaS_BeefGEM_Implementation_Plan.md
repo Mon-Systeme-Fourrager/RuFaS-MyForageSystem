@@ -299,11 +299,21 @@ Validate: `0 < stocker_limit_feed_pct <= 100`, math.isfinite.
 
 ### B-1.3 DMI adjustment in `BeefStockerRequirementsCalculator`
 
-When `diet_system == StockerDietSystem.LIMIT_FEED`:
+Applied as a single guarded block at the end of `_calculate_dmi`, after the
+ad libitum value is computed:
 ```python
-if inputs.diet_system is StockerDietSystem.LIMIT_FEED:
-    dmi = dmi * (AnimalConfig.stocker_limit_feed_pct / 100.0)
+if diet_system is StockerDietSystem.LIMIT_FEED:
+    return ad_libitum_dmi * (limit_feed_pct / 100.0)
+return ad_libitum_dmi
 ```
+
+The calculator receives `diet_system` and `limit_feed_pct` through
+`StockerRequirementsInputs` rather than reading `AnimalConfig`. Both are
+defaulted so existing call sites are unaffected; `animal.py` supplies
+them from `AnimalConfig`. This keeps `BeefStockerRequirementsCalculator`
+free of config imports, consistent with how `mud_condition`,
+`temperature_c` and every other input is already handled, and keeps the
+DMI cap testable without patching global state.
 
 ### B-1.4 Add ration and constraints
 

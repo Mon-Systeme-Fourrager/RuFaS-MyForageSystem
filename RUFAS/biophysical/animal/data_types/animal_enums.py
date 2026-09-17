@@ -38,6 +38,7 @@ class StockerDietSystem(Enum):
 
     PASTURE = "pasture"
     DRYLOT_FORAGE = "drylot_forage"
+    LIMIT_FEED = "limit_feed"
 
 
 class FinishingSystem(Enum):
