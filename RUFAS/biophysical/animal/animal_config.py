@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from typing import Any
 
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
@@ -17,8 +18,19 @@ from RUFAS.biophysical.animal.data_types.repro_protocol_enums import (
     BeefReproductionProtocol,
 )
 from RUFAS.data_validator import DataValidator
+from RUFAS.general_constants import GeneralConstants
 from RUFAS.input_manager import InputManager
 from RUFAS.output_manager import OutputManager
+
+_MONTHS_IN_YEAR: int = 12
+"""Calendar months per year, for calving-month validation."""
+
+_NON_LEAP_REFERENCE_YEAR: int = 2001
+"""Arbitrary non-leap year used to convert between calendar month and day-of-year.
+
+The simulation calendar is 365 days (GeneralConstants.YEAR_LENGTH), so a
+non-leap reference year keeps the month boundaries consistent with it.
+"""
 
 
 class AnimalConfig:
@@ -441,6 +453,7 @@ class AnimalConfig:
     beef_mature_cow_weight_kg: float = AnimalModuleConstants.BEEF_DEFAULT_MATURE_COW_WEIGHT_KG
     beef_natural_service_bull_ratio: int = 25
     beef_cow_cull_rate_annual: float = AnimalModuleConstants.BEEF_ANNUAL_CULL_RATE
+    beef_conception_rate_multiplier: float = 1.0
     beef_reproduction_program: BeefReproductionProtocol = BeefReproductionProtocol.NATURAL_SERVICE_SEASONAL
 
     @classmethod
@@ -760,6 +773,76 @@ class AnimalConfig:
             float(merged["weaning_weight_kg"]) if merged["weaning_weight_kg"] is not None else None
         )
         cls.beef_creep_feeding_enabled = bool(beef_cfg.get("creep_feeding_enabled") or False)
+        if (multiplier := beef_cfg.get("conception_rate_multiplier")) is not None:
+            cls.beef_conception_rate_multiplier = float(multiplier)
+
+    @classmethod
+    def get_beef_calving_month(cls) -> int:
+        """Return the calving month implied by the breeding season start day.
+
+        Returns
+        -------
+        int
+            Calendar month (1-12) in which the calving season opens, derived as
+            ``beef_breeding_season_start_day + BEEF_GESTATION_LENGTH_DAYS``
+            wrapped into a single year.
+
+        Notes
+        -----
+        Nothing is stored for the calving month; only
+        ``beef_breeding_season_start_day`` is held, so the two cannot
+        desynchronise.
+
+        Month-to-day is one-to-many. The setter maps month M to the first
+        day of M, so month -> day -> month round-trips losslessly, while
+        day -> month -> day snaps to the month start. Expected behaviour for
+        a coarsening accessor.
+
+        """
+        calving_day = cls.beef_breeding_season_start_day + AnimalModuleConstants.BEEF_GESTATION_LENGTH_DAYS
+        return cls._month_of_year_day(((calving_day - 1) % GeneralConstants.YEAR_LENGTH) + 1)
+
+    @classmethod
+    def set_beef_calving_month(cls, month: int) -> None:
+        """Set the calving month by moving the breeding season start day.
+
+        Parameters
+        ----------
+        month : int
+            Calendar month (1-12) in which the calving season should open.
+
+        Raises
+        ------
+        ValueError
+            If ``month`` is outside 1-12.
+
+        Notes
+        -----
+        Writes only ``beef_breeding_season_start_day``; nothing of its own is
+        retained, so the two values cannot desynchronise.
+
+        Month-to-day is one-to-many. The setter maps month M to the first
+        day of M, so month -> day -> month round-trips losslessly, while
+        day -> month -> day snaps to the month start. Expected behaviour for
+        a coarsening accessor.
+
+        """
+        if not isinstance(month, int) or month < 1 or month > _MONTHS_IN_YEAR:
+            raise ValueError(f"calving_month must be an integer in 1-12, got {month}")
+        calving_day = cls._first_year_day_of_month(month)
+        breeding_day = calving_day - AnimalModuleConstants.BEEF_GESTATION_LENGTH_DAYS
+        cls.beef_breeding_season_start_day = ((breeding_day - 1) % GeneralConstants.YEAR_LENGTH) + 1
+
+    @staticmethod
+    def _first_year_day_of_month(month: int) -> int:
+        """Return the 1-based day of a non-leap year on which ``month`` begins."""
+        return date(_NON_LEAP_REFERENCE_YEAR, month, 1).timetuple().tm_yday
+
+    @staticmethod
+    def _month_of_year_day(year_day: int) -> int:
+        """Return the 1-based calendar month containing ``year_day`` in a non-leap year."""
+        reference = date(_NON_LEAP_REFERENCE_YEAR, 1, 1) + timedelta(days=year_day - 1)
+        return reference.month
 
     @classmethod
     def _parse_beef_enum_fields(cls, beef_cfg: dict[str, Any]) -> None:

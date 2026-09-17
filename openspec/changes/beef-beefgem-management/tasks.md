@@ -66,12 +66,18 @@
 - [x] C-0-2: Write `test_grouping_scenario.py` — Phase C-0 checkpoint
       (distinct lists, no shared types, BEEF_STOCKER_ONLY regression guard)
 
-- [ ] C-1-1: Add named scenario constants to
-      `animal_module_constants.py`
-      (BEEF_SCENARIO_SPRING_CALVING_MONTH etc.)
-- [ ] C-1-2: Add `beef_calving_month` and `beef_calving_rate` to
-      `AnimalConfig` with validation
-- [ ] C-1-3: Write `test_scenario_constants.py` — Phase C-1 checkpoint
+- [x] C-1-1: Add the eight named scenario constants to
+      `animal_module_constants.py`. The two conception constants are
+      multipliers (1.15 / 0.625) derived from the calibration, not rates.
+      Docstrings state these are named-scenario defaults, not measured
+      values. 0.855 is NOT a conception rate — it is
+      BEEF_CALF_CROP_WEANED_RATE, downstream of conception.
+- [x] C-1-2: Add `get_beef_calving_month()` / `set_beef_calving_month()`
+      classmethods over `beef_breeding_season_start_day` (not a property —
+      AnimalConfig is never instantiated), and
+      `beef_conception_rate_multiplier` with > 0 and isfinite validation,
+      applied and clamped in `calculate_seasonal_conception_probability`.
+- [x] C-1-3: Write `test_scenario_constants.py` — Phase C-1 checkpoint
 - [ ] C-2-1: Add `get_beef_herd_summary()` to
       `AnimalModuleReporter` returning dict[str, float] with 8 metrics
 - [ ] C-2-2: Wire summary metrics from HerdManager live state

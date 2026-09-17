@@ -83,15 +83,45 @@ intake, NRC 2016 Table 16-2)
 **When** `COW_CALF_STOCKER_FEEDLOT` is added
 **Then** `BEEF_STOCKER_ONLY` behavior is unchanged (regression guard)
 
-### C-1: BeefHerdScenario dataclass
+### C-1: Named scenario constants and levers
 
-**Given** a BeefHerdScenario with calving_month=4, weaning_age_mo=7
-**When** the scenario is constructed
-**Then** all fields default correctly and validate without error
+**Given** the eight named-scenario constants
+**When** they are read from AnimalModuleConstants
+**Then** they hold their pinned values: calving months 4 and 10, weaning ages
+5 and 7, extended stocker 9 months, conception multipliers 1.15 and 0.625,
+and an aggressive cull rate of 0.22
+
+**Given** the shipped breeding-season default of day 90 and a 283-day gestation
+**When** `AnimalConfig.get_beef_calving_month()` is called
+**Then** it returns 1 (January), not the 4 that
+BEEF_SCENARIO_SPRING_CALVING_MONTH pins — the shipped default is not a
+spring-calving herd, and April calving is a scenario override
+
+**Given** any month in 1-12
+**When** it is passed to `set_beef_calving_month` and read back
+**Then** `get_beef_calving_month` returns the same month, and only
+`beef_breeding_season_start_day` has changed
 
 **Given** calving_month = 13 (invalid)
-**When** the scenario is constructed
+**When** `set_beef_calving_month` is called
 **Then** a ValueError is raised
+
+**Given** beef_conception_rate_multiplier = 1.0 (default)
+**When** the daily conception probability is computed
+**Then** it equals BEEF_CONCEPTION_BASE_DAILY_PROB exactly — calibrated
+behaviour is untouched
+
+**Given** a multiplier of 1.15 or 0.625 at the calibration reference point
+**When** the seasonal rate over the 63-day season is computed
+**Then** it is 95.0% or 80.0% respectively (the baseline 1.0 gives 92.56%)
+
+**Given** a multiplier at or below zero, or non-finite
+**When** the cow-calf config is validated
+**Then** a ValueError is raised
+
+**Given** an extreme multiplier
+**When** the daily conception probability is computed
+**Then** it is clamped to at most 1.0
 
 ### C-2: Herd summary reporter
 

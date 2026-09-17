@@ -2359,6 +2359,7 @@ class Animal:
             body_condition_score=self.body_condition_score_9,
             bull_to_cow_ratio=AnimalConfig.beef_natural_service_bull_ratio,
             days_since_calving=self.days_since_calving,
+            conception_rate_multiplier=AnimalConfig.beef_conception_rate_multiplier,
         )
         if random() < prob:
             self.is_open = False

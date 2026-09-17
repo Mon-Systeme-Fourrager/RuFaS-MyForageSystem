@@ -1881,6 +1881,15 @@ class DataValidator:
 
         DataValidator._validate_beef_breeding_season_start_day(config)
         DataValidator._validate_beef_weaning_weight(config)
+        DataValidator._validate_beef_conception_rate_multiplier(config)
+
+    @staticmethod
+    def _validate_beef_conception_rate_multiplier(config: dict[str, Any]) -> None:
+        """Raise ValueError if conception_rate_multiplier is non-positive or non-finite."""
+        if "conception_rate_multiplier" in config and config["conception_rate_multiplier"] is not None:
+            multiplier = float(config["conception_rate_multiplier"])
+            if not math.isfinite(multiplier) or multiplier <= 0.0:
+                raise ValueError(f"conception_rate_multiplier must be positive and finite, got {multiplier}")
 
     @staticmethod
     def _validate_stocker_weight_order(config: dict[str, Any]) -> None:

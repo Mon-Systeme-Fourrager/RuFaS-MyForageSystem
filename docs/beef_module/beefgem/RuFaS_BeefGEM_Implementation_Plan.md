@@ -513,22 +513,82 @@ BEEF_SCENARIO_FALL_CALVING_MONTH: int = 10       # October calving
 BEEF_SCENARIO_EARLY_WEANING_AGE_MO: int = 5      # 5 months
 BEEF_SCENARIO_STANDARD_WEANING_AGE_MO: int = 7   # 7 months
 BEEF_SCENARIO_EXTENDED_STOCKER_MO: int = 9       # 9 months backgrounding
-BEEF_SCENARIO_HIGH_CONCEPTION_RATE: float = 0.95
-BEEF_SCENARIO_LOW_CONCEPTION_RATE: float = 0.80
+BEEF_SCENARIO_HIGH_CONCEPTION_MULTIPLIER: float = 1.15
+BEEF_SCENARIO_LOW_CONCEPTION_MULTIPLIER: float = 0.625
 BEEF_SCENARIO_AGGRESSIVE_CULL_RATE: float = 0.22
 ```
+
+These are named-scenario defaults — the management choices being compared —
+not measured biological values. Their docstrings say so and carry no NRC or
+USDA citation.
+
+The two conception constants are multipliers on the calibrated base daily
+probability, derived rather than assumed linear. At the calibration reference
+point (BCS 5, 25:1 bull ratio) both adjustment factors are 1.0, so the seasonal
+rate over the 63-day season is `1 - (1 - 0.0404 x m)^63`. Inverting for a target
+gives 1.15 for 95% and 0.625 for 80%; the baseline 1.0 yields 92.56%.
+
+**The plan previously described 0.855 as a "USDA reference conception
+rate". It is not.** BEEF_CALF_CROP_WEANED_RATE = 0.855 is USDA NASS
+calf crop weaned per cow exposed, downstream of conception,
+stillbirth and preweaning mortality. The conception-equivalent figure
+is 91.5%, which BEEF_CONCEPTION_BASE_DAILY_PROB is already calibrated
+against. The BeefGEM source document conflates the two.
 
 ### C-1.2 Scenario parameter fields on `AnimalConfig`
 
 Add to beef cow-calf section:
 ```python
-beef_calving_month: int = 4           # 1-12, month of calving season start
-beef_calving_rate: float = 0.855      # USDA 85.5% reference conception rate
+beef_conception_rate_multiplier: float = 1.0   # > 0, finite; 1.0 = calibrated baseline
 ```
 
-These extend existing `beef_breeding_season_start_day` config — calving_month
-provides a higher-level interface that BeefGEM uses. Implement as a computed
-property: `calving_month` → `breeding_season_start_day`.
+plus a calving-month accessor pair over the existing
+`beef_breeding_season_start_day`:
+
+```python
+AnimalConfig.get_beef_calving_month() -> int
+AnimalConfig.set_beef_calving_month(month: int) -> None
+```
+
+Implemented as a classmethod pair rather than a property. AnimalConfig
+is never instantiated — it is a class-level namespace of ClassVar
+fields with classmethod accessors — so a plain property would return
+the property object rather than a value, and making one work would
+require adding the animal subsystem's only metaclass to its most
+widely imported config class. The classmethod pair gives the same
+guarantee against desynchronisation, since only
+beef_breeding_season_start_day is ever stored.
+
+Month-to-day is one-to-many. The setter maps month M to the first
+day of M, so month -> day -> month round-trips losslessly, while
+day -> month -> day snaps to the month start. Expected behaviour for
+a coarsening accessor.
+
+**The shipped default is not a spring-calving herd.**
+`BEEF_DEFAULT_BREEDING_SEASON_START_DAY` is 90 and gestation is 283 days, so
+calving falls on day 373, wrapping to 8 January — month 1, not the month 4 that
+`BEEF_SCENARIO_SPRING_CALVING_MONTH` pins. The breeding default is deliberately
+left at 90; April calving is a scenario override, not the default. A test pins
+`get_beef_calving_month() == 1` at the shipped default so a later change to the
+breeding default fails loudly and says what it did.
+
+`beef_conception_rate_multiplier` is a scenario lever, not a target rate. The
+cow-calf module derives calf crop from daily conception draws conditioned on BCS,
+bull ratio and days postpartum — it is an emergent outcome. A stored calving-rate
+field would be a second, conflicting source of truth, so the lever scales the
+calibrated base daily probability instead and defaults to 1.0.
+
+conception_rate_multiplier is threaded through
+`calculate_seasonal_conception_probability` as a parameter rather than
+read from AnimalConfig inside it. The module previously imported only
+AnimalModuleConstants — frozen values, not simulation state — so
+importing config would have made it the first dependency on mutable
+global state, and would have required a save/restore fixture in every
+test touching the function. There is one production call site, in
+`animal.py`, where AnimalConfig is already in scope and already
+supplying the adjacent bull-ratio argument. Same reasoning as the
+stocker calculator, which takes `diet_system` and `limit_feed_pct`
+through its inputs dataclass for identical reasons.
 
 ### Phase C-1 Test Checkpoint
 

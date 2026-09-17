@@ -322,6 +322,52 @@ class AnimalModuleConstants:
     BEEF_DEFAULT_BREEDING_SEASON_START_DAY: int = 90
     """Default Julian day on which the breeding season opens (approximately April 1)."""
 
+    # ===== NAMED SCENARIO DEFAULTS =====
+    # Starting points for the pre-built comparison scenarios. These are
+    # management choices being compared, not measured biological values, and
+    # carry no NRC 2016 or USDA citation.
+
+    BEEF_SCENARIO_SPRING_CALVING_MONTH: int = 4
+    """Calving month for the spring-calving scenario. A named-scenario default, not a measured value."""
+
+    BEEF_SCENARIO_FALL_CALVING_MONTH: int = 10
+    """Calving month for the fall-calving scenario. A named-scenario default, not a measured value."""
+
+    BEEF_SCENARIO_EARLY_WEANING_AGE_MO: int = 5
+    """Weaning age for the early-weaning scenario (months). A named-scenario default."""
+
+    BEEF_SCENARIO_STANDARD_WEANING_AGE_MO: int = 7
+    """Weaning age for the baseline scenario (months). A named-scenario default."""
+
+    BEEF_SCENARIO_EXTENDED_STOCKER_MO: int = 9
+    """Backgrounding length for the extended-stocker scenario (months). A named-scenario default."""
+
+    BEEF_SCENARIO_HIGH_CONCEPTION_MULTIPLIER: float = 1.15
+    """
+    Scenario lever scaling the calibrated base daily conception
+    probability. Not a measured rate. At the calibration reference point
+    (BCS 5, 25:1 bull ratio) both adjustment factors are 1.0, so the
+    seasonal rate over the 63-day season is 1 - (1 - 0.0404 x m)^63.
+    A multiplier of 1.15 yields 95.0%; 0.625 yields 80.0%; the baseline
+    1.0 yields 92.56%.
+
+    Note: BEEF_CONCEPTION_BASE_DAILY_PROB documents itself as calibrated
+    to a USDA 91.5% seasonal pregnancy rate. The value it actually
+    produces at the reference point is 92.56%, a gap of 1.1 percentage
+    points. The constant is left unchanged, as altering it would move
+    existing cow-calf output.
+    """
+
+    BEEF_SCENARIO_LOW_CONCEPTION_MULTIPLIER: float = 0.625
+    """
+    Scenario lever scaling the calibrated base daily conception
+    probability down to an 80.0% seasonal rate. Not a measured rate. Same
+    derivation as BEEF_SCENARIO_HIGH_CONCEPTION_MULTIPLIER.
+    """
+
+    BEEF_SCENARIO_AGGRESSIVE_CULL_RATE: float = 0.22
+    """Annual cow cull fraction for the aggressive-culling scenario. A named-scenario default."""
+
     BEEF_DEFAULT_BCS_9: float = 5.0
     """Default moderate body condition score on the NRC 2016 beef 1–9 scale (not the dairy 1–5 scale)."""
 
