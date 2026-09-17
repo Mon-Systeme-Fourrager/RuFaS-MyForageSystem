@@ -669,6 +669,28 @@ class AnimalModuleConstants:
     document; no NRC 2016 equation number has been identified for them.
     """
 
+    BEEF_CH4_STOCKER_FORAGE_INTERCEPT: float = 10.04
+    """
+    Intercept of the linear enteric CH4 model for stocker cattle on forage
+    (g CH4/d). Pinned from the BeefGEM implementation plan. No NRC/NASEM 2016
+    equation number has been identified for this pair: the plan cites
+    "Eq.6.8", but Chapter 6 of NRC 2016 covers protein and amino acids, and
+    the enteric methane equations are Ch.16 (Eq.16-8 and Eq.16-9). The BeefGEM
+    source document's own backgrounding rule R-CH4-ENT-003 is Eq.16-8,
+    71.5 + 0.12*BW + 0.10*DMI^3 - 244.8*Fat^3, which is a different equation
+    taking four inputs. Retained as pinned for traceability; see the module
+    docs for the open provenance question.
+    """
+
+    BEEF_CH4_STOCKER_FORAGE_SLOPE: float = 23.7
+    """
+    Slope of the linear enteric CH4 model for stocker cattle on forage
+    (g CH4 per kg DMI/d). Same provenance caveat as
+    BEEF_CH4_STOCKER_FORAGE_INTERCEPT. Across 6-10 kg DM/d the pair yields
+    152-247 g/d, inside the 87-252 g/d NRC 2016 Ch.16 reports for grazing
+    beef cattle; it exceeds that ceiling above roughly 10.2 kg DM/d.
+    """
+
     BEEF_CH4_YM_FRACTION: float = 0.030
     """
     Methane conversion factor for grain-finished feedlot cattle, as a

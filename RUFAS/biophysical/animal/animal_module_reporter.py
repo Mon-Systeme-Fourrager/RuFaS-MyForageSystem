@@ -25,6 +25,9 @@ from RUFAS.biophysical.animal.data_types.reproduction import HerdReproductionSta
 from RUFAS.biophysical.animal.nutrients.beef_nrc_requirements_calculator import (
     BeefNRCRequirementsCalculator,
 )
+from RUFAS.biophysical.animal.nutrients.beef_stocker_requirements_calculator import (
+    BeefStockerRequirementsCalculator,
+)
 from RUFAS.biophysical.animal.data_types.animal_manure_excretions import AnimalManureExcretions
 from RUFAS.data_structures.animal_to_manure_connection import ManureStream
 from RUFAS.data_structures.feed_storage_to_animal_connection import RUFAS_ID
@@ -1585,4 +1588,17 @@ class AnimalModuleReporter:
             "stocker_cumulative_dmi_kg",
             animal.stocker_cumulative_dmi,
             dict(info_map, units=MeasurementUnits.KILOGRAMS),
+        )
+
+        # The forage CH4 equation has a non-zero intercept, so a zero-day phase
+        # must short-circuit rather than evaluate the equation at zero intake.
+        if dof > 0:
+            mean_daily_dmi: float = animal.stocker_cumulative_dmi / dof
+            ch4 = BeefStockerRequirementsCalculator.calculate_enteric_ch4_stocker(mean_daily_dmi)
+        else:
+            ch4 = 0.0
+        om.add_variable(
+            "stocker_mean_daily_enteric_ch4_g_d",
+            ch4,
+            dict(info_map, units=MeasurementUnits.GRAMS_PER_DAY),
         )

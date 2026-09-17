@@ -34,12 +34,16 @@ if inputs.diet_system is StockerDietSystem.LIMIT_FEED:
     dmi = dmi * (AnimalConfig.stocker_limit_feed_pct / 100.0)
 ```
 
-### NASEM 2016 Eq.6.8
+### Stocker forage enteric CH4
 ```python
-# NASEM 2016 Ch.6 — stocker on forage
-ch4_g_d = NASEM_CH4_FORAGE_INTERCEPT + NASEM_CH4_FORAGE_SLOPE * dmi
+# Linear in DMI; no NRC 2016 equation number identified for the coefficients
+ch4_g_d = BEEF_CH4_STOCKER_FORAGE_INTERCEPT + BEEF_CH4_STOCKER_FORAGE_SLOPE * dmi
 # = 10.04 + 23.7 × dmi
 ```
+The source document labels this "NASEM 2016, eq 6.8", but Ch.6 is protein and
+amino acids and enteric methane is Ch.16. See the provenance note in the plan.
+The intercept is non-zero, so callers representing a phase an animal never
+entered must short-circuit rather than evaluate at zero intake.
 
 ## Phase C design
 

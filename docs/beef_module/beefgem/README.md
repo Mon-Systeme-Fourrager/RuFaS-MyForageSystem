@@ -21,8 +21,8 @@ Contains BeefGEM rule IDs (R-CH4-ENT-003, D-STOCKER-TO-FINISH-001, …),
 the `COW_CALF_STOCKER_FEEDLOT` grouping scenario definition, test-marker
 taxonomy, and five named future-PR gaps (Section 10).
 
-**Phase B (Steps B-1 and B-2) is superseded.** The native stocker module
-it describes was delivered by PR #47 and merged to dev-msf. Implement from
+**Its stocker section is superseded.** The native stocker module it
+describes is already implemented in the animal subsystem. Implement from
 the execution plan above, not from this file.
 
 Code blocks were flattened by the pandoc conversion and re-fenced
@@ -36,6 +36,26 @@ the DOCX only to check the conversion or recover formatting it dropped.
 
 Tracked via a scoped exception in `.gitignore` — the repo-wide `*.docx`
 rule would otherwise exclude it.
+
+## Coefficient provenance
+
+**Two BeefGEM coefficient sets could not be traced to NRC 2016.**
+
+Grass-fed (`BEEF_CH4_GRASS_FED_*`, 8.25 / 31.2): give 257.85 g/d at
+8 kg DM/d, above the 87-252 g/d NRC Ch.16 reports for grazing cattle.
+Pinned in the suite as a tripwire.
+
+Stocker forage (`BEEF_CH4_STOCKER_FORAGE_*`, 10.04 / 23.7): the source
+document labels these "NASEM 2016, eq 6.8". NRC Ch.6 is protein and
+amino acids; enteric methane is Ch.16, Eq. 16-8 and 16-9. Neither
+coefficient appears anywhere in the BeefGEM source document, whose own
+backgrounding rule R-CH4-ENT-003 uses the four-input Eq. 16-8 form
+(71.5 + 0.12*BW + 0.10*DMI^3 - 244.8*fat). Output values do fall
+inside the NRC range across the working intake band, but the equation
+itself has no identified source.
+
+Both are implemented as pinned, for traceability. Neither should be
+treated as NRC-sourced without re-derivation.
 
 ## OpenSpec
 

@@ -45,14 +45,18 @@
 - [x] B-1-7: Add `days_on_restricted_intake` and
       `is_on_restricted_intake` to Animal stocker instance attrs
 - [x] B-1-8: Write `test_limit_feeding.py` — Phase B-1 checkpoint
-- [ ] B-2-1: Add NASEM_CH4_FORAGE_INTERCEPT and
-      NASEM_CH4_FORAGE_SLOPE to `animal_module_constants.py`
-- [ ] B-2-2: Add `calculate_enteric_ch4_stocker()` to
-      `BeefStockerRequirementsCalculator` (NASEM 2016 Eq.6.8)
-- [ ] B-2-3: Add `stocker_enteric_ch4_g_d` output variable to
-      `AnimalModuleReporter.report_stocker_performance()`
-      [OutputChange]
-- [ ] B-2-4: Write `test_enteric_ch4.py` — Phase B-2 checkpoint
+- [x] B-2-1: Add BEEF_CH4_STOCKER_FORAGE_INTERCEPT and
+      BEEF_CH4_STOCKER_FORAGE_SLOPE to `animal_module_constants.py`.
+      Named `BEEF_CH4_*` not `NASEM_*` — the coefficients have no identified
+      NRC 2016 equation number; see the plan's provenance note.
+- [x] B-2-2: Add `calculate_enteric_ch4_stocker()` to
+      `BeefStockerRequirementsCalculator`, linear in DMI
+- [x] B-2-3: Add `stocker_mean_daily_enteric_ch4_g_d` output variable to
+      `AnimalModuleReporter.report_stocker_performance()`, matching the
+      feedlot naming. The equation has a non-zero intercept, so the
+      reporter short-circuits on days_in_stocker > 0 rather than
+      evaluating at zero intake. [OutputChange]
+- [x] B-2-4: Write `test_enteric_ch4.py` — Phase B-2 checkpoint
 
 ## Phase C — Herd Population Dynamics
 

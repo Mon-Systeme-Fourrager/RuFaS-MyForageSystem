@@ -198,7 +198,7 @@ equation exceeds the published upper bound at DMI 8 kg/d. That test is a
 tripwire, not an endorsement: it should fail and be rewritten if the
 coefficients are ever re-sourced.
 
-The stocker forage pair (`NASEM_CH4_FORAGE_INTERCEPT` / `NASEM_CH4_FORAGE_SLOPE`)
+The stocker forage pair (`BEEF_CH4_STOCKER_FORAGE_INTERCEPT` / `BEEF_CH4_STOCKER_FORAGE_SLOPE`)
 is stocker-only and stays in Phase B — see B-2.1.
 
 ### A-1.5 Finishing CH4 calculation methods
@@ -355,21 +355,42 @@ Write `test_beefgem/test_limit_feeding.py`:
 **Files:** `beef_nrc_requirements_calculator.py`, `beef_stocker_requirements_calculator.py`,
 `animal_module_reporter.py`, `animal_module_constants.py`
 
-### B-2.1 NASEM 2016 constants
+### B-2.1 Stocker forage CH4 constants
 
 Add to `animal_module_constants.py`:
 ```python
-# ===== NASEM 2016 ENTERIC CH4 CONSTANTS (BeefGEM Phase B) =====
+# Linear enteric CH4 for stocker cattle on forage.
+# See the provenance note below — no NRC 2016 equation number identified.
+BEEF_CH4_STOCKER_FORAGE_INTERCEPT: float = 10.04
+"""Intercept of the stocker forage enteric CH4 model (g CH4/d)."""
 
-# Eq.6.8 — Stocker/backgrounding on forage (NASEM 2016 Ch.6)
-NASEM_CH4_FORAGE_INTERCEPT: float = 10.04
-"""NASEM 2016 Eq.6.8 intercept (g CH4/d)."""
-
-NASEM_CH4_FORAGE_SLOPE: float = 23.7
-"""NASEM 2016 Eq.6.8 slope (g CH4 per kg DMI/d)."""
+BEEF_CH4_STOCKER_FORAGE_SLOPE: float = 23.7
+"""Slope of the stocker forage enteric CH4 model (g CH4 per kg DMI/d)."""
 ```
 
-**Note:** the Mits3 grass-fed pair (`BEEF_CH4_GRASS_FED_INTERCEPT` = 8.25,
+The constants carry the `BEEF_CH4_` prefix used by the rest of this family,
+not `NASEM_`, because the `NASEM_` prefix asserts a provenance that does not
+hold — see below.
+
+**Two BeefGEM coefficient sets could not be traced to NRC 2016.**
+
+Grass-fed (`BEEF_CH4_GRASS_FED_*`, 8.25 / 31.2): give 257.85 g/d at
+8 kg DM/d, above the 87-252 g/d NRC Ch.16 reports for grazing cattle.
+Pinned in the suite as a tripwire.
+
+Stocker forage (`BEEF_CH4_STOCKER_FORAGE_*`, 10.04 / 23.7): the source
+document labels these "NASEM 2016, eq 6.8". NRC Ch.6 is protein and
+amino acids; enteric methane is Ch.16, Eq. 16-8 and 16-9. Neither
+coefficient appears anywhere in the BeefGEM source document, whose own
+backgrounding rule R-CH4-ENT-003 uses the four-input Eq. 16-8 form
+(71.5 + 0.12*BW + 0.10*DMI^3 - 244.8*fat). Output values do fall
+inside the NRC range across the working intake band, but the equation
+itself has no identified source.
+
+Both are implemented as pinned, for traceability. Neither should be
+treated as NRC-sourced without re-derivation.
+
+**Note:** the grass-fed pair (`BEEF_CH4_GRASS_FED_INTERCEPT` = 8.25,
 `BEEF_CH4_GRASS_FED_SLOPE` = 31.2) was already added in Phase A step A-1.4,
 because `calculate_enteric_ch4_grass_fed()` is a Phase A deliverable. Do not
 add them again here. Only the two forage constants above are new in Phase B.
@@ -386,8 +407,8 @@ In `BeefStockerRequirementsCalculator` (used by stocker):
 @classmethod
 def calculate_enteric_ch4_stocker(cls, dmi: float) -> float:
     """NASEM 2016 Eq.6.8 enteric CH4 for stocker/backgrounding on forage (g/d)."""
-    return (AnimalModuleConstants.NASEM_CH4_FORAGE_INTERCEPT
-            + AnimalModuleConstants.NASEM_CH4_FORAGE_SLOPE * dmi)
+    return (AnimalModuleConstants.BEEF_CH4_STOCKER_FORAGE_INTERCEPT
+            + AnimalModuleConstants.BEEF_CH4_STOCKER_FORAGE_SLOPE * dmi)
 ```
 
 ### B-2.3 Report the stocker CH4 output
