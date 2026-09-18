@@ -12,6 +12,7 @@ from RUFAS.EEE.EEE_manager import EEEManager
 from RUFAS.biophysical.animal.herd_manager import HerdManager
 from RUFAS.biophysical.animal.pen import Pen
 from RUFAS.biophysical.feed_storage.feed_manager import FeedManager
+from RUFAS.biophysical.feed_storage.hay import Hay
 from RUFAS.current_day_conditions import CurrentDayConditions
 from RUFAS.data_structures.events import ManureEvent
 from RUFAS.data_structures.feed_storage_to_animal_connection import (
@@ -466,6 +467,82 @@ def test_execute_daily_field_operations_no_harvested_crops(
     )
     simulation_engine.feed_manager.receive_crop.assert_not_called()
     assert result == harvested_crops
+
+
+def test_receive_daily_harvested_crops_defers_curing_crop_until_storage_date_no_negative_hay_loss(
+    simulation_engine: SimulationEngine,
+) -> None:
+    """Regression: a wilt_days>0 crop's storage_time is set wilt_days in the future at harvest
+    (crop_management.py); it must NOT reach feed_manager.receive_crop on harvest day, only once
+    storage_time is reached -- and once delivered on schedule, Hay's degradation math (which has
+    no clamp, unlike silage.py) must never see a negative days_stored crossing the 30-day
+    INITIAL_LOSS_PERIOD boundary inside what used to be the wilt window."""
+    harvest_date = date(2026, 6, 1)
+    storage_date = harvest_date + timedelta(days=3)
+    crop = HarvestedCrop(
+        config_name="alfalfa_hay",
+        field_name="field_1",
+        harvest_time=harvest_date,
+        storage_time=storage_date,
+        dry_matter_mass=1000.0,
+        dry_matter_percentage=50.0,
+        dry_matter_digestibility=70.0,
+        crude_protein_percent=10.0,
+        non_protein_nitrogen=5.0,
+        starch=30.0,
+        adf=7.0,
+        ndf=15.0,
+        lignin=3.0,
+        sugar=20.0,
+        ash=6.0,
+    )
+
+    simulation_engine.time = MagicMock(spec=RufasTime)
+    simulation_engine.time.current_date = datetime(harvest_date.year, harvest_date.month, harvest_date.day)
+    simulation_engine.time.simulation_day = 10
+    # Unrelated to this test's focus (delivery timing) -- fixed far in the future so
+    # _should_recalculate_feed_planning is always False and its untested branch is not exercised.
+    simulation_engine.next_max_daily_feed_recalculation = datetime(2099, 1, 1)
+    # Local reassignment (not the fixture's spec'd mock) so mypy narrows receive_crop to
+    # MagicMock's attrs -- same pattern as simulation_engine.field_manager elsewhere in this file.
+    simulation_engine.feed_manager = MagicMock()
+
+    # Harvest day: still curing (storage_date is 3 days out) -- must NOT be delivered yet.
+    simulation_engine._receive_daily_harvested_crops([crop])
+    simulation_engine.feed_manager.receive_crop.assert_not_called()
+    assert crop in simulation_engine._pending_curing_crops
+
+    # Ready day: storage_date has arrived -- must be delivered now, with today's simulation_day.
+    simulation_engine.time.current_date = datetime(storage_date.year, storage_date.month, storage_date.day)
+    simulation_engine.time.simulation_day = 13
+    simulation_engine._receive_daily_harvested_crops([])
+    simulation_engine.feed_manager.receive_crop.assert_called_once_with(crop, 13)
+    assert simulation_engine._pending_curing_crops == []
+
+    # Hay degradation math must never go negative once delivered on schedule.
+    hay = Hay(
+        config={
+            "name": "hay_storage",
+            "rufas_id": 1,
+            "field_names": ["field_1"],
+            "crop_name": "alfalfa_hay",
+            "initial_storage_dry_matter": 0.0,
+            "bale_size": 1.2,
+            "target_dry_matter": 85.0,
+            "capacity": 1_000_000.0,
+            "additional_dry_matter_loss_coefficient": 0.0,
+        }
+    )
+    time_35_days_later = RufasTime(
+        datetime(2026, 1, 1), datetime(2027, 1, 1), datetime(storage_date.year, storage_date.month, storage_date.day)
+    )
+    time_35_days_later.current_date = datetime(storage_date.year, storage_date.month, storage_date.day) + timedelta(
+        days=35
+    )
+
+    loss = hay.calculate_dry_matter_loss_to_gas(crop, [], time_35_days_later)
+
+    assert loss >= 0.0
 
 
 def test_execute_field_only_simulation(
