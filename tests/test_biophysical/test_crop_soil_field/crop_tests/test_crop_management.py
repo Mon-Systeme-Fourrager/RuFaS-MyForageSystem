@@ -453,6 +453,46 @@ def test_get_harvested_crop_with_wilt_days_applies_curing(mocker: MockerFixture,
     )
 
 
+@pytest.mark.unit
+def test_get_harvested_crop_wilt_window_exceeds_available_weather_falls_back(
+    mocker: MockerFixture, mock_crop_data: CropData
+) -> None:
+    """When the wilt window runs past the simulation's available weather data,
+    get_conditions_series raises KeyError; _determine_harvest_composition must fall back to
+    wilt_days==0 behavior (no crash) and log the failure via OutputManager.add_error."""
+    add_variable = mocker.patch.object(OutputManager, "add_variable")
+    add_error = mocker.patch.object(OutputManager, "add_error")
+
+    mock_crop_data.wilt_days = 5
+    mock_time = MagicMock(spec=RufasTime)
+    mock_time.current_date = datetime(2024, 6, 15)
+    field_size = 2.0
+    crop_management = CropManagement(crop_data=mock_crop_data, dry_matter_yield_collected=1000.0)
+
+    weather = mocker.Mock(spec=Weather)
+    weather.get_conditions_series = mocker.Mock(side_effect=KeyError("date out of range"))
+
+    actual = crop_management._get_harvested_crop(mock_time, field_size, "mock_field", weather)
+
+    weather.get_conditions_series.assert_called_once_with(time=mock_time, starting_offset=0, ending_offset=4)
+    assert actual.harvest_time == actual.storage_time == mock_time.current_date.date()
+    assert actual.dry_matter_mass == pytest.approx(1000.0 * field_size)
+    assert actual.dry_matter_percentage == pytest.approx(mock_crop_data.dry_matter_percentage)
+    assert actual.crude_protein_percent == pytest.approx(mock_crop_data.crude_protein_percent_at_harvest)
+    assert actual.ndf == pytest.approx(mock_crop_data.ndf_at_harvest)
+    add_variable.assert_not_called()
+    add_error.assert_called_once_with(
+        "Field curing skipped",
+        f"Weather unavailable for the full 5-day wilt window starting {mock_time.current_date} "
+        f"for field 'mock_field'.",
+        {
+            "class": "CropManagement",
+            "function": "_determine_harvest_composition",
+            "suffix": "field='mock_field'",
+        },
+    )
+
+
 @pytest.mark.parametrize(
     "harvest_op, field_name,field_size,year,day,mass,dry_mass,nitrogen,phosphorus",
     [
