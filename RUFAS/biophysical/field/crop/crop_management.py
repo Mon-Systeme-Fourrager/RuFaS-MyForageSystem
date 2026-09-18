@@ -122,7 +122,7 @@ class CropManagement:
         field_size: float,
         time: RufasTime,
         soil_data: SoilData,
-        weather: Weather | None = None,
+        weather: Weather,
     ) -> HarvestedCrop:
         """
         Executes the harvest operation passed on the crop that contains this module.
@@ -139,10 +139,9 @@ class CropManagement:
             RufasTime instance containing the current time of the simulation.
         soil_data : SoilData
             The object tracking the attributes of the soil profile.
-        weather : Weather, optional
+        weather : Weather
             Weather instance used to fetch the daily conditions for the opt-in field-curing calculation
-            (``CropData.wilt_days > 0``). If not provided, field curing is skipped and today's exact
-            behavior (``harvest_time == storage_time``) is preserved.
+            (``CropData.wilt_days > 0``).
 
         Returns
         -------
@@ -330,7 +329,7 @@ class CropManagement:
             self.data.root_fraction = 1.0
 
     def _get_harvested_crop(
-        self, time: RufasTime, field_size: float, field_name: str, weather: Weather | None = None
+        self, time: RufasTime, field_size: float, field_name: str, weather: Weather
     ) -> HarvestedCrop:
         """
         Compiles the details of a harvest of this crop into a HarvestedCrop instance and passes it to the Feed Manager.
@@ -343,10 +342,9 @@ class CropManagement:
             Size of the field from which this crop was harvested (ha).
         field_name : str
             The name of the field that contains this crop.
-        weather : Weather, optional
+        weather : Weather
             Weather instance used to fetch the daily conditions over the wilt window for the opt-in
-            field-curing calculation (``self.data.wilt_days > 0``). If not provided, field curing is
-            skipped, matching a ``wilt_days == 0`` configuration exactly.
+            field-curing calculation (``self.data.wilt_days > 0``).
 
         Returns
         -------
@@ -382,12 +380,12 @@ class CropManagement:
         return harvested_crop
 
     def _determine_harvest_composition(
-        self, time: RufasTime, field_size: float, field_name: str, weather: Weather | None
+        self, time: RufasTime, field_size: float, field_name: str, weather: Weather
     ) -> tuple[float, float, float, float, date]:
         """
         Determines a harvest's DM mass/percentage, CP, NDF, and storage date, applying the opt-in
         pre-harvest field-curing calculation (respiration + rain loss/leaching, DAFOSYM/Rotz & Chen 1985)
-        when ``self.data.wilt_days > 0`` and a ``weather`` instance is available.
+        when ``self.data.wilt_days > 0``.
 
         Parameters
         ----------
@@ -397,9 +395,8 @@ class CropManagement:
             Size of the field from which this crop was harvested (ha).
         field_name : str
             The name of the field that contains this crop.
-        weather : Weather, optional
-            Weather instance used to fetch the daily conditions over the wilt window. If ``None``, field
-            curing is skipped regardless of ``self.data.wilt_days``.
+        weather : Weather
+            Weather instance used to fetch the daily conditions over the wilt window.
 
         Returns
         -------
@@ -414,16 +411,16 @@ class CropManagement:
         falls back to the ``wilt_days == 0`` behavior rather than crashing the run.
 
         """
-        # Defaults for wilt_days<=0, weather is None, and the KeyError fallback below --
-        # computed once so the three paths that all reduce to "no field curing applied"
-        # cannot silently diverge from one another.
+        # Defaults for wilt_days<=0 and the KeyError fallback below -- computed once so the
+        # two paths that both reduce to "no field curing applied" cannot silently diverge
+        # from one another.
         dm_mass = self.dry_matter_yield_collected * field_size
         dm_pct = self.data.dry_matter_percentage
         cp_pct = self.data.crude_protein_percent_at_harvest
         ndf_pct = self.data.ndf_at_harvest
         storage_date = time.current_date.date()
 
-        if self.data.wilt_days > 0 and weather is not None:
+        if self.data.wilt_days > 0:
             info_map = {
                 "class": self.__class__.__name__,
                 "function": self._determine_harvest_composition.__name__,

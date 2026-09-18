@@ -234,7 +234,7 @@ class Crop:
         field_size: float,
         time: RufasTime,
         soil_data: SoilData,
-        weather: Weather | None = None,
+        weather: Weather,
     ) -> HarvestedCrop:
         """Wrapper function for the Crop's CropManagement harvesting operation.
 
@@ -250,9 +250,8 @@ class Crop:
             RufasTime instance containing the current time of the simulation.
         soil_data : SoilData
             The object tracking the attributes of the soil profile.
-        weather : Weather, optional
-            Weather instance used for the opt-in field-curing calculation during harvest. If not provided,
-            field curing is skipped.
+        weather : Weather
+            Weather instance used for the opt-in field-curing calculation during harvest.
 
         Returns
         -------
