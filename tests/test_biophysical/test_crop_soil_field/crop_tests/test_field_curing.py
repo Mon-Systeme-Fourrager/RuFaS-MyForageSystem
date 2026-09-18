@@ -14,17 +14,7 @@ import math
 import pytest
 
 from RUFAS.biophysical.field.crop import field_curing_constants as fcc
-from RUFAS.biophysical.field.crop.field_curing import (
-    apply_leaching_quality_shift,
-    celsius_to_fahrenheit,
-    dry_bulb_drying_rate,
-    mm_to_inches,
-    rain_leaching_loss_fraction,
-    rain_leaf_loss_fraction,
-    respiration_dm_loss_fraction,
-    simulate_field_curing,
-    swath_moisture_content,
-)
+from RUFAS.biophysical.field.crop.field_curing import FieldCuring
 from RUFAS.current_day_conditions import CurrentDayConditions
 from RUFAS.general_constants import GeneralConstants
 
@@ -57,8 +47,8 @@ def test_dry_bulb_drying_rate_typical_values() -> None:
     (1985)'s own reported range for standard conditioning (AR=0):
     0.024-0.232 /h (their own sensitivity-analysis text, Trans. ASAE
     28(5):1686-1691)."""
-    dr_mowing_day = dry_bulb_drying_rate(180.0, 20.0, 17.0, 700.0, is_mowing_day=True)
-    dr_subsequent_day = dry_bulb_drying_rate(180.0, 20.0, 17.0, 700.0, is_mowing_day=False)
+    dr_mowing_day = FieldCuring.dry_bulb_drying_rate(180.0, 20.0, 17.0, 700.0, is_mowing_day=True)
+    dr_subsequent_day = FieldCuring.dry_bulb_drying_rate(180.0, 20.0, 17.0, 700.0, is_mowing_day=False)
     assert 0.024 <= dr_mowing_day <= 0.232
     assert 0.024 <= dr_subsequent_day <= 0.232
 
@@ -71,8 +61,8 @@ def test_dry_bulb_drying_rate_day_term_matches_primary_source() -> None:
     denominator's day-moisture term is smaller (2.06-0.97*1=1.09) than with
     DAY=0 (2.06-0.97*0=2.06), so DR should be strictly larger on the mowing
     day than on a subsequent day, all else equal."""
-    dr_mowing_day = dry_bulb_drying_rate(180.0, 20.0, 17.0, 700.0, is_mowing_day=True)
-    dr_subsequent_day = dry_bulb_drying_rate(180.0, 20.0, 17.0, 700.0, is_mowing_day=False)
+    dr_mowing_day = FieldCuring.dry_bulb_drying_rate(180.0, 20.0, 17.0, 700.0, is_mowing_day=True)
+    dr_subsequent_day = FieldCuring.dry_bulb_drying_rate(180.0, 20.0, 17.0, 700.0, is_mowing_day=False)
     assert dr_mowing_day == pytest.approx(0.053922164365376876, rel=1e-9)
     assert dr_subsequent_day == pytest.approx(0.04505616397694074, rel=1e-9)
     assert dr_mowing_day > dr_subsequent_day
@@ -82,9 +72,9 @@ def test_dry_bulb_drying_rate_day_term_matches_primary_source() -> None:
 def test_swath_moisture_content_decay() -> None:
     """M decreases monotonically with elapsed time and approaches the
     (zero) equilibrium moisture as T grows large."""
-    m_early = swath_moisture_content(0.75, 0.05, 10.0)
-    m_later = swath_moisture_content(0.75, 0.05, 20.0)
-    m_huge = swath_moisture_content(0.75, 0.05, 10000.0)
+    m_early = FieldCuring.swath_moisture_content(0.75, 0.05, 10.0)
+    m_later = FieldCuring.swath_moisture_content(0.75, 0.05, 20.0)
+    m_huge = FieldCuring.swath_moisture_content(0.75, 0.05, 10000.0)
     assert m_later < m_early
     assert m_huge == pytest.approx(0.0, abs=1e-6)
 
@@ -92,7 +82,7 @@ def test_swath_moisture_content_decay() -> None:
 @pytest.mark.unit
 def test_swath_moisture_content_zero_elapsed_hours_is_noop() -> None:
     """T=0 returns the initial moisture unchanged (edge case)."""
-    assert swath_moisture_content(0.75, 0.05, 0.0) == pytest.approx(0.75)
+    assert FieldCuring.swath_moisture_content(0.75, 0.05, 0.0) == pytest.approx(0.75)
 
 
 # ---------------------------------------------------------------------------
@@ -103,15 +93,15 @@ def test_swath_moisture_content_zero_elapsed_hours_is_noop() -> None:
 @pytest.mark.unit
 def test_respiration_dm_loss_zero_below_threshold() -> None:
     """Respiration is zero at and below the 0.27 moisture threshold."""
-    assert respiration_dm_loss_fraction(0.27, 68.0) == pytest.approx(0.0)
-    assert respiration_dm_loss_fraction(0.10, 68.0) == pytest.approx(0.0)
+    assert FieldCuring.respiration_dm_loss_fraction(0.27, 68.0) == pytest.approx(0.0)
+    assert FieldCuring.respiration_dm_loss_fraction(0.10, 68.0) == pytest.approx(0.0)
 
 
 @pytest.mark.unit
 def test_respiration_dm_loss_matches_dafosym_eq7() -> None:
     """RL = 0.00239*(AMC-0.27)*exp(0.038*AT_F), hand-computed at AMC=0.5,
     AT_F=68 (20 deg C)."""
-    result = respiration_dm_loss_fraction(0.5, 68.0)
+    result = FieldCuring.respiration_dm_loss_fraction(0.5, 68.0)
     expected = 0.00239 * (0.5 - 0.27) * math.exp(0.038 * 68.0)
     assert result == pytest.approx(expected, rel=1e-9)
 
@@ -119,29 +109,29 @@ def test_respiration_dm_loss_matches_dafosym_eq7() -> None:
 @pytest.mark.unit
 def test_celsius_to_fahrenheit_and_mm_to_inches_conversion() -> None:
     """Known reference points: 0C=32F, 100C=212F, 25.4mm=1in."""
-    assert celsius_to_fahrenheit(0.0) == pytest.approx(32.0)
-    assert celsius_to_fahrenheit(100.0) == pytest.approx(212.0)
-    assert mm_to_inches(25.4) == pytest.approx(1.0)
-    assert mm_to_inches(0.0) == pytest.approx(0.0)
+    assert FieldCuring.celsius_to_fahrenheit(0.0) == pytest.approx(32.0)
+    assert FieldCuring.celsius_to_fahrenheit(100.0) == pytest.approx(212.0)
+    assert FieldCuring.mm_to_inches(25.4) == pytest.approx(1.0)
+    assert FieldCuring.mm_to_inches(0.0) == pytest.approx(0.0)
 
 
 @pytest.mark.unit
 def test_rain_leaf_loss_fraction_proportional_to_rainfall() -> None:
     """RNLL = 0.094*RAIN_IN, uncapped (the 15% ceiling is enforced
     cumulatively by the orchestrator, not by this function)."""
-    assert rain_leaf_loss_fraction(1.0) == pytest.approx(0.094)
-    assert rain_leaf_loss_fraction(2.0) == pytest.approx(0.188)
-    assert rain_leaf_loss_fraction(0.0) == pytest.approx(0.0)
+    assert FieldCuring.rain_leaf_loss_fraction(1.0) == pytest.approx(0.094)
+    assert FieldCuring.rain_leaf_loss_fraction(2.0) == pytest.approx(0.188)
+    assert FieldCuring.rain_leaf_loss_fraction(0.0) == pytest.approx(0.0)
 
 
 @pytest.mark.unit
 def test_rain_leaching_and_quality_shift() -> None:
     """RNL, CPf, NDFf hand-computed at rainfall=2in, NDF=40%."""
-    rnl = rain_leaching_loss_fraction(2.0, 40.0)
+    rnl = FieldCuring.rain_leaching_loss_fraction(2.0, 40.0)
     expected_rnl = (1.0 - 0.40) * (1.0 - math.exp(-0.28 * 2.0))
     assert rnl == pytest.approx(expected_rnl, rel=1e-9)
 
-    cp, ndf = apply_leaching_quality_shift(18.0, 40.0, rnl)
+    cp, ndf = FieldCuring.apply_leaching_quality_shift(18.0, 40.0, rnl)
     expected_cp = 18.0 * (1.0 - 1.2 * rnl) / (1.0 - rnl)
     expected_ndf = 40.0 / (1.0 - rnl)
     assert cp == pytest.approx(expected_cp, rel=1e-9)
@@ -151,7 +141,7 @@ def test_rain_leaching_and_quality_shift() -> None:
 @pytest.mark.unit
 def test_rain_leaching_loss_fraction_zero_rain_is_zero() -> None:
     """No rain -> no leaching loss (edge case)."""
-    assert rain_leaching_loss_fraction(0.0, 40.0) == pytest.approx(0.0)
+    assert FieldCuring.rain_leaching_loss_fraction(0.0, 40.0) == pytest.approx(0.0)
 
 
 @pytest.mark.unit
@@ -162,11 +152,11 @@ def test_rain_leaching_rnl_clamped_near_singularity() -> None:
     calculation neither raises nor returns inf/nan -- CP floors at 0.0
     (Eq.11 goes negative once RNL exceeds 1/1.2, well before the clamp;
     apply_leaching_quality_shift's max(0.0, ...) guard catches this)."""
-    rnl = rain_leaching_loss_fraction(100.0, 0.0)
+    rnl = FieldCuring.rain_leaching_loss_fraction(100.0, 0.0)
     assert rnl == pytest.approx(fcc.FIELD_CURING_RNL_MAX)
     assert rnl < 1.0
 
-    cp, ndf = apply_leaching_quality_shift(18.0, 40.0, rnl)
+    cp, ndf = FieldCuring.apply_leaching_quality_shift(18.0, 40.0, rnl)
     assert cp == pytest.approx(0.0)
     assert math.isfinite(ndf)
 
@@ -174,7 +164,7 @@ def test_rain_leaching_rnl_clamped_near_singularity() -> None:
 @pytest.mark.unit
 def test_apply_leaching_quality_shift_zero_loss_is_noop() -> None:
     """leaching_loss_fraction=0 returns the inputs unchanged (edge case)."""
-    cp, ndf = apply_leaching_quality_shift(18.0, 40.0, 0.0)
+    cp, ndf = FieldCuring.apply_leaching_quality_shift(18.0, 40.0, 0.0)
     assert cp == pytest.approx(18.0)
     assert ndf == pytest.approx(40.0)
 
@@ -189,7 +179,7 @@ def test_simulate_field_curing_zero_days_is_noop() -> None:
     """An empty daily_weather list returns the inputs unchanged, matching
     wilt_days=0's zero-output-impact guarantee at the crop_management.py
     integration layer (Task 7)."""
-    result = simulate_field_curing(
+    result = FieldCuring.simulate_field_curing(
         initial_dry_matter_mass_kg=100.0,
         initial_dry_matter_percentage=30.0,
         crude_protein_percent=18.0,
@@ -218,7 +208,7 @@ def test_simulate_field_curing_multiplicative_compounding() -> None:
     test only checked monotonic decrease, which cannot distinguish
     multiplicative from additive compounding)."""
     rainy_day = _make_day(rainfall_mm=50.0)
-    result = simulate_field_curing(
+    result = FieldCuring.simulate_field_curing(
         initial_dry_matter_mass_kg=100.0,
         initial_dry_matter_percentage=30.0,
         crude_protein_percent=18.0,
@@ -247,11 +237,11 @@ def test_rain_leaf_loss_cumulative_cap_across_wilt_window() -> None:
     not reset to a fresh 0.15 allowance each day (`/challenge-plan` cycle-3
     finding 4: DAFOSYM's Eq.9 states its cap as "max 15% of total plant DM",
     a single ceiling on the whole exposure)."""
-    per_day_uncapped = rain_leaf_loss_fraction(mm_to_inches(50.0))
+    per_day_uncapped = FieldCuring.rain_leaf_loss_fraction(FieldCuring.mm_to_inches(50.0))
     assert per_day_uncapped > fcc.FIELD_CURING_RAIN_LEAF_LOSS_CAP_FRACTION
 
     rainy_day = _make_day(rainfall_mm=50.0)
-    result = simulate_field_curing(
+    result = FieldCuring.simulate_field_curing(
         initial_dry_matter_mass_kg=100.0,
         initial_dry_matter_percentage=30.0,
         crude_protein_percent=18.0,
@@ -280,7 +270,7 @@ def test_simulate_field_curing_respiration_uses_start_of_day_moisture() -> None:
     rates) -- even though it was wet for most of the day. A rain-free,
     fast-drying 1-day scenario must show nonzero total loss."""
     dry_day = _make_day(rainfall_mm=0.0)
-    result = simulate_field_curing(
+    result = FieldCuring.simulate_field_curing(
         initial_dry_matter_mass_kg=100.0,
         initial_dry_matter_percentage=30.0,
         crude_protein_percent=18.0,
@@ -298,7 +288,7 @@ def test_simulate_field_curing_zero_initial_mass_does_not_divide_by_zero() -> No
     """total_loss_fraction's divide-by-initial-mass guard (edge case: an
     invalid but non-crashing input)."""
     dry_day = _make_day(rainfall_mm=0.0)
-    result = simulate_field_curing(
+    result = FieldCuring.simulate_field_curing(
         initial_dry_matter_mass_kg=0.0,
         initial_dry_matter_percentage=30.0,
         crude_protein_percent=18.0,
@@ -318,7 +308,7 @@ def test_simulate_field_curing_dry_matter_percentage_tracks_moisture_curve() -> 
     confirms both sub-models run and their outputs are both surfaced, not
     just one silently dropped."""
     dry_day = _make_day(rainfall_mm=0.0)
-    result = simulate_field_curing(
+    result = FieldCuring.simulate_field_curing(
         initial_dry_matter_mass_kg=100.0,
         initial_dry_matter_percentage=30.0,
         crude_protein_percent=18.0,
@@ -340,7 +330,7 @@ def test_simulate_field_curing_no_rain_leaves_cp_ndf_unchanged() -> None:
     here). A fully rain-free window must leave CP/NDF exactly as given,
     even though DM mass decreases via respiration."""
     dry_day = _make_day(rainfall_mm=0.0)
-    result = simulate_field_curing(
+    result = FieldCuring.simulate_field_curing(
         initial_dry_matter_mass_kg=100.0,
         initial_dry_matter_percentage=30.0,
         crude_protein_percent=18.0,
@@ -363,7 +353,7 @@ def test_simulate_field_curing_percentage_to_fraction_moisture_conversion() -> N
     rain-free day. (Guards against a GeneralConstants.PERCENTAGE_TO_FRACTION
     sign/inversion error.)"""
     dry_day = _make_day(rainfall_mm=0.0)
-    result = simulate_field_curing(
+    result = FieldCuring.simulate_field_curing(
         initial_dry_matter_mass_kg=100.0,
         initial_dry_matter_percentage=30.0,
         crude_protein_percent=18.0,

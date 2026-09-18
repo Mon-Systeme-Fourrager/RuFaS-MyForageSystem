@@ -6,7 +6,7 @@ from RUFAS.current_day_conditions import CurrentDayConditions
 from RUFAS.data_structures.crop_soil_to_feed_storage_connection import HarvestedCrop
 from RUFAS.output_manager import OutputManager
 from RUFAS.biophysical.field.crop.crop_data import DEFAULT_DRY_MATTER_DIGESTIBILITY, CropData
-from RUFAS.biophysical.field.crop.field_curing import simulate_field_curing
+from RUFAS.biophysical.field.crop.field_curing import FieldCuring
 from RUFAS.biophysical.field.crop.harvest_operations import HarvestOperation
 from RUFAS.biophysical.field.soil.layer_data import LayerData
 from RUFAS.biophysical.field.soil.soil_data import SoilData
@@ -432,7 +432,7 @@ class CropManagement:
             try:
                 # Only the weather fetch can raise the KeyError this guards against
                 # (a wilt window running past the simulation's available weather data)
-                # -- kept narrow so a bug in simulate_field_curing or the OutputManager
+                # -- kept narrow so a bug in FieldCuring.simulate_field_curing or the OutputManager
                 # calls below can't be silently swallowed by this handler too.
                 daily_weather: list[CurrentDayConditions] = weather.get_conditions_series(
                     time=time, starting_offset=0, ending_offset=self.data.wilt_days - 1
@@ -445,7 +445,7 @@ class CropManagement:
                     info_map,
                 )
             else:
-                cured = simulate_field_curing(
+                cured = FieldCuring.simulate_field_curing(
                     initial_dry_matter_mass_kg=self.dry_matter_yield_collected * field_size,
                     initial_dry_matter_percentage=self.data.dry_matter_percentage,
                     crude_protein_percent=self.data.crude_protein_percent_at_harvest,
