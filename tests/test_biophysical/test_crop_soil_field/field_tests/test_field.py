@@ -38,8 +38,8 @@ from RUFAS.biophysical.field.soil.soil_data import SoilData
 from RUFAS.data_structures.manure_to_crop_soil_connection import NutrientRequest, NutrientRequestResults
 from RUFAS.data_structures.manure_types import ManureType
 from RUFAS.rufas_time import RufasTime
-from RUFAS.weather import Weather
 from RUFAS.units import MeasurementUnits
+from RUFAS.weather import Weather
 
 from tests.test_biophysical.test_crop_soil_field.sample_crop_configuration import SAMPLE_CROP_CONFIGURATION
 
