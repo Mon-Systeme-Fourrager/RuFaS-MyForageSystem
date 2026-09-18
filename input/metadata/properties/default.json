@@ -2778,6 +2778,21 @@
           "description": "Fraction of phosphorus in yield (unitless).",
           "minimum": 0.0,
           "maximum": 1.0
+        },
+        "wilt_days": {
+          "type": "number",
+          "description": "Number of days between cutting and storage during which the opt-in pre-harvest field-curing calculation is applied (days). 0 (default) disables field curing.",
+          "minimum": 0.0
+        },
+        "swath_density": {
+          "type": "number",
+          "description": "Swath density used by the opt-in field-curing drying-rate calculation (g/m^2). Only used when wilt_days > 0.",
+          "minimum": 0.0
+        },
+        "soil_moisture_at_mowing": {
+          "type": "number",
+          "description": "Soil moisture at mowing used by the opt-in field-curing drying-rate calculation (% dry basis). Only used when wilt_days > 0.",
+          "minimum": 0.0
         }
       }
     }
