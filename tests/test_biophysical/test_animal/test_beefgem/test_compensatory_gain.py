@@ -77,9 +77,8 @@ def _feedlot_kwargs(**overrides: Any) -> dict[str, Any]:
 
 @pytest.mark.unit
 def test_compensatory_gain_constants_have_the_settled_values() -> None:
-    """The four CG constants are pinned."""
+    """The three CG constants are pinned."""
     assert THRESHOLD == 21
-    assert AnimalModuleConstants.CG_MIN_INTAKE_FRACTION == pytest.approx(0.70)
     assert MAX_MULTIPLIER == pytest.approx(1.25)
     assert DECAY == pytest.approx(0.02)
 

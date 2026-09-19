@@ -345,14 +345,6 @@ class AnimalModuleConstants:
     triggers. A restriction of exactly this length produces no uplift.
     """
 
-    CG_MIN_INTAKE_FRACTION: float = 0.70
-    """
-    Fraction of ad libitum DMI below which intake counts as restricted for
-    compensatory gain purposes. Recorded for reference: the stocker module
-    tracks restriction by diet system rather than by measured intake, so
-    nothing currently reads this value.
-    """
-
     CG_MAX_ADG_MULTIPLIER: float = 1.25
     """
     Ceiling on the compensatory gain ADG multiplier, for biological

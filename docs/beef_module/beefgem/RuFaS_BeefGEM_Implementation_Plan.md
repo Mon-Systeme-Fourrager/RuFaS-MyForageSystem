@@ -961,6 +961,11 @@ def test_heat_stress_continuous_at_onset() -> None:
 
 ### Step D-2: Compensatory Gain After Nutritional Restriction
 
+An intake-fraction threshold was specified but removed: restriction is tracked
+by diet system rather than measured intake, so nothing read it. A future step
+needing an intake threshold should derive one rather than inherit an unused
+constant.
+
 **Files:** `animal.py`, `beef_nrc_requirements_calculator.py`,
 `animal_module_constants.py`, `animal_config.py`
 
@@ -971,9 +976,6 @@ def test_heat_stress_continuous_at_onset() -> None:
 
 CG_RESTRICTION_THRESHOLD_DAYS: int = 21
 """Minimum days of restricted intake before compensatory gain triggers."""
-
-CG_MIN_INTAKE_FRACTION: float = 0.70
-"""Below this fraction of ad libitum DMI = restricted intake for CG tracking."""
 
 CG_MAX_ADG_MULTIPLIER: float = 1.25
 """Ceiling on compensatory gain ADG multiplier (biological plausibility)."""

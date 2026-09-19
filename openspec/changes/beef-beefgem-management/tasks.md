@@ -159,12 +159,13 @@
       nowhere outside its own module, so the modifier would be unreachable
       code. Blocked on the same wiring gap as C-2-4.
 - [x] D-2-1: Add CG constants to `animal_module_constants.py`
-      (CG_RESTRICTION_THRESHOLD_DAYS, CG_MIN_INTAKE_FRACTION,
-      CG_MAX_ADG_MULTIPLIER, CG_DECAY_RATE_PER_DAY). Plus
+      (CG_RESTRICTION_THRESHOLD_DAYS, CG_MAX_ADG_MULTIPLIER,
+      CG_DECAY_RATE_PER_DAY). Plus
       CG_ADG_MULTIPLIER_PER_RESTRICTED_DAY — the 0.005 per-day rate, which
       has no citation: the source document says the factor comes from a
-      lookup table and does not supply the table. CG_MIN_INTAKE_FRACTION is
-      unread; restriction is tracked by diet system, not measured intake.
+      lookup table and does not supply the table. The specified
+      intake-fraction threshold was removed rather than kept: restriction
+      is tracked by diet system, not measured intake, so nothing read it.
 - [x] D-2-2: Add `enable_compensatory_gain: bool = False` to
       `AnimalConfig`, parsed from the stocker config block
 - [x] D-2-3: Add `compensatory_gain_factor: float = 1.0` to Animal
