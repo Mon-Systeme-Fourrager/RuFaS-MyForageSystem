@@ -25,6 +25,17 @@ taxonomy, and five named future-PR gaps (Section 10).
 describes is already implemented in the animal subsystem. Implement from
 the execution plan above, not from this file.
 
+**Its `calving_rate` field is not a conception rate.** The source
+document's `BeefHerdScenario.calving_rate` and its `high_conception_rate`
+/ `low_conception_rate` scenarios conflate calf crop weaned with
+conception. 0.855 is calf crop weaned — downstream of conception,
+gestation loss and pre-weaning mortality — and is carried in this
+codebase as `BEEF_CALF_CROP_WEANED_RATE`. The conception-equivalent of
+the same USDA figure is 91.5%. The scenario runner therefore exposes
+`conception_rate_multiplier`, a dimensionless scale factor on the
+calibrated base daily conception probability, not a rate. Those lines
+are left as converted, to keep the conversion faithful to its source.
+
 Code blocks were flattened by the pandoc conversion and re-fenced
 heuristically — treat them as indicative, not copy-paste ready.
 
@@ -58,6 +69,14 @@ calculations in this module are computed at exit as mean-daily values
 and written directly to output, not accumulated. A herd-level methane
 total requires per-day beef methane, which is a modelling gap rather
 than a plumbing one.
+
+**The scenario runner does not drive simulations.** Running a herd
+requires a populated input manager, the weather and feed subsystems,
+and the ration formulation cycle. The runner therefore takes the herd
+drive as an injectable callable and composes scenarios, replicates
+and comparison around it. The default raises rather than returning,
+so a caller cannot obtain plausible-looking numbers from a herd that
+was never driven.
 
 **Calf crop counts survivors.** The herd summary divides lifetime calvings
 by the cows currently in the herd, not by the cows exposed during the

@@ -594,7 +594,7 @@ through its inputs dataclass for identical reasons.
 
 - All 8 named scenario constants exist with correct values
 - `beef_calving_month` validates 1–12
-- `beef_calving_rate` validates 0 < rate ≤ 1.0
+- `beef_conception_rate_multiplier` validates > 0 and `math.isfinite`
 
 ---
 
@@ -679,9 +679,9 @@ class BeefHerdScenario:
     name: str
     calving_month: int = AnimalModuleConstants.BEEF_SCENARIO_SPRING_CALVING_MONTH
     weaning_age_mo: int = AnimalModuleConstants.BEEF_SCENARIO_STANDARD_WEANING_AGE_MO
-    stocker_mo: int = 7
-    calving_rate: float = 0.855
-    cull_rate: float = 0.175
+    stocker_mo: int = AnimalModuleConstants.BEEF_SCENARIO_STANDARD_STOCKER_MO
+    conception_rate_multiplier: float = 1.0
+    cull_rate: float = AnimalModuleConstants.BEEF_ANNUAL_CULL_RATE
     post_weaning_dest: BeefPostWeaningDestination = BeefPostWeaningDestination.STOCKER
     finishing_system: FinishingSystem = FinishingSystem.GRAIN_FED
 ```
@@ -724,10 +724,10 @@ BEEF_SCENARIOS: dict[str, BeefHerdScenario] = {
         name="extended_backgrounding", stocker_mo=9),
     "high_conception_rate": BeefHerdScenario(
         name="high_conception_rate",
-        calving_rate=AnimalModuleConstants.BEEF_SCENARIO_HIGH_CONCEPTION_RATE),
+        conception_rate_multiplier=AnimalModuleConstants.BEEF_SCENARIO_HIGH_CONCEPTION_MULTIPLIER),
     "low_conception_rate": BeefHerdScenario(
         name="low_conception_rate",
-        calving_rate=AnimalModuleConstants.BEEF_SCENARIO_LOW_CONCEPTION_RATE),
+        conception_rate_multiplier=AnimalModuleConstants.BEEF_SCENARIO_LOW_CONCEPTION_MULTIPLIER),
     "aggressive_culling": BeefHerdScenario(
         name="aggressive_culling",
         cull_rate=AnimalModuleConstants.BEEF_SCENARIO_AGGRESSIVE_CULL_RATE),
@@ -1102,8 +1102,9 @@ Document what BeefGEM adds and what remains out of scope:
    quantify; add `monensin_dmi_reduction_pct` to `AnimalConfig` in a future PR
 10. Implant ADG factor quantification — BeefGEM documents but does not quantify
    the multiplier; needs product-label or USDA data mapping
-11. Explicit BCS effect on reproduction — `calving_rate` lever captures it
-   implicitly; explicit BCS tracking is needed for the reproduction module
+11. Explicit BCS effect on reproduction — the `conception_rate_multiplier`
+   lever captures it implicitly; explicit BCS tracking is needed for the
+   reproduction module
 
 **No "Lesson X" references anywhere in this file.**
 

@@ -96,13 +96,27 @@
       paths, plus wiring report_feedlot_performance into a feedlot
       daily-update path. Blocked on the feedlot wiring gap. Not part
       of this module.
-- [ ] C-3-1: Create `RUFAS/biophysical/animal/beef_scenario_runner.py`
-      with `BeefHerdScenario` dataclass
-- [ ] C-3-2: Implement `run_scenario()` function
-- [ ] C-3-3: Implement `compare_scenarios() → pd.DataFrame`
-- [ ] C-3-4: Define `BEEF_SCENARIOS` dict with 8 named scenarios
-- [ ] C-3-5: Write `test_scenario_runner.py` — Phase C-3 checkpoint
-      (@pytest.mark.integration)
+- [x] C-3-1: Create `RUFAS/biophysical/animal/beef_scenario_runner.py`
+      with `BeefHerdScenario` dataclass. Carries
+      `conception_rate_multiplier`, not `calving_rate` — 0.855 is calf
+      crop weaned, not a conception rate (see C-1-1).
+- [x] C-3-2: Implement `run_scenario()`, returning a `ScenarioResult` that
+      holds per-replicate rows rather than only aggregates. The herd drive
+      is an injectable callable; the default raises rather than returning,
+      so a caller cannot obtain numbers from a herd that was never driven.
+- [x] C-3-3: Implement `compare_scenarios()`, returning a
+      `ScenarioComparison` whose `to_frame()` builds the `pd.DataFrame` on
+      demand from the summary's keys — adding a metric needs no change
+      here. Common random numbers on by default so paired differences
+      cancel shared stochastic noise.
+- [x] C-3-4: Define `BEEF_SCENARIOS` dict with 8 named scenarios, built
+      from the C-1 constants
+- [x] C-3-5: Write `test_scenario_runner.py` — Phase C-3 checkpoint.
+      Config is snapshotted and restored through a context manager;
+      four tests cover the leak, including restoration when the runner
+      raises. The @pytest.mark.integration end-to-end case is written out
+      in full and marked skip — driving a real herd needs a populated
+      InputManager, the weather and feed subsystems and the ration cycle.
 
 ## Phase D — Environmental Stress
 

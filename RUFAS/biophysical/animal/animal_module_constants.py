@@ -339,6 +339,15 @@ class AnimalModuleConstants:
     BEEF_SCENARIO_STANDARD_WEANING_AGE_MO: int = 7
     """Weaning age for the baseline scenario (months). A named-scenario default."""
 
+    BEEF_SCENARIO_STANDARD_STOCKER_MO: int = 7
+    """
+    Standard backgrounding duration in months for the named scenarios.
+    A scenario default, not a measured value. Numerically equal to the
+    standard weaning age, but independent of it — the two are not
+    related, and coupling them would make backgrounding length follow a
+    change to weaning age for no reason.
+    """
+
     BEEF_SCENARIO_EXTENDED_STOCKER_MO: int = 9
     """Backgrounding length for the extended-stocker scenario (months). A named-scenario default."""
 
