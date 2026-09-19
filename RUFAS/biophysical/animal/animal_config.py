@@ -443,6 +443,8 @@ class AnimalConfig:
     stocker_diet_system: StockerDietSystem = StockerDietSystem.PASTURE
     stocker_limit_feed_pct: float = AnimalModuleConstants.STOCKER_DEFAULT_LIMIT_FEED_PCT
 
+    enable_compensatory_gain: bool = False
+
     # ── ENVIRONMENTAL STRESS (farm-wide; applies to feedlot and stocker alike) ─
     # UPSTREAM-COLLISION: RuminantFarmSystems/RuFaS PR #3241 removes ~172
     # lines from this file (streamline_animal_culling_inputs). Reconcile
@@ -728,6 +730,8 @@ class AnimalConfig:
             cls.stocker_diet_system = StockerDietSystem(str(raw))
         if (limit_feed_pct := stocker_cfg.get("limit_feed_pct")) is not None:
             cls.stocker_limit_feed_pct = float(limit_feed_pct)
+        if (enable_cg := stocker_cfg.get("enable_compensatory_gain")) is not None:
+            cls.enable_compensatory_gain = bool(enable_cg)
 
     @classmethod
     def _merge_beef_defaults(cls, beef_cfg: dict[str, Any]) -> dict[str, Any]:

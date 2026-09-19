@@ -60,6 +60,9 @@ class StockerRequirementsInputs:
     relative_humidity_pct : float | None
         Relative humidity (0-100%) for the THI heat stress modifiers. None
         disables heat stress and leaves DMI and maintenance energy unchanged.
+    compensatory_gain_factor : float
+        ADG multiplier earned by prior nutritional restriction. 1.0 means no
+        compensatory gain. Clamped to CG_MAX_ADG_MULTIPLIER.
 
     """
 
@@ -75,6 +78,7 @@ class StockerRequirementsInputs:
     diet_system: StockerDietSystem = field(default=StockerDietSystem.PASTURE)
     limit_feed_pct: float = field(default=AnimalModuleConstants.STOCKER_DEFAULT_LIMIT_FEED_PCT)
     relative_humidity_pct: float | None = field(default=None)
+    compensatory_gain_factor: float = field(default=1.0)
 
 
 class BeefStockerRequirementsCalculator(NutritionRequirementsCalculator):
@@ -150,13 +154,16 @@ class BeefStockerRequirementsCalculator(NutritionRequirementsCalculator):
         msbw: float = inputs.mature_body_weight * 0.96
         eqsbw: float = BeefNRCRequirementsCalculator._calculate_eqsbw(sbw, msbw)
         eqebw: float = BeefNRCRequirementsCalculator._calculate_eqebw(eqsbw)
-        ebg: float = inputs.target_adg * 0.956
+        effective_adg: float = BeefNRCRequirementsCalculator._apply_compensatory_gain(
+            inputs.target_adg, inputs.target_adg, inputs.compensatory_gain_factor
+        )
+        ebg: float = effective_adg * 0.956
 
         ne_maintenance: float = BeefNRCRequirementsCalculator._calculate_maintenance_energy(
             sbw, inputs.breed, inputs.sex, "Open_Lot", inputs.mud_condition, inputs.temperature_c
         )
         ne_growth: float = BeefNRCRequirementsCalculator._calculate_growth_energy(eqebw, ebg)
-        np_growth: float = BeefNRCRequirementsCalculator._calculate_np_growth(inputs.target_adg, ne_growth)
+        np_growth: float = BeefNRCRequirementsCalculator._calculate_np_growth(effective_adg, ne_growth)
         mp: float = BeefNRCRequirementsCalculator._calculate_metabolizable_protein(inputs.body_weight, np_growth, eqsbw)
 
         calcium: float = BeefNRCRequirementsCalculator._calculate_calcium(sbw, np_growth)
@@ -229,6 +236,7 @@ class BeefStockerRequirementsCalculator(NutritionRequirementsCalculator):
             valid_sexes = ", ".join(str(s) for s in AnimalModuleConstants.SEX_NEm_MULTIPLIER)
             raise ValueError(f"sex must be one of {valid_sexes}; got {inputs.sex}.")
         BeefNRCRequirementsCalculator.validate_relative_humidity(inputs.relative_humidity_pct)
+        BeefNRCRequirementsCalculator.validate_compensatory_gain_factor(inputs.compensatory_gain_factor)
 
     @classmethod
     def _calculate_dmi(

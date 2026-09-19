@@ -1432,6 +1432,7 @@ class Animal:
         self.entry_weight = self.body_weight
         self.days_on_feed = int(args.get("days_on_feed", 0))
         self.receiving_stress = self.days_on_feed <= AnimalModuleConstants.RECEIVING_PERIOD_DAYS
+        self.compensatory_gain_factor = getattr(self, "compensatory_gain_factor", 1.0)
         self._update_step_up_phase()
 
     def _initialize_stocker_animal(self, args: Any) -> None:
@@ -1468,6 +1469,7 @@ class Animal:
         self.stocker_cumulative_dmi = 0.0
         self.days_on_restricted_intake = 0
         self.is_on_restricted_intake = False
+        self.compensatory_gain_factor = 1.0
 
     def _initialize_beef_cow_calf_animal(self, args: Any) -> None:
         """
@@ -1988,6 +1990,88 @@ class Animal:
 
         return daily_routines_output
 
+    @staticmethod
+    def calculate_compensatory_gain_factor(days_on_restricted_intake: int) -> float:
+        """
+        ADG multiplier earned by a period of restricted intake.
+
+        Parameters
+        ----------
+        days_on_restricted_intake : int
+            Days the animal spent on a limit-feed program.
+
+        Returns
+        -------
+        float
+            1.0 when the restriction did not exceed
+            ``CG_RESTRICTION_THRESHOLD_DAYS``; otherwise 1.0 plus
+            ``CG_ADG_MULTIPLIER_PER_RESTRICTED_DAY`` per excess day, capped at
+            ``CG_MAX_ADG_MULTIPLIER``.
+
+        Raises
+        ------
+        ValueError
+            If the day count is negative.
+
+        Notes
+        -----
+        The per-day coefficient has no identified source — see
+        ``CG_ADG_MULTIPLIER_PER_RESTRICTED_DAY``. This function ignores
+        ``AnimalConfig.enable_compensatory_gain``; callers that must respect
+        the opt-in gate use :meth:`resolve_compensatory_gain_factor`.
+        """
+        if days_on_restricted_intake < 0:
+            raise ValueError(f"days_on_restricted_intake must be non-negative, got {days_on_restricted_intake}")
+        excess = days_on_restricted_intake - AnimalModuleConstants.CG_RESTRICTION_THRESHOLD_DAYS
+        if excess <= 0:
+            return 1.0
+        raw = 1.0 + excess * AnimalModuleConstants.CG_ADG_MULTIPLIER_PER_RESTRICTED_DAY
+        return min(raw, AnimalModuleConstants.CG_MAX_ADG_MULTIPLIER)
+
+    @staticmethod
+    def resolve_compensatory_gain_factor(days_on_restricted_intake: int) -> float:
+        """
+        Compensatory gain factor honouring the opt-in configuration gate.
+
+        Parameters
+        ----------
+        days_on_restricted_intake : int
+            Days the animal spent on a limit-feed program.
+
+        Returns
+        -------
+        float
+            1.0 when ``AnimalConfig.enable_compensatory_gain`` is False,
+            otherwise the calculated factor.
+        """
+        if not AnimalConfig.enable_compensatory_gain:
+            return 1.0
+        return Animal.calculate_compensatory_gain_factor(days_on_restricted_intake)
+
+    @staticmethod
+    def decay_compensatory_gain_factor(compensatory_gain_factor: float) -> float:
+        """
+        One day of decay on a compensatory gain factor.
+
+        Parameters
+        ----------
+        compensatory_gain_factor : float
+            The current multiplier.
+
+        Returns
+        -------
+        float
+            The multiplier reduced by ``CG_DECAY_RATE_PER_DAY``, floored at
+            1.0 so the advantage never becomes a penalty.
+
+        Notes
+        -----
+        Called from ``_feedlot_daily_routines``, which no production run
+        reaches — feedlot animals are not iterated in the herd daily loop.
+        Until that is wired, a factor set at stocker exit persists undecayed.
+        """
+        return max(1.0, compensatory_gain_factor - AnimalModuleConstants.CG_DECAY_RATE_PER_DAY)
+
     def _feedlot_daily_routines(self, time: RufasTime) -> DailyRoutinesOutput:
         """
         Streamlined daily routine for feedlot finishing animals.
@@ -2012,8 +2096,12 @@ class Animal:
 
         self._update_step_up_phase(simulation_day=time.simulation_day)
 
+        self.compensatory_gain_factor = self.decay_compensatory_gain_factor(self.compensatory_gain_factor)
+
         # Direct body weight update — Growth.evaluate_body_weight_change does not support feedlot
-        effective_adg: float = AnimalConfig.feedlot_target_adg * AnimalConfig.feedlot_implant_adg_factor
+        effective_adg: float = (
+            AnimalConfig.feedlot_target_adg * AnimalConfig.feedlot_implant_adg_factor * self.compensatory_gain_factor
+        )
         self.body_weight += effective_adg
         self.growth.daily_growth = effective_adg
 
@@ -2309,6 +2397,7 @@ class Animal:
             self.events.add_event(self.days_born, time.simulation_day, exit_event)
             self.events.add_event(self.days_born, time.simulation_day, animal_constants.STOCKER_TO_FEEDLOT)
             self.animal_type = AnimalType.FEEDLOT_STEER if self.sex == Sex.STEER else AnimalType.FEEDLOT_HEIFER
+            self.compensatory_gain_factor = self.resolve_compensatory_gain_factor(self.days_on_restricted_intake)
             self._initialize_feedlot_animal(
                 {"body_weight": self.body_weight, "mature_body_weight": AnimalConfig.beef_mature_cow_weight_kg}
             )
@@ -3261,6 +3350,7 @@ class Animal:
                 ne_diet_concentration=ne_conc,
                 process_based_phosphorus_requirement=0.0,
                 relative_humidity_pct=AnimalConfig.relative_humidity_pct,
+                compensatory_gain_factor=self.compensatory_gain_factor,
             )
 
         if self.animal_type.is_beef_stocker:
@@ -3283,6 +3373,7 @@ class Animal:
                     diet_system=AnimalConfig.stocker_diet_system,
                     limit_feed_pct=AnimalConfig.stocker_limit_feed_pct,
                     relative_humidity_pct=AnimalConfig.relative_humidity_pct,
+                    compensatory_gain_factor=self.compensatory_gain_factor,
                 )
             )
 

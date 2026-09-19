@@ -108,6 +108,7 @@ class BeefNRCRequirementsCalculator(NutritionRequirementsCalculator):
         ne_diet_concentration: float,
         process_based_phosphorus_requirement: float,
         relative_humidity_pct: float | None = None,
+        compensatory_gain_factor: float = 1.0,
     ) -> NutritionRequirements:
         """
         Calculate all nutritional requirements for a feedlot finishing animal.
@@ -144,6 +145,9 @@ class BeefNRCRequirementsCalculator(NutritionRequirementsCalculator):
             Relative humidity (0-100%) for the THI heat stress modifiers.
             ``None`` disables heat stress and leaves DMI and maintenance
             energy unchanged.
+        compensatory_gain_factor : float
+            ADG multiplier earned by prior nutritional restriction. 1.0 means
+            no compensatory gain. Clamped to ``CG_MAX_ADG_MULTIPLIER``.
 
         Returns
         -------
@@ -168,7 +172,10 @@ class BeefNRCRequirementsCalculator(NutritionRequirementsCalculator):
         eqsbw = cls._calculate_eqsbw(sbw, msbw)
         eqebw = cls._calculate_eqebw(eqsbw)
 
-        effective_adg = target_adg * implant_adg_factor
+        cls.validate_compensatory_gain_factor(compensatory_gain_factor)
+        effective_adg = cls._apply_compensatory_gain(
+            target_adg * implant_adg_factor, target_adg, compensatory_gain_factor
+        )
         ebg = effective_adg * 0.956  # EBG = 0.956 × ADG (NRC 2016 Ch. 12)
 
         ne_maintenance = cls._calculate_maintenance_energy(sbw, breed, sex, housing, mud_condition, temperature_c)
@@ -406,6 +413,54 @@ class BeefNRCRequirementsCalculator(NutritionRequirementsCalculator):
         dmi_factor = cls._interpolate_heat_stress(thi, AnimalModuleConstants.BEEF_HEAT_STRESS_DMI_MULTIPLIERS)
         nem_factor = cls._interpolate_heat_stress(thi, AnimalModuleConstants.BEEF_HEAT_STRESS_NEM_MULTIPLIERS)
         return dmi * dmi_factor, ne_maintenance * nem_factor
+
+    @staticmethod
+    def validate_compensatory_gain_factor(compensatory_gain_factor: float) -> None:
+        """
+        Raise ValueError for a compensatory gain factor below 1.0 or non-finite.
+
+        Parameters
+        ----------
+        compensatory_gain_factor : float
+            Multiplier to check. 1.0 means no compensatory gain.
+
+        Raises
+        ------
+        ValueError
+            If the value is NaN, infinite, or below 1.0. Compensatory gain is
+            an uplift; a value below 1.0 is a caller error rather than a
+            growth penalty.
+        """
+        if not math.isfinite(compensatory_gain_factor) or compensatory_gain_factor < 1.0:
+            raise ValueError(f"compensatory_gain_factor must be >= 1.0 and finite, got {compensatory_gain_factor}")
+
+    @staticmethod
+    def _apply_compensatory_gain(effective_adg: float, target_adg: float, compensatory_gain_factor: float) -> float:
+        """
+        Scale an effective ADG by the compensatory gain factor, under the ceiling.
+
+        Parameters
+        ----------
+        effective_adg : float
+            ADG after any other multipliers, such as the implant factor (kg/d).
+        target_adg : float
+            Unmodified target ADG (kg/d), the basis for the ceiling.
+        compensatory_gain_factor : float
+            ADG multiplier earned by prior nutritional restriction.
+
+        Returns
+        -------
+        float
+            The scaled ADG, capped at ``target_adg x CG_MAX_ADG_MULTIPLIER``.
+
+        Notes
+        -----
+        The ceiling is re-applied here rather than trusted from the caller, so
+        a factor built elsewhere cannot push growth past what is biologically
+        plausible.
+        """
+        boosted = effective_adg * compensatory_gain_factor
+        return min(boosted, target_adg * AnimalModuleConstants.CG_MAX_ADG_MULTIPLIER)
 
     @staticmethod
     def validate_relative_humidity(relative_humidity_pct: float | None) -> None:

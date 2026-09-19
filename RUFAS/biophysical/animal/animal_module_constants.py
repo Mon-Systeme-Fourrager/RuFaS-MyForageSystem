@@ -339,6 +339,46 @@ class AnimalModuleConstants:
     BEEF_SCENARIO_STANDARD_WEANING_AGE_MO: int = 7
     """Weaning age for the baseline scenario (months). A named-scenario default."""
 
+    CG_RESTRICTION_THRESHOLD_DAYS: int = 21
+    """
+    Days of restricted intake that must be exceeded before compensatory gain
+    triggers. A restriction of exactly this length produces no uplift.
+    """
+
+    CG_MIN_INTAKE_FRACTION: float = 0.70
+    """
+    Fraction of ad libitum DMI below which intake counts as restricted for
+    compensatory gain purposes. Recorded for reference: the stocker module
+    tracks restriction by diet system rather than by measured intake, so
+    nothing currently reads this value.
+    """
+
+    CG_MAX_ADG_MULTIPLIER: float = 1.25
+    """
+    Ceiling on the compensatory gain ADG multiplier, for biological
+    plausibility. Applied both when the factor is set and again inside the
+    calculators, so a caller-supplied factor cannot exceed it either.
+    """
+
+    CG_DECAY_RATE_PER_DAY: float = 0.02
+    """
+    Decline in the compensatory gain advantage per day once restriction ends,
+    in multiplier units. A factor at the 1.25 ceiling returns to 1.0 after 13
+    days.
+    """
+
+    CG_ADG_MULTIPLIER_PER_RESTRICTED_DAY: float = 0.005
+    """
+    Uplift added to the ADG multiplier for each restricted day beyond
+    CG_RESTRICTION_THRESHOLD_DAYS.
+
+    This coefficient has no identified source. The BeefGEM source document
+    states only that the factor is set from the restricted-day count "via a
+    lookup table" and never provides that table; 0.005 is a linearisation
+    adopted in the implementation plan. It should not be treated as
+    BeefGEM- or NRC-derived without re-derivation.
+    """
+
     BEEF_THI_BREAKPOINTS: tuple[float, ...] = (72.0, 80.0, 90.0)
     """
     THI anchor points for beef cattle heat stress interpolation. 72 is the

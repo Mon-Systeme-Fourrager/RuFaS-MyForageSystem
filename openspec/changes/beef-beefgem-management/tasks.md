@@ -155,18 +155,38 @@
       production call site and `CowCalfRequirementsInputs` is constructed
       nowhere outside its own module, so the modifier would be unreachable
       code. Blocked on the same wiring gap as C-2-4.
-- [ ] D-2-1: Add CG constants to `animal_module_constants.py`
+- [x] D-2-1: Add CG constants to `animal_module_constants.py`
       (CG_RESTRICTION_THRESHOLD_DAYS, CG_MIN_INTAKE_FRACTION,
-      CG_MAX_ADG_MULTIPLIER, CG_DECAY_RATE_PER_DAY)
-- [ ] D-2-2: Add `enable_compensatory_gain: bool = False` to
-      `AnimalConfig`
-- [ ] D-2-3: Add `compensatory_gain_factor: float = 1.0` to Animal
-      stocker and feedlot instance attrs
-- [ ] D-2-4: Set CG factor at stocker exit based on
-      `days_on_restricted_intake`
-- [ ] D-2-5: Apply CG decay in `_feedlot_daily_routines()`
-- [ ] D-2-6: Apply CG factor in both calculators on target_adg
-- [ ] D-2-7: Write `test_compensatory_gain.py` — Phase D-2 checkpoint
+      CG_MAX_ADG_MULTIPLIER, CG_DECAY_RATE_PER_DAY). Plus
+      CG_ADG_MULTIPLIER_PER_RESTRICTED_DAY — the 0.005 per-day rate, which
+      has no citation: the source document says the factor comes from a
+      lookup table and does not supply the table. CG_MIN_INTAKE_FRACTION is
+      unread; restriction is tracked by diet system, not measured intake.
+- [x] D-2-2: Add `enable_compensatory_gain: bool = False` to
+      `AnimalConfig`, parsed from the stocker config block
+- [x] D-2-3: Add `compensatory_gain_factor: float = 1.0` to Animal
+      stocker and feedlot instance attrs. The feedlot initializer preserves
+      an existing value, so a factor earned in the stocker phase survives
+      the transition.
+- [x] D-2-4: Set CG factor at stocker exit based on
+      `days_on_restricted_intake`, via `resolve_compensatory_gain_factor`
+      so the opt-in gate is honoured in one place. The day counter itself
+      is NOT gated — it describes what the animal ate and is an output of
+      the limit-feeding work.
+- [x] D-2-5: Apply CG decay in `_feedlot_daily_routines()`. Implemented and
+      unit-tested, but does not execute in production — see D-2-8.
+- [x] D-2-6: Apply CG factor in both calculators on target_adg, threaded
+      through the inputs dataclass rather than read from config. The
+      ceiling is re-applied inside the modifier rather than trusted from
+      the caller, and the factor is validated on entry.
+- [x] D-2-7: Write `test_compensatory_gain.py` — Phase D-2 checkpoint
+      (37 tests)
+- [ ] D-2-8: DEFERRED — wire feedlot animals into the herd daily loop.
+      `feedlot_animals` is absent from both group lists in
+      `_process_daily_herd_updates`, so `_feedlot_daily_routines` never
+      runs and a factor set at stocker exit persists undecayed for the
+      whole feedlot period. Same root cause as C-2-4 and the unreported
+      feedlot exit performance.
 
 ## Post-implementation
 
