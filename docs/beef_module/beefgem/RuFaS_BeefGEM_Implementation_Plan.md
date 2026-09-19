@@ -1165,10 +1165,20 @@ pins a value directly from the NRC 2016 text (equations, tables, or examples).
 
 ## Pre-Review Checklist (Run Before Requesting Review)
 
+After any rebase, re-check `changelog.md`. It is set to `merge=union` in
+`.gitattributes`, so the merge keeps every line from both sides. Adding a line
+is safe across a rebase; editing or deleting one is not — the old line returns
+and the edit appears to have been reverted. Confirm each entry appears exactly
+once.
+
 ```bash
 # 1. Branch current
 git fetch origin
 git log HEAD..origin/dev-msf --oneline  # must be empty
+
+# 1b. changelog.md survived the rebase (merge=union keeps both sides)
+grep -c "<your entry's distinguishing phrase>" changelog.md   # must be 1
+grep -c "<phrase from any entry you replaced>" changelog.md   # must be 0
 
 # 2. No string literals where enums exist
 git diff dev-msf -- '*.py' | \
