@@ -127,11 +127,33 @@ behaviour is untouched
 
 **Given** a herd with known calf and cow counts
 **When** get_beef_herd_summary() is called
-**Then** calf_crop_pct = calves_born / cows_exposed × 100
+**Then** calf_crop_pct = sum(times_calved) / len(beef_cows) × 100
+
+**Given** a barren cow is culled mid-run
+**When** get_beef_herd_summary() is called
+**Then** calf_crop_pct rises, because the denominator counts cows currently in
+the herd rather than cows exposed during the breeding season — a documented
+upward bias, pinned in the suite
 
 **Given** an empty herd
 **When** get_beef_herd_summary() is called
-**Then** all 8 metrics return 0.0 without raising
+**Then** all 4 metrics return 0.0 without raising
+
+**Given** any herd
+**When** get_beef_herd_summary() is called
+**Then** exactly four keys are returned — calf_crop_pct,
+mean_calving_interval_days, replacement_rate_pct, mean_cow_bcs
+
+**Given** the four metrics with no backing state
+**When** get_beef_herd_summary() is called
+**Then** mean_stocker_adg_kg_d, mean_feedlot_adg_kg_d,
+mean_feedlot_days_on_feed and total_enteric_ch4_g_d are absent from the dict,
+not present as 0.0 — a zero would be indistinguishable from a real measurement
+
+**Given** a cow with three recorded calvings
+**When** the calving interval is computed
+**Then** the two consecutive gaps are averaged; cows with fewer than two
+calvings contribute no interval
 
 ### C-3: Scenario runner
 

@@ -78,10 +78,24 @@
       `beef_conception_rate_multiplier` with > 0 and isfinite validation,
       applied and clamped in `calculate_seasonal_conception_probability`.
 - [x] C-1-3: Write `test_scenario_constants.py` — Phase C-1 checkpoint
-- [ ] C-2-1: Add `get_beef_herd_summary()` to
-      `AnimalModuleReporter` returning dict[str, float] with 8 metrics
-- [ ] C-2-2: Wire summary metrics from HerdManager live state
-- [ ] C-2-3: Write `test_herd_summary_reporter.py` — Phase C-2 checkpoint
+- [x] C-2-1: Add `get_beef_herd_summary()` to `AnimalModuleReporter`
+      returning dict[str, float] with 4 metrics: calf_crop_pct,
+      mean_calving_interval_days, replacement_rate_pct, mean_cow_bcs.
+      Four originally specified metrics are CUT, not returned as 0.0 —
+      mean_stocker_adg_kg_d, mean_feedlot_adg_kg_d,
+      mean_feedlot_days_on_feed and total_enteric_ch4_g_d. Nothing
+      retains exit performance across a run, report_feedlot_performance
+      is never called in production, and beef animals produce no daily
+      methane. Do not restore them without the accumulator — see C-2-4.
+- [x] C-2-2: Wire summary metrics from HerdManager live state.
+      calf_crop_pct counts survivors only and is biased upward; the bias
+      is documented in the docstring and pinned in a test.
+- [x] C-2-3: Write `test_herd_summary_reporter.py` — Phase C-2 checkpoint
+- [ ] C-2-4: DEFERRED — herd-level exit-performance accumulator.
+      Requires persistent state on HerdManager written from both exit
+      paths, plus wiring report_feedlot_performance into a feedlot
+      daily-update path. Blocked on the feedlot wiring gap. Not part
+      of this module.
 - [ ] C-3-1: Create `RUFAS/biophysical/animal/beef_scenario_runner.py`
       with `BeefHerdScenario` dataclass
 - [ ] C-3-2: Implement `run_scenario()` function

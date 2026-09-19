@@ -616,23 +616,46 @@ def get_beef_herd_summary(cls, herd_manager: HerdManager,
     -------
     dict[str, float]
         Keys: calf_crop_pct, mean_calving_interval_days, replacement_rate_pct,
-        mean_cow_bcs, mean_stocker_adg_kg_d, mean_feedlot_adg_kg_d,
-        mean_feedlot_days_on_feed, total_enteric_ch4_g_d
+        mean_cow_bcs
     """
 ```
+
+Four metrics ship. Four originally specified are **cut**, not returned as 0.0 —
+a zero would be indistinguishable from a real measurement. Each is recorded as
+a scope boundary in the module README and carries a deferred task.
+
+**Exit-performance metrics are not summarised.** Stocker and feedlot
+average daily gain and days on feed are emitted per animal at exit
+and written to the output manager, but nothing retains them across a
+run. Summarising them at herd level requires an accumulator that does
+not currently exist.
+
+**Feedlot exit reporting is not wired.** `report_feedlot_performance`
+exists but is never called in production. The call belongs in a
+feedlot daily-update path that has not been built, so no feedlot
+animal currently reaches the reporter. This is a pre-existing gap,
+not introduced here.
+
+**Beef cattle produce no enteric methane in the herd totals.**
+Digestion supports dairy animal types only, so beef animals never
+contribute to the herd methane total. The enteric methane
+calculations in this module are computed at exit as mean-daily values
+and written directly to output, not accumulated. A herd-level methane
+total requires per-day beef methane, which is a modelling gap rather
+than a plumbing one.
 
 ### C-2.2 Metrics to compute
 
 | Metric | Source | Formula |
 |--------|--------|---------|
-| `calf_crop_pct` | `herd_manager.beef_cows` | calves born / cows exposed × 100 |
+| `calf_crop_pct` | `herd_manager.beef_cows` | sum(times_calved) / len(beef_cows) × 100 — survivors only, biased upward |
 | `mean_calving_interval_days` | cow event history | mean days between consecutive calvings |
 | `replacement_rate_pct` | `beef_replacement_heifers` | heifers / cows × 100 |
 | `mean_cow_bcs` | `beef_cows` | mean `body_condition_score_9` |
-| `mean_stocker_adg_kg_d` | stocker exit reporter accumulator | mean ADG at exit |
-| `mean_feedlot_adg_kg_d` | feedlot exit reporter accumulator | mean ADG at exit |
-| `mean_feedlot_days_on_feed` | feedlot exit reporter accumulator | mean days |
-| `total_enteric_ch4_g_d` | all beef animal groups | sum of daily CH4 |
+| ~~`mean_stocker_adg_kg_d`~~ | CUT — no accumulator exists | deferred |
+| ~~`mean_feedlot_adg_kg_d`~~ | CUT — no accumulator, reporter unwired | deferred |
+| ~~`mean_feedlot_days_on_feed`~~ | CUT — no accumulator, reporter unwired | deferred |
+| ~~`total_enteric_ch4_g_d`~~ | CUT — beef produce no daily methane | deferred |
 
 ### Phase C-2 Test Checkpoint
 
@@ -724,13 +747,17 @@ def test_spring_vs_fall_calving_scenarios():
     df = compare_scenarios({"spring": BEEF_SCENARIOS["spring_calving_baseline"],
                             "fall": BEEF_SCENARIOS["fall_calving"]}, years=1)
     assert isinstance(df, pd.DataFrame)
-    assert df.shape == (2, 8)  # 2 scenarios × 8 metrics
+    assert df.shape == (2, 4)  # 2 scenarios × 4 metrics
     assert set(df.index) == {"spring", "fall"}
     assert set(df.columns) == {"calf_crop_pct", "mean_calving_interval_days",
-                               "replacement_rate_pct", "mean_cow_bcs",
-                               "mean_stocker_adg_kg_d", "mean_feedlot_adg_kg_d",
-                               "mean_feedlot_days_on_feed", "total_enteric_ch4_g_d"}
+                               "replacement_rate_pct", "mean_cow_bcs"}
 ```
+
+The frame has four columns, not eight. `get_beef_herd_summary` returns four
+keys; the other four were cut in C-2 because nothing retains the state they
+would summarise. C-3 consumes the summary by key, so it inherits whatever
+`get_beef_herd_summary` returns — do not hard-code the column count in the
+runner itself.
 
 ---
 
@@ -1046,7 +1073,7 @@ Document what BeefGEM adds and what remains out of scope:
 1. `finishing_system` flag (grain vs grass-fed)
 2. Limit-feeding diet system for stocker
 3. NASEM 2016 CH4 enteric equation (stocker on forage + grass-fed feedlot)
-4. Herd population summary reporter (8 metrics)
+4. Herd population summary reporter (4 metrics)
 5. Scenario runner with 8 named pre-built scenarios
 6. Heat stress THI-based DMI and NEm modifiers
 7. Compensatory gain after nutritional restriction (opt-in)
@@ -1100,7 +1127,6 @@ def test_beefgem_full_simulation():
     )
     row = df.loc["spring"]
     assert 60.0 <= row["calf_crop_pct"] <= 100.0
-    assert row["total_enteric_ch4_g_d"] > 0
     assert row["mean_cow_bcs"] > 0
 
 @pytest.mark.integration

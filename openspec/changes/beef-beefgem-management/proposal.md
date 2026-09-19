@@ -31,7 +31,7 @@ simulation.
 - Limit-feeding diet system for stocker (LIMIT_FEED)
 - NASEM 2016 Eq.6.8 enteric CH4 for stocker on forage
 - Mits3 enteric CH4 for grass-fed feedlot
-- Herd population summary reporter (8 metrics)
+- Herd population summary reporter (4 metrics)
 - beef_scenario_runner.py with compare_scenarios() → pd.DataFrame
 - 8 pre-built named scenarios
 - THI-based heat stress DMI/NEm modifiers (opt-in)

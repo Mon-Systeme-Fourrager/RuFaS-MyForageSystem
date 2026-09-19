@@ -37,6 +37,34 @@ the DOCX only to check the conversion or recover formatting it dropped.
 Tracked via a scoped exception in `.gitignore` — the repo-wide `*.docx`
 rule would otherwise exclude it.
 
+## Scope boundaries
+
+**Exit-performance metrics are not summarised.** Stocker and feedlot
+average daily gain and days on feed are emitted per animal at exit
+and written to the output manager, but nothing retains them across a
+run. Summarising them at herd level requires an accumulator that does
+not currently exist.
+
+**Feedlot exit reporting is not wired.** `report_feedlot_performance`
+exists but is never called in production. The call belongs in a
+feedlot daily-update path that has not been built, so no feedlot
+animal currently reaches the reporter. This is a pre-existing gap,
+not introduced here.
+
+**Beef cattle produce no enteric methane in the herd totals.**
+Digestion supports dairy animal types only, so beef animals never
+contribute to the herd methane total. The enteric methane
+calculations in this module are computed at exit as mean-daily values
+and written directly to output, not accumulated. A herd-level methane
+total requires per-day beef methane, which is a modelling gap rather
+than a plumbing one.
+
+**Calf crop counts survivors.** The herd summary divides lifetime calvings
+by the cows currently in the herd, not by the cows exposed during the
+breeding season. Cows culled, sold or died mid-season have already left the
+cohort, so the figure is biased upward. An unbiased denominator is not
+recoverable from current state.
+
 ## Coefficient provenance
 
 **Two BeefGEM coefficient sets could not be traced to NRC 2016.**

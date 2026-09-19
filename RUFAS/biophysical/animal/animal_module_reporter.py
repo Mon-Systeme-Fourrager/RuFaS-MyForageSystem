@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from RUFAS.biophysical.animal.animal import Animal
+    from RUFAS.biophysical.animal.herd_manager import HerdManager
 
 from RUFAS.biophysical.animal.animal_config import AnimalConfig
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
@@ -38,6 +39,9 @@ from RUFAS.rufas_time import RufasTime
 from RUFAS.units import MeasurementUnits
 
 om = OutputManager()
+
+MIN_CALVINGS_FOR_INTERVAL: int = 2
+"""Calvings a cow needs before she contributes an interval to the herd mean."""
 
 
 class AnimalModuleReporter:
@@ -1494,6 +1498,107 @@ class AnimalModuleReporter:
             ch4,
             dict(info_map, units=MeasurementUnits.GRAMS_PER_DAY),
         )
+
+    @classmethod
+    def get_beef_herd_summary(cls, herd_manager: HerdManager, simulation_day: int) -> dict[str, float]:
+        """Return a beef herd summary for scenario comparison.
+
+        Parameters
+        ----------
+        herd_manager : HerdManager
+            The live herd, read for its beef cow and replacement heifer cohorts.
+        simulation_day : int
+            Current simulation day. Unused; kept for API symmetry with the other
+            reporter entry points and for future per-day summarisation.
+
+        Returns
+        -------
+        dict[str, float]
+            Keys: calf_crop_pct, mean_calving_interval_days,
+            replacement_rate_pct, mean_cow_bcs. An empty herd returns 0.0 for
+            every metric rather than raising.
+
+        Notes
+        -----
+        Four further metrics named in the module plan are deliberately absent
+        rather than returned as 0.0, because a zero would be indistinguishable
+        from a real measurement: mean stocker and feedlot average daily gain,
+        feedlot days on feed, and total enteric methane. The first three need a
+        herd-level accumulator that does not exist — exit performance is written
+        to the output manager and then discarded — and the fourth needs per-day
+        beef methane, which the digestion model does not produce. See the module
+        README for the full scope boundaries.
+
+        Calf crop is computed against cows currently in the herd, not cows
+        exposed during the breeding season. Cows culled, sold or died
+        mid-season have already left beef_cows, so the denominator counts
+        survivors only and the result is biased upward. HerdStatistics
+        retains exited cows but cumulatively across the whole run and without
+        times_calved, so an unbiased denominator is not recoverable from
+        current state.
+
+        """
+        cows: list[Animal] = herd_manager.beef_cows
+        heifers: list[Animal] = herd_manager.beef_replacement_heifers
+        cow_count: int = len(cows)
+
+        if cow_count == 0:
+            return {
+                "calf_crop_pct": 0.0,
+                "mean_calving_interval_days": 0.0,
+                "replacement_rate_pct": 0.0,
+                "mean_cow_bcs": 0.0,
+            }
+
+        total_calvings: int = sum(cow.times_calved for cow in cows)
+        total_bcs: float = sum(cow.body_condition_score_9 for cow in cows)
+
+        return {
+            "calf_crop_pct": total_calvings / cow_count * GeneralConstants.FRACTION_TO_PERCENTAGE,
+            "mean_calving_interval_days": cls._mean_beef_calving_interval(cows),
+            "replacement_rate_pct": len(heifers) / cow_count * GeneralConstants.FRACTION_TO_PERCENTAGE,
+            "mean_cow_bcs": total_bcs / cow_count,
+        }
+
+    @staticmethod
+    def _mean_beef_calving_interval(cows: list[Animal]) -> float:
+        """Return the mean interval between consecutive calvings, pooled across cows.
+
+        Parameters
+        ----------
+        cows : list[Animal]
+            Beef cows to scan. Cows with fewer than two recorded calvings
+            contribute no interval and are skipped.
+
+        Returns
+        -------
+        float
+            Mean days between consecutive calvings, or 0.0 when no cow has
+            calved at least twice.
+
+        Notes
+        -----
+        AnimalEvents is keyed by the animal's age in days rather than by
+        simulation day. Within a single animal the two differ by a constant
+        birth offset, so the difference between consecutive calving ages equals
+        the difference between the corresponding simulation days. Intervals are
+        therefore correct even though the absolute dates are ages.
+
+        Intervals are pooled across the herd rather than averaged per cow first,
+        so a cow with more calvings contributes proportionally more intervals.
+
+        """
+        intervals: list[int] = []
+        for cow in cows:
+            if cow.times_calved < MIN_CALVINGS_FOR_INTERVAL:
+                continue
+            calving_ages = sorted(
+                age for age, descriptions in cow.events.events.items() if animal_constants.BEEF_CALVING in descriptions
+            )
+            intervals.extend(later - earlier for earlier, later in zip(calving_ages, calving_ages[1:], strict=False))
+        if not intervals:
+            return 0.0
+        return sum(intervals) / len(intervals)
 
     @classmethod
     def report_cow_calf_performance(cls, animal: Animal, simulation_day: int) -> None:

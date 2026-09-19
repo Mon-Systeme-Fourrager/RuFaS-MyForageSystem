@@ -63,10 +63,18 @@ Computed from live HerdManager state at end of simulation:
 - mean_calving_interval_days: from consecutive BEEF_CALVING events
 - replacement_rate_pct: len(beef_replacement_heifers) / len(beef_cows)
 - mean_cow_bcs: mean of body_condition_score_9 across beef_cows
-- mean_stocker_adg_kg_d: accumulated from stocker exit reporter
-- mean_feedlot_adg_kg_d: accumulated from feedlot exit reporter
-- mean_feedlot_days_on_feed: accumulated from feedlot exit reporter
-- total_enteric_ch4_g_d: sum across all beef animal groups
+Four further metrics were specified and then cut, because nothing in current
+state retains what they would summarise. They are absent from the returned
+dict rather than zero, so a consumer cannot mistake an unwired metric for a
+real measurement:
+
+- mean_stocker_adg_kg_d: CUT — exit performance is written to the output
+  manager and discarded; no herd-level accumulator exists
+- mean_feedlot_adg_kg_d: CUT — same, and report_feedlot_performance is never
+  called in production
+- mean_feedlot_days_on_feed: CUT — same as above
+- total_enteric_ch4_g_d: CUT — digestion supports dairy types only, so beef
+  animals produce no daily methane to sum
 
 ## Phase D design
 
