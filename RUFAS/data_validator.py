@@ -1810,6 +1810,18 @@ class DataValidator:
                 raise ValueError(f"finishing_system must be one of {sorted(valid)}, got '{system}'")
 
     @staticmethod
+    def _validate_relative_humidity(config: dict[str, Any]) -> None:
+        """Raise ValueError if relative_humidity_pct is present, non-None, and invalid."""
+        if "relative_humidity_pct" not in config:
+            return
+        humidity = config["relative_humidity_pct"]
+        if humidity is None:
+            return
+        humidity_val = float(humidity)
+        if not math.isfinite(humidity_val) or humidity_val < 0.0 or humidity_val > 100.0:
+            raise ValueError(f"relative_humidity_pct must be 0-100 and finite, got {humidity_val}")
+
+    @staticmethod
     def _validate_beef_breeding_season_start_day(config: dict[str, Any]) -> None:
         """Raise ValueError if breeding_season_start_day is present, non-None, and outside [1, 365]."""
         if "breeding_season_start_day" not in config:

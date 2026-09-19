@@ -107,6 +107,7 @@ class BeefNRCRequirementsCalculator(NutritionRequirementsCalculator):
         temperature_c: float,
         ne_diet_concentration: float,
         process_based_phosphorus_requirement: float,
+        relative_humidity_pct: float | None = None,
     ) -> NutritionRequirements:
         """
         Calculate all nutritional requirements for a feedlot finishing animal.
@@ -139,6 +140,10 @@ class BeefNRCRequirementsCalculator(NutritionRequirementsCalculator):
             NEm concentration of the current ration (Mcal/kg DM).
         process_based_phosphorus_requirement : float
             Phosphorus requirement from the process-based submodule (g/d).
+        relative_humidity_pct : float | None
+            Relative humidity (0-100%) for the THI heat stress modifiers.
+            ``None`` disables heat stress and leaves DMI and maintenance
+            energy unchanged.
 
         Returns
         -------
@@ -176,6 +181,9 @@ class BeefNRCRequirementsCalculator(NutritionRequirementsCalculator):
         phosphorus = cls._calculate_phosphorus(sbw, np_growth)
 
         dmi = cls._calculate_dmi(body_weight, ne_diet_concentration, days_on_feed)
+
+        cls.validate_relative_humidity(relative_humidity_pct)
+        dmi, ne_maintenance = cls._apply_heat_stress(dmi, ne_maintenance, temperature_c, relative_humidity_pct)
 
         empty_aa = EssentialAminoAcidRequirements(
             histidine=0.0,
@@ -279,6 +287,146 @@ class BeefNRCRequirementsCalculator(NutritionRequirementsCalculator):
 
         """
         return eqsbw * 0.891
+
+    @staticmethod
+    def calculate_thi(temperature_c: float, relative_humidity_pct: float) -> float:
+        """
+        Temperature-Humidity Index for beef cattle heat stress.
+
+        Parameters
+        ----------
+        temperature_c : float
+            Dry-bulb air temperature (°C).
+        relative_humidity_pct : float
+            Relative humidity (0-100%).
+
+        Returns
+        -------
+        float
+            THI value. Values above 72 indicate heat stress.
+
+        Notes
+        -----
+        THI = (1.8 x T + 32) - (0.55 - 0.0055 x RH) x (1.8 x T - 26)
+
+        The second bracket is ``1.8 * T - 26``, not ``t_f - 26``. The two
+        differ by 32 and the wrong form understates THI by roughly 3.5 units
+        at 30 °C / 80% RH, which would silently suppress heat stress
+        throughout. At 30 °C / 80% RH this yields 82.92.
+
+        Source: NRC 2016 Ch. 11 (Maintenance, heat stress NEhs).
+        """
+        t_f = 1.8 * temperature_c + 32
+        return t_f - (0.55 - 0.0055 * relative_humidity_pct) * (1.8 * temperature_c - 26)
+
+    @staticmethod
+    def _interpolate_heat_stress(thi: float, multipliers: tuple[float, ...]) -> float:
+        """
+        Piecewise-linear heat stress multiplier for a given THI.
+
+        Parameters
+        ----------
+        thi : float
+            Temperature-Humidity Index, from :meth:`calculate_thi`.
+        multipliers : tuple[float, ...]
+            Multiplier at each anchor in ``BEEF_THI_BREAKPOINTS``, same length
+            and paired one-to-one.
+
+        Returns
+        -------
+        float
+            Below the first anchor, the first multiplier; above the last, the
+            last; between anchors, linearly interpolated.
+
+        Raises
+        ------
+        ValueError
+            If ``multipliers`` is not the same length as the anchor tuple.
+            Adding an anchor without its multiplier would otherwise shift the
+            whole response silently.
+        """
+        breakpoints = AnimalModuleConstants.BEEF_THI_BREAKPOINTS
+        if len(multipliers) != len(breakpoints):
+            raise ValueError(
+                f"heat stress multipliers must pair one-to-one with BEEF_THI_BREAKPOINTS: "
+                f"got {len(multipliers)} multipliers for {len(breakpoints)} anchors"
+            )
+        if thi <= breakpoints[0]:
+            return multipliers[0]
+        if thi >= breakpoints[-1]:
+            return multipliers[-1]
+        for index in range(len(breakpoints) - 1):
+            if breakpoints[index] <= thi < breakpoints[index + 1]:
+                span = breakpoints[index + 1] - breakpoints[index]
+                fraction = (thi - breakpoints[index]) / span
+                return multipliers[index] + fraction * (multipliers[index + 1] - multipliers[index])
+        return multipliers[-1]
+
+    @classmethod
+    def _apply_heat_stress(
+        cls,
+        dmi: float,
+        ne_maintenance: float,
+        temperature_c: float,
+        relative_humidity_pct: float | None,
+    ) -> tuple[float, float]:
+        """
+        Scale DMI and maintenance energy for heat stress.
+
+        Parameters
+        ----------
+        dmi : float
+            Predicted dry matter intake before heat stress (kg/d).
+        ne_maintenance : float
+            Maintenance energy before heat stress (Mcal/d).
+        temperature_c : float
+            Ambient temperature (°C).
+        relative_humidity_pct : float | None
+            Relative humidity (0-100%). ``None`` disables heat stress and
+            returns both values unchanged.
+
+        Returns
+        -------
+        tuple[float, float]
+            The heat-stress-adjusted ``(dmi, ne_maintenance)``.
+
+        Notes
+        -----
+        Applied once per animal at the ``calculate_requirements`` level rather
+        than inside ``_calculate_maintenance_energy``, which the stocker
+        calculator also calls — putting it there would apply the multiplier
+        twice on the feedlot path.
+
+        No lower floor on DMI is needed: every multiplier is positive and the
+        interpolation is bounded by the tuple.
+        """
+        if relative_humidity_pct is None:
+            return dmi, ne_maintenance
+        thi = cls.calculate_thi(temperature_c, relative_humidity_pct)
+        dmi_factor = cls._interpolate_heat_stress(thi, AnimalModuleConstants.BEEF_HEAT_STRESS_DMI_MULTIPLIERS)
+        nem_factor = cls._interpolate_heat_stress(thi, AnimalModuleConstants.BEEF_HEAT_STRESS_NEM_MULTIPLIERS)
+        return dmi * dmi_factor, ne_maintenance * nem_factor
+
+    @staticmethod
+    def validate_relative_humidity(relative_humidity_pct: float | None) -> None:
+        """
+        Raise ValueError for a humidity outside 0-100% or non-finite.
+
+        Parameters
+        ----------
+        relative_humidity_pct : float | None
+            Relative humidity to check. ``None`` is valid and disables heat
+            stress.
+
+        Raises
+        ------
+        ValueError
+            If the value is NaN, infinite, or outside the inclusive 0-100 range.
+        """
+        if relative_humidity_pct is None:
+            return
+        if not math.isfinite(relative_humidity_pct) or not 0.0 <= relative_humidity_pct <= 100.0:
+            raise ValueError(f"relative_humidity_pct must be 0-100 and finite, got {relative_humidity_pct}")
 
     @classmethod
     def _calculate_maintenance_energy(

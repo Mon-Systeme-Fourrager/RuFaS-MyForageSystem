@@ -120,26 +120,41 @@
 
 ## Phase D — Environmental Stress
 
-- [ ] D-1-0: Add `relative_humidity_pct: float | None = None` to
+- [x] D-1-0: Add `relative_humidity_pct: float | None = None` to
       `AnimalConfig` with range (0-100) and `math.isfinite` validation.
-      Static configuration value, not a daily weather input.
-- [ ] D-1-0b: Implement `_interpolate_heat_stress` with anchor tables
+      Static configuration value, not a daily weather input. Parsed from
+      the top level of `animal_config`, not a feedlot or stocker sub-block,
+      because heat stress is farm-wide.
+- [x] D-1-0b: Implement `_interpolate_heat_stress` with anchor tables
       (piecewise-linear, continuous at the THI 72 onset). Raise ValueError
       if the multiplier tuple length does not match the anchor tuple.
-- [ ] D-1-0c: Port the Phase D-1 checkpoint tests from the plan into
+- [x] D-1-0c: Port the Phase D-1 checkpoint tests from the plan into
       `tests/test_biophysical/test_animal/test_beefgem/test_heat_stress.py`
       BEFORE implementing `_interpolate_heat_stress`. The seven-row
       multiplier table and the onset continuity test are written as
       specification in the plan and must exist as failing tests first.
-- [ ] D-1-1: Add heat stress constants to `animal_module_constants.py`
+- [x] D-1-1: Add heat stress constants to `animal_module_constants.py`
       (BEEF_THI_BREAKPOINTS = (72.0, 80.0, 90.0),
       BEEF_HEAT_STRESS_DMI_MULTIPLIERS = (1.00, 0.88, 0.75),
-      BEEF_HEAT_STRESS_NEm_MULTIPLIERS = (1.00, 1.12, 1.20))
-- [ ] D-1-2: Add `calculate_thi()` static method to both calculators
-- [ ] D-1-3: Add `relative_humidity_pct: float | None = None` to
-      both input dataclasses, sourced from `AnimalConfig`
-- [ ] D-1-4: Apply THI modifiers in both calculators after base DMI/NEm
-- [ ] D-1-5: Write `test_heat_stress.py` — Phase D-1 checkpoint
+      BEEF_HEAT_STRESS_NEM_MULTIPLIERS = (1.00, 1.12, 1.20))
+- [x] D-1-2: Add `calculate_thi()` static method. Defined once on
+      `BeefNRCRequirementsCalculator` and delegated by the stocker, not
+      duplicated — two copies of a formula whose bracket form is the thing
+      under guard would let a later fix land in only one of them.
+- [x] D-1-3: Add `relative_humidity_pct: float | None = None` to
+      `StockerRequirementsInputs` and to the feedlot calculator's signature,
+      threaded from `AnimalConfig` at the two `animal.py` call sites so
+      neither calculator imports config.
+- [x] D-1-4: Apply THI modifiers in both calculators after base DMI/NEm,
+      via `_apply_heat_stress` at the `calculate_requirements` level. Not
+      inside `_calculate_maintenance_energy` — the stocker calls that same
+      helper, so the feedlot path would otherwise apply the multiplier twice.
+- [x] D-1-5: Write `test_heat_stress.py` — Phase D-1 checkpoint (50 tests)
+- [ ] D-1-6: DEFERRED — heat stress on the cow-calf calculator.
+      `BeefCowCalfRequirementsCalculator.calculate_requirements` has no
+      production call site and `CowCalfRequirementsInputs` is constructed
+      nowhere outside its own module, so the modifier would be unreachable
+      code. Blocked on the same wiring gap as C-2-4.
 - [ ] D-2-1: Add CG constants to `animal_module_constants.py`
       (CG_RESTRICTION_THRESHOLD_DAYS, CG_MIN_INTAKE_FRACTION,
       CG_MAX_ADG_MULTIPLIER, CG_DECAY_RATE_PER_DAY)

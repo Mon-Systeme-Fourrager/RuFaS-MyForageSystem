@@ -3260,6 +3260,7 @@ class Animal:
                 temperature_c=previous_temperature,
                 ne_diet_concentration=ne_conc,
                 process_based_phosphorus_requirement=0.0,
+                relative_humidity_pct=AnimalConfig.relative_humidity_pct,
             )
 
         if self.animal_type.is_beef_stocker:
@@ -3281,6 +3282,7 @@ class Animal:
                     ne_diet_concentration=ne_conc_sk,
                     diet_system=AnimalConfig.stocker_diet_system,
                     limit_feed_pct=AnimalConfig.stocker_limit_feed_pct,
+                    relative_humidity_pct=AnimalConfig.relative_humidity_pct,
                 )
             )
 

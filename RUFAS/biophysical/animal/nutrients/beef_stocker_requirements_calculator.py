@@ -57,6 +57,9 @@ class StockerRequirementsInputs:
     limit_feed_pct : float
         DMI ceiling as a percentage of ad libitum intake, applied only when
         diet_system is LIMIT_FEED. Must be in (0, 100] and math.isfinite.
+    relative_humidity_pct : float | None
+        Relative humidity (0-100%) for the THI heat stress modifiers. None
+        disables heat stress and leaves DMI and maintenance energy unchanged.
 
     """
 
@@ -71,10 +74,14 @@ class StockerRequirementsInputs:
     mud_condition: str = field(default=AnimalModuleConstants.BEEF_MUD_CONDITION_NONE)
     diet_system: StockerDietSystem = field(default=StockerDietSystem.PASTURE)
     limit_feed_pct: float = field(default=AnimalModuleConstants.STOCKER_DEFAULT_LIMIT_FEED_PCT)
+    relative_humidity_pct: float | None = field(default=None)
 
 
 class BeefStockerRequirementsCalculator(NutritionRequirementsCalculator):
     """Nutrition requirements calculator for stocker/backgrounding cattle — NRC 2016 (Beef)."""
+
+    calculate_thi = BeefNRCRequirementsCalculator.calculate_thi
+    _interpolate_heat_stress = BeefNRCRequirementsCalculator._interpolate_heat_stress
 
     @classmethod
     def calculate_enteric_ch4_stocker(cls, dmi: float) -> float:
@@ -162,6 +169,10 @@ class BeefStockerRequirementsCalculator(NutritionRequirementsCalculator):
             inputs.limit_feed_pct,
         )
 
+        dmi, ne_maintenance = BeefNRCRequirementsCalculator._apply_heat_stress(
+            dmi, ne_maintenance, inputs.temperature_c, inputs.relative_humidity_pct
+        )
+
         empty_aa = EssentialAminoAcidRequirements(
             histidine=0.0,
             isoleucine=0.0,
@@ -217,6 +228,7 @@ class BeefStockerRequirementsCalculator(NutritionRequirementsCalculator):
         if inputs.sex not in AnimalModuleConstants.SEX_NEm_MULTIPLIER:
             valid_sexes = ", ".join(str(s) for s in AnimalModuleConstants.SEX_NEm_MULTIPLIER)
             raise ValueError(f"sex must be one of {valid_sexes}; got {inputs.sex}.")
+        BeefNRCRequirementsCalculator.validate_relative_humidity(inputs.relative_humidity_pct)
 
     @classmethod
     def _calculate_dmi(

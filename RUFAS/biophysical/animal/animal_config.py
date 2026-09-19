@@ -443,6 +443,13 @@ class AnimalConfig:
     stocker_diet_system: StockerDietSystem = StockerDietSystem.PASTURE
     stocker_limit_feed_pct: float = AnimalModuleConstants.STOCKER_DEFAULT_LIMIT_FEED_PCT
 
+    # ── ENVIRONMENTAL STRESS (farm-wide; applies to feedlot and stocker alike) ─
+    # UPSTREAM-COLLISION: RuminantFarmSystems/RuFaS PR #3241 removes ~172
+    # lines from this file (streamline_animal_culling_inputs). Reconcile
+    # at sync: this field is farm-wide, parsed at the top level of the
+    # animal config rather than from a sub-block.
+    relative_humidity_pct: float | None = None
+
     # ── COW-CALF PARAMETERS (defaults; overridden by initialize_animal_config) ─
     beef_breeding_season_start_day: int = 90
     beef_breeding_season_length: int = AnimalModuleConstants.BEEF_DEFAULT_BREEDING_SEASON_LENGTH_DAYS
@@ -643,6 +650,24 @@ class AnimalConfig:
         # ── STOCKER / BACKGROUNDING PARAMETERS ───────────────────────────────
         stocker_cfg: dict[str, Any] = animal_config_data.get("stocker", {}) or {}
         cls._initialize_beef_stocker_config(stocker_cfg)
+
+        # ── ENVIRONMENTAL STRESS ─────────────────────────────────
+        cls._initialize_relative_humidity(animal_config_data)
+
+    @classmethod
+    def _initialize_relative_humidity(cls, animal_config_data: dict[str, Any]) -> None:
+        """Initialize the relative_humidity_pct ClassVar from the animal config block.
+
+        Parameters
+        ----------
+        animal_config_data : dict[str, Any]
+            The raw ``animal_config`` dict. A missing or None value keeps the
+            None default, which disables heat stress entirely.
+
+        """
+        DataValidator._validate_relative_humidity(animal_config_data)
+        if (humidity := animal_config_data.get("relative_humidity_pct")) is not None:
+            cls.relative_humidity_pct = float(humidity)
 
     @classmethod
     def _initialize_feedlot_finishing_system(cls, feedlot_cfg: dict[str, Any]) -> None:

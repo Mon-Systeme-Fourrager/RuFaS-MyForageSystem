@@ -339,6 +339,34 @@ class AnimalModuleConstants:
     BEEF_SCENARIO_STANDARD_WEANING_AGE_MO: int = 7
     """Weaning age for the baseline scenario (months). A named-scenario default."""
 
+    BEEF_THI_BREAKPOINTS: tuple[float, ...] = (72.0, 80.0, 90.0)
+    """
+    THI anchor points for beef cattle heat stress interpolation. 72 is the
+    onset of stress, 80 the moderate class value, 90 the severe. Pairs
+    one-to-one with BEEF_HEAT_STRESS_DMI_MULTIPLIERS and
+    BEEF_HEAT_STRESS_NEM_MULTIPLIERS.
+    """
+
+    BEEF_HEAT_STRESS_DMI_MULTIPLIERS: tuple[float, ...] = (1.00, 0.88, 0.75)
+    """
+    DMI multiplier at each THI anchor point. Below 72 no reduction applies;
+    above 90 the value is clamped. The source document reports these as
+    discrete classes; they are interpolated linearly between anchors here so
+    daily output is continuous and animals crossing a threshold do not
+    produce step artefacts.
+
+    The source's mild-class value of 0.95 is deliberately not an anchor.
+    Pinning it at 72 would put a five-point cliff at the onset; it instead
+    falls out of the interpolation at THI 75.33, inside the mild band.
+    """
+
+    BEEF_HEAT_STRESS_NEM_MULTIPLIERS: tuple[float, ...] = (1.00, 1.12, 1.20)
+    """
+    Maintenance energy multiplier at each THI anchor point. Same
+    interpolation treatment as the DMI multipliers; the source's mild-class
+    value of 1.07 falls out at THI 76.67, inside the mild band.
+    """
+
     BEEF_SCENARIO_STANDARD_STOCKER_MO: int = 7
     """
     Standard backgrounding duration in months for the named scenarios.
