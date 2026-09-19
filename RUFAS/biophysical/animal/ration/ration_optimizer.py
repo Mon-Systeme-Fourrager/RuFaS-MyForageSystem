@@ -1019,6 +1019,14 @@ class RationOptimizer:
             return self.beef_cow_constraints
         if animal_combination is AnimalCombination.BEEF_REPLACEMENT:
             return self.beef_replacement_constraints
+        # UPSTREAM-COLLISION: RuminantFarmSystems/RuFaS PR #3248 rewrites
+        # this area (IntakeOption enum, ~278 lines in ration_manager.py).
+        # Reconcile at sync: this cap should become a fourth IntakeOption
+        # member taking a percentage of predicted DMI.
+        # Limit-feeding does not change the pen's AnimalCombination, so stocker
+        # pens resolve here whatever the diet system; the intake reduction is
+        # already carried in the DMI requirement. handle_failed_constraints
+        # delegates to this method, so the two cannot diverge.
         if animal_combination is AnimalCombination.BEEF_STOCKER:
             return self.beef_stocker_constraints
         OutputManager().add_error(

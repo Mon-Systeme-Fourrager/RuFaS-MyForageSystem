@@ -7,6 +7,8 @@ References: NRC (2016) Nutrient Requirements of Beef Cattle, 8th ed.
 
 from __future__ import annotations
 
+import math
+
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
 from RUFAS.biophysical.animal.data_types.animal_enums import Sex
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
@@ -19,6 +21,75 @@ from RUFAS.biophysical.animal.ration.amino_acid import EssentialAminoAcidRequire
 
 class BeefNRCRequirementsCalculator(NutritionRequirementsCalculator):
     """Nutrition requirements calculator for feedlot cattle — NRC 2016 (Beef)."""
+
+    @classmethod
+    def calculate_enteric_ch4_grass_fed(cls, dmi: float) -> float:
+        """Enteric methane for a grass-finished animal from dry matter intake.
+
+        Parameters
+        ----------
+        dmi : float
+            Dry matter intake (kg DM/d). Must be finite and non-negative.
+
+        Returns
+        -------
+        float
+            Enteric methane production (g CH4/d).
+
+        Raises
+        ------
+        ValueError
+            If ``dmi`` is negative or not finite.
+
+        Notes
+        -----
+        Linear form ``CH4 = intercept + slope * DMI`` using
+        BEEF_CH4_GRASS_FED_INTERCEPT and BEEF_CH4_GRASS_FED_SLOPE. See those
+        constants for the open question about the equation's provenance — no
+        NRC 2016 equation number has been identified for it, and it is unrelated
+        to the Mitscherlich Model 3 used elsewhere in the animal module.
+
+        """
+        if not math.isfinite(dmi) or dmi < 0.0:
+            raise ValueError(f"dmi must be non-negative and finite, got {dmi}")
+        return AnimalModuleConstants.BEEF_CH4_GRASS_FED_INTERCEPT + AnimalModuleConstants.BEEF_CH4_GRASS_FED_SLOPE * dmi
+
+    @classmethod
+    def calculate_enteric_ch4_grain_fed(cls, dmi: float) -> float:
+        """Enteric CH4 for grain-finished feedlot cattle (g/d).
+
+        Parameters
+        ----------
+        dmi : float
+            Dry matter intake (kg/d).
+
+        Returns
+        -------
+        float
+            Enteric methane production (g/d).
+
+        Raises
+        ------
+        ValueError
+            If ``dmi`` is negative or not finite.
+
+        Notes
+        -----
+        IPCC Tier 2 with Ym = 3.0% of gross energy intake, offered by
+        NRC 2016 Table 16-2 for cases where diet composition is not
+        available at the call site.
+
+        NRC 2016 Eq. 16-9 is the preferred primary equation but requires
+        body weight, DMI, fat, crude protein, NDF and starch. Ration
+        composition is not reachable from the reporter today, so Eq. 16-9
+        is deferred to its own step. See the scope boundary note.
+
+        """
+        if not math.isfinite(dmi) or dmi < 0.0:
+            raise ValueError(f"dmi must be non-negative and finite, got {dmi}")
+        gross_energy_intake_mj = dmi * AnimalModuleConstants.BEEF_GROSS_ENERGY_MJ_PER_KG_DM
+        methane_energy_mj = gross_energy_intake_mj * AnimalModuleConstants.BEEF_CH4_YM_FRACTION
+        return methane_energy_mj / AnimalModuleConstants.BEEF_CH4_ENERGY_MJ_PER_G
 
     @classmethod
     def calculate_requirements(
@@ -36,6 +107,8 @@ class BeefNRCRequirementsCalculator(NutritionRequirementsCalculator):
         temperature_c: float,
         ne_diet_concentration: float,
         process_based_phosphorus_requirement: float,
+        relative_humidity_pct: float | None = None,
+        compensatory_gain_factor: float = 1.0,
     ) -> NutritionRequirements:
         """
         Calculate all nutritional requirements for a feedlot finishing animal.
@@ -68,6 +141,13 @@ class BeefNRCRequirementsCalculator(NutritionRequirementsCalculator):
             NEm concentration of the current ration (Mcal/kg DM).
         process_based_phosphorus_requirement : float
             Phosphorus requirement from the process-based submodule (g/d).
+        relative_humidity_pct : float | None
+            Relative humidity (0-100%) for the THI heat stress modifiers.
+            ``None`` disables heat stress and leaves DMI and maintenance
+            energy unchanged.
+        compensatory_gain_factor : float
+            ADG multiplier earned by prior nutritional restriction. 1.0 means
+            no compensatory gain. Clamped to ``CG_MAX_ADG_MULTIPLIER``.
 
         Returns
         -------
@@ -92,7 +172,10 @@ class BeefNRCRequirementsCalculator(NutritionRequirementsCalculator):
         eqsbw = cls._calculate_eqsbw(sbw, msbw)
         eqebw = cls._calculate_eqebw(eqsbw)
 
-        effective_adg = target_adg * implant_adg_factor
+        cls.validate_compensatory_gain_factor(compensatory_gain_factor)
+        effective_adg = cls._apply_compensatory_gain(
+            target_adg * implant_adg_factor, target_adg, compensatory_gain_factor
+        )
         ebg = effective_adg * 0.956  # EBG = 0.956 × ADG (NRC 2016 Ch. 12)
 
         ne_maintenance = cls._calculate_maintenance_energy(sbw, breed, sex, housing, mud_condition, temperature_c)
@@ -105,6 +188,9 @@ class BeefNRCRequirementsCalculator(NutritionRequirementsCalculator):
         phosphorus = cls._calculate_phosphorus(sbw, np_growth)
 
         dmi = cls._calculate_dmi(body_weight, ne_diet_concentration, days_on_feed)
+
+        cls.validate_relative_humidity(relative_humidity_pct)
+        dmi, ne_maintenance = cls._apply_heat_stress(dmi, ne_maintenance, temperature_c, relative_humidity_pct)
 
         empty_aa = EssentialAminoAcidRequirements(
             histidine=0.0,
@@ -208,6 +294,194 @@ class BeefNRCRequirementsCalculator(NutritionRequirementsCalculator):
 
         """
         return eqsbw * 0.891
+
+    @staticmethod
+    def calculate_thi(temperature_c: float, relative_humidity_pct: float) -> float:
+        """
+        Temperature-Humidity Index for beef cattle heat stress.
+
+        Parameters
+        ----------
+        temperature_c : float
+            Dry-bulb air temperature (°C).
+        relative_humidity_pct : float
+            Relative humidity (0-100%).
+
+        Returns
+        -------
+        float
+            THI value. Values above 72 indicate heat stress.
+
+        Notes
+        -----
+        THI = (1.8 x T + 32) - (0.55 - 0.0055 x RH) x (1.8 x T - 26)
+
+        The second bracket is ``1.8 * T - 26``, not ``t_f - 26``. The two
+        differ by 32 and the wrong form understates THI by roughly 3.5 units
+        at 30 °C / 80% RH, which would silently suppress heat stress
+        throughout. At 30 °C / 80% RH this yields 82.92.
+
+        Source: NRC 2016 Ch. 11 (Maintenance, heat stress NEhs).
+        """
+        t_f = 1.8 * temperature_c + 32
+        return t_f - (0.55 - 0.0055 * relative_humidity_pct) * (1.8 * temperature_c - 26)
+
+    @staticmethod
+    def _interpolate_heat_stress(thi: float, multipliers: tuple[float, ...]) -> float:
+        """
+        Piecewise-linear heat stress multiplier for a given THI.
+
+        Parameters
+        ----------
+        thi : float
+            Temperature-Humidity Index, from :meth:`calculate_thi`.
+        multipliers : tuple[float, ...]
+            Multiplier at each anchor in ``BEEF_THI_BREAKPOINTS``, same length
+            and paired one-to-one.
+
+        Returns
+        -------
+        float
+            Below the first anchor, the first multiplier; above the last, the
+            last; between anchors, linearly interpolated.
+
+        Raises
+        ------
+        ValueError
+            If ``multipliers`` is not the same length as the anchor tuple.
+            Adding an anchor without its multiplier would otherwise shift the
+            whole response silently.
+        """
+        breakpoints = AnimalModuleConstants.BEEF_THI_BREAKPOINTS
+        if len(multipliers) != len(breakpoints):
+            raise ValueError(
+                f"heat stress multipliers must pair one-to-one with BEEF_THI_BREAKPOINTS: "
+                f"got {len(multipliers)} multipliers for {len(breakpoints)} anchors"
+            )
+        if thi <= breakpoints[0]:
+            return multipliers[0]
+        if thi >= breakpoints[-1]:
+            return multipliers[-1]
+        for index in range(len(breakpoints) - 1):
+            if breakpoints[index] <= thi < breakpoints[index + 1]:
+                span = breakpoints[index + 1] - breakpoints[index]
+                fraction = (thi - breakpoints[index]) / span
+                return multipliers[index] + fraction * (multipliers[index + 1] - multipliers[index])
+        return multipliers[-1]
+
+    @classmethod
+    def _apply_heat_stress(
+        cls,
+        dmi: float,
+        ne_maintenance: float,
+        temperature_c: float,
+        relative_humidity_pct: float | None,
+    ) -> tuple[float, float]:
+        """
+        Scale DMI and maintenance energy for heat stress.
+
+        Parameters
+        ----------
+        dmi : float
+            Predicted dry matter intake before heat stress (kg/d).
+        ne_maintenance : float
+            Maintenance energy before heat stress (Mcal/d).
+        temperature_c : float
+            Ambient temperature (°C).
+        relative_humidity_pct : float | None
+            Relative humidity (0-100%). ``None`` disables heat stress and
+            returns both values unchanged.
+
+        Returns
+        -------
+        tuple[float, float]
+            The heat-stress-adjusted ``(dmi, ne_maintenance)``.
+
+        Notes
+        -----
+        Applied once per animal at the ``calculate_requirements`` level rather
+        than inside ``_calculate_maintenance_energy``, which the stocker
+        calculator also calls — putting it there would apply the multiplier
+        twice on the feedlot path.
+
+        No lower floor on DMI is needed: every multiplier is positive and the
+        interpolation is bounded by the tuple.
+        """
+        if relative_humidity_pct is None:
+            return dmi, ne_maintenance
+        thi = cls.calculate_thi(temperature_c, relative_humidity_pct)
+        dmi_factor = cls._interpolate_heat_stress(thi, AnimalModuleConstants.BEEF_HEAT_STRESS_DMI_MULTIPLIERS)
+        nem_factor = cls._interpolate_heat_stress(thi, AnimalModuleConstants.BEEF_HEAT_STRESS_NEM_MULTIPLIERS)
+        return dmi * dmi_factor, ne_maintenance * nem_factor
+
+    @staticmethod
+    def validate_compensatory_gain_factor(compensatory_gain_factor: float) -> None:
+        """
+        Raise ValueError for a compensatory gain factor below 1.0 or non-finite.
+
+        Parameters
+        ----------
+        compensatory_gain_factor : float
+            Multiplier to check. 1.0 means no compensatory gain.
+
+        Raises
+        ------
+        ValueError
+            If the value is NaN, infinite, or below 1.0. Compensatory gain is
+            an uplift; a value below 1.0 is a caller error rather than a
+            growth penalty.
+        """
+        if not math.isfinite(compensatory_gain_factor) or compensatory_gain_factor < 1.0:
+            raise ValueError(f"compensatory_gain_factor must be >= 1.0 and finite, got {compensatory_gain_factor}")
+
+    @staticmethod
+    def _apply_compensatory_gain(effective_adg: float, target_adg: float, compensatory_gain_factor: float) -> float:
+        """
+        Scale an effective ADG by the compensatory gain factor, under the ceiling.
+
+        Parameters
+        ----------
+        effective_adg : float
+            ADG after any other multipliers, such as the implant factor (kg/d).
+        target_adg : float
+            Unmodified target ADG (kg/d), the basis for the ceiling.
+        compensatory_gain_factor : float
+            ADG multiplier earned by prior nutritional restriction.
+
+        Returns
+        -------
+        float
+            The scaled ADG, capped at ``target_adg x CG_MAX_ADG_MULTIPLIER``.
+
+        Notes
+        -----
+        The ceiling is re-applied here rather than trusted from the caller, so
+        a factor built elsewhere cannot push growth past what is biologically
+        plausible.
+        """
+        boosted = effective_adg * compensatory_gain_factor
+        return min(boosted, target_adg * AnimalModuleConstants.CG_MAX_ADG_MULTIPLIER)
+
+    @staticmethod
+    def validate_relative_humidity(relative_humidity_pct: float | None) -> None:
+        """
+        Raise ValueError for a humidity outside 0-100% or non-finite.
+
+        Parameters
+        ----------
+        relative_humidity_pct : float | None
+            Relative humidity to check. ``None`` is valid and disables heat
+            stress.
+
+        Raises
+        ------
+        ValueError
+            If the value is NaN, infinite, or outside the inclusive 0-100 range.
+        """
+        if relative_humidity_pct is None:
+            return
+        if not math.isfinite(relative_humidity_pct) or not 0.0 <= relative_humidity_pct <= 100.0:
+            raise ValueError(f"relative_humidity_pct must be 0-100 and finite, got {relative_humidity_pct}")
 
     @classmethod
     def _calculate_maintenance_energy(

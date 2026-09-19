@@ -44,7 +44,7 @@ def test_stocker_diet_system_drylot_forage_value() -> None:
 def test_stocker_diet_system_invalid_raises_value_error() -> None:
     """Constructing StockerDietSystem from an invalid string must raise ValueError."""
     with pytest.raises(ValueError, match="is not a valid StockerDietSystem"):
-        StockerDietSystem("limit_feed")
+        StockerDietSystem("grass_only")
 
 
 @pytest.mark.unit
@@ -60,9 +60,9 @@ def test_stocker_diet_system_drylot_roundtrip() -> None:
 
 
 @pytest.mark.unit
-def test_stocker_diet_system_exactly_two_members() -> None:
-    """StockerDietSystem must have exactly two members (pasture and drylot_forage)."""
-    assert len(StockerDietSystem) == 2
+def test_stocker_diet_system_exactly_three_members() -> None:
+    """StockerDietSystem must have exactly three members (pasture, drylot_forage, limit_feed)."""
+    assert len(StockerDietSystem) == 3
 
 
 # ---------------------------------------------------------------------------

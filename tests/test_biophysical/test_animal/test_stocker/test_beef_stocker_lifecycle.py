@@ -82,6 +82,9 @@ def _make_stocker_animal(
     animal.days_in_stocker = days_in_stocker
     animal.stocker_entry_weight = body_weight
     animal.stocker_cumulative_dmi = stocker_cumulative_dmi
+    animal.days_on_restricted_intake = 0
+    animal.is_on_restricted_intake = False
+    animal.compensatory_gain_factor = 1.0
     # feedlot tracking defaults (always present on Animal instances)
     animal.days_on_feed = 0
     animal.entry_weight = 0.0
@@ -533,6 +536,7 @@ def test_calculate_nutrition_requirements_routes_to_stocker_calculator(mocker: M
     animal.breed = Breed.AN
     animal.sex = Sex.STEER
     animal.previous_nutrition_supply = None
+    animal.compensatory_gain_factor = 1.0
 
     result = animal.calculate_nutrition_requirements(
         housing="Open_Lot",
@@ -586,20 +590,20 @@ def test_no_reporter_or_herd_import_in_animal_py() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Scope guard — no compensatory-gain or BeefGEM Phase D attributes
+# Scope guard — BeefGEM attribute naming
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.unit
-def test_no_compensatory_gain_factor_attribute() -> None:
-    """stocker animals must NOT have compensatory_gain_factor (BeefGEM Phase D scope).
+def test_compensatory_gain_factor_defaults_to_one() -> None:
+    """stocker animals carry compensatory_gain_factor, neutral until earned.
 
-    This attribute is excluded from the native stocker module per the approved plan.
+    This attribute was out of scope for the native stocker module and arrived
+    with the compensatory gain work. It defaults to 1.0, so its presence alone
+    changes no result.
     """
     animal = _make_stocker_animal()
-    assert not hasattr(
-        animal, "compensatory_gain_factor"
-    ), "compensatory_gain_factor is BeefGEM Phase D scope and must not appear in Step 4"
+    assert animal.compensatory_gain_factor == pytest.approx(1.0)
 
 
 @pytest.mark.unit

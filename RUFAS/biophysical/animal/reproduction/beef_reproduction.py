@@ -7,6 +7,7 @@ def calculate_seasonal_conception_probability(
     body_condition_score: float,
     bull_to_cow_ratio: int,
     days_since_calving: int,
+    conception_rate_multiplier: float = 1.0,
 ) -> float:
     """
     NRC 2016 Ch.13-informed daily conception probability for natural-service seasonal breeding.
@@ -19,6 +20,11 @@ def calculate_seasonal_conception_probability(
         Cows per bull. Above 30 reduces probability.
     days_since_calving : int
         Days postpartum. Below 45 = postpartum anestrus (probability = 0.0).
+    conception_rate_multiplier : float
+        Scenario lever scaling the calibrated base daily probability. Defaults
+        to 1.0, which reproduces unmodified calibrated behaviour. Supplied by
+        the caller from configuration; this function does not read config, so
+        it stays a pure function of its arguments.
 
     Returns
     -------
@@ -50,4 +56,9 @@ def calculate_seasonal_conception_probability(
         ),
     )
     bull_factor = min(1.0, AnimalModuleConstants.BEEF_CONCEPTION_BULL_RATIO_REFERENCE / max(bull_to_cow_ratio, 1))
-    return AnimalModuleConstants.BEEF_CONCEPTION_BASE_DAILY_PROB * bcs_factor * bull_factor
+    probability = (
+        AnimalModuleConstants.BEEF_CONCEPTION_BASE_DAILY_PROB * bcs_factor * bull_factor * conception_rate_multiplier
+    )
+    # Defensive guard, unreachable under validated inputs: both adjustment
+    # factors cap at 1.0, so exceeding 1.0 requires a multiplier of 24.75.
+    return min(1.0, probability)

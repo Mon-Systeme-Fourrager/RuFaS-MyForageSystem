@@ -49,6 +49,24 @@ class AnimalGroupingScenario(Enum):
             AnimalType.BEEF_STOCKER_HEIFER,
         ],
     }
+
+    COW_CALF_STOCKER_FEEDLOT = {
+        AnimalCombination.BEEF_COW_CALF_PAIR: [
+            AnimalType.BEEF_COW,
+            AnimalType.BEEF_CALF,
+        ],
+        AnimalCombination.BEEF_GESTATING: [AnimalType.BEEF_COW],
+        AnimalCombination.BEEF_REPLACEMENT: [AnimalType.BEEF_HEIFER_REPLACEMENT],
+        AnimalCombination.BEEF_BULL_BATTERY: [AnimalType.BEEF_BULL],
+        AnimalCombination.BEEF_STOCKER: [
+            AnimalType.BEEF_STOCKER_STEER,
+            AnimalType.BEEF_STOCKER_HEIFER,
+        ],
+        AnimalCombination.FEEDLOT_FINISHING: [
+            AnimalType.FEEDLOT_STEER,
+            AnimalType.FEEDLOT_HEIFER,
+        ],
+    }
     # BEEF_COW appears in both BEEF_COW_CALF_PAIR and BEEF_GESTATING.
     # The static _animal_combination_by_animal_type dict will map BEEF_COW to BEEF_GESTATING
     # (last write wins). Pen assignment at runtime must use each cow's live reproduction
@@ -222,7 +240,10 @@ class AnimalGroupingScenario(Enum):
         """
 
         animal_type = self.get_animal_type(animal)
-        if self is AnimalGroupingScenario.BEEF_COW_CALF_HERD and animal_type is AnimalType.BEEF_COW:
+        if animal_type is AnimalType.BEEF_COW and self in (
+            AnimalGroupingScenario.BEEF_COW_CALF_HERD,
+            AnimalGroupingScenario.COW_CALF_STOCKER_FEEDLOT,
+        ):
             raise NotImplementedError(
                 "BEEF_COW combination requires runtime reproduction-state "
                 "dispatch (cow-calf pair vs gestating). Wired in Step 7."
