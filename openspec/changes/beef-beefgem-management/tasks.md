@@ -96,6 +96,9 @@
       paths, plus wiring report_feedlot_performance into a feedlot
       daily-update path. Blocked on the feedlot wiring gap. Not part
       of this module.
+- [ ] C-2-5: DEFERRED — wire get_beef_herd_summary to a production
+      call site. Requires deciding emission cadence for herd-level
+      aggregates. Independent of the feedlot daily-loop gap.
 - [x] C-3-1: Create `RUFAS/biophysical/animal/beef_scenario_runner.py`
       with `BeefHerdScenario` dataclass. Carries
       `conception_rate_multiplier`, not `calving_rate` — 0.855 is calf
