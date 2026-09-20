@@ -668,8 +668,9 @@ class AnimalConfig:
 
         """
         DataValidator._validate_relative_humidity(animal_config_data)
-        if (humidity := animal_config_data.get("relative_humidity_pct")) is not None:
-            cls.relative_humidity_pct = float(humidity)
+        cls.relative_humidity_pct = (
+            float(humidity) if (humidity := animal_config_data.get("relative_humidity_pct")) is not None else None
+        )
 
     @classmethod
     def _initialize_feedlot_finishing_system(cls, feedlot_cfg: dict[str, Any]) -> None:
@@ -683,8 +684,11 @@ class AnimalConfig:
 
         """
         DataValidator._validate_feedlot_finishing_system(feedlot_cfg)
-        if (raw := feedlot_cfg.get("finishing_system")) is not None:
-            cls.finishing_system = FinishingSystem(str(raw))
+        cls.finishing_system = (
+            FinishingSystem(str(raw))
+            if (raw := feedlot_cfg.get("finishing_system")) is not None
+            else FinishingSystem.GRAIN_FED
+        )
 
     @classmethod
     def _initialize_beef_cow_calf_config(cls, animal_config_data: dict[str, Any]) -> None:
@@ -718,20 +722,39 @@ class AnimalConfig:
             Unknown keys are silently ignored; missing keys keep class defaults.
         """
         DataValidator.validate_beef_stocker_config(stocker_cfg)
-        if (entry_weight := stocker_cfg.get("entry_weight")) is not None:
-            cls.stocker_entry_weight = float(entry_weight)
-        if (exit_weight := stocker_cfg.get("exit_weight")) is not None:
-            cls.stocker_exit_weight = float(exit_weight)
-        if (max_days := stocker_cfg.get("max_days")) is not None:
-            cls.stocker_max_days = int(max_days)
-        if (target_adg := stocker_cfg.get("target_adg")) is not None:
-            cls.stocker_target_adg = float(target_adg)
-        if (raw := stocker_cfg.get("stocker_diet_system")) is not None:
-            cls.stocker_diet_system = StockerDietSystem(str(raw))
-        if (limit_feed_pct := stocker_cfg.get("limit_feed_pct")) is not None:
-            cls.stocker_limit_feed_pct = float(limit_feed_pct)
-        if (enable_cg := stocker_cfg.get("enable_compensatory_gain")) is not None:
-            cls.enable_compensatory_gain = bool(enable_cg)
+        cls.stocker_entry_weight = (
+            float(entry_weight)
+            if (entry_weight := stocker_cfg.get("entry_weight")) is not None
+            else AnimalModuleConstants.STOCKER_MIN_ENTRY_WEIGHT_KG
+        )
+        cls.stocker_exit_weight = (
+            float(exit_weight)
+            if (exit_weight := stocker_cfg.get("exit_weight")) is not None
+            else AnimalModuleConstants.STOCKER_TARGET_EXIT_WEIGHT_KG
+        )
+        cls.stocker_max_days = (
+            int(max_days)
+            if (max_days := stocker_cfg.get("max_days")) is not None
+            else AnimalModuleConstants.STOCKER_MAX_DAYS
+        )
+        cls.stocker_target_adg = (
+            float(target_adg)
+            if (target_adg := stocker_cfg.get("target_adg")) is not None
+            else AnimalModuleConstants.STOCKER_TARGET_ADG_KG_D
+        )
+        cls.stocker_diet_system = (
+            StockerDietSystem(str(raw))
+            if (raw := stocker_cfg.get("stocker_diet_system")) is not None
+            else StockerDietSystem.PASTURE
+        )
+        cls.stocker_limit_feed_pct = (
+            float(limit_feed_pct)
+            if (limit_feed_pct := stocker_cfg.get("limit_feed_pct")) is not None
+            else AnimalModuleConstants.STOCKER_DEFAULT_LIMIT_FEED_PCT
+        )
+        cls.enable_compensatory_gain = (
+            bool(enable_cg) if (enable_cg := stocker_cfg.get("enable_compensatory_gain")) is not None else False
+        )
 
     @classmethod
     def _merge_beef_defaults(cls, beef_cfg: dict[str, Any]) -> dict[str, Any]:
@@ -779,6 +802,11 @@ class AnimalConfig:
                 else AnimalModuleConstants.BEEF_DEFAULT_BREEDING_SEASON_START_DAY
             ),
             "weaning_weight_kg": beef_cfg.get("weaning_weight_kg"),
+            "conception_rate_multiplier": (
+                beef_cfg["conception_rate_multiplier"]
+                if beef_cfg.get("conception_rate_multiplier") is not None
+                else 1.0
+            ),
         }
 
     @classmethod
@@ -802,8 +830,7 @@ class AnimalConfig:
             float(merged["weaning_weight_kg"]) if merged["weaning_weight_kg"] is not None else None
         )
         cls.beef_creep_feeding_enabled = bool(beef_cfg.get("creep_feeding_enabled") or False)
-        if (multiplier := beef_cfg.get("conception_rate_multiplier")) is not None:
-            cls.beef_conception_rate_multiplier = float(multiplier)
+        cls.beef_conception_rate_multiplier = float(merged["conception_rate_multiplier"])
 
     @classmethod
     def get_beef_calving_month(cls) -> int:
