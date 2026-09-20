@@ -335,3 +335,49 @@ def test_dairy_calculators_have_no_compensatory_gain() -> None:
     from RUFAS.biophysical.animal.nutrients.nasem_requirements_calculator import NASEMRequirementsCalculator
 
     assert not hasattr(NASEMRequirementsCalculator, "calculate_compensatory_gain_factor")
+
+
+# ──────────────────── the ceiling caps uplift, not total ADG ─────────────
+
+
+@pytest.mark.unit
+@pytest.mark.regression
+def test_ceiling_does_not_clip_the_implant_factor() -> None:
+    """With no compensatory gain, an implant factor above the cap is untouched.
+
+    The ceiling bounds the compensatory uplift, not total ADG. Capping the
+    product would change feedlot growth for anyone running an implant factor
+    above 1.25 even with the feature switched off.
+    """
+    base = 1.5 * 1.3
+    assert BeefNRCRequirementsCalculator._apply_compensatory_gain(base, 1.0) == pytest.approx(1.950)
+
+
+@pytest.mark.unit
+def test_ceiling_still_binds_on_genuine_uplift() -> None:
+    """A factor at the cap yields exactly base x 1.25."""
+    assert BeefNRCRequirementsCalculator._apply_compensatory_gain(1.5, 1.25) == pytest.approx(1.875)
+
+
+@pytest.mark.unit
+def test_ceiling_clamps_a_factor_beyond_the_cap() -> None:
+    """An out-of-range factor is clamped to the cap, not trusted."""
+    assert BeefNRCRequirementsCalculator._apply_compensatory_gain(1.5, 5.0) == pytest.approx(1.875)
+
+
+@pytest.mark.unit
+@pytest.mark.regression
+def test_growth_and_calculator_paths_agree_under_compensatory_gain() -> None:
+    """Body-weight growth and the nutrition calculator must use one ADG.
+
+    Two expressions that have to agree is the defect; both paths call the same
+    helper. At implant 1.3 with a factor at the cap they previously diverged by
+    0.5625 kg/d, so the animal gained weight the calculator never budgeted for.
+    """
+    target, implant, factor = 1.5, 1.3, 1.25
+    base = target * implant
+    shared = BeefNRCRequirementsCalculator._apply_compensatory_gain(base, factor)
+
+    growth_path = Animal.effective_feedlot_adg(target, implant, factor)
+    assert growth_path == pytest.approx(shared)
+    assert growth_path == pytest.approx(2.4375)

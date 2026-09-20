@@ -155,7 +155,7 @@ class BeefStockerRequirementsCalculator(NutritionRequirementsCalculator):
         eqsbw: float = BeefNRCRequirementsCalculator._calculate_eqsbw(sbw, msbw)
         eqebw: float = BeefNRCRequirementsCalculator._calculate_eqebw(eqsbw)
         effective_adg: float = BeefNRCRequirementsCalculator._apply_compensatory_gain(
-            inputs.target_adg, inputs.target_adg, inputs.compensatory_gain_factor
+            inputs.target_adg, inputs.compensatory_gain_factor
         )
         ebg: float = effective_adg * 0.956
 

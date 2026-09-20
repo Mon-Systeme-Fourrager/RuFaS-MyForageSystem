@@ -173,9 +173,7 @@ class BeefNRCRequirementsCalculator(NutritionRequirementsCalculator):
         eqebw = cls._calculate_eqebw(eqsbw)
 
         cls.validate_compensatory_gain_factor(compensatory_gain_factor)
-        effective_adg = cls._apply_compensatory_gain(
-            target_adg * implant_adg_factor, target_adg, compensatory_gain_factor
-        )
+        effective_adg = cls._apply_compensatory_gain(target_adg * implant_adg_factor, compensatory_gain_factor)
         ebg = effective_adg * 0.956  # EBG = 0.956 × ADG (NRC 2016 Ch. 12)
 
         ne_maintenance = cls._calculate_maintenance_energy(sbw, breed, sex, housing, mud_condition, temperature_c)
@@ -435,32 +433,38 @@ class BeefNRCRequirementsCalculator(NutritionRequirementsCalculator):
             raise ValueError(f"compensatory_gain_factor must be >= 1.0 and finite, got {compensatory_gain_factor}")
 
     @staticmethod
-    def _apply_compensatory_gain(effective_adg: float, target_adg: float, compensatory_gain_factor: float) -> float:
+    def _apply_compensatory_gain(base_adg: float, compensatory_gain_factor: float) -> float:
         """
-        Scale an effective ADG by the compensatory gain factor, under the ceiling.
+        Scale a base ADG by the compensatory gain factor, under the ceiling.
 
         Parameters
         ----------
-        effective_adg : float
-            ADG after any other multipliers, such as the implant factor (kg/d).
-        target_adg : float
-            Unmodified target ADG (kg/d), the basis for the ceiling.
+        base_adg : float
+            ADG after every other multiplier, the implant factor included
+            (kg/d). This is what the uplift scales.
         compensatory_gain_factor : float
             ADG multiplier earned by prior nutritional restriction.
 
         Returns
         -------
         float
-            The scaled ADG, capped at ``target_adg x CG_MAX_ADG_MULTIPLIER``.
+            ``base_adg`` scaled by the factor, with the factor itself clamped
+            to ``CG_MAX_ADG_MULTIPLIER``.
 
         Notes
         -----
-        The ceiling is re-applied here rather than trusted from the caller, so
-        a factor built elsewhere cannot push growth past what is biologically
-        plausible.
+        The ceiling bounds the compensatory uplift, not total ADG. Capping the
+        product against ``target_adg`` would clip the implant factor whenever
+        it exceeded the ceiling — changing feedlot growth for a user who never
+        enabled compensatory gain.
+
+        The factor is clamped here rather than trusted from the caller, so one
+        built elsewhere cannot push growth past what is biologically plausible.
+
+        Both the nutrition calculators and the feedlot body-weight update call
+        this, so the two cannot drift apart.
         """
-        boosted = effective_adg * compensatory_gain_factor
-        return min(boosted, target_adg * AnimalModuleConstants.CG_MAX_ADG_MULTIPLIER)
+        return base_adg * min(compensatory_gain_factor, AnimalModuleConstants.CG_MAX_ADG_MULTIPLIER)
 
     @staticmethod
     def validate_relative_humidity(relative_humidity_pct: float | None) -> None:

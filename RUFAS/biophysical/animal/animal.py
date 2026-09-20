@@ -2049,6 +2049,30 @@ class Animal:
         return Animal.calculate_compensatory_gain_factor(days_on_restricted_intake)
 
     @staticmethod
+    def effective_feedlot_adg(target_adg: float, implant_adg_factor: float, compensatory_gain_factor: float) -> float:
+        """
+        Feedlot average daily gain after the implant and compensatory factors.
+
+        Parameters
+        ----------
+        target_adg : float
+            Configured target ADG (kg/d).
+        implant_adg_factor : float
+            Growth-implant multiplier.
+        compensatory_gain_factor : float
+            ADG multiplier earned by prior nutritional restriction.
+
+        Returns
+        -------
+        float
+            The ADG both the body-weight update and the nutrition calculator
+            use, so gain and the energy budgeted for it cannot diverge.
+        """
+        return BeefNRCRequirementsCalculator._apply_compensatory_gain(
+            target_adg * implant_adg_factor, compensatory_gain_factor
+        )
+
+    @staticmethod
     def decay_compensatory_gain_factor(compensatory_gain_factor: float) -> float:
         """
         One day of decay on a compensatory gain factor.
@@ -2099,8 +2123,10 @@ class Animal:
         self.compensatory_gain_factor = self.decay_compensatory_gain_factor(self.compensatory_gain_factor)
 
         # Direct body weight update — Growth.evaluate_body_weight_change does not support feedlot
-        effective_adg: float = (
-            AnimalConfig.feedlot_target_adg * AnimalConfig.feedlot_implant_adg_factor * self.compensatory_gain_factor
+        effective_adg: float = self.effective_feedlot_adg(
+            AnimalConfig.feedlot_target_adg,
+            AnimalConfig.feedlot_implant_adg_factor,
+            self.compensatory_gain_factor,
         )
         self.body_weight += effective_adg
         self.growth.daily_growth = effective_adg
