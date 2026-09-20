@@ -12,12 +12,15 @@ Verifies:
 
 from __future__ import annotations
 
+from unittest.mock import MagicMock
+
 import pytest
 
 from RUFAS.biophysical.animal.animal import Animal
 from RUFAS.biophysical.animal.animal_grouping_scenarios import AnimalGroupingScenario
 from RUFAS.biophysical.animal.data_types.animal_combination import AnimalCombination
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
+from RUFAS.biophysical.animal.herd_manager import HerdManager
 from RUFAS.biophysical.animal.ration.ration_optimizer import RationOptimizer
 
 # ---------------------------------------------------------------------------
@@ -273,3 +276,72 @@ def test_beef_stocker_only_lookup_still_resolves() -> None:
     animal = _make_animal(AnimalType.BEEF_STOCKER_STEER)
     result = AnimalGroupingScenario.BEEF_STOCKER_ONLY.find_animal_combination(animal)
     assert result is AnimalCombination.BEEF_STOCKER
+
+
+# ---------------------------------------------------------------------------
+# Selection guard — the mapping is correct, but a run cannot use it yet
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.component
+def test_selecting_the_full_chain_scenario_for_a_run_raises() -> None:
+    """The combined scenario cannot be selected to drive a simulation.
+
+    A replacement heifer promoting to BEEF_COW on first calving reaches pen
+    assignment, which cannot resolve BEEF_COW without runtime dispatch on
+    reproduction state. Failing at selection beats failing part-way through
+    a multi-year run.
+    """
+    with pytest.raises(NotImplementedError, match="reproduction state"):
+        HerdManager.set_animal_grouping_scenario(AnimalGroupingScenario.COW_CALF_STOCKER_FEEDLOT)
+
+
+@pytest.mark.component
+def test_selection_error_names_the_usable_scenarios() -> None:
+    """The message says what to use instead, not merely that this is unsupported."""
+    with pytest.raises(NotImplementedError) as excinfo:
+        HerdManager.set_animal_grouping_scenario(AnimalGroupingScenario.COW_CALF_STOCKER_FEEDLOT)
+    message = str(excinfo.value)
+    assert "BEEF_COW_CALF_HERD" in message
+    assert "BEEF_STOCKER_ONLY" in message
+
+
+@pytest.mark.component
+@pytest.mark.regression
+@pytest.mark.parametrize(
+    "scenario",
+    [
+        AnimalGroupingScenario.BEEF_COW_CALF_HERD,
+        AnimalGroupingScenario.BEEF_STOCKER_ONLY,
+        AnimalGroupingScenario.FEEDLOT_ONLY,
+        AnimalGroupingScenario.CALF__GROWING__CLOSE_UP__LACCOW,
+    ],
+)
+def test_every_other_scenario_is_still_selectable(scenario: AnimalGroupingScenario) -> None:
+    """The guard is scenario-specific, not a blanket block."""
+    was_set = hasattr(HerdManager, "ANIMAL_GROUPING_SCENARIO")
+    saved = HerdManager.ANIMAL_GROUPING_SCENARIO if was_set else None
+    try:
+        HerdManager.set_animal_grouping_scenario(scenario)
+        assert HerdManager.ANIMAL_GROUPING_SCENARIO is scenario
+    finally:
+        if saved is not None:
+            HerdManager.ANIMAL_GROUPING_SCENARIO = saved
+        elif was_set is False:
+            del HerdManager.ANIMAL_GROUPING_SCENARIO
+
+
+@pytest.mark.component
+@pytest.mark.regression
+def test_beef_cow_is_unresolvable_under_the_cow_calf_scenario_too() -> None:
+    """BEEF_COW resolution is missing in BEEF_COW_CALF_HERD as well.
+
+    Pins the scope of the gap: the combined scenario is not uniquely affected,
+    so the selection guard bounds what this change adds rather than fixing the
+    underlying dispatch. BEEF_COW_CALF_HERD carries the same unresolved state
+    and predates this work.
+    """
+    animal = MagicMock()
+    animal.animal_type = AnimalType.BEEF_COW
+    with pytest.raises(NotImplementedError, match="reproduction-state"):
+        AnimalGroupingScenario.BEEF_COW_CALF_HERD.find_animal_combination(animal)

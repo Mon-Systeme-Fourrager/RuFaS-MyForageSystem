@@ -70,6 +70,15 @@ and written directly to output, not accumulated. A herd-level methane
 total requires per-day beef methane, which is a modelling gap rather
 than a plumbing one.
 
+**The combined grouping scenario cannot be selected for a run.** The
+cow-calf, stocker and feedlot grouping scenario is defined and its
+mapping is correct, but it is rejected at selection. A replacement heifer
+promoting to cow on first calving reaches pen assignment, which cannot
+resolve a beef cow to a pen combination without dispatching on her live
+reproduction state. That dispatch does not exist. Rejecting at selection
+beats failing part-way through a multi-year run. The same unresolved
+state exists in the cow-calf-only scenario and predates this work.
+
 **Backgrounding duration is not a scenario variable.** The stocker phase
 ends on target weight or on a maximum-days ceiling, not a configured
 duration, so a scenario cannot vary it. The extended-backgrounding

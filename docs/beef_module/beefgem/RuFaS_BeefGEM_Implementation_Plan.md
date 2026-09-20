@@ -768,6 +768,13 @@ runner itself.
 
 ## PHASE D — Environmental Stress and Performance Modifiers
 
+The combined cow-calf, stocker and feedlot grouping scenario is defined and
+correct but cannot be selected for a simulation run. A replacement heifer
+promoting to cow on first calving reaches pen assignment, which cannot resolve a
+beef cow to a pen combination without dispatching on her live reproduction
+state. That dispatch does not exist. The scenario is rejected at selection
+rather than failing part-way through a run.
+
 ### Step D-1: Heat Stress (THI-Based DMI and NEm Reduction)
 
 **Files:** `beef_nrc_requirements_calculator.py`, `beef_stocker_requirements_calculator.py`,
