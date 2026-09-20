@@ -70,6 +70,11 @@ and written directly to output, not accumulated. A herd-level methane
 total requires per-day beef methane, which is a modelling gap rather
 than a plumbing one.
 
+**Backgrounding duration is not a scenario variable.** The stocker phase
+ends on target weight or on a maximum-days ceiling, not a configured
+duration, so a scenario cannot vary it. The extended-backgrounding
+scenario was removed rather than shipped with no effect.
+
 **The scenario runner does not drive simulations.** Running a herd
 requires a populated input manager, the weather and feed subsystems,
 and the ration formulation cycle. The runner therefore takes the herd

@@ -44,13 +44,26 @@ DEFAULT_SCENARIO_YEARS: int = 3
 DEFAULT_BASE_SEED: int = 42
 """Seed the per-replicate sequence starts from, so runs are reproducible."""
 
-_SNAPSHOT_FIELDS: tuple[str, ...] = (
-    "finishing_system",
-    "stocker_diet_system",
-    "stocker_limit_feed_pct",
-    "beef_conception_rate_multiplier",
-    "beef_breeding_season_start_day",
-)
+_SCENARIO_FIELD_TO_CONFIG: dict[str, str] = {
+    "calving_month": "beef_breeding_season_start_day",
+    "weaning_age_days": "beef_weaning_age_days",
+    "conception_rate_multiplier": "beef_conception_rate_multiplier",
+    "cull_rate": "beef_cow_cull_rate_annual",
+    "post_weaning_dest": "beef_post_weaning_destination",
+    "finishing_system": "finishing_system",
+    "stocker_diet_system": "stocker_diet_system",
+    "stocker_limit_feed_pct": "stocker_limit_feed_pct",
+}
+"""Every BeefHerdScenario field and the AnimalConfig ClassVar it drives.
+
+A scenario field absent from this map is a lever that does nothing, so the
+suite asserts the map covers the dataclass exactly.
+"""
+
+_SNAPSHOT_SOURCE_FIELDS: tuple[str, ...] = tuple(_SCENARIO_FIELD_TO_CONFIG)
+"""The scenario-side field names, in map order."""
+
+_SNAPSHOT_FIELDS: tuple[str, ...] = tuple(_SCENARIO_FIELD_TO_CONFIG.values())
 """AnimalConfig ClassVars a scenario may change, snapshotted around every run.
 
 Four of these parse conditionally from input and so survive a re-initialisation
@@ -70,9 +83,8 @@ class BeefHerdScenario:
         Identifier, used as the row key in a comparison frame.
     calving_month : int
         Calendar month (1-12) the calving season opens.
-    weaning_age_mo : int
-        Calf age at weaning, in months.
-    stocker_mo : int
+    weaning_age_days : int
+        Calf age at weaning, in days.
         Months spent backgrounding before feedlot entry.
     conception_rate_multiplier : float
         Scenario lever scaling the calibrated base daily conception probability.
@@ -98,8 +110,7 @@ class BeefHerdScenario:
 
     name: str
     calving_month: int = AnimalModuleConstants.BEEF_SCENARIO_SPRING_CALVING_MONTH
-    weaning_age_mo: int = AnimalModuleConstants.BEEF_SCENARIO_STANDARD_WEANING_AGE_MO
-    stocker_mo: int = AnimalModuleConstants.BEEF_SCENARIO_STANDARD_STOCKER_MO
+    weaning_age_days: int = AnimalModuleConstants.BEEF_DEFAULT_WEANING_AGE_DAYS
     conception_rate_multiplier: float = 1.0
     cull_rate: float = AnimalModuleConstants.BEEF_ANNUAL_CULL_RATE
     post_weaning_dest: BeefPostWeaningDestination = BeefPostWeaningDestination.STOCKER
@@ -113,10 +124,8 @@ class BeefHerdScenario:
             raise ValueError("scenario name must be a non-empty string")
         if self.calving_month < 1 or self.calving_month > MONTHS_IN_YEAR:
             raise ValueError(f"calving_month must be in 1-12, got {self.calving_month}")
-        if self.weaning_age_mo <= 0:
-            raise ValueError(f"weaning_age_mo must be positive, got {self.weaning_age_mo}")
-        if self.stocker_mo <= 0:
-            raise ValueError(f"stocker_mo must be positive, got {self.stocker_mo}")
+        if self.weaning_age_days <= 0:
+            raise ValueError(f"weaning_age_days must be positive, got {self.weaning_age_days}")
         if not math.isfinite(self.conception_rate_multiplier) or self.conception_rate_multiplier <= 0.0:
             raise ValueError(
                 f"conception_rate_multiplier must be positive and finite, got {self.conception_rate_multiplier}"
@@ -241,7 +250,10 @@ def _scenario_config(scenario: BeefHerdScenario) -> Iterator[None]:
     saved = {name: getattr(AnimalConfig, name) for name in _SNAPSHOT_FIELDS}
     try:
         AnimalConfig.set_beef_calving_month(scenario.calving_month)
+        AnimalConfig.beef_weaning_age_days = scenario.weaning_age_days
         AnimalConfig.beef_conception_rate_multiplier = scenario.conception_rate_multiplier
+        AnimalConfig.beef_cow_cull_rate_annual = scenario.cull_rate
+        AnimalConfig.beef_post_weaning_destination = scenario.post_weaning_dest
         AnimalConfig.finishing_system = scenario.finishing_system
         AnimalConfig.stocker_diet_system = scenario.stocker_diet_system
         AnimalConfig.stocker_limit_feed_pct = scenario.stocker_limit_feed_pct
@@ -394,21 +406,15 @@ BEEF_SCENARIOS: dict[str, BeefHerdScenario] = {
     "spring_calving_baseline": BeefHerdScenario(
         name="spring_calving_baseline",
         calving_month=AnimalModuleConstants.BEEF_SCENARIO_SPRING_CALVING_MONTH,
-        weaning_age_mo=AnimalModuleConstants.BEEF_SCENARIO_STANDARD_WEANING_AGE_MO,
     ),
     "fall_calving": BeefHerdScenario(
         name="fall_calving",
         calving_month=AnimalModuleConstants.BEEF_SCENARIO_FALL_CALVING_MONTH,
-        weaning_age_mo=AnimalModuleConstants.BEEF_SCENARIO_STANDARD_WEANING_AGE_MO,
     ),
     "early_weaning": BeefHerdScenario(
         name="early_weaning",
         calving_month=AnimalModuleConstants.BEEF_SCENARIO_SPRING_CALVING_MONTH,
-        weaning_age_mo=AnimalModuleConstants.BEEF_SCENARIO_EARLY_WEANING_AGE_MO,
-    ),
-    "extended_backgrounding": BeefHerdScenario(
-        name="extended_backgrounding",
-        stocker_mo=AnimalModuleConstants.BEEF_SCENARIO_EXTENDED_STOCKER_MO,
+        weaning_age_days=AnimalModuleConstants.BEEF_SCENARIO_EARLY_WEANING_AGE_DAYS,
     ),
     "high_conception_rate": BeefHerdScenario(
         name="high_conception_rate",
@@ -427,4 +433,4 @@ BEEF_SCENARIOS: dict[str, BeefHerdScenario] = {
         post_weaning_dest=BeefPostWeaningDestination.DIRECT_TO_FEEDLOT,
     ),
 }
-"""The eight pre-built comparison scenarios, each varying one management choice."""
+"""The seven pre-built comparison scenarios, each varying one management choice."""

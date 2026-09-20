@@ -510,7 +510,7 @@ Write `tests/test_biophysical/test_animal/test_beefgem/test_grouping_scenario.py
 
 BEEF_SCENARIO_SPRING_CALVING_MONTH: int = 4      # April calving
 BEEF_SCENARIO_FALL_CALVING_MONTH: int = 10       # October calving
-BEEF_SCENARIO_EARLY_WEANING_AGE_MO: int = 5      # 5 months
+BEEF_SCENARIO_EARLY_WEANING_AGE_DAYS: int = 150  # round figure; no day-based source
 BEEF_SCENARIO_STANDARD_WEANING_AGE_MO: int = 7   # 7 months
 BEEF_SCENARIO_EXTENDED_STOCKER_MO: int = 9       # 9 months backgrounding
 BEEF_SCENARIO_HIGH_CONCEPTION_MULTIPLIER: float = 1.15
@@ -678,7 +678,7 @@ class BeefHerdScenario:
     """Configuration for a single beef herd simulation scenario."""
     name: str
     calving_month: int = AnimalModuleConstants.BEEF_SCENARIO_SPRING_CALVING_MONTH
-    weaning_age_mo: int = AnimalModuleConstants.BEEF_SCENARIO_STANDARD_WEANING_AGE_MO
+    weaning_age_days: int = AnimalModuleConstants.BEEF_DEFAULT_WEANING_AGE_DAYS
     stocker_mo: int = AnimalModuleConstants.BEEF_SCENARIO_STANDARD_STOCKER_MO
     conception_rate_multiplier: float = 1.0
     cull_rate: float = AnimalModuleConstants.BEEF_ANNUAL_CULL_RATE
@@ -710,16 +710,21 @@ def compare_scenarios(scenarios: dict[str, BeefHerdScenario],
     return pd.DataFrame(results).T
 ```
 
+Backgrounding duration is not a scenario variable. The stocker phase ends on
+target weight or on a maximum-days ceiling, not a configured duration, so a
+scenario cannot vary it. The extended-backgrounding scenario was removed rather
+than shipped with no effect.
+
 ### C-3.3 Pre-built named scenarios
 
 ```python
 BEEF_SCENARIOS: dict[str, BeefHerdScenario] = {
     "spring_calving_baseline": BeefHerdScenario(
-        name="spring_calving_baseline", calving_month=4, weaning_age_mo=7),
+        name="spring_calving_baseline", calving_month=4),
     "fall_calving": BeefHerdScenario(
-        name="fall_calving", calving_month=10, weaning_age_mo=7),
+        name="fall_calving", calving_month=10),
     "early_weaning": BeefHerdScenario(
-        name="early_weaning", calving_month=4, weaning_age_mo=5),
+        name="early_weaning", calving_month=4, weaning_age_days=150),
     "extended_backgrounding": BeefHerdScenario(
         name="extended_backgrounding", stocker_mo=9),
     "high_conception_rate": BeefHerdScenario(

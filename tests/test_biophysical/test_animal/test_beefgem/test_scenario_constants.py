@@ -84,9 +84,7 @@ def _seasonal_rate(multiplier: float) -> float:
     [
         ("BEEF_SCENARIO_SPRING_CALVING_MONTH", 4),
         ("BEEF_SCENARIO_FALL_CALVING_MONTH", 10),
-        ("BEEF_SCENARIO_EARLY_WEANING_AGE_MO", 5),
-        ("BEEF_SCENARIO_STANDARD_WEANING_AGE_MO", 7),
-        ("BEEF_SCENARIO_EXTENDED_STOCKER_MO", 9),
+        ("BEEF_SCENARIO_EARLY_WEANING_AGE_DAYS", 150),
     ],
 )
 def test_integer_scenario_constants(name: str, expected: int) -> None:

@@ -2,7 +2,7 @@
 
 Verifies:
 - BeefHerdScenario construction, defaults and validation
-- The eight named scenarios and the parameter each varies
+- The seven named scenarios and the parameter each varies
 - Config snapshot and restore, including when the runner raises
 - run_scenario replicate handling and seeding
 - compare_scenarios frame shape, built from the summary keys
@@ -11,6 +11,7 @@ Verifies:
 
 from __future__ import annotations
 
+import dataclasses
 from typing import Generator
 
 import pandas as pd
@@ -23,6 +24,9 @@ from RUFAS.biophysical.animal.beef_scenario_runner import (
     BeefHerdScenario,
     ScenarioComparison,
     ScenarioResult,
+    _SCENARIO_FIELD_TO_CONFIG,
+    _SNAPSHOT_FIELDS,
+    _SNAPSHOT_SOURCE_FIELDS,
     _scenario_config,
     compare_scenarios,
     run_scenario,
@@ -44,14 +48,6 @@ _SUMMARY_KEYS: frozenset[str] = frozenset(
         "replacement_rate_pct",
         "mean_cow_bcs",
     }
-)
-
-_SNAPSHOT_FIELDS: tuple[str, ...] = (
-    "finishing_system",
-    "stocker_diet_system",
-    "stocker_limit_feed_pct",
-    "beef_conception_rate_multiplier",
-    "beef_breeding_season_start_day",
 )
 
 
@@ -126,8 +122,7 @@ def test_scenario_defaults_come_from_constants() -> None:
     """Defaults must reference the C-1 constants, not inline numbers."""
     scenario = BeefHerdScenario(name="baseline")
     assert scenario.calving_month == AnimalModuleConstants.BEEF_SCENARIO_SPRING_CALVING_MONTH
-    assert scenario.weaning_age_mo == AnimalModuleConstants.BEEF_SCENARIO_STANDARD_WEANING_AGE_MO
-    assert scenario.stocker_mo == AnimalModuleConstants.BEEF_SCENARIO_STANDARD_STOCKER_MO
+    assert scenario.weaning_age_days == AnimalModuleConstants.BEEF_DEFAULT_WEANING_AGE_DAYS
     assert scenario.cull_rate == pytest.approx(AnimalModuleConstants.BEEF_ANNUAL_CULL_RATE)
     assert scenario.conception_rate_multiplier == pytest.approx(1.0)
 
@@ -178,9 +173,13 @@ def test_scenario_rejects_empty_name() -> None:
 
 
 @pytest.mark.unit
-def test_there_are_exactly_eight_named_scenarios() -> None:
-    """BEEF_SCENARIOS must hold the eight pre-built scenarios."""
-    assert len(BEEF_SCENARIOS) == 8
+def test_there_are_exactly_seven_named_scenarios() -> None:
+    """BEEF_SCENARIOS must hold the seven pre-built scenarios.
+
+    Backgrounding duration was removed rather than shipped inert, so the
+    extended-backgrounding scenario is gone.
+    """
+    assert len(BEEF_SCENARIOS) == 7
 
 
 @pytest.mark.unit
@@ -190,7 +189,6 @@ def test_there_are_exactly_eight_named_scenarios() -> None:
         "spring_calving_baseline",
         "fall_calving",
         "early_weaning",
-        "extended_backgrounding",
         "high_conception_rate",
         "low_conception_rate",
         "aggressive_culling",
@@ -209,22 +207,27 @@ def test_fall_calving_differs_from_baseline_only_in_calving_month() -> None:
     fall = BEEF_SCENARIOS["fall_calving"]
     assert fall.calving_month == AnimalModuleConstants.BEEF_SCENARIO_FALL_CALVING_MONTH
     assert fall.calving_month != baseline.calving_month
-    assert fall.weaning_age_mo == baseline.weaning_age_mo
+    assert fall.weaning_age_days == baseline.weaning_age_days
     assert fall.cull_rate == pytest.approx(baseline.cull_rate)
 
 
 @pytest.mark.unit
 def test_early_weaning_varies_weaning_age() -> None:
     """The early-weaning scenario uses the early weaning-age constant."""
-    assert BEEF_SCENARIOS["early_weaning"].weaning_age_mo == AnimalModuleConstants.BEEF_SCENARIO_EARLY_WEANING_AGE_MO
+    assert (
+        BEEF_SCENARIOS["early_weaning"].weaning_age_days == AnimalModuleConstants.BEEF_SCENARIO_EARLY_WEANING_AGE_DAYS
+    )
 
 
 @pytest.mark.unit
-def test_extended_backgrounding_varies_stocker_months() -> None:
-    """The extended-backgrounding scenario uses the extended stocker constant."""
-    assert (
-        BEEF_SCENARIOS["extended_backgrounding"].stocker_mo == AnimalModuleConstants.BEEF_SCENARIO_EXTENDED_STOCKER_MO
-    )
+def test_backgrounding_duration_is_not_a_scenario_field() -> None:
+    """Stocker duration has no config home, so it is not a scenario lever.
+
+    The phase ends on target weight or a maximum-days ceiling, not a
+    configured duration. A field here would be inert.
+    """
+    assert "stocker_mo" not in {f.name for f in dataclasses.fields(BeefHerdScenario)}
+    assert "extended_backgrounding" not in BEEF_SCENARIOS
 
 
 @pytest.mark.unit
@@ -553,3 +556,99 @@ def test_spring_vs_fall_calving_end_to_end() -> None:
     frame = comparison.to_frame()
     assert set(frame.index) == {"spring", "fall"}
     assert not frame.loc["spring"].equals(frame.loc["fall"])
+
+
+# ---------------------------------------------------------------------------
+# Every declared scenario field must reach AnimalConfig
+# ---------------------------------------------------------------------------
+
+
+def _live_config() -> dict[str, object]:
+    """Snapshot every AnimalConfig field a scenario is able to change."""
+    return {name: getattr(AnimalConfig, name) for name in _SNAPSHOT_FIELDS}
+
+
+@pytest.mark.component
+@pytest.mark.parametrize("scenario_name", sorted(BEEF_SCENARIOS))
+def test_declared_scenario_fields_reach_animal_config(scenario_name: str) -> None:
+    """A scenario must change config in exactly the fields it declares.
+
+    Guards the class of bug where a scenario varies a dataclass field that
+    _scenario_config never applies: the scenario then runs identically to the
+    baseline and the comparison is silently meaningless.
+    """
+    scenario = BEEF_SCENARIOS[scenario_name]
+    baseline = BeefHerdScenario(name="baseline")
+
+    declared = {
+        field_name
+        for field_name in _SNAPSHOT_SOURCE_FIELDS
+        if getattr(scenario, field_name) != getattr(baseline, field_name)
+    }
+
+    with _scenario_config(baseline):
+        baseline_config = _live_config()
+    with _scenario_config(scenario):
+        scenario_config = _live_config()
+
+    changed = {name for name, value in scenario_config.items() if baseline_config[name] != value}
+    expected = {_SCENARIO_FIELD_TO_CONFIG[field_name] for field_name in declared}
+
+    assert changed == expected, (
+        f"{scenario_name} declares {sorted(declared) or ['nothing']} but changed "
+        f"config {sorted(changed) or ['nothing']}; expected {sorted(expected) or ['nothing']}"
+    )
+
+
+@pytest.mark.component
+def test_every_scenario_field_has_a_config_target() -> None:
+    """No dataclass field may exist without a config home.
+
+    A field with nowhere to go is a scenario lever that does nothing.
+    """
+    declarable = {f.name for f in dataclasses.fields(BeefHerdScenario)} - {"name"}
+    assert declarable == set(_SCENARIO_FIELD_TO_CONFIG)
+
+
+@pytest.mark.component
+def test_snapshot_list_matches_what_the_writer_touches() -> None:
+    """The snapshot is derived from the writes, so the two cannot drift."""
+    assert set(_SNAPSHOT_FIELDS) == set(_SCENARIO_FIELD_TO_CONFIG.values())
+
+
+@pytest.mark.component
+def test_no_varying_scenario_is_inert() -> None:
+    """A scenario that varies a field must change configuration.
+
+    spring_calving_baseline is excluded by construction: it declares the
+    default values, so producing the baseline configuration is correct for it.
+    Any other scenario reaching config unchanged is a lever that does nothing.
+    """
+    baseline = BeefHerdScenario(name="baseline")
+    with _scenario_config(baseline):
+        baseline_config = _live_config()
+
+    inert = []
+    for name, scenario in BEEF_SCENARIOS.items():
+        varies = any(
+            getattr(scenario, field_name) != getattr(baseline, field_name) for field_name in _SNAPSHOT_SOURCE_FIELDS
+        )
+        if not varies:
+            continue
+        with _scenario_config(scenario):
+            if _live_config() == baseline_config:
+                inert.append(name)
+    assert not inert, f"scenarios varying a field with no effect on configuration: {sorted(inert)}"
+
+
+@pytest.mark.component
+@pytest.mark.regression
+def test_baseline_scenario_writes_the_shipped_weaning_default() -> None:
+    """The baseline must reproduce the shipped config exactly, not approximate it.
+
+    Weaning age is carried in days rather than months precisely so no
+    conversion sits between the scenario and the config value.
+    """
+    with _scenario_config(BEEF_SCENARIOS["spring_calving_baseline"]):
+        assert AnimalConfig.beef_weaning_age_days == AnimalModuleConstants.BEEF_DEFAULT_WEANING_AGE_DAYS
+        assert AnimalConfig.beef_weaning_age_days == 207

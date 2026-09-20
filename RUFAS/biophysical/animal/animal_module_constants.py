@@ -333,11 +333,17 @@ class AnimalModuleConstants:
     BEEF_SCENARIO_FALL_CALVING_MONTH: int = 10
     """Calving month for the fall-calving scenario. A named-scenario default, not a measured value."""
 
-    BEEF_SCENARIO_EARLY_WEANING_AGE_MO: int = 5
-    """Weaning age for the early-weaning scenario (months). A named-scenario default."""
+    BEEF_SCENARIO_EARLY_WEANING_AGE_DAYS: int = 150
+    """
+    Weaning age for the early-weaning scenario (days).
 
-    BEEF_SCENARIO_STANDARD_WEANING_AGE_MO: int = 7
-    """Weaning age for the baseline scenario (months). A named-scenario default."""
+    Neither the source document nor the cited literature gives an
+    early-weaning age in days — the source specifies only whole months
+    (5). 150 is a round figure chosen for that reason, roughly two months
+    ahead of BEEF_DEFAULT_WEANING_AGE_DAYS (207), which it is defined
+    against rather than derived from. A named-scenario default, not a
+    measured value.
+    """
 
     CG_RESTRICTION_THRESHOLD_DAYS: int = 21
     """
@@ -398,18 +404,6 @@ class AnimalModuleConstants:
     interpolation treatment as the DMI multipliers; the source's mild-class
     value of 1.07 falls out at THI 76.67, inside the mild band.
     """
-
-    BEEF_SCENARIO_STANDARD_STOCKER_MO: int = 7
-    """
-    Standard backgrounding duration in months for the named scenarios.
-    A scenario default, not a measured value. Numerically equal to the
-    standard weaning age, but independent of it — the two are not
-    related, and coupling them would make backgrounding length follow a
-    change to weaning age for no reason.
-    """
-
-    BEEF_SCENARIO_EXTENDED_STOCKER_MO: int = 9
-    """Backgrounding length for the extended-stocker scenario (months). A named-scenario default."""
 
     BEEF_SCENARIO_HIGH_CONCEPTION_MULTIPLIER: float = 1.15
     """
