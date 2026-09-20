@@ -424,3 +424,69 @@ def test_restricted_days_do_not_increment_on_unrestricted_diets(
     animal._stocker_daily_routines(_mock_time())
     assert animal.days_on_restricted_intake == 0
     assert animal.is_on_restricted_intake is False
+
+
+@pytest.mark.unit
+@pytest.mark.regression
+def test_limit_feed_at_one_hundred_percent_is_not_restriction() -> None:
+    """LIMIT_FEED at 100% caps at ad libitum, so no restriction occurred.
+
+    is_on_restricted_intake must reflect an actual intake cap, not merely
+    the diet-system enum. Without this guard a 100% limit-feed pen would
+    accumulate restricted days and could later trigger compensatory gain
+    for a restriction that never reduced intake.
+    """
+    AnimalConfig.stocker_diet_system = StockerDietSystem.LIMIT_FEED
+    AnimalConfig.stocker_limit_feed_pct = 100.0
+    animal = _make_stocker_animal()
+    animal._stocker_daily_routines(_mock_time())
+    assert animal.is_on_restricted_intake is False
+    assert animal.days_on_restricted_intake == 0
+
+
+@pytest.mark.unit
+def test_limit_feed_below_one_hundred_percent_is_still_restriction() -> None:
+    """A genuine cap below 100% must still count as restriction."""
+    AnimalConfig.stocker_diet_system = StockerDietSystem.LIMIT_FEED
+    AnimalConfig.stocker_limit_feed_pct = 99.9
+    animal = _make_stocker_animal()
+    animal._stocker_daily_routines(_mock_time())
+    assert animal.is_on_restricted_intake is True
+    assert animal.days_on_restricted_intake == 1
+
+
+# ---------------------------------------------------------------------------
+# Calculator-level validation of limit_feed_pct and diet_system
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.component
+@pytest.mark.parametrize("bad_pct", [0.0, -5.0, 100.1, float("nan"), float("inf")])
+def test_calculator_rejects_invalid_limit_feed_pct(bad_pct: float) -> None:
+    """Calculator-level validation must mirror the config-level bound.
+
+    limit_feed_pct is not checked by _validate_inputs today, so a caller
+    that builds StockerRequirementsInputs directly -- every test in this
+    suite does exactly that -- bypasses the (0, 100] and finite guard that
+    AnimalConfig enforces at parse time.
+    """
+    with pytest.raises(ValueError, match="limit_feed_pct"):
+        BeefStockerRequirementsCalculator.calculate_requirements(
+            _make_stocker_inputs(diet_system=StockerDietSystem.LIMIT_FEED, limit_feed_pct=bad_pct)
+        )
+
+
+@pytest.mark.component
+def test_calculator_accepts_limit_feed_pct_at_the_boundary() -> None:
+    """100.0 is the inclusive upper bound and must be accepted."""
+    result = BeefStockerRequirementsCalculator.calculate_requirements(
+        _make_stocker_inputs(diet_system=StockerDietSystem.LIMIT_FEED, limit_feed_pct=100.0)
+    )
+    assert result.dry_matter > 0.0
+
+
+@pytest.mark.component
+def test_calculator_rejects_a_diet_system_that_is_not_a_member() -> None:
+    """diet_system must be a real StockerDietSystem member, not an arbitrary value."""
+    with pytest.raises(ValueError, match="diet_system"):
+        BeefStockerRequirementsCalculator.calculate_requirements(_make_stocker_inputs(diet_system="limit_feed"))

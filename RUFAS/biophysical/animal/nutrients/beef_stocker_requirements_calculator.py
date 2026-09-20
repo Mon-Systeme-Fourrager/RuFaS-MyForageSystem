@@ -235,6 +235,10 @@ class BeefStockerRequirementsCalculator(NutritionRequirementsCalculator):
         if inputs.sex not in AnimalModuleConstants.SEX_NEm_MULTIPLIER:
             valid_sexes = ", ".join(str(s) for s in AnimalModuleConstants.SEX_NEm_MULTIPLIER)
             raise ValueError(f"sex must be one of {valid_sexes}; got {inputs.sex}.")
+        if not isinstance(inputs.diet_system, StockerDietSystem):
+            raise ValueError(f"diet_system must be a StockerDietSystem member, got {inputs.diet_system!r}")
+        if not math.isfinite(inputs.limit_feed_pct) or not 0.0 < inputs.limit_feed_pct <= 100.0:
+            raise ValueError(f"limit_feed_pct must be in (0, 100] and finite, got {inputs.limit_feed_pct}")
         BeefNRCRequirementsCalculator.validate_relative_humidity(inputs.relative_humidity_pct)
         BeefNRCRequirementsCalculator.validate_compensatory_gain_factor(inputs.compensatory_gain_factor)
 

@@ -2167,7 +2167,10 @@ class Animal:
         if self.nutrition_supply is not None and self.nutrition_supply.dry_matter > 0:
             self.stocker_cumulative_dmi += self.nutrition_supply.dry_matter
 
-        self.is_on_restricted_intake = AnimalConfig.stocker_diet_system is StockerDietSystem.LIMIT_FEED
+        self.is_on_restricted_intake = (
+            AnimalConfig.stocker_diet_system is StockerDietSystem.LIMIT_FEED
+            and AnimalConfig.stocker_limit_feed_pct < 100.0
+        )
         if self.is_on_restricted_intake:
             self.days_on_restricted_intake += 1
 

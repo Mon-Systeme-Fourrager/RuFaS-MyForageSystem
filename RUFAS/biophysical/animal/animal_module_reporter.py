@@ -1482,11 +1482,16 @@ class AnimalModuleReporter:
         fcr: float = animal.cumulative_dmi / total_gain if total_gain > 0.0 else 0.0
         hcw: float = animal.body_weight * AnimalModuleConstants.FEEDLOT_HCW_DRESSING_PERCENTAGE
 
-        mean_daily_dmi: float = animal.cumulative_dmi / dof if dof > 0 else 0.0
-        if AnimalConfig.finishing_system is FinishingSystem.GRASS_FED:
-            ch4 = BeefNRCRequirementsCalculator.calculate_enteric_ch4_grass_fed(mean_daily_dmi)
+        # The grass-fed equation has a non-zero intercept, so a zero-day phase
+        # must short-circuit rather than evaluate the equation at zero intake.
+        if dof > 0:
+            mean_daily_dmi: float = animal.cumulative_dmi / dof
+            if AnimalConfig.finishing_system is FinishingSystem.GRASS_FED:
+                ch4 = BeefNRCRequirementsCalculator.calculate_enteric_ch4_grass_fed(mean_daily_dmi)
+            else:
+                ch4 = BeefNRCRequirementsCalculator.calculate_enteric_ch4_grain_fed(mean_daily_dmi)
         else:
-            ch4 = BeefNRCRequirementsCalculator.calculate_enteric_ch4_grain_fed(mean_daily_dmi)
+            ch4 = 0.0
 
         om.add_variable("feedlot_days_on_feed", dof, dict(info_map, units=MeasurementUnits.DAYS))
         om.add_variable("feedlot_total_gain_kg", total_gain, dict(info_map, units=MeasurementUnits.KILOGRAMS))

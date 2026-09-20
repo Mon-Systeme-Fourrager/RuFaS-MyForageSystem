@@ -456,6 +456,26 @@ def test_reporter_zero_days_on_feed_yields_zero_ch4(mocker: MockerFixture) -> No
 
 
 @pytest.mark.unit
+@pytest.mark.regression
+def test_reporter_zero_days_on_feed_yields_zero_ch4_under_grass_fed(mocker: MockerFixture) -> None:
+    """days_on_feed = 0 under GRASS_FED must give 0.0, not the equation's intercept.
+
+    calculate_enteric_ch4_grass_fed has a non-zero intercept (8.25 at zero
+    DMI), matching the reason the stocker reporter short-circuits a
+    zero-day phase instead of evaluating the equation at zero intake. The
+    feedlot reporter must apply the same short-circuit.
+    """
+    AnimalConfig.finishing_system = FinishingSystem.GRASS_FED
+    spy = mocker.patch.object(reporter_module.om, "add_variable")
+
+    AnimalModuleReporter.report_feedlot_performance(
+        _make_feedlot_animal(days_on_feed=0, cumulative_dmi=0.0), simulation_day=300
+    )
+
+    assert _emitted_ch4(spy) == pytest.approx(0.0)
+
+
+@pytest.mark.unit
 def test_reporter_emits_ch4_with_grams_per_day_units(mocker: MockerFixture) -> None:
     """The CH4 variable must be tagged with GRAMS_PER_DAY units."""
     spy = mocker.patch.object(reporter_module.om, "add_variable")
