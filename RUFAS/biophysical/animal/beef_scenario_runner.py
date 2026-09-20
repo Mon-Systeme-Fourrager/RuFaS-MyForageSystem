@@ -85,7 +85,6 @@ class BeefHerdScenario:
         Calendar month (1-12) the calving season opens.
     weaning_age_days : int
         Calf age at weaning, in days.
-        Months spent backgrounding before feedlot entry.
     conception_rate_multiplier : float
         Scenario lever scaling the calibrated base daily conception probability.
         1.0 leaves calibrated behaviour untouched.
