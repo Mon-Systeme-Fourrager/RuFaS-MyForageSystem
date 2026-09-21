@@ -181,10 +181,10 @@ def test_initialize_stocker_missing_section_uses_defaults() -> None:
 
 
 @pytest.mark.unit
-def test_initialize_stocker_limit_feed_raises_value_error() -> None:
-    """'limit_feed' stocker_diet_system must raise ValueError — BeefGEM scope only."""
-    with pytest.raises(ValueError, match="stocker_diet_system"):
-        AnimalConfig._initialize_beef_stocker_config({"stocker_diet_system": "limit_feed"})
+def test_initialize_stocker_limit_feed_is_accepted() -> None:
+    """'limit_feed' is now a supported stocker_diet_system."""
+    AnimalConfig._initialize_beef_stocker_config({"stocker_diet_system": "limit_feed"})
+    assert AnimalConfig.stocker_diet_system is StockerDietSystem.LIMIT_FEED
 
 
 @pytest.mark.unit

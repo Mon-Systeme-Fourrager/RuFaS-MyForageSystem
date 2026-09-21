@@ -322,6 +322,115 @@ class AnimalModuleConstants:
     BEEF_DEFAULT_BREEDING_SEASON_START_DAY: int = 90
     """Default Julian day on which the breeding season opens (approximately April 1)."""
 
+    # ===== NAMED SCENARIO DEFAULTS =====
+    # Starting points for the pre-built comparison scenarios. These are
+    # management choices being compared, not measured biological values, and
+    # carry no NRC 2016 or USDA citation.
+
+    BEEF_SCENARIO_SPRING_CALVING_MONTH: int = 4
+    """Calving month for the spring-calving scenario. A named-scenario default, not a measured value."""
+
+    BEEF_SCENARIO_FALL_CALVING_MONTH: int = 10
+    """Calving month for the fall-calving scenario. A named-scenario default, not a measured value."""
+
+    BEEF_SCENARIO_EARLY_WEANING_AGE_DAYS: int = 150
+    """
+    Weaning age for the early-weaning scenario (days).
+
+    Neither the source document nor the cited literature gives an
+    early-weaning age in days — the source specifies only whole months
+    (5). 150 is a round figure chosen for that reason, roughly two months
+    ahead of BEEF_DEFAULT_WEANING_AGE_DAYS (207), which it is defined
+    against rather than derived from. A named-scenario default, not a
+    measured value.
+    """
+
+    CG_RESTRICTION_THRESHOLD_DAYS: int = 21
+    """
+    Days of restricted intake that must be exceeded before compensatory gain
+    triggers. A restriction of exactly this length produces no uplift.
+    """
+
+    CG_MAX_ADG_MULTIPLIER: float = 1.25
+    """
+    Ceiling on the compensatory gain ADG multiplier, for biological
+    plausibility. Applied both when the factor is set and again inside the
+    calculators, so a caller-supplied factor cannot exceed it either.
+    """
+
+    CG_DECAY_RATE_PER_DAY: float = 0.02
+    """
+    Decline in the compensatory gain advantage per day once restriction ends,
+    in multiplier units. A factor at the 1.25 ceiling returns to 1.0 after 13
+    days.
+    """
+
+    CG_ADG_MULTIPLIER_PER_RESTRICTED_DAY: float = 0.005
+    """
+    Uplift added to the ADG multiplier for each restricted day beyond
+    CG_RESTRICTION_THRESHOLD_DAYS.
+
+    This coefficient has no identified source. The BeefGEM source document
+    states only that the factor is set from the restricted-day count "via a
+    lookup table" and never provides that table; 0.005 is a linearisation
+    adopted in the implementation plan. It should not be treated as
+    BeefGEM- or NRC-derived without re-derivation.
+    """
+
+    BEEF_THI_BREAKPOINTS: tuple[float, ...] = (72.0, 80.0, 90.0)
+    """
+    THI anchor points for beef cattle heat stress interpolation. 72 is the
+    onset of stress, 80 the moderate class value, 90 the severe. Pairs
+    one-to-one with BEEF_HEAT_STRESS_DMI_MULTIPLIERS and
+    BEEF_HEAT_STRESS_NEM_MULTIPLIERS.
+    """
+
+    BEEF_HEAT_STRESS_DMI_MULTIPLIERS: tuple[float, ...] = (1.00, 0.88, 0.75)
+    """
+    DMI multiplier at each THI anchor point. Below 72 no reduction applies;
+    above 90 the value is clamped. The source document reports these as
+    discrete classes; they are interpolated linearly between anchors here so
+    daily output is continuous and animals crossing a threshold do not
+    produce step artefacts.
+
+    The source's mild-class value of 0.95 is deliberately not an anchor.
+    Pinning it at 72 would put a five-point cliff at the onset; it instead
+    falls out of the interpolation at THI 75.33, inside the mild band.
+    """
+
+    BEEF_HEAT_STRESS_NEM_MULTIPLIERS: tuple[float, ...] = (1.00, 1.12, 1.20)
+    """
+    Maintenance energy multiplier at each THI anchor point. Same
+    interpolation treatment as the DMI multipliers; the source's mild-class
+    value of 1.07 falls out at THI 76.67, inside the mild band.
+    """
+
+    BEEF_SCENARIO_HIGH_CONCEPTION_MULTIPLIER: float = 1.15
+    """
+    Scenario lever scaling the calibrated base daily conception
+    probability. Not a measured rate. At the calibration reference point
+    (BCS 5, 25:1 bull ratio) both adjustment factors are 1.0, so the
+    seasonal rate over the 63-day season is 1 - (1 - 0.0404 x m)^63.
+    A multiplier of 1.15 yields 95.0%; 0.625 yields 80.0%; the baseline
+    1.0 yields 92.56%.
+
+    Note: BEEF_CONCEPTION_BASE_DAILY_PROB documents itself as calibrated
+    to a USDA 91.5% seasonal pregnancy rate. The value it actually
+    produces at the reference point is 92.56%, a gap of 1.1 percentage
+    points. The constant is left unchanged, as altering it would move
+    existing cow-calf output.
+    """
+
+    BEEF_SCENARIO_LOW_CONCEPTION_MULTIPLIER: float = 0.625
+    """
+    Scenario lever scaling the calibrated base daily conception
+    probability down to an 80.0% seasonal rate. Not a measured rate. Same
+    derivation as BEEF_SCENARIO_HIGH_CONCEPTION_MULTIPLIER.
+    """
+
+    BEEF_SCENARIO_AGGRESSIVE_CULL_RATE: float = 0.22
+    """Annual cow cull fraction for the aggressive-culling scenario. A named-scenario default."""
+
     BEEF_DEFAULT_BCS_9: float = 5.0
     """Default moderate body condition score on the NRC 2016 beef 1–9 scale (not the dairy 1–5 scale)."""
 
@@ -628,6 +737,14 @@ class AnimalModuleConstants:
     STOCKER_MAX_DAYS: int = 210
     """Maximum backgrounding days before forced exit."""
 
+    STOCKER_DEFAULT_LIMIT_FEED_PCT: float = 85.0
+    """
+    Default dry matter intake ceiling when the stocker diet system is limit-feeding,
+    as a percentage of ad libitum intake. BeefGEM source document; not an NRC 2016
+    threshold. Limit-feeding programmes in the literature span roughly 80-90% of
+    ad libitum, and 85% is the midpoint of that range.
+    """
+
     BEEF_MUD_CONDITION_NONE: str = "none"
     """NRC 2016 mud condition: no mud, multiplier = 1.00 (MUD_NEm_MULTIPLIER_NONE)."""
 
@@ -640,3 +757,64 @@ class AnimalModuleConstants:
     BEEF_DMI_MIN_NE_CONCENTRATION: float = 0.95
     """Minimum NEm concentration (Mcal/kg DM) applied before division in DMI Eq.10-5.
     This is a numerical guard against a near-zero denominator, not an NRC 2016 threshold."""
+
+    # ===== BEEF FINISHING ENTERIC CH4 CONSTANTS (NRC 2016 Ch.16) =====
+
+    BEEF_CH4_GRASS_FED_INTERCEPT: float = 8.25
+    """
+    Linear enteric CH4 model for grass-finished beef: intercept (g CH4/d). Distinct
+    from the Mitscherlich Model 3 curve (MITS_PARAMETER_A/_B, Mills et al. 2003)
+    already in animal_constants.py, despite the source document referring to this
+    as "Mits3". Provenance for these coefficients is the BeefGEM source document;
+    no NRC 2016 equation number has been identified for them.
+    """
+
+    BEEF_CH4_GRASS_FED_SLOPE: float = 31.2
+    """
+    Linear enteric CH4 model for grass-finished beef: slope (g CH4 per kg DMI/d).
+    Distinct from the Mitscherlich Model 3 curve (MITS_PARAMETER_A/_B, Mills et al.
+    2003) already in animal_constants.py, despite the source document referring to
+    this as "Mits3". Provenance for these coefficients is the BeefGEM source
+    document; no NRC 2016 equation number has been identified for them.
+    """
+
+    BEEF_CH4_STOCKER_FORAGE_INTERCEPT: float = 10.04
+    """
+    Intercept of the linear enteric CH4 model for stocker cattle on forage
+    (g CH4/d). Pinned from the BeefGEM implementation plan. No NRC/NASEM 2016
+    equation number has been identified for this pair: the plan cites
+    "Eq.6.8", but Chapter 6 of NRC 2016 covers protein and amino acids, and
+    the enteric methane equations are Ch.16 (Eq.16-8 and Eq.16-9). The BeefGEM
+    source document's own backgrounding rule R-CH4-ENT-003 is Eq.16-8,
+    71.5 + 0.12*BW + 0.10*DMI^3 - 244.8*Fat^3, which is a different equation
+    taking four inputs. Retained as pinned for traceability; see the module
+    docs for the open provenance question.
+    """
+
+    BEEF_CH4_STOCKER_FORAGE_SLOPE: float = 23.7
+    """
+    Slope of the linear enteric CH4 model for stocker cattle on forage
+    (g CH4 per kg DMI/d). Same provenance caveat as
+    BEEF_CH4_STOCKER_FORAGE_INTERCEPT. Across 6-10 kg DM/d the pair yields
+    152-247 g/d, inside the 87-252 g/d NRC 2016 Ch.16 reports for grazing
+    beef cattle; it exceeds that ceiling above roughly 10.2 kg DM/d.
+    """
+
+    BEEF_CH4_YM_FRACTION: float = 0.030
+    """
+    Methane conversion factor for grain-finished feedlot cattle, as a
+    fraction of gross energy intake. IPCC Tier 2 default for high-grain
+    diets; NRC 2016 Table 16-2.
+    """
+
+    BEEF_GROSS_ENERGY_MJ_PER_KG_DM: float = 18.45
+    """
+    Gross energy content of feed dry matter (MJ/kg DM). IPCC default
+    used with BEEF_CH4_YM_FRACTION.
+    """
+
+    BEEF_CH4_ENERGY_MJ_PER_G: float = 0.05565
+    """
+    Energy content of methane (MJ/g), for converting the IPCC Tier 2
+    energy result to mass. Equivalent to 55.65 MJ/kg.
+    """
