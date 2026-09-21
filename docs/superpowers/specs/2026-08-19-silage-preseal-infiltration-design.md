@@ -87,7 +87,8 @@ These need genuinely different math (front sinking down a column vs. front shrin
 
 **In scope (this PR):**
 - Preseal phase for `Bunker`, `Pile`, `Bag` (all `Silage` subclasses)
-- New per-crop state: temperature, initial pH estimate
+- New per-crop state: temperature
+- `PRESEAL_INITIAL_PH`: a fixed Preseal calculation constant (not per-crop state — see §5.1's detail below)
 - New per-storage config: geometry (width/height for Bunker/Pile, diameter for Bag) — optional, reference-table fallback
 
 **Designed here, implemented in a follow-up PR (`PLAN_silage-infiltration-phase.md`) — delivered
