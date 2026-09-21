@@ -40,19 +40,46 @@ _LOW_SEASONAL_RATE: float = 0.80
 # ---------------------------------------------------------------------------
 
 
+_COW_CALF_CONFIG_FIELDS: tuple[str, ...] = (
+    "beef_breeding_season_start_day",
+    "beef_conception_rate_multiplier",
+    "beef_breeding_season_length",
+    "beef_weaning_age_days",
+    "beef_mature_cow_weight_kg",
+    "beef_natural_service_bull_ratio",
+    "beef_cow_cull_rate_annual",
+    "beef_weaning_weight_kg",
+    "beef_creep_feeding_enabled",
+    "beef_post_weaning_destination",
+    "beef_reproduction_program",
+)
+"""Every ClassVar _initialize_beef_cow_calf_config assigns.
+
+No single map in animal_config.py enumerates these the way
+beef_scenario_runner._SCENARIO_FIELD_TO_CONFIG enumerates the scenario
+fields it writes -- the assignments are split across _merge_beef_defaults,
+_assign_beef_config_fields and _parse_beef_enum_fields, so this list is
+hand-maintained rather than derived. test_conception_multiplier_parsed_from_config
+calls the full initializer with a config that sets only
+conception_rate_multiplier, so every other field here is reset to its
+declared default by that one call and must be restored, not just the two
+fields these tests deliberately vary.
+"""
+
+
 @pytest.fixture(autouse=True)
 def _restore_beef_config() -> Generator[None, None, None]:
-    """Save and restore the scalar ClassVars these tests mutate.
+    """Save and restore every ClassVar _initialize_beef_cow_calf_config touches.
 
-    The conception multiplier is a parameter of the probability function, so
-    only the two tests covering the ClassVar itself — its default and its
-    config parsing — touch it.
+    A call to that initializer with a partial config resets every field it
+    owns to its declared default, not only the ones the calling test cares
+    about -- so the fixture must cover the full set, not just the fields
+    these tests deliberately vary.
     """
-    saved_start_day = AnimalConfig.beef_breeding_season_start_day
-    saved_multiplier = AnimalConfig.beef_conception_rate_multiplier
+    saved = {name: getattr(AnimalConfig, name) for name in _COW_CALF_CONFIG_FIELDS}
     yield
-    AnimalConfig.beef_breeding_season_start_day = saved_start_day
-    AnimalConfig.beef_conception_rate_multiplier = saved_multiplier
+    for name, value in saved.items():
+        setattr(AnimalConfig, name, value)
 
 
 def _make_beef_config(**overrides: object) -> dict[str, Any]:

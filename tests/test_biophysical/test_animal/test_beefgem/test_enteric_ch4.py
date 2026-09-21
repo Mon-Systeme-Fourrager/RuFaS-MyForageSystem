@@ -244,29 +244,21 @@ def test_reporter_still_emits_all_six_original_stocker_variables(mocker: MockerF
 @pytest.mark.regression
 def test_feedlot_grain_fed_routing_unchanged(mocker: MockerFixture) -> None:
     """Adding the stocker path must not disturb the Phase A grain-fed routing."""
-    saved = AnimalConfig.finishing_system
-    try:
-        AnimalConfig.finishing_system = FinishingSystem.GRAIN_FED
-        spy = mocker.patch.object(reporter_module.om, "add_variable")
-        AnimalModuleReporter.report_feedlot_performance(_make_exiting_feedlot_animal(), simulation_day=400)
-        expected = BeefNRCRequirementsCalculator.calculate_enteric_ch4_grain_fed(1350.0 / 150)
-        assert _emitted(spy, "feedlot_mean_daily_enteric_ch4_g_d") == pytest.approx(expected)
-    finally:
-        AnimalConfig.finishing_system = saved
+    mocker.patch.object(AnimalConfig, "finishing_system", FinishingSystem.GRAIN_FED)
+    spy = mocker.patch.object(reporter_module.om, "add_variable")
+    AnimalModuleReporter.report_feedlot_performance(_make_exiting_feedlot_animal(), simulation_day=400)
+    expected = BeefNRCRequirementsCalculator.calculate_enteric_ch4_grain_fed(1350.0 / 150)
+    assert _emitted(spy, "feedlot_mean_daily_enteric_ch4_g_d") == pytest.approx(expected)
 
 
 @pytest.mark.regression
 def test_feedlot_grass_fed_routing_unchanged(mocker: MockerFixture) -> None:
     """The Phase A grass-fed routing must also be untouched."""
-    saved = AnimalConfig.finishing_system
-    try:
-        AnimalConfig.finishing_system = FinishingSystem.GRASS_FED
-        spy = mocker.patch.object(reporter_module.om, "add_variable")
-        AnimalModuleReporter.report_feedlot_performance(_make_exiting_feedlot_animal(), simulation_day=400)
-        expected = BeefNRCRequirementsCalculator.calculate_enteric_ch4_grass_fed(1350.0 / 150)
-        assert _emitted(spy, "feedlot_mean_daily_enteric_ch4_g_d") == pytest.approx(expected)
-    finally:
-        AnimalConfig.finishing_system = saved
+    mocker.patch.object(AnimalConfig, "finishing_system", FinishingSystem.GRASS_FED)
+    spy = mocker.patch.object(reporter_module.om, "add_variable")
+    AnimalModuleReporter.report_feedlot_performance(_make_exiting_feedlot_animal(), simulation_day=400)
+    expected = BeefNRCRequirementsCalculator.calculate_enteric_ch4_grass_fed(1350.0 / 150)
+    assert _emitted(spy, "feedlot_mean_daily_enteric_ch4_g_d") == pytest.approx(expected)
 
 
 @pytest.mark.regression

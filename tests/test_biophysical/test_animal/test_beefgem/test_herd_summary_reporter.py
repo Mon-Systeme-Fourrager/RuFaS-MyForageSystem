@@ -20,6 +20,7 @@ from RUFAS.biophysical.animal.animal import Animal
 from RUFAS.biophysical.animal.animal_module_reporter import AnimalModuleReporter
 from RUFAS.biophysical.animal.data_types.animal_events import AnimalEvents
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
+from RUFAS.biophysical.animal.herd_manager import HerdManager
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -83,8 +84,16 @@ def _make_heifer() -> Animal:
 
 
 def _make_herd(cows: list[Animal] | None = None, heifers: list[Animal] | None = None) -> MagicMock:
-    """Return a herd manager stub exposing only the two cohort lists the summary reads."""
-    herd: MagicMock = MagicMock()
+    """Return a herd manager stub exposing only the two cohort lists the summary reads.
+
+    spec=HerdManager blocks any attribute read the test never set and that
+    is not a real HerdManager attribute, so a typo or a rename in the
+    reporter surfaces as an AttributeError rather than a fresh silent
+    MagicMock. Assignment itself is unrestricted by plain spec=, so setting
+    beef_cows/beef_replacement_heifers here works even though they are
+    instance attributes rather than class-level ones.
+    """
+    herd: MagicMock = MagicMock(spec=HerdManager)
     herd.beef_cows = cows if cows is not None else []
     herd.beef_replacement_heifers = heifers if heifers is not None else []
     return herd
