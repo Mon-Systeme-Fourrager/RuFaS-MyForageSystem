@@ -196,8 +196,8 @@
 
 - [ ] POST-1: Write `test_beefgem_integration.py`
       (@pytest.mark.integration — full scenario comparison test)
-- [ ] POST-2: Create `docs/beef_module/beefgem/README.md`
+- [x] POST-2: Create `docs/beef_module/beefgem/README.md`
       with scope boundaries (no Lesson references)
-- [ ] POST-3: Update `changelog.md` with [OutputChange] entry
+- [x] POST-3: Update `changelog.md` with [OutputChange] entry
 - [ ] POST-4: Update `CLAUDE.md` with BeefGEM reference section
 - [ ] POST-5: Run full pre-review checklist before requesting review

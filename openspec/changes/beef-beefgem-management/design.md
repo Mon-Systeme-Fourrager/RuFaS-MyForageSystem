@@ -82,7 +82,7 @@ real measurement:
 ```python
 # NRC 2016 Ch.11
 t_f = 1.8 * temperature_c + 32
-thi = t_f - (0.55 - 0.0055 * relative_humidity_pct) * (t_f - 26)
+thi = t_f - (0.55 - 0.0055 * relative_humidity_pct) * (1.8 * temperature_c - 26)
 ```
 
 ### Heat stress modifiers

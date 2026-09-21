@@ -11,7 +11,10 @@ zero delta on all outputs)
 
 **Given** finishing_system = "grass_fed" in feedlot config
 **When** enteric CH4 is reported
-**Then** the Mits3 equation is used: CH4 = 8.25 + 31.2 × DMI (g/d)
+**Then** the grass-fed linear model is used: CH4 = 8.25 + 31.2 × DMI (g/d)
+(distinct from the Mitscherlich Model 3 parameters already in the
+codebase — the coefficients here are unrelated and have no identified
+NRC 2016 equation number)
 
 **Given** an invalid finishing_system string in config
 **When** AnimalConfig initializes

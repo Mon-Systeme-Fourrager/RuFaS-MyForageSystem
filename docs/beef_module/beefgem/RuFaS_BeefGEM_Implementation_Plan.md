@@ -68,7 +68,7 @@ saved_system = AnimalConfig.finishing_system
 
 **Rule 3 — Scoped formatting only**
 ```bash
-black RUFAS/biophysical/animal/ RUFAS/beef_scenario_runner.py \
+black RUFAS/biophysical/animal/ \
       tests/test_biophysical/test_animal/test_beefgem/
 # NEVER: black .
 ```
@@ -416,16 +416,16 @@ def calculate_enteric_ch4_stocker(cls, dmi: float) -> float:
 In `AnimalModuleReporter.report_stocker_performance()`:
 ```python
 ch4 = BeefStockerRequirementsCalculator.calculate_enteric_ch4_stocker(dmi)
-om.add_variable("stocker_enteric_ch4_g_d", ch4, ...)
+om.add_variable("stocker_mean_daily_enteric_ch4_g_d", ch4, ...)
 ```
 
-Mark changelog `[OutputChange]` — new output variable `stocker_enteric_ch4_g_d`.
+Mark changelog `[OutputChange]` — new output variable `stocker_mean_daily_enteric_ch4_g_d`.
 
 ### Phase B-2 Test Checkpoint
 
 Write `test_beefgem/test_enteric_ch4.py`:
 - NASEM Eq.6.8 stocker: at DMI=10 kg/d → CH4 = 10.04 + 23.7×10 = 247.04 g/d (exact)
-- `stocker_enteric_ch4_g_d` appears in the stocker reporter output
+- `stocker_mean_daily_enteric_ch4_g_d` appears in the stocker reporter output
 - Feedlot CH4 routing is unchanged from Phase A (regression guard)
 
 ---
@@ -658,7 +658,7 @@ than a plumbing one.
 ### Phase C-2 Test Checkpoint
 
 Write `test_beefgem/test_herd_summary_reporter.py`:
-- `get_beef_herd_summary` returns all 8 keys
+- `get_beef_herd_summary` returns 4 keys (see the CUT rows above)
 - `calf_crop_pct` computes correctly from mock herd state
 - Empty herd returns zeros not errors
 
@@ -1120,7 +1120,9 @@ Document what BeefGEM adds and what remains out of scope:
 ### `changelog.md`
 
 Tag as `[OutputChange]` — new variables: `feedlot_mean_daily_enteric_ch4_g_d`,
-`stocker_enteric_ch4_g_d`, and all 8 herd summary reporter fields.
+`stocker_mean_daily_enteric_ch4_g_d`. get_beef_herd_summary is not an
+output variable — it has no production call site and is never written
+via om.add_variable; it is consumed directly by the scenario runner.
 
 ---
 
@@ -1210,11 +1212,11 @@ tests/test_biophysical/test_animal/test_beefgem/
 # Must be zero
 
 # 6. Ruff (scoped)
-ruff check RUFAS/biophysical/animal/ RUFAS/beef_scenario_runner.py \
+ruff check RUFAS/biophysical/animal/ \
            tests/test_biophysical/test_animal/test_beefgem/
 
 # 7. Black (scoped — NOT black .)
-black --check RUFAS/biophysical/animal/ RUFAS/beef_scenario_runner.py \
+black --check RUFAS/biophysical/animal/ \
               tests/test_biophysical/test_animal/test_beefgem/
 
 # 8. Full test suite
