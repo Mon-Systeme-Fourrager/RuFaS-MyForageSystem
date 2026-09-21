@@ -1,5 +1,7 @@
 from typing import Any, TypedDict
 
+from typing_extensions import NotRequired
+
 from RUFAS.input_manager import InputManager
 from RUFAS.output_manager import OutputManager
 
@@ -47,6 +49,9 @@ class CropConfiguration(TypedDict):
     ash_at_harvest: float
     yield_nitrogen_fraction: float
     yield_phosphorus_fraction: float
+    wilt_days: NotRequired[int]
+    swath_density: NotRequired[float]
+    soil_moisture_at_mowing: NotRequired[float]
 
 
 class CropDataFactory:

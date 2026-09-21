@@ -6,6 +6,8 @@ from RUFAS.biophysical.field.crop.crop_data_factory import CropConfiguration, Cr
 from RUFAS.biophysical.field.crop.crop_data import PlantCategory
 from RUFAS.output_manager import OutputManager
 
+from tests.test_biophysical.test_crop_soil_field.sample_crop_configuration import SAMPLE_CROP_CONFIGURATION
+
 
 def test_setup_crop_configurations(mocker: MockerFixture) -> None:
     """Test that the CropDataFactory is initialized correctly."""
@@ -296,3 +298,33 @@ def test_crop_crop_data_error() -> None:
     """Test that CropDataFactory raises an error when trying to create an unavailable configuration."""
     with pytest.raises(ValueError):
         CropDataFactory.create_crop_data("unavailble")
+
+
+def test_create_crop_data_field_curing_fields_default_when_absent() -> None:
+    """Test that CropDataFactory falls back to CropData's own defaults when a crop configuration omits the
+    optional field-curing keys (wilt_days, swath_density, soil_moisture_at_mowing)."""
+    CropDataFactory._crop_configurations = {"alfalfa_silage": SAMPLE_CROP_CONFIGURATION}
+
+    actual = CropDataFactory.create_crop_data("alfalfa_silage")
+
+    assert actual.wilt_days == 0
+    assert actual.swath_density == pytest.approx(700.0)
+    assert actual.soil_moisture_at_mowing == pytest.approx(17.0)
+
+
+def test_create_crop_data_field_curing_fields_present() -> None:
+    """Test that CropDataFactory forwards a crop configuration's optional field-curing keys into the constructed
+    CropData instance when they are present."""
+    config: CropConfiguration = CropConfiguration(
+        **SAMPLE_CROP_CONFIGURATION,
+        wilt_days=3,
+        swath_density=550.0,
+        soil_moisture_at_mowing=20.0,
+    )
+    CropDataFactory._crop_configurations = {"alfalfa_silage": config}
+
+    actual = CropDataFactory.create_crop_data("alfalfa_silage")
+
+    assert actual.wilt_days == 3
+    assert actual.swath_density == pytest.approx(550.0)
+    assert actual.soil_moisture_at_mowing == pytest.approx(20.0)

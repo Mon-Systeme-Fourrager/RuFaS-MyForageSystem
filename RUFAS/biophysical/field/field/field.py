@@ -30,6 +30,7 @@ from RUFAS.biophysical.field.field.tillage_application import TillageApplication
 from RUFAS.biophysical.field.soil.soil import Soil
 from RUFAS.rufas_time import RufasTime
 from RUFAS.units import MeasurementUnits
+from RUFAS.weather import Weather
 
 FieldManagementEventT = TypeVar("FieldManagementEventT", bound=BaseFieldManagementEvent)
 
@@ -145,6 +146,7 @@ class Field:
         time: RufasTime,
         current_conditions: CurrentDayConditions,
         manure_applications: list[ManureEventNutrientRequestResults],
+        weather: Weather,
     ) -> list[HarvestedCrop]:
         """
         Main Field routine, runs all subroutines routines based on current attribute configuration.
@@ -157,6 +159,9 @@ class Field:
             Contains a collection of today's conditions variables needed for field processes.
         manure_applications : list[ManureEventNutrientRequestResults]
             List of manure events and the results of the nutrient requests for each event.
+        weather : Weather
+            Weather instance passed through to crop harvesting so the opt-in field-curing calculation can
+            fetch the daily conditions over a crop's wilt window.
 
         Returns
         -------
@@ -202,7 +207,7 @@ class Field:
 
         self._check_crop_planting_schedule(time)
 
-        harvested_crops: list[HarvestedCrop] = self._check_crop_harvest_schedule(time, current_conditions)
+        harvested_crops: list[HarvestedCrop] = self._check_crop_harvest_schedule(time, current_conditions, weather)
 
         self._remove_dead_crops()
         self._reset_crop_field_coverage_fractions()
@@ -1125,7 +1130,7 @@ class Field:
         )
 
     def _check_crop_harvest_schedule(
-        self, time: RufasTime, current_conditions: CurrentDayConditions
+        self, time: RufasTime, current_conditions: CurrentDayConditions, weather: Weather
     ) -> list[HarvestedCrop]:
         """
         Checks for all crops for potential harvests that may happen on the current day.
@@ -1136,6 +1141,8 @@ class Field:
             RufasTime object containing the current day and year of the simulation.
         current_conditions : CurrentDayConditions
             CurrentDayConditions object containing the current weather conditions of the simulated day.
+        weather : Weather
+            Weather instance passed through to crop harvesting for the opt-in field-curing calculation.
 
         Returns
         -------
@@ -1152,16 +1159,16 @@ class Field:
         harvested_crops = []
         for event in todays_harvest_events:
             crops: list[HarvestedCrop] = self._harvest_crop(
-                event.crop_reference, event.operation, time, current_conditions
+                event.crop_reference, event.operation, time, current_conditions, weather
             )
             harvested_crops.extend(crops)
 
-        heat_scheduled_harvested_crops = self._harvest_heat_scheduled_crops(current_conditions.rainfall, time)
+        heat_scheduled_harvested_crops = self._harvest_heat_scheduled_crops(current_conditions.rainfall, time, weather)
 
         harvested_crops.extend(heat_scheduled_harvested_crops)
         return harvested_crops
 
-    def _harvest_heat_scheduled_crops(self, rainfall: float, time: RufasTime) -> list[HarvestedCrop]:
+    def _harvest_heat_scheduled_crops(self, rainfall: float, time: RufasTime, weather: Weather) -> list[HarvestedCrop]:
         """
         Checks if any of the active plants in the field are harvested based on their heat schedule, and if so harvests
         them if they meet the heat threshold.
@@ -1172,6 +1179,8 @@ class Field:
             Amount of rainfall on the current day (mm).
         time : RufasTime
             RufasTime object containing the current day and year of the simulation.
+        weather : Weather
+            Weather instance passed through to crop harvesting for the opt-in field-curing calculation.
 
         Returns
         -------
@@ -1192,6 +1201,7 @@ class Field:
                     self.field_data.field_size,
                     time,
                     self.soil.data,
+                    weather,
                 )
                 self.soil.carbon_cycling.residue_partition.add_residue_to_pools(rainfall)
                 if harvested_crop:
@@ -1326,6 +1336,7 @@ class Field:
         harvest_operation: HarvestOperation,
         time: RufasTime,
         current_conditions: CurrentDayConditions,
+        weather: Weather,
     ) -> list[HarvestedCrop]:
         """
         Performs the specified crop operation on the specified crop.
@@ -1340,6 +1351,8 @@ class Field:
             RufasTime object containing the current day and year of the simulation.
         current_conditions : CurrentDayConditions
             Object containing the conditions of the current simulated day.
+        weather : Weather
+            Weather instance passed through to crop harvesting for the opt-in field-curing calculation.
 
         Returns
         -------
@@ -1386,6 +1399,7 @@ class Field:
                 self.field_data.field_size,
                 time,
                 self.soil.data,
+                weather,
             )
             self.soil.carbon_cycling.residue_partition.add_residue_to_pools(current_conditions.rainfall)
             if harvested_crop:
