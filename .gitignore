@@ -5,6 +5,9 @@
 *.txt#
 *.doc
 *.docx
+# Beef module planning documents are tracked deliberately — the
+# module READMEs reference them as source provenance.
+!docs/beef_module/**/*.docx
 !constraints-release.txt
 
 # ignore log files

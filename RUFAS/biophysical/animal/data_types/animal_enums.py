@@ -38,6 +38,18 @@ class StockerDietSystem(Enum):
 
     PASTURE = "pasture"
     DRYLOT_FORAGE = "drylot_forage"
+    LIMIT_FEED = "limit_feed"
+
+
+class FinishingSystem(Enum):
+    """Production system for beef finishing cattle.
+
+    Selects the enteric methane pathway used when reporting finishing animals.
+    GRAIN_FED is the default and preserves pre-existing feedlot behaviour.
+    """
+
+    GRAIN_FED = "grain_fed"
+    GRASS_FED = "grass_fed"
 
 
 class AnimalStatus(Enum):

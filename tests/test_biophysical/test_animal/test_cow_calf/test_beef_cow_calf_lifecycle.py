@@ -132,6 +132,9 @@ def _make_beef_animal(
     animal.wean_weight = 0.0
     animal.body_condition_score_9 = body_condition_score_9
     animal.body_condition_score_5 = 3.0
+    animal.days_on_restricted_intake = 0
+    animal.is_on_restricted_intake = False
+    animal.compensatory_gain_factor = 1.0
     animal.times_calved = times_calved
     animal.is_open = is_open
     animal.days_since_calving = days_since_calving

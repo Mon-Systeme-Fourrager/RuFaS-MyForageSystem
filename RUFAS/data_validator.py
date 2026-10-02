@@ -6,7 +6,7 @@ from enum import Enum
 from typing import Any, Callable, Sequence, cast
 
 from RUFAS.biophysical.animal import animal_constants
-from RUFAS.biophysical.animal.data_types.animal_enums import StockerDietSystem
+from RUFAS.biophysical.animal.data_types.animal_enums import FinishingSystem, StockerDietSystem
 from RUFAS.util import Aggregator
 
 AGGREGATION_FUNCTIONS: dict[
@@ -1798,6 +1798,29 @@ class DataValidator:
                 f"feedlot mud_condition must be one of {sorted(valid_mud_conditions)}, " f"got '{mud_condition}'"
             )
 
+        DataValidator._validate_feedlot_finishing_system(feedlot_config)
+
+    @staticmethod
+    def _validate_feedlot_finishing_system(config: dict[str, Any]) -> None:
+        """Raise ValueError for an unrecognised finishing_system value."""
+        if "finishing_system" in config and config["finishing_system"] is not None:
+            system = str(config["finishing_system"])
+            valid = {m.value for m in FinishingSystem}
+            if system not in valid:
+                raise ValueError(f"finishing_system must be one of {sorted(valid)}, got '{system}'")
+
+    @staticmethod
+    def _validate_relative_humidity(config: dict[str, Any]) -> None:
+        """Raise ValueError if relative_humidity_pct is present, non-None, and invalid."""
+        if "relative_humidity_pct" not in config:
+            return
+        humidity = config["relative_humidity_pct"]
+        if humidity is None:
+            return
+        humidity_val = float(humidity)
+        if not math.isfinite(humidity_val) or humidity_val < 0.0 or humidity_val > 100.0:
+            raise ValueError(f"relative_humidity_pct must be 0-100 and finite, got {humidity_val}")
+
     @staticmethod
     def _validate_beef_breeding_season_start_day(config: dict[str, Any]) -> None:
         """Raise ValueError if breeding_season_start_day is present, non-None, and outside [1, 365]."""
@@ -1870,6 +1893,15 @@ class DataValidator:
 
         DataValidator._validate_beef_breeding_season_start_day(config)
         DataValidator._validate_beef_weaning_weight(config)
+        DataValidator._validate_beef_conception_rate_multiplier(config)
+
+    @staticmethod
+    def _validate_beef_conception_rate_multiplier(config: dict[str, Any]) -> None:
+        """Raise ValueError if conception_rate_multiplier is non-positive or non-finite."""
+        if "conception_rate_multiplier" in config and config["conception_rate_multiplier"] is not None:
+            multiplier = float(config["conception_rate_multiplier"])
+            if not math.isfinite(multiplier) or multiplier <= 0.0:
+                raise ValueError(f"conception_rate_multiplier must be positive and finite, got {multiplier}")
 
     @staticmethod
     def _validate_stocker_weight_order(config: dict[str, Any]) -> None:
@@ -1891,6 +1923,14 @@ class DataValidator:
             valid = {m.value for m in StockerDietSystem}
             if system not in valid:
                 raise ValueError(f"stocker_diet_system must be one of {sorted(valid)}, got '{system}'")
+
+    @staticmethod
+    def _validate_stocker_limit_feed_pct(config: dict[str, Any]) -> None:
+        """Raise ValueError if limit_feed_pct is outside (0, 100] or non-finite."""
+        if "limit_feed_pct" in config and config["limit_feed_pct"] is not None:
+            pct = float(config["limit_feed_pct"])
+            if not math.isfinite(pct) or pct <= 0.0 or pct > 100.0:
+                raise ValueError(f"limit_feed_pct must be in (0, 100] and finite, got {pct}")
 
     @staticmethod
     def validate_beef_stocker_config(config: dict[str, Any]) -> None:
@@ -1929,6 +1969,7 @@ class DataValidator:
                 raise ValueError(f"max_days must be > 0, got {d}")
 
         DataValidator._validate_stocker_diet_system(config)
+        DataValidator._validate_stocker_limit_feed_pct(config)
 
         if "target_adg" in config and config["target_adg"] is not None:
             adg = float(config["target_adg"])

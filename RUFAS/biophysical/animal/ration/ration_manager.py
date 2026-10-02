@@ -54,8 +54,13 @@ class RationManager:
     beef_dry_gestating_ration: ClassVar[dict[RUFAS_ID, float]] = {}
     beef_creep_feed_ration: ClassVar[dict[RUFAS_ID, float]] = {}
     beef_replacement_heifer_ration: ClassVar[dict[RUFAS_ID, float]] = {}
+    # UPSTREAM-COLLISION: RuminantFarmSystems/RuFaS PR #3248 rewrites
+    # this area (IntakeOption enum, ~278 lines in ration_manager.py).
+    # Reconcile at sync: this cap should become a fourth IntakeOption
+    # member taking a percentage of predicted DMI.
     beef_stocker_pasture_ration: ClassVar[dict[RUFAS_ID, float]] = {}
     beef_stocker_drylot_ration: ClassVar[dict[RUFAS_ID, float]] = {}
+    beef_stocker_limit_feed_ration: ClassVar[dict[RUFAS_ID, float]] = {}
 
     @classmethod
     def set_ration_feeds(cls, ration_config: dict[str, Any]) -> None:
@@ -144,9 +149,13 @@ class RationManager:
         beef_stocker_drylot_ration = {
             int(k): float(v) for k, v in (ration_config.get("beef_stocker_drylot_ration") or {}).items()
         }
+        beef_stocker_limit_feed_ration = {
+            int(k): float(v) for k, v in (ration_config.get("beef_stocker_limit_feed_ration") or {}).items()
+        }
         for name, ration in [
             ("beef_stocker_pasture", beef_stocker_pasture_ration),
             ("beef_stocker_drylot", beef_stocker_drylot_ration),
+            ("beef_stocker_limit_feed", beef_stocker_limit_feed_ration),
         ]:
             if ration:
                 cls._validate_ration_percentages(f"Beef {name}", ration)
@@ -161,6 +170,7 @@ class RationManager:
         cls.beef_replacement_heifer_ration = beef_replacement_heifer_ration
         cls.beef_stocker_pasture_ration = beef_stocker_pasture_ration
         cls.beef_stocker_drylot_ration = beef_stocker_drylot_ration
+        cls.beef_stocker_limit_feed_ration = beef_stocker_limit_feed_ration
 
     @staticmethod
     def _validate_ration_percentages(name: str, ration: dict[int, float]) -> None:
@@ -284,11 +294,17 @@ class RationManager:
             If AnimalConfig.stocker_diet_system is not a recognised StockerDietSystem member.
 
         """
+        # UPSTREAM-COLLISION: RuminantFarmSystems/RuFaS PR #3248 rewrites
+        # this area (IntakeOption enum, ~278 lines in ration_manager.py).
+        # Reconcile at sync: this cap should become a fourth IntakeOption
+        # member taking a percentage of predicted DMI.
         system = AnimalConfig.stocker_diet_system
         if system is StockerDietSystem.PASTURE:
             return cls.beef_stocker_pasture_ration.copy()
         if system is StockerDietSystem.DRYLOT_FORAGE:
             return cls.beef_stocker_drylot_ration.copy()
+        if system is StockerDietSystem.LIMIT_FEED:
+            return cls.beef_stocker_limit_feed_ration.copy()
         raise ValueError(f"Unknown stocker_diet_system: {system!r}")
 
     @classmethod
