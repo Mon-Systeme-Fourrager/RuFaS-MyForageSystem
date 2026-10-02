@@ -540,9 +540,9 @@ def test_compare_rejects_an_empty_scenario_mapping() -> None:
 
 @pytest.mark.integration
 @pytest.mark.skip(
-    reason="Driving a real herd needs a populated InputManager, the weather and feed "
-    "subsystems and the ration cycle — most of RuFaS. The default runner is exercised "
-    "against a live herd by the end-to-end suite, not here."
+    reason="No production herd runner exists: _default_runner raises NotImplementedError and "
+    "no end-to-end scenario drives a beef herd, so nothing covers this path yet. Un-skip "
+    "once a runner that drives a real HerdManager is wired."
 )
 def test_spring_vs_fall_calving_end_to_end() -> None:
     """Spring and fall calving produce differing herd summaries on a real herd."""

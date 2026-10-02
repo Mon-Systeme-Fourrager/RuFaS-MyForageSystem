@@ -23,6 +23,7 @@ from RUFAS.biophysical.animal.nutrients.nutrition_requirements_calculator import
     NutritionRequirementsCalculator,
 )
 from RUFAS.biophysical.animal.ration.amino_acid import EssentialAminoAcidRequirements
+from RUFAS.general_constants import GeneralConstants
 
 
 @dataclass
@@ -83,47 +84,6 @@ class StockerRequirementsInputs:
 
 class BeefStockerRequirementsCalculator(NutritionRequirementsCalculator):
     """Nutrition requirements calculator for stocker/backgrounding cattle — NRC 2016 (Beef)."""
-
-    calculate_thi = BeefNRCRequirementsCalculator.calculate_thi
-    _interpolate_heat_stress = BeefNRCRequirementsCalculator._interpolate_heat_stress
-
-    @classmethod
-    def calculate_enteric_ch4_stocker(cls, dmi: float) -> float:
-        """Enteric methane for stocker cattle on a forage diet (g CH4/d).
-
-        Parameters
-        ----------
-        dmi : float
-            Dry matter intake (kg DM/d). Must be finite and non-negative.
-
-        Returns
-        -------
-        float
-            Enteric methane production (g CH4/d).
-
-        Raises
-        ------
-        ValueError
-            If ``dmi`` is negative or not finite.
-
-        Notes
-        -----
-        Linear form ``CH4 = intercept + slope * DMI`` using
-        BEEF_CH4_STOCKER_FORAGE_INTERCEPT and BEEF_CH4_STOCKER_FORAGE_SLOPE. See those
-        constants for the open question about provenance — no NRC/NASEM 2016
-        equation number has been identified for the coefficients.
-
-        The intercept is non-zero, so this returns 10.04 g/d at zero intake.
-        Callers representing a phase an animal never entered must short-circuit
-        rather than pass a zero DMI.
-
-        """
-        if not math.isfinite(dmi) or dmi < 0.0:
-            raise ValueError(f"dmi must be non-negative and finite, got {dmi}")
-        return (
-            AnimalModuleConstants.BEEF_CH4_STOCKER_FORAGE_INTERCEPT
-            + AnimalModuleConstants.BEEF_CH4_STOCKER_FORAGE_SLOPE * dmi
-        )
 
     @classmethod
     def calculate_requirements(cls, inputs: StockerRequirementsInputs) -> NutritionRequirements:
@@ -295,5 +255,5 @@ class BeefStockerRequirementsCalculator(NutritionRequirementsCalculator):
         # Reconcile at sync: this cap should become a fourth IntakeOption
         # member taking a percentage of predicted DMI.
         if diet_system is StockerDietSystem.LIMIT_FEED:
-            return ad_libitum_dmi * (limit_feed_pct / 100.0)
+            return ad_libitum_dmi * limit_feed_pct * GeneralConstants.PERCENTAGE_TO_FRACTION
         return ad_libitum_dmi

@@ -349,6 +349,10 @@ class AnimalModuleConstants:
     """
     Days of restricted intake that must be exceeded before compensatory gain
     triggers. A restriction of exactly this length produces no uplift.
+
+    Value as specified by the BeefGEM source document
+    (docs/beef_module/beefgem/RuFaS_BeefGEM_Source_Reference.md, Step D-2),
+    which gives no primary citation for it.
     """
 
     CG_MAX_ADG_MULTIPLIER: float = 1.25
@@ -356,6 +360,10 @@ class AnimalModuleConstants:
     Ceiling on the compensatory gain ADG multiplier, for biological
     plausibility. Applied both when the factor is set and again inside the
     calculators, so a caller-supplied factor cannot exceed it either.
+
+    Value as specified by the BeefGEM source document
+    (docs/beef_module/beefgem/RuFaS_BeefGEM_Source_Reference.md, Step D-2),
+    which gives no primary citation for it.
     """
 
     CG_DECAY_RATE_PER_DAY: float = 0.02
@@ -363,6 +371,10 @@ class AnimalModuleConstants:
     Decline in the compensatory gain advantage per day once restriction ends,
     in multiplier units. A factor at the 1.25 ceiling returns to 1.0 after 13
     days.
+
+    Value as specified by the BeefGEM source document
+    (docs/beef_module/beefgem/RuFaS_BeefGEM_Source_Reference.md, Step D-2),
+    which gives no primary citation for it.
     """
 
     CG_ADG_MULTIPLIER_PER_RESTRICTED_DAY: float = 0.005
@@ -375,6 +387,28 @@ class AnimalModuleConstants:
     lookup table" and never provides that table; 0.005 is a linearisation
     adopted in the implementation plan. It should not be treated as
     BeefGEM- or NRC-derived without re-derivation.
+    """
+
+    BEEF_THI_HUMIDITY_INTERCEPT: float = 0.55
+    """
+    Intercept of the humidity term of the temperature-humidity index,
+    THI = T_F - (0.55 - 0.0055 x RH) x (T_F - 58) (unitless). Source as cited
+    by BeefNRCRequirementsCalculator.calculate_thi (NRC 2016 Ch. 11).
+    """
+
+    BEEF_THI_HUMIDITY_SLOPE: float = 0.0055
+    """
+    Slope of the humidity term of the temperature-humidity index, per
+    percentage point of relative humidity (1/%). Same equation and source as
+    BEEF_THI_HUMIDITY_INTERCEPT.
+    """
+
+    BEEF_THI_REFERENCE_TEMPERATURE_F: float = 58.0
+    """
+    Reference temperature subtracted from the dry-bulb temperature in the
+    temperature-humidity index (°F). Same equation and source as
+    BEEF_THI_HUMIDITY_INTERCEPT. In Celsius terms the bracket T_F - 58 equals
+    1.8 x T - 26.
     """
 
     BEEF_THI_BREAKPOINTS: tuple[float, ...] = (72.0, 80.0, 90.0)
@@ -811,10 +845,4 @@ class AnimalModuleConstants:
     """
     Gross energy content of feed dry matter (MJ/kg DM). IPCC default
     used with BEEF_CH4_YM_FRACTION.
-    """
-
-    BEEF_CH4_ENERGY_MJ_PER_G: float = 0.05565
-    """
-    Energy content of methane (MJ/g), for converting the IPCC Tier 2
-    energy result to mass. Equivalent to 55.65 MJ/kg.
     """

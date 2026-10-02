@@ -23,12 +23,7 @@ from RUFAS.biophysical.animal.data_types.nutrition_data_structures import (
     NutritionEvaluationResults,
 )
 from RUFAS.biophysical.animal.data_types.reproduction import HerdReproductionStatistics
-from RUFAS.biophysical.animal.nutrients.beef_nrc_requirements_calculator import (
-    BeefNRCRequirementsCalculator,
-)
-from RUFAS.biophysical.animal.nutrients.beef_stocker_requirements_calculator import (
-    BeefStockerRequirementsCalculator,
-)
+from RUFAS.biophysical.animal.digestive_system.enteric_methane_calculator import EntericMethaneCalculator
 from RUFAS.biophysical.animal.data_types.animal_manure_excretions import AnimalManureExcretions
 from RUFAS.data_structures.animal_to_manure_connection import ManureStream
 from RUFAS.data_structures.feed_storage_to_animal_connection import RUFAS_ID
@@ -1487,9 +1482,9 @@ class AnimalModuleReporter:
         if dof > 0:
             mean_daily_dmi: float = animal.cumulative_dmi / dof
             if AnimalConfig.finishing_system is FinishingSystem.GRASS_FED:
-                ch4 = BeefNRCRequirementsCalculator.calculate_enteric_ch4_grass_fed(mean_daily_dmi)
+                ch4 = EntericMethaneCalculator.calculate_beef_grass_fed_methane(mean_daily_dmi)
             else:
-                ch4 = BeefNRCRequirementsCalculator.calculate_enteric_ch4_grain_fed(mean_daily_dmi)
+                ch4 = EntericMethaneCalculator.calculate_beef_grain_fed_methane(mean_daily_dmi)
         else:
             ch4 = 0.0
 
@@ -1505,16 +1500,13 @@ class AnimalModuleReporter:
         )
 
     @classmethod
-    def get_beef_herd_summary(cls, herd_manager: HerdManager, simulation_day: int) -> dict[str, float]:
+    def get_beef_herd_summary(cls, herd_manager: HerdManager) -> dict[str, float]:
         """Return a beef herd summary for scenario comparison.
 
         Parameters
         ----------
         herd_manager : HerdManager
             The live herd, read for its beef cow and replacement heifer cohorts.
-        simulation_day : int
-            Current simulation day. Unused; kept for API symmetry with the other
-            reporter entry points and for future per-day summarisation.
 
         Returns
         -------
@@ -1704,7 +1696,7 @@ class AnimalModuleReporter:
         # must short-circuit rather than evaluate the equation at zero intake.
         if dof > 0:
             mean_daily_dmi: float = animal.stocker_cumulative_dmi / dof
-            ch4 = BeefStockerRequirementsCalculator.calculate_enteric_ch4_stocker(mean_daily_dmi)
+            ch4 = EntericMethaneCalculator.calculate_beef_stocker_methane(mean_daily_dmi)
         else:
             ch4 = 0.0
         om.add_variable(

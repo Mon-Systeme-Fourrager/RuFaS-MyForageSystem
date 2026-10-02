@@ -8,8 +8,9 @@ results of several scenarios into a comparison frame.
 Driving a full simulation requires a populated InputManager, the
 weather and feed subsystems, and the ration formulation cycle — most
 of RuFaS. This module therefore takes the herd drive as an injectable
-callable rather than owning it. Unit tests inject a stub; the
-end-to-end path is exercised by a single integration-marked test.
+callable rather than owning it. Unit tests inject a stub. No production
+runner exists yet: the default runner raises, and no simulation entry
+point calls this module.
 
 Results are held per replicate rather than pre-averaged. The cow-calf module
 draws conception stochastically, so repeat runs of the same scenario differ;
@@ -285,7 +286,7 @@ def _default_runner(scenario: BeefHerdScenario, years: int, seed: int) -> dict[s
     raise NotImplementedError(
         "beef_scenario_runner does not construct a herd. Pass a runner that drives "
         "an already-constructed HerdManager and returns "
-        "AnimalModuleReporter.get_beef_herd_summary(herd, simulation_day)."
+        "AnimalModuleReporter.get_beef_herd_summary(herd)."
     )
 
 

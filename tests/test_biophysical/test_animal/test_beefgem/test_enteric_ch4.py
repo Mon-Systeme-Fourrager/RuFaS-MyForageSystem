@@ -2,7 +2,7 @@
 
 Verifies:
 - The forage intercept and slope constants
-- calculate_enteric_ch4_stocker arithmetic and input guarding
+- calculate_beef_stocker_methane arithmetic and input guarding
 - Where the equation sits against the NRC 2016 Ch.16 grazing range
 - stocker_mean_daily_enteric_ch4_g_d emitted at stocker exit
 - Regression: the Phase A feedlot routing is untouched
@@ -22,12 +22,7 @@ from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstan
 from RUFAS.biophysical.animal.animal_module_reporter import AnimalModuleReporter
 from RUFAS.biophysical.animal.data_types.animal_enums import FinishingSystem
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
-from RUFAS.biophysical.animal.nutrients.beef_nrc_requirements_calculator import (
-    BeefNRCRequirementsCalculator,
-)
-from RUFAS.biophysical.animal.nutrients.beef_stocker_requirements_calculator import (
-    BeefStockerRequirementsCalculator,
-)
+from RUFAS.biophysical.animal.digestive_system.enteric_methane_calculator import EntericMethaneCalculator
 from RUFAS.units import MeasurementUnits
 
 # ---------------------------------------------------------------------------
@@ -113,7 +108,7 @@ def test_forage_slope_constant_value() -> None:
 @pytest.mark.nrc2016
 def test_stocker_ch4_at_pinned_dmi() -> None:
     """At DMI 10 kg/d the equation must yield 247.04 g/d exactly."""
-    assert BeefStockerRequirementsCalculator.calculate_enteric_ch4_stocker(_PINNED_DMI) == pytest.approx(_PINNED_CH4)
+    assert EntericMethaneCalculator.calculate_beef_stocker_methane(_PINNED_DMI) == pytest.approx(_PINNED_CH4)
 
 
 @pytest.mark.unit
@@ -123,15 +118,15 @@ def test_stocker_ch4_at_zero_dmi_returns_intercept() -> None:
     The reporter must therefore short-circuit a zero-day phase rather than
     feeding it a zero DMI; see test_reporter_zero_days_yields_zero_ch4.
     """
-    result = BeefStockerRequirementsCalculator.calculate_enteric_ch4_stocker(0.0)
+    result = EntericMethaneCalculator.calculate_beef_stocker_methane(0.0)
     assert result == pytest.approx(_FORAGE_INTERCEPT)
 
 
 @pytest.mark.unit
 def test_stocker_ch4_is_monotonic_in_dmi() -> None:
     """Stocker CH4 must increase with intake."""
-    low = BeefStockerRequirementsCalculator.calculate_enteric_ch4_stocker(5.0)
-    high = BeefStockerRequirementsCalculator.calculate_enteric_ch4_stocker(9.0)
+    low = EntericMethaneCalculator.calculate_beef_stocker_methane(5.0)
+    high = EntericMethaneCalculator.calculate_beef_stocker_methane(9.0)
     assert high > low
 
 
@@ -140,7 +135,7 @@ def test_stocker_ch4_is_monotonic_in_dmi() -> None:
 def test_stocker_ch4_rejects_invalid_dmi(bad_dmi: float) -> None:
     """Negative, NaN and infinite intake must raise ValueError."""
     with pytest.raises(ValueError, match="dmi"):
-        BeefStockerRequirementsCalculator.calculate_enteric_ch4_stocker(bad_dmi)
+        EntericMethaneCalculator.calculate_beef_stocker_methane(bad_dmi)
 
 
 @pytest.mark.nrc2016
@@ -152,7 +147,7 @@ def test_stocker_ch4_inside_published_grazing_range(dmi: float) -> None:
     grass-fed finishing coefficients, this equation sits inside it throughout
     the practical intake range.
     """
-    result = BeefStockerRequirementsCalculator.calculate_enteric_ch4_stocker(dmi)
+    result = EntericMethaneCalculator.calculate_beef_stocker_methane(dmi)
     assert _GRAZING_CH4_MIN_G_D <= result <= _GRAZING_CH4_MAX_G_D
 
 
@@ -165,7 +160,7 @@ def test_stocker_ch4_leaves_published_range_above_ten_kg() -> None:
     operating range rather than a defect, but it bounds where the equation
     stops agreeing with NRC 2016 Ch.16.
     """
-    assert BeefStockerRequirementsCalculator.calculate_enteric_ch4_stocker(11.0) > _GRAZING_CH4_MAX_G_D
+    assert EntericMethaneCalculator.calculate_beef_stocker_methane(11.0) > _GRAZING_CH4_MAX_G_D
 
 
 # ---------------------------------------------------------------------------
@@ -191,7 +186,7 @@ def test_reporter_ch4_matches_mean_daily_intake(mocker: MockerFixture) -> None:
 
     AnimalModuleReporter.report_stocker_performance(_make_exiting_stocker(), simulation_day=400)
 
-    expected = BeefStockerRequirementsCalculator.calculate_enteric_ch4_stocker(_EXIT_MEAN_DAILY_DMI)
+    expected = EntericMethaneCalculator.calculate_beef_stocker_methane(_EXIT_MEAN_DAILY_DMI)
     assert _emitted(spy, _CH4_VARIABLE_NAME) == pytest.approx(expected)
 
 
@@ -247,7 +242,7 @@ def test_feedlot_grain_fed_routing_unchanged(mocker: MockerFixture) -> None:
     mocker.patch.object(AnimalConfig, "finishing_system", FinishingSystem.GRAIN_FED)
     spy = mocker.patch.object(reporter_module.om, "add_variable")
     AnimalModuleReporter.report_feedlot_performance(_make_exiting_feedlot_animal(), simulation_day=400)
-    expected = BeefNRCRequirementsCalculator.calculate_enteric_ch4_grain_fed(1350.0 / 150)
+    expected = EntericMethaneCalculator.calculate_beef_grain_fed_methane(1350.0 / 150)
     assert _emitted(spy, "feedlot_mean_daily_enteric_ch4_g_d") == pytest.approx(expected)
 
 
@@ -257,7 +252,7 @@ def test_feedlot_grass_fed_routing_unchanged(mocker: MockerFixture) -> None:
     mocker.patch.object(AnimalConfig, "finishing_system", FinishingSystem.GRASS_FED)
     spy = mocker.patch.object(reporter_module.om, "add_variable")
     AnimalModuleReporter.report_feedlot_performance(_make_exiting_feedlot_animal(), simulation_day=400)
-    expected = BeefNRCRequirementsCalculator.calculate_enteric_ch4_grass_fed(1350.0 / 150)
+    expected = EntericMethaneCalculator.calculate_beef_grass_fed_methane(1350.0 / 150)
     assert _emitted(spy, "feedlot_mean_daily_enteric_ch4_g_d") == pytest.approx(expected)
 
 
@@ -265,8 +260,8 @@ def test_feedlot_grass_fed_routing_unchanged(mocker: MockerFixture) -> None:
 def test_stocker_and_feedlot_equations_are_distinct() -> None:
     """The stocker forage equation must not coincide with either finishing equation."""
     dmi = 8.0
-    stocker = BeefStockerRequirementsCalculator.calculate_enteric_ch4_stocker(dmi)
-    grain = BeefNRCRequirementsCalculator.calculate_enteric_ch4_grain_fed(dmi)
-    grass = BeefNRCRequirementsCalculator.calculate_enteric_ch4_grass_fed(dmi)
+    stocker = EntericMethaneCalculator.calculate_beef_stocker_methane(dmi)
+    grain = EntericMethaneCalculator.calculate_beef_grain_fed_methane(dmi)
+    grass = EntericMethaneCalculator.calculate_beef_grass_fed_methane(dmi)
     assert stocker != pytest.approx(grain)
     assert stocker != pytest.approx(grass)

@@ -25,10 +25,12 @@ from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstan
 from RUFAS.biophysical.animal.animal_module_reporter import AnimalModuleReporter
 from RUFAS.biophysical.animal.data_types.animal_enums import FinishingSystem, Sex
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
+from RUFAS.biophysical.animal.digestive_system.enteric_methane_calculator import EntericMethaneCalculator
 from RUFAS.biophysical.animal.nutrients.beef_nrc_requirements_calculator import (
     BeefNRCRequirementsCalculator,
 )
 from RUFAS.data_validator import DataValidator
+from RUFAS.general_constants import GeneralConstants
 from RUFAS.units import MeasurementUnits
 
 # ---------------------------------------------------------------------------
@@ -279,14 +281,14 @@ def test_grass_fed_slope_constant_value() -> None:
 @pytest.mark.nrc2016
 def test_grass_fed_ch4_at_benchmark_dmi() -> None:
     """At DMI 8 kg/d the grass-fed equation must yield 257.85 g CH4/d exactly."""
-    result = BeefNRCRequirementsCalculator.calculate_enteric_ch4_grass_fed(_BENCHMARK_DMI)
+    result = EntericMethaneCalculator.calculate_beef_grass_fed_methane(_BENCHMARK_DMI)
     assert result == pytest.approx(_EXPECTED_GRASS_FED_CH4)
 
 
 @pytest.mark.unit
 def test_grass_fed_ch4_at_zero_dmi_returns_intercept() -> None:
     """At DMI 0 the grass-fed equation must return the intercept alone."""
-    result = BeefNRCRequirementsCalculator.calculate_enteric_ch4_grass_fed(0.0)
+    result = EntericMethaneCalculator.calculate_beef_grass_fed_methane(0.0)
     assert result == pytest.approx(AnimalModuleConstants.BEEF_CH4_GRASS_FED_INTERCEPT)
 
 
@@ -300,7 +302,7 @@ def test_grass_fed_ch4_exceeds_published_range_at_8kg() -> None:
     discrepancy; it should be revisited if the coefficients are
     re-sourced.
     """
-    result = BeefNRCRequirementsCalculator.calculate_enteric_ch4_grass_fed(_BENCHMARK_DMI)
+    result = EntericMethaneCalculator.calculate_beef_grass_fed_methane(_BENCHMARK_DMI)
     assert result > _GRAZING_CH4_MAX_G_D
 
 
@@ -311,15 +313,15 @@ def test_grass_fed_ch4_inside_published_range_at_typical_grazing_dmi() -> None:
     The discrepancy pinned above is confined to the upper intake end, not
     present across the whole range.
     """
-    result = BeefNRCRequirementsCalculator.calculate_enteric_ch4_grass_fed(7.0)
+    result = EntericMethaneCalculator.calculate_beef_grass_fed_methane(7.0)
     assert _GRAZING_CH4_MIN_G_D <= result <= _GRAZING_CH4_MAX_G_D
 
 
 @pytest.mark.unit
 def test_grass_fed_ch4_is_monotonic_in_dmi() -> None:
     """Grass-fed CH4 must increase with DMI."""
-    low = BeefNRCRequirementsCalculator.calculate_enteric_ch4_grass_fed(5.0)
-    high = BeefNRCRequirementsCalculator.calculate_enteric_ch4_grass_fed(10.0)
+    low = EntericMethaneCalculator.calculate_beef_grass_fed_methane(5.0)
+    high = EntericMethaneCalculator.calculate_beef_grass_fed_methane(10.0)
     assert high > low
 
 
@@ -328,7 +330,7 @@ def test_grass_fed_ch4_is_monotonic_in_dmi() -> None:
 def test_grass_fed_ch4_rejects_invalid_dmi(bad_dmi: float) -> None:
     """Negative, NaN, and infinite DMI must raise ValueError."""
     with pytest.raises(ValueError, match="dmi"):
-        BeefNRCRequirementsCalculator.calculate_enteric_ch4_grass_fed(bad_dmi)
+        EntericMethaneCalculator.calculate_beef_grass_fed_methane(bad_dmi)
 
 
 # ---------------------------------------------------------------------------
@@ -350,8 +352,8 @@ def test_grain_fed_gross_energy_constant_value() -> None:
 
 @pytest.mark.unit
 def test_grain_fed_methane_energy_constant_value() -> None:
-    """BEEF_CH4_ENERGY_MJ_PER_G must be 0.05565 MJ/g (55.65 MJ/kg)."""
-    assert AnimalModuleConstants.BEEF_CH4_ENERGY_MJ_PER_G == pytest.approx(0.05565)
+    """The grain-fed chain converts with the shared MJ_CH4_TO_G_CH4 of 0.05565 MJ/g (55.65 MJ/kg)."""
+    assert GeneralConstants.MJ_CH4_TO_G_CH4 == pytest.approx(0.05565)
 
 
 @pytest.mark.nrc2016
@@ -361,29 +363,29 @@ def test_grain_fed_ch4_at_dmi_nine_matches_ipcc_tier_two() -> None:
         _GRAIN_FED_DMI
         * AnimalModuleConstants.BEEF_GROSS_ENERGY_MJ_PER_KG_DM
         * AnimalModuleConstants.BEEF_CH4_YM_FRACTION
-    ) / AnimalModuleConstants.BEEF_CH4_ENERGY_MJ_PER_G
-    result = BeefNRCRequirementsCalculator.calculate_enteric_ch4_grain_fed(_GRAIN_FED_DMI)
+    ) / GeneralConstants.MJ_CH4_TO_G_CH4
+    result = EntericMethaneCalculator.calculate_beef_grain_fed_methane(_GRAIN_FED_DMI)
     assert result == pytest.approx(expected)
 
 
 @pytest.mark.nrc2016
 def test_grain_fed_ch4_at_dmi_nine_inside_validation_window() -> None:
     """At DMI 9 kg/d the result must fall inside the NRC 2016 Ch.16 range of 36-145 g/d."""
-    result = BeefNRCRequirementsCalculator.calculate_enteric_ch4_grain_fed(_GRAIN_FED_DMI)
+    result = EntericMethaneCalculator.calculate_beef_grain_fed_methane(_GRAIN_FED_DMI)
     assert _FEEDLOT_CH4_MIN_G_D <= result <= _FEEDLOT_CH4_MAX_G_D
 
 
 @pytest.mark.unit
 def test_grain_fed_ch4_at_zero_dmi_is_zero() -> None:
     """IPCC Tier 2 is proportional to intake, so zero DMI must give zero CH4."""
-    assert BeefNRCRequirementsCalculator.calculate_enteric_ch4_grain_fed(0.0) == pytest.approx(0.0)
+    assert EntericMethaneCalculator.calculate_beef_grain_fed_methane(0.0) == pytest.approx(0.0)
 
 
 @pytest.mark.unit
 def test_grain_fed_ch4_is_lower_than_grass_fed_at_same_dmi() -> None:
     """Grain finishing must emit less enteric CH4 than grass finishing at equal DMI."""
-    grain = BeefNRCRequirementsCalculator.calculate_enteric_ch4_grain_fed(_BENCHMARK_DMI)
-    grass = BeefNRCRequirementsCalculator.calculate_enteric_ch4_grass_fed(_BENCHMARK_DMI)
+    grain = EntericMethaneCalculator.calculate_beef_grain_fed_methane(_BENCHMARK_DMI)
+    grass = EntericMethaneCalculator.calculate_beef_grass_fed_methane(_BENCHMARK_DMI)
     assert grain < grass
 
 
@@ -392,7 +394,7 @@ def test_grain_fed_ch4_is_lower_than_grass_fed_at_same_dmi() -> None:
 def test_grain_fed_ch4_rejects_invalid_dmi(bad_dmi: float) -> None:
     """Negative, NaN, and infinite DMI must raise ValueError."""
     with pytest.raises(ValueError, match="dmi"):
-        BeefNRCRequirementsCalculator.calculate_enteric_ch4_grain_fed(bad_dmi)
+        EntericMethaneCalculator.calculate_beef_grain_fed_methane(bad_dmi)
 
 
 # ---------------------------------------------------------------------------
@@ -409,7 +411,7 @@ def test_reporter_grain_fed_default_routes_to_grain_fed_equation(mocker: MockerF
     AnimalModuleReporter.report_feedlot_performance(_make_feedlot_animal(), simulation_day=300)
 
     emitted = _emitted_ch4(spy)
-    expected = BeefNRCRequirementsCalculator.calculate_enteric_ch4_grain_fed(_EXIT_MEAN_DAILY_DMI)
+    expected = EntericMethaneCalculator.calculate_beef_grain_fed_methane(_EXIT_MEAN_DAILY_DMI)
     assert emitted == pytest.approx(expected)
 
 
@@ -422,7 +424,7 @@ def test_reporter_grass_fed_routes_to_grass_fed_equation(mocker: MockerFixture) 
     AnimalModuleReporter.report_feedlot_performance(_make_feedlot_animal(), simulation_day=300)
 
     emitted = _emitted_ch4(spy)
-    expected = BeefNRCRequirementsCalculator.calculate_enteric_ch4_grass_fed(_EXIT_MEAN_DAILY_DMI)
+    expected = EntericMethaneCalculator.calculate_beef_grass_fed_methane(_EXIT_MEAN_DAILY_DMI)
     assert emitted == pytest.approx(expected)
 
 
@@ -460,7 +462,7 @@ def test_reporter_zero_days_on_feed_yields_zero_ch4(mocker: MockerFixture) -> No
 def test_reporter_zero_days_on_feed_yields_zero_ch4_under_grass_fed(mocker: MockerFixture) -> None:
     """days_on_feed = 0 under GRASS_FED must give 0.0, not the equation's intercept.
 
-    calculate_enteric_ch4_grass_fed has a non-zero intercept (8.25 at zero
+    calculate_beef_grass_fed_methane has a non-zero intercept (8.25 at zero
     DMI), matching the reason the stocker reporter short-circuits a
     zero-day phase instead of evaluating the equation at zero intake. The
     feedlot reporter must apply the same short-circuit.

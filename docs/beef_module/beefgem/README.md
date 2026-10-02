@@ -62,11 +62,22 @@ feedlot daily-update path that has not been built, so no feedlot
 animal currently reaches the reporter. This is a pre-existing gap,
 not introduced here.
 
+**`finishing_system` has no effect on a run yet.** It only selects the
+methane equation inside `report_feedlot_performance`, which is never
+called (above), so `feedlot_mean_daily_enteric_ch4_g_d` is never written
+either.
+
+**Compensatory gain never applies in a run.** The factor is set only when
+a stocker hands off to the feedlot, and feedlot animals are not iterated
+in the herd daily loop, so neither the uplift nor its decay executes.
+`enable_compensatory_gain` therefore changes no output today.
+
 **Beef cattle produce no enteric methane in the herd totals.**
 Digestion supports dairy animal types only, so beef animals never
-contribute to the herd methane total. The enteric methane
-calculations in this module are computed at exit as mean-daily values
-and written directly to output, not accumulated. A herd-level methane
+contribute to the herd methane total. The beef methane equations live
+in `EntericMethaneCalculator` beside the dairy ones, but the reporter
+evaluates them at exit as mean-daily values and writes them directly
+to output, not accumulated. A herd-level methane
 total requires per-day beef methane, which is a modelling gap rather
 than a plumbing one.
 
@@ -90,7 +101,10 @@ and the ration formulation cycle. The runner therefore takes the herd
 drive as an injectable callable and composes scenarios, replicates
 and comparison around it. The default raises rather than returning,
 so a caller cannot obtain plausible-looking numbers from a herd that
-was never driven.
+was never driven. Nothing in a simulation run calls the runner or
+`AnimalModuleReporter.get_beef_herd_summary`; both are library entry
+points awaiting a caller, and the only end-to-end test is skipped for
+that reason.
 
 **Calf crop counts survivors.** The herd summary divides lifetime calvings
 by the cows currently in the herd, not by the cows exposed during the

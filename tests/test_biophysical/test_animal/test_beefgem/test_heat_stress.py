@@ -115,12 +115,6 @@ def test_thi_rises_with_temperature_at_fixed_humidity() -> None:
     assert hot > cool
 
 
-@pytest.mark.unit
-def test_stocker_delegates_thi_to_the_shared_implementation() -> None:
-    """One formula, not two — the stocker reuses the NRC calculator's method."""
-    assert BeefStockerRequirementsCalculator.calculate_thi is BeefNRCRequirementsCalculator.calculate_thi
-
-
 # ────────────────────────── constants and invariant ──────────────────────
 
 

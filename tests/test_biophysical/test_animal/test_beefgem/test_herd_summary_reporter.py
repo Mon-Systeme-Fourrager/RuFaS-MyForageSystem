@@ -36,7 +36,6 @@ _EXPECTED_KEYS: frozenset[str] = frozenset(
 )
 
 _DEFAULT_BCS: float = 5.0
-_SIMULATION_DAY: int = 400
 
 
 # ---------------------------------------------------------------------------
@@ -101,7 +100,7 @@ def _make_herd(cows: list[Animal] | None = None, heifers: list[Animal] | None = 
 
 def _summary(cows: list[Animal] | None = None, heifers: list[Animal] | None = None) -> dict[str, float]:
     """Build a herd and return its summary."""
-    return AnimalModuleReporter.get_beef_herd_summary(_make_herd(cows, heifers), _SIMULATION_DAY)
+    return AnimalModuleReporter.get_beef_herd_summary(_make_herd(cows, heifers))
 
 
 # ---------------------------------------------------------------------------
