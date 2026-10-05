@@ -145,9 +145,6 @@ class SimulationEngine:
         Whether or not the simulation will have a FeedManager.
     _simulation_type_to_daily_simulation_function : dict[SimulationType, Callable]
         A dictionary mapping the simulation type to the appropriate daily simulation function.
-    _pending_curing_crops : list[HarvestedCrop]
-        Harvested crops whose ``storage_time`` (set by field curing) is still in the future; held
-        here and delivered to ``feed_manager`` once their storage date is reached.
     time : RufasTime
         The RufasTime object that contains methods for accessing and manipulating the simulation time.
     weather : Weather
@@ -200,7 +197,6 @@ class SimulationEngine:
             SimulationType.FIELD_ONLY: self._execute_field_only_simulation,
             SimulationType.ANIMALS_ONLY: self._execute_animals_only_daily_simulation,
         }
-        self._pending_curing_crops: list[HarvestedCrop] = []
 
         self._setup_simulation_modules()
 
@@ -293,6 +289,9 @@ class SimulationEngine:
         t_start_sim = timer.time()
 
         self._run_simulation_main_loop()
+
+        if self.simulate_feed:
+            self.feed_manager.report_undelivered_crops(self.time)
 
         if self.simulate_animals:
             AnimalModuleReporter.report_end_of_simulation(
@@ -448,15 +447,14 @@ class SimulationEngine:
         return manure_applications
 
     def _receive_daily_harvested_crops(self, harvested_crops: list[HarvestedCrop]) -> None:
-        """Receives and stores the crops harvested, holding any still-curing crops
-        (``HarvestedCrop.storage_time`` in the future) until their storage date is reached."""
-        today = self.time.current_date.date()
-        self._pending_curing_crops.extend(harvested_crops)
-        ready_crops = [crop for crop in self._pending_curing_crops if crop.storage_time <= today]
-        self._pending_curing_crops = [crop for crop in self._pending_curing_crops if crop.storage_time > today]
-
-        for crop in ready_crops:
-            self.feed_manager.receive_crop(crop, self.time.simulation_day)
+        """Delivers curing crops that are due today, then receives the crops harvested today. A crop whose
+        ``storage_time`` is still in the future (field curing) is held by the feed manager until that date."""
+        self.feed_manager.release_crops_in_transit(self.time)
+        for crop in harvested_crops:
+            if crop.storage_time > self.time.current_date.date():
+                self.feed_manager.hold_crop_until_storage_date(crop)
+            else:
+                self.feed_manager.receive_crop(crop, self.time.simulation_day)
 
         if self._should_recalculate_feed_planning:
             harvest_schedule_crops = set(crop.config_name for crop in harvested_crops)

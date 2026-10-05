@@ -1,4 +1,5 @@
 from datetime import date, datetime, timedelta
+from typing import cast
 
 from RUFAS.EEE.emissions import EmissionsEstimator
 from RUFAS.data_structures.animal_to_manure_connection import ManureStream
@@ -13,6 +14,10 @@ from RUFAS.biophysical.animal.herd_manager import HerdManager
 from RUFAS.biophysical.animal.pen import Pen
 from RUFAS.biophysical.feed_storage.feed_manager import FeedManager
 from RUFAS.biophysical.feed_storage.hay import Hay
+from RUFAS.biophysical.feed_storage.purchased_feed_storage import PurchasedFeedStorage
+from RUFAS.biophysical.field.crop.crop_data import CropData
+from RUFAS.biophysical.field.crop.crop_data_factory import CropConfiguration
+from RUFAS.biophysical.field.crop.crop_management import CropManagement
 from RUFAS.current_day_conditions import CurrentDayConditions
 from RUFAS.data_structures.events import ManureEvent
 from RUFAS.data_structures.feed_storage_to_animal_connection import (
@@ -35,6 +40,7 @@ from RUFAS.biophysical.manure.manure_manager import ManureManager
 from RUFAS.simulation_engine import DEFAULT_FEED_DEGRADATIONS_PROCESSING_INTERVAL, SimulationEngine, SimulationType
 from RUFAS.rufas_time import RufasTime
 from RUFAS.weather import Weather
+from tests.test_biophysical.test_crop_soil_field.sample_crop_configuration import SAMPLE_CROP_CONFIGURATION
 
 
 def test_simulation_type_enum_values() -> None:
@@ -200,6 +206,26 @@ def test_simulate(
     )
 
     mock_estimate_emissions.assert_called_once()
+
+
+def test_simulate_reports_crops_still_curing_at_end_of_simulation(
+    simulation_engine: SimulationEngine, mocker: MockerFixture
+) -> None:
+    """Crops still in transit when the main loop ends are reported by the feed manager instead of silently dropped,
+    and only after the loop has finished delivering."""
+    mocker.patch.object(EEEManager, "estimate_all")
+    mocker.patch.object(simulation_engine, "_run_simulation_main_loop")
+    mocker.patch("RUFAS.output_manager.OutputManager.add_log")
+    simulation_engine.time = MagicMock(spec=RufasTime)
+    simulation_engine.herd_manager = MagicMock()
+    simulation_engine.manure_manager = MagicMock()
+    simulation_engine.feed_manager = MagicMock()
+    mocker.patch("RUFAS.simulation_engine.AnimalModuleReporter")
+    mocker.patch("RUFAS.simulation_engine.ManureExcretionCalculator")
+
+    simulation_engine.simulate()
+
+    simulation_engine.feed_manager.report_undelivered_crops.assert_called_once_with(simulation_engine.time)
 
 
 def test_execute_full_farm_daily_simulation(
@@ -469,80 +495,32 @@ def test_execute_daily_field_operations_no_harvested_crops(
     assert result == harvested_crops
 
 
-def test_receive_daily_harvested_crops_defers_curing_crop_until_storage_date_no_negative_hay_loss(
+def test_receive_daily_harvested_crops_releases_due_crops_then_routes_todays(
     simulation_engine: SimulationEngine,
 ) -> None:
-    """Regression: a wilt_days>0 crop's storage_time is set wilt_days in the future at harvest
-    (crop_management.py); it must NOT reach feed_manager.receive_crop on harvest day, only once
-    storage_time is reached -- and once delivered on schedule, Hay's degradation math (which has
-    no clamp, unlike silage.py) must never see a negative days_stored crossing the 30-day
-    INITIAL_LOSS_PERIOD boundary inside what used to be the wilt window."""
-    harvest_date = date(2026, 6, 1)
-    storage_date = harvest_date + timedelta(days=3)
-    crop = HarvestedCrop(
-        config_name="alfalfa_hay",
-        field_name="field_1",
-        harvest_time=harvest_date,
-        storage_time=storage_date,
-        dry_matter_mass=1000.0,
-        dry_matter_percentage=50.0,
-        dry_matter_digestibility=70.0,
-        crude_protein_percent=10.0,
-        non_protein_nitrogen=5.0,
-        starch=30.0,
-        adf=7.0,
-        ndf=15.0,
-        lignin=3.0,
-        sugar=20.0,
-        ash=6.0,
-    )
-
+    """The engine holds no crop queue of its own. Each day it asks the feed manager to deliver the curing crops that
+    are due, then passes today's crops on: the original ``receive_crop`` for a crop stored today, and
+    ``hold_crop_until_storage_date`` for a crop still curing (``storage_time`` in the future)."""
+    today = datetime(2026, 6, 1)
+    stored_now = MagicMock(spec=HarvestedCrop, storage_time=today.date())
+    still_curing = MagicMock(spec=HarvestedCrop, storage_time=today.date() + timedelta(days=3))
     simulation_engine.time = MagicMock(spec=RufasTime)
-    simulation_engine.time.current_date = datetime(harvest_date.year, harvest_date.month, harvest_date.day)
+    simulation_engine.time.current_date = today
     simulation_engine.time.simulation_day = 10
-    # Unrelated to this test's focus (delivery timing) -- fixed far in the future so
-    # _should_recalculate_feed_planning is always False and its untested branch is not exercised.
     simulation_engine.next_max_daily_feed_recalculation = datetime(2099, 1, 1)
-    # Local reassignment (not the fixture's spec'd mock) so mypy narrows receive_crop to
-    # MagicMock's attrs -- same pattern as simulation_engine.field_manager elsewhere in this file.
-    simulation_engine.feed_manager = MagicMock()
+    feed_manager = MagicMock()
+    simulation_engine.feed_manager = feed_manager
 
-    # Harvest day: still curing (storage_date is 3 days out) -- must NOT be delivered yet.
-    simulation_engine._receive_daily_harvested_crops([crop])
-    simulation_engine.feed_manager.receive_crop.assert_not_called()
-    assert crop in simulation_engine._pending_curing_crops
+    simulation_engine._receive_daily_harvested_crops([stored_now, still_curing])
 
-    # Ready day: storage_date has arrived -- must be delivered now, with today's simulation_day.
-    simulation_engine.time.current_date = datetime(storage_date.year, storage_date.month, storage_date.day)
-    simulation_engine.time.simulation_day = 13
-    simulation_engine._receive_daily_harvested_crops([])
-    simulation_engine.feed_manager.receive_crop.assert_called_once_with(crop, 13)
-    assert simulation_engine._pending_curing_crops == []
-
-    # Hay degradation math must never go negative once delivered on schedule.
-    hay = Hay(
-        config={
-            "name": "hay_storage",
-            "rufas_id": 1,
-            "field_names": ["field_1"],
-            "crop_name": "alfalfa_hay",
-            "initial_storage_dry_matter": 0.0,
-            "bale_size": 1.2,
-            "target_dry_matter": 85.0,
-            "capacity": 1_000_000.0,
-            "additional_dry_matter_loss_coefficient": 0.0,
-        }
-    )
-    time_35_days_later = RufasTime(
-        datetime(2026, 1, 1), datetime(2027, 1, 1), datetime(storage_date.year, storage_date.month, storage_date.day)
-    )
-    time_35_days_later.current_date = datetime(storage_date.year, storage_date.month, storage_date.day) + timedelta(
-        days=35
-    )
-
-    loss = hay.calculate_dry_matter_loss_to_gas(crop, [], time_35_days_later)
-
-    assert loss >= 0.0
+    assert [c[0] for c in feed_manager.method_calls] == [
+        "release_crops_in_transit",
+        "receive_crop",
+        "hold_crop_until_storage_date",
+    ]
+    feed_manager.release_crops_in_transit.assert_called_once_with(simulation_engine.time)
+    feed_manager.receive_crop.assert_called_once_with(stored_now, 10)
+    feed_manager.hold_crop_until_storage_date.assert_called_once_with(still_curing)
 
 
 def test_execute_field_only_simulation(
@@ -1561,3 +1539,114 @@ def test_gather_field_data_no_fields(mocker: MockerFixture) -> None:
         "No fields will be simulated.",
         {"class": "SimulationEngine", "function": "_gather_field_data"},
     )
+
+
+def _build_curing_scenario(
+    mocker: MockerFixture, simulation_engine: SimulationEngine, wilt_days: int
+) -> tuple[CropManagement, Weather, Hay]:
+    """Real RufasTime, Weather, CropManagement, FeedManager and Hay storage, wired into the engine.
+
+    Only construction is shortcut (``FeedManager.__init__`` reads input files); every method exercised afterwards is
+    the production one.
+    """
+    start = datetime(2024, 6, 1)
+    simulation_engine.time = RufasTime(start, start + timedelta(days=30), start)
+    weather = Weather.__new__(Weather)
+    weather.mean_annual_temperature = 10.0
+    weather.weather_data = {
+        start
+        + timedelta(days=offset): CurrentDayConditions(
+            incoming_light=25.0, min_air_temperature=13.0, mean_air_temperature=20.0, max_air_temperature=27.0
+        )
+        for offset in range(40)
+    }
+    crop_data = CropData(**CropConfiguration(**SAMPLE_CROP_CONFIGURATION, wilt_days=wilt_days))
+    crop_management = CropManagement(crop_data=crop_data, dry_matter_yield_collected=1000.0)
+
+    available_feeds = [cast(Feed, MagicMock(spec=Feed, rufas_id=feed_id, buffer=0.0)) for feed_id in (1, 2)]
+    hay = Hay(
+        config={
+            "name": "hay",
+            "rufas_id": 1,
+            "field_names": ["field_1"],
+            "crop_name": str(crop_data.name),
+            "initial_storage_dry_matter": 0.0,
+            "bale_size": 1.2,
+            "target_dry_matter": 85.0,
+            "capacity": 1_000_000.0,
+            "additional_dry_matter_loss_coefficient": 0.0,
+        }
+    )
+    mocker.patch.object(FeedManager, "__init__", return_value=None)
+    feed_manager = FeedManager.__new__(FeedManager)
+    feed_manager._om = OutputManager()
+    feed_manager._available_feeds = available_feeds
+    feed_manager._crops_in_transit = []
+    feed_manager.active_storages = {"hay": hay}
+    feed_manager.purchased_feed_storage = PurchasedFeedStorage(available_feeds)
+    simulation_engine.feed_manager = feed_manager
+    simulation_engine.next_max_daily_feed_recalculation = datetime(2099, 1, 1)
+    return crop_management, weather, hay
+
+
+def _inventory_of_feed_1(simulation_engine: SimulationEngine, weather: Weather) -> float:
+    inventory = simulation_engine.feed_manager.get_total_projected_inventory(
+        simulation_engine.time.current_date.date(), weather, simulation_engine.time
+    )
+    return inventory.available_feeds[1]
+
+
+@pytest.mark.integration
+def test_curing_crop_is_delivered_through_the_engine_and_counted_in_planning_inventory(
+    mocker: MockerFixture, simulation_engine: SimulationEngine
+) -> None:
+    """A real CropManagement harvest with wilt_days > 0 reaches a real storage only on its storage date, and the
+    planning inventory counts it throughout: on the harvest day while it cures, and once it is in storage (never
+    twice, never missing). Before the in-transit queue moved into FeedManager, the harvest-day planning cycle saw
+    none of the crop."""
+    wilt_days = 3
+    crop_management, weather, hay = _build_curing_scenario(mocker, simulation_engine, wilt_days)
+    harvest_time = simulation_engine.time
+    harvested_crop = crop_management._get_harvested_crop(harvest_time, 1.0, "field_1", weather)
+    storage_date = harvest_time.current_date.date() + timedelta(days=wilt_days)
+    assert harvested_crop.storage_time == storage_date
+    assert harvested_crop.dry_matter_percentage <= 80.0
+
+    simulation_engine._receive_daily_harvested_crops([harvested_crop])
+    assert hay.stored == []
+    assert _inventory_of_feed_1(simulation_engine, weather) == pytest.approx(harvested_crop.dry_matter_mass)
+
+    for _ in range(wilt_days - 1):
+        simulation_engine.time.advance()
+        simulation_engine._receive_daily_harvested_crops([])
+        assert hay.stored == []
+        assert _inventory_of_feed_1(simulation_engine, weather) == pytest.approx(harvested_crop.dry_matter_mass)
+
+    simulation_engine.time.advance()
+    assert simulation_engine.time.current_date.date() == storage_date
+    simulation_engine._receive_daily_harvested_crops([])
+    assert hay.stored == [harvested_crop]
+    assert simulation_engine.feed_manager._crops_in_transit == []
+    assert _inventory_of_feed_1(simulation_engine, weather) == pytest.approx(harvested_crop.dry_matter_mass)
+
+    initial_mass = harvested_crop.dry_matter_mass
+    simulation_engine.feed_manager.process_degradations(weather, simulation_engine.time)
+    assert 0.0 < harvested_crop.dry_matter_mass <= initial_mass
+
+
+@pytest.mark.integration
+def test_curing_crop_still_in_transit_at_end_of_simulation_is_reported_not_dropped(
+    mocker: MockerFixture, simulation_engine: SimulationEngine
+) -> None:
+    """A crop harvested so late that its storage date falls after the last simulated day is reported through the
+    OutputManager, with its dry matter, rather than vanishing."""
+    crop_management, weather, hay = _build_curing_scenario(mocker, simulation_engine, 3)
+    harvested_crop = crop_management._get_harvested_crop(simulation_engine.time, 1.0, "field_1", weather)
+    simulation_engine._receive_daily_harvested_crops([harvested_crop])
+    add_warning = mocker.patch.object(simulation_engine.feed_manager._om, "add_warning")
+
+    simulation_engine.feed_manager.report_undelivered_crops(simulation_engine.time)
+
+    assert hay.stored == []
+    add_warning.assert_called_once()
+    assert str(harvested_crop.dry_matter_mass) in add_warning.call_args.args[1]
