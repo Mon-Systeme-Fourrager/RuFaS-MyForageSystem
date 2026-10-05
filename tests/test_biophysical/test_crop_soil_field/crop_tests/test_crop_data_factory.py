@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 from pytest_mock import MockerFixture
 
@@ -195,6 +197,50 @@ def test_manufacture_crop_configuration_error() -> None:
 
     with pytest.raises(ValueError):
         CropDataFactory._manufacture_crop_configuration(crop_config)
+
+
+def _crop_config_dict(**overrides: Any) -> dict[str, Any]:
+    config: dict[str, Any] = {**SAMPLE_CROP_CONFIGURATION, "plant_category": "perennial_legume"}
+    config.update(overrides)
+    return config
+
+
+@pytest.mark.parametrize("wilt_days", [0, 1, 3])
+def test_manufacture_crop_configuration_accepts_non_negative_integer_wilt_days(wilt_days: int) -> None:
+    """Test that whole-number wilt_days values, including 0 (curing disabled), are accepted unchanged."""
+    CropDataFactory._om = OutputManager()
+
+    actual = CropDataFactory._manufacture_crop_configuration(_crop_config_dict(wilt_days=wilt_days))
+
+    assert actual["wilt_days"] == wilt_days
+
+
+def test_manufacture_crop_configuration_accepts_missing_wilt_days() -> None:
+    """Test that wilt_days stays optional: a configuration without it is accepted."""
+    CropDataFactory._om = OutputManager()
+
+    actual = CropDataFactory._manufacture_crop_configuration(_crop_config_dict())
+
+    assert "wilt_days" not in actual
+
+
+@pytest.mark.parametrize("wilt_days", [2.0, 2.5, -1, True, "3", None])
+def test_manufacture_crop_configuration_rejects_invalid_wilt_days(
+    mocker: MockerFixture, wilt_days: float | int | bool | str | None
+) -> None:
+    """Test that a schema-valid but non-integer or negative wilt_days raises ValueError and logs the received value.
+
+    2.0 and 2.5 pass the schema (type "number") and DataValidator, but ``Weather.get_conditions_series`` iterates
+    ``range(..., wilt_days)`` and ``timedelta`` is built from it, so they must be rejected at configuration time.
+    """
+    CropDataFactory._om = OutputManager()
+    add_error = mocker.patch.object(CropDataFactory._om, "add_error")
+
+    with pytest.raises(ValueError, match="wilt_days"):
+        CropDataFactory._manufacture_crop_configuration(_crop_config_dict(wilt_days=wilt_days))
+
+    add_error.assert_called_once()
+    assert repr(wilt_days) in add_error.call_args.args[1]
 
 
 def test_get_available_crop_configurations() -> None:

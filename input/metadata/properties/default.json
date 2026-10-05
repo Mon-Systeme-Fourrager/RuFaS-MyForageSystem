@@ -2781,7 +2781,7 @@
         },
         "wilt_days": {
           "type": "number",
-          "description": "Number of days between cutting and storage during which the opt-in pre-harvest field-curing calculation is applied (days). 0 (default) disables field curing.",
+          "description": "Number of days between cutting and storage during which the opt-in pre-harvest field-curing calculation is applied (days). Must be a whole number (e.g. 3, not 2.5 or 3.0). 0 (default) disables field curing.",
           "minimum": 0.0
         },
         "swath_density": {
