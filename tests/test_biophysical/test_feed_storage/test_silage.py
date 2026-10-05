@@ -1577,22 +1577,39 @@ def test_get_or_compute_feed_out_rate_computes_total_over_365(silage: Silage, ha
 
 
 @pytest.mark.unit
-def test_get_or_compute_feed_out_rate_held_fixed_after_first_call(
-    silage: Silage, harvested_crop: HarvestedCrop
-) -> None:
-    """Design spec Section 5.3.3: computed once, on first activation, held fixed thereafter — a
-    later change to self.stored (Effluent/Fermentation/Infiltration/a new crop arriving) must NOT
-    change the already-cached rate. This is the mechanism the 'held fixed' design note exists for; a
-    test only checking the first call's value would not catch a silent recompute-every-call bug."""
+def test_get_or_compute_feed_out_rate_held_between_receipts(silage: Silage, harvested_crop: HarvestedCrop) -> None:
+    """Between crop receipts the rate is held: a change to self.stored (Effluent/Fermentation/
+    Infiltration shrinking a crop) must NOT change the already-computed rate."""
     silage.stored = [harvested_crop]
     first_rate = silage._get_or_compute_feed_out_rate_kg_dm_per_day()
 
-    second_crop = copy.deepcopy(harvested_crop)
-    second_crop.dry_matter_mass = 9999.0
-    silage.stored.append(second_crop)
+    harvested_crop.dry_matter_mass *= 0.5
     second_rate = silage._get_or_compute_feed_out_rate_kg_dm_per_day()
 
     assert second_rate == first_rate
+
+
+@pytest.mark.unit
+def test_get_or_compute_feed_out_rate_recomputed_after_crop_received(
+    mocker: MockerFixture, silage: Silage, harvested_crop: HarvestedCrop
+) -> None:
+    """A later receipt resets the rate, so the next call recomputes it from the total now stored
+    (stored DM / 365). A small first batch must not fix a small rate for the rest of the run."""
+    mocker.patch.object(silage, "_finalize_preseal_loss")
+    first_crop = copy.deepcopy(harvested_crop)
+    first_crop.dry_matter_mass = 20.0
+    silage.receive_crop(first_crop, simulation_day=1)
+    first_rate = silage._get_or_compute_feed_out_rate_kg_dm_per_day()
+    assert first_rate == pytest.approx(20.0 / 365.0)
+
+    second_crop = copy.deepcopy(harvested_crop)
+    second_crop.dry_matter_mass = 480.0
+    silage.receive_crop(second_crop, simulation_day=2)
+    second_rate = silage._get_or_compute_feed_out_rate_kg_dm_per_day()
+
+    total_dry_matter_kg = sum(crop.dry_matter_mass for crop in silage.stored)
+    assert second_rate == pytest.approx(total_dry_matter_kg / 365.0)
+    assert second_rate > first_rate
 
 
 @pytest.mark.unit
@@ -1604,7 +1621,7 @@ def test_apply_feed_out_loss_dilutes_both_ndf_and_crude_protein(harvested_crop: 
     initial_cp = harvested_crop.crude_protein_percent
     initial_mass = harvested_crop.dry_matter_mass
 
-    silage._apply_feed_out_loss(harvested_crop, loss_fraction=0.05)
+    silage._apply_feed_out_loss(harvested_crop, dry_matter_loss_kg=initial_mass * 0.05)
 
     assert harvested_crop.dry_matter_mass == pytest.approx(initial_mass * 0.95)
     assert harvested_crop.ndf > initial_ndf
@@ -1612,16 +1629,16 @@ def test_apply_feed_out_loss_dilutes_both_ndf_and_crude_protein(harvested_crop: 
 
 
 @pytest.mark.unit
-def test_apply_feed_out_loss_zero_fraction_is_a_noop(harvested_crop: HarvestedCrop, silage: Silage) -> None:
+def test_apply_feed_out_loss_zero_loss_is_a_noop(harvested_crop: HarvestedCrop, silage: Silage) -> None:
     initial_mass = harvested_crop.dry_matter_mass
-    silage._apply_feed_out_loss(harvested_crop, loss_fraction=0.0)
+    silage._apply_feed_out_loss(harvested_crop, dry_matter_loss_kg=0.0)
     assert harvested_crop.dry_matter_mass == initial_mass
 
 
 @pytest.mark.unit
 def test_process_feed_out_default_raises_not_implemented(silage: Silage) -> None:
     with pytest.raises(NotImplementedError):
-        silage._process_feed_out()
+        silage._process_feed_out(elapsed_days=30.0)
 
 
 @pytest.mark.unit
@@ -1640,7 +1657,7 @@ def test_bag_process_feed_out_reduces_mass(harvested_crop: HarvestedCrop) -> Non
     bag.stored = [harvested_crop]
     initial_mass = harvested_crop.dry_matter_mass
 
-    bag._process_feed_out()
+    bag._process_feed_out(elapsed_days=30.0)
 
     assert harvested_crop.dry_matter_mass < initial_mass
 
@@ -1659,43 +1676,28 @@ def test_bag_process_feed_out_skips_when_geometry_missing(harvested_crop: Harves
     bag.stored = [harvested_crop]
     initial_mass = harvested_crop.dry_matter_mass
 
-    bag._process_feed_out()
+    bag._process_feed_out(elapsed_days=30.0)
 
     assert harvested_crop.dry_matter_mass == initial_mass
 
 
 @pytest.mark.unit
-@pytest.mark.parametrize("storage_class_name", ["Bunker", "Pile"])
+@pytest.mark.parametrize("storage_class", [Bunker, Pile])
 def test_bunker_process_feed_out_applies_same_fraction_within_a_section(
-    storage_class_name: str, harvested_crop: HarvestedCrop
+    storage_class: type[Silage], harvested_crop: HarvestedCrop
 ) -> None:
-    """Two crops of different mass, grouped into the same section, must lose the same *fraction* of
-    their own dry matter — proves the section-uniform-loss semantics (design spec Section 5.3.2)."""
-    config: dict[str, str | float | list[str]] = {
-        "name": "storage",
-        "rufas_id": 1,
-        "field_names": ["field_1"],
-        "crop_name": "corn",
-        "initial_storage_dry_matter": 500.0,
-        "capacity": 1_000_000.0,
-        "width_m": 10.0,
-        "height_m": 3.0,
-        "dry_matter_density_kg_per_m3": 180.0,
-    }
-    storage_class = Bunker if storage_class_name == "Bunker" else Pile
-    storage = storage_class(config=config)
-    second_crop = copy.deepcopy(harvested_crop)
-    second_crop.dry_matter_mass = 50.0
-    storage.stored = [harvested_crop, second_crop]  # rate is 0 on first call -> one section, both crops
-    initial_first_mass = harvested_crop.dry_matter_mass
-    initial_second_mass = second_crop.dry_matter_mass
+    """Crops grouped into the same section must lose the same *fraction* of their own dry matter —
+    proves the section-uniform-loss semantics (design spec Section 5.3.2). The two small crops sit
+    below the per-section target mass (total / 36), so they share section 1 with the large crop."""
+    storage = _make_feed_out_storage(storage_class, harvested_crop, [10.0, 5.0, 985.0])
+    initial_masses = [crop.dry_matter_mass for crop in storage.stored]
 
-    storage._process_feed_out()
+    storage._process_feed_out(elapsed_days=30.0)
 
-    first_fraction_lost = 1.0 - harvested_crop.dry_matter_mass / initial_first_mass
-    second_fraction_lost = 1.0 - second_crop.dry_matter_mass / initial_second_mass
-    assert first_fraction_lost == pytest.approx(second_fraction_lost)
-    assert first_fraction_lost > 0.0
+    fractions_lost = [1.0 - crop.dry_matter_mass / initial for crop, initial in zip(storage.stored, initial_masses)]
+    assert fractions_lost[0] > 0.0
+    assert fractions_lost[1] == pytest.approx(fractions_lost[0])
+    assert fractions_lost[2] == pytest.approx(fractions_lost[0])
 
 
 @pytest.mark.unit
@@ -1716,9 +1718,154 @@ def test_bunker_process_feed_out_skips_when_geometry_missing(
     storage.stored = [harvested_crop]
     initial_mass = harvested_crop.dry_matter_mass
 
-    storage._process_feed_out()
+    storage._process_feed_out(elapsed_days=30.0)
 
     assert harvested_crop.dry_matter_mass == initial_mass
+
+
+def _make_feed_out_storage(storage_class: type[Silage], crop: HarvestedCrop, crop_masses: list[float]) -> Silage:
+    """Builds a Bunker/Pile with one copy of `crop` per entry in `crop_masses` (kg DM, oldest first)."""
+    config: dict[str, str | float | list[str]] = {
+        "name": "storage",
+        "rufas_id": 1,
+        "field_names": ["field_1"],
+        "crop_name": "corn",
+        "initial_storage_dry_matter": 500.0,
+        "capacity": 1_000_000.0,
+        "width_m": 9.14,
+        "height_m": 3.05,
+        "dry_matter_density_kg_per_m3": 180.0,
+    }
+    storage = storage_class(config=config)
+    storage.stored = []
+    for mass in crop_masses:
+        stored_crop = copy.deepcopy(crop)
+        stored_crop.dry_matter_mass = mass
+        storage.stored.append(stored_crop)
+    return storage
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("storage_class", [Bunker, Pile])
+def test_process_feed_out_total_loss_independent_of_call_frequency(
+    storage_class: type[Silage], harvested_crop: HarvestedCrop
+) -> None:
+    """One 30-day call and two calls (10 days, then 20 days) lose the same dry matter: Feed-out is a
+    fraction of the dry matter fed out, so it must not depend on how often process_degradations runs
+    (production calls it only on harvest days, up to 30 days apart)."""
+    one_call = _make_feed_out_storage(storage_class, harvested_crop, [500_000.0])
+    two_calls = _make_feed_out_storage(storage_class, harvested_crop, [500_000.0])
+    initial_mass = one_call.stored[0].dry_matter_mass
+
+    one_call._process_feed_out(elapsed_days=30.0)
+    two_calls._process_feed_out(elapsed_days=10.0)
+    two_calls._process_feed_out(elapsed_days=20.0)
+
+    loss_one_call = initial_mass - one_call.stored[0].dry_matter_mass
+    loss_two_calls = initial_mass - two_calls.stored[0].dry_matter_mass
+    assert loss_one_call > 0.0
+    # Not exact: each call re-reads the crop's composition, which concentrates slightly as dry matter
+    # is lost, so the second call's loss fraction differs by ~1e-4. The old per-call behaviour
+    # differed by a factor of ~3 here.
+    assert loss_two_calls == pytest.approx(loss_one_call, rel=1e-3)
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("storage_class", [Bunker, Pile])
+def test_process_feed_out_loss_bounded_by_loss_fraction_times_fed_out_mass(
+    storage_class: type[Silage], harvested_crop: HarvestedCrop
+) -> None:
+    """Each kg is hit once, so cumulative loss over many calls can never exceed the (RS-clipped) loss
+    fraction times the mass fed out. 12 monthly calls on a 500 t bunker used to lose ~36% of DM."""
+    storage = _make_feed_out_storage(storage_class, harvested_crop, [500_000.0])
+    initial_mass = storage.stored[0].dry_matter_mass
+    rate = storage._get_or_compute_feed_out_rate_kg_dm_per_day()
+
+    for _ in range(12):
+        storage._process_feed_out(elapsed_days=30.0)
+
+    fed_out_kg = rate * 360.0
+    lost_kg = initial_mass - storage.stored[0].dry_matter_mass
+    assert 0.0 < lost_kg < 0.5 * fed_out_kg
+    assert lost_kg / initial_mass < 0.05
+
+
+@pytest.mark.unit
+def test_process_feed_out_zero_elapsed_days_is_a_noop(harvested_crop: HarvestedCrop) -> None:
+    storage = _make_feed_out_storage(Bunker, harvested_crop, [500_000.0])
+    initial_mass = storage.stored[0].dry_matter_mass
+
+    storage._process_feed_out(elapsed_days=0.0)
+
+    assert storage.stored[0].dry_matter_mass == initial_mass
+
+
+@pytest.mark.unit
+def test_apply_feed_out_front_first_spills_to_next_group_and_leaves_the_rest(harvested_crop: HarvestedCrop) -> None:
+    """Fed-out mass larger than the front group moves on to the next group; groups past the fed-out
+    mass are untouched, and the loss is split by dry matter within a group."""
+    silage = Silage(config=_make_feed_out_config())
+    front, second, back_a, back_b = (copy.deepcopy(harvested_crop) for _ in range(4))
+    front.dry_matter_mass = 100.0
+    second.dry_matter_mass = 100.0
+    back_a.dry_matter_mass = 300.0
+    back_b.dry_matter_mass = 100.0
+
+    # Fed out 150 kg: all of the front group (100 kg at 10%) then 50 kg of the second (at 20%).
+    silage._apply_feed_out_front_first([([front], 0.10), ([second], 0.20), ([back_a, back_b], 0.50)], 150.0)
+
+    assert front.dry_matter_mass == pytest.approx(100.0 - 0.10 * 100.0)
+    assert second.dry_matter_mass == pytest.approx(100.0 - 0.20 * 50.0)
+    assert back_a.dry_matter_mass == 300.0
+    assert back_b.dry_matter_mass == 100.0
+
+
+@pytest.mark.unit
+def test_apply_feed_out_front_first_splits_group_loss_by_dry_matter(harvested_crop: HarvestedCrop) -> None:
+    silage = Silage(config=_make_feed_out_config())
+    crop_a, crop_b = copy.deepcopy(harvested_crop), copy.deepcopy(harvested_crop)
+    crop_a.dry_matter_mass = 300.0
+    crop_b.dry_matter_mass = 100.0
+
+    # Whole 400 kg group fed out at a 10% loss fraction: 40 kg lost, 30 kg from A and 10 kg from B.
+    silage._apply_feed_out_front_first([([crop_a, crop_b], 0.10)], 400.0)
+
+    assert crop_a.dry_matter_mass == pytest.approx(270.0)
+    assert crop_b.dry_matter_mass == pytest.approx(90.0)
+
+
+@pytest.mark.unit
+def test_process_degradations_passes_oldest_crops_elapsed_days_to_feed_out(
+    mocker: MockerFixture, silage: Silage
+) -> None:
+    mock_weather = mocker.MagicMock(autospec=Weather)
+    mock_time = mocker.MagicMock(autospec=RufasTime)
+    mock_time.simulation_day = 40
+    mock_time.current_date = datetime(2022, 3, 31)
+    mocker.patch.object(silage, "_finalize_preseal_loss")
+    mocker.patch.object(silage, "calculate_days_of_effluent_loss_to_process", return_value=0)
+    mocker.patch.object(Storage, "process_degradations")
+    mocker.patch.object(silage, "_process_infiltration", return_value=0.0)
+    feed_out = mocker.patch.object(silage, "_process_feed_out")
+    old_crop, new_crop = HarvestedCrop(**sample_crop_data), HarvestedCrop(**sample_crop_data)
+    old_crop.last_time_degraded = datetime(2022, 3, 1).date()
+    new_crop.last_time_degraded = datetime(2022, 3, 21).date()
+    silage.stored = [old_crop, new_crop]
+
+    silage.process_degradations(mock_weather, mock_time)
+
+    feed_out.assert_called_once_with(30.0)
+
+
+def _make_feed_out_config() -> dict[str, str | float | list[str]]:
+    return {
+        "name": "silage",
+        "rufas_id": 1,
+        "field_names": ["field_1"],
+        "crop_name": "corn",
+        "initial_storage_dry_matter": 500.0,
+        "capacity": 1_000_000.0,
+    }
 
 
 @pytest.mark.unit
@@ -1740,7 +1887,7 @@ def test_process_degradations_runs_infiltration_before_feed_out(mocker: MockerFi
         call_order.append("infiltration")
         return 0.0
 
-    def _record_feed_out() -> None:
+    def _record_feed_out(elapsed_days: float) -> None:
         call_order.append("feed_out")
 
     mocker.patch.object(Storage, "process_degradations", side_effect=_record_fermentation)

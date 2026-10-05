@@ -861,6 +861,9 @@ class Silage(Storage):
         """
         predecessor = self.stored[-1] if self.stored else None
         super().receive_crop(crop, simulation_day)
+        # The stored mass just changed, so the Feed-out rate is stale; it is recomputed from the new
+        # total at the next `_get_or_compute_feed_out_rate_kg_dm_per_day` call.
+        self._feed_out_rate_kg_dm_per_day = None
 
         if predecessor is not None and not predecessor.preseal_finalized:
             exposure_days = min(
@@ -1030,17 +1033,16 @@ class Silage(Storage):
         crop.dry_matter_mass = mass_values["dry_matter_mass"]
         crop.dry_matter_percentage = mass_values["dry_matter_percentage"]
 
-    def _apply_feed_out_loss(self, crop: HarvestedCrop, loss_fraction: float) -> None:
+    def _apply_feed_out_loss(self, crop: HarvestedCrop, dry_matter_loss_kg: float) -> None:
         """
-        Applies a computed Feed-out dry-matter loss fraction to a crop's mass and composition.
+        Applies a computed Feed-out dry-matter loss to a crop's mass and composition.
 
         Parameters
         ----------
         crop : HarvestedCrop
             The crop to update in place.
-        loss_fraction : float
-            Fraction of this crop's current dry matter lost to Feed-out this step (already clipped
-            at the respirable-substrate ceiling by `calculate_feed_out_loss`).
+        dry_matter_loss_kg : float
+            Dry-matter loss to apply (kg).
 
         Notes
         -----
@@ -1054,9 +1056,8 @@ class Silage(Storage):
         Feed Storage Scientific Documentation, equation FS.NUT.1.
 
         """
-        if loss_fraction <= 0.0:
+        if dry_matter_loss_kg <= 0.0:
             return
-        dry_matter_loss_kg = crop.dry_matter_mass * loss_fraction
         crop.ndf = self.recalculate_nutrient_percentage(crop.ndf, 0.0, dry_matter_loss_kg, crop.dry_matter_mass)
         crop.crude_protein_percent = self.recalculate_nutrient_percentage(
             crop.crude_protein_percent, 0.0, dry_matter_loss_kg, crop.dry_matter_mass
@@ -1065,10 +1066,54 @@ class Silage(Storage):
         crop.dry_matter_mass = mass_values["dry_matter_mass"]
         crop.dry_matter_percentage = mass_values["dry_matter_percentage"]
 
-    def _process_feed_out(self) -> None:
+    def _apply_feed_out_front_first(
+        self, groups: list[tuple[list[HarvestedCrop], float]], fed_out_mass_kg: float
+    ) -> None:
         """
-        Calculates and applies this storage's Feed-out dry-matter loss for every currently-stored
-        crop.
+        Applies Feed-out loss to the dry matter fed out over the elapsed period, front of the stack first.
+
+        Parameters
+        ----------
+        groups : list[tuple[list[HarvestedCrop], float]]
+            Front-first ``(crops, loss_fraction)`` pairs: a vertical section and its loss fraction for
+            `Bunker`/`Pile`, or a single crop and its loss fraction for `Bag`. Fractions must be
+            computed before any loss is applied.
+        fed_out_mass_kg : float
+            Dry matter fed out since Feed-out was last processed (kg): rate times elapsed days.
+
+        Notes
+        -----
+        `Silostg.for` applies `PLOT(NN,11) = (1.-DML4)*PLOT(NN,11)` once to each section as it leaves
+        the silo, so the loss is a fraction of the dry matter *fed out*, not of everything stored. Each
+        kg is taken from exactly one group, front first; when the fed-out mass exceeds the front
+        group, the remainder moves to the next group. Within a group the loss is split in proportion
+        to each crop's dry matter. Because every kg is hit once, total loss cannot exceed the loss
+        fraction times the mass fed out, and it does not depend on how often this is called.
+        ``[FS.SIL.17]``.
+
+        """
+        remaining_kg = fed_out_mass_kg
+        for crops, loss_fraction in groups:
+            if remaining_kg <= 0.0:
+                break
+            group_dry_matter_kg = sum(crop.dry_matter_mass for crop in crops)
+            if group_dry_matter_kg <= 0.0:
+                continue
+            fed_out_from_group_kg = min(remaining_kg, group_dry_matter_kg)
+            group_loss_kg = loss_fraction * fed_out_from_group_kg
+            for crop in crops:
+                self._apply_feed_out_loss(crop, group_loss_kg * crop.dry_matter_mass / group_dry_matter_kg)
+            remaining_kg -= fed_out_from_group_kg
+
+    def _process_feed_out(self, elapsed_days: float) -> None:
+        """
+        Calculates and applies this storage's Feed-out dry-matter loss for the dry matter fed out
+        over the elapsed period.
+
+        Parameters
+        ----------
+        elapsed_days : float
+            Days since Feed-out was last processed for this storage.
 
         Raises
         ------
@@ -1085,8 +1130,8 @@ class Silage(Storage):
 
     def _get_or_compute_feed_out_rate_kg_dm_per_day(self) -> float:
         """
-        Fixes this storage's Feed-out rate the first time it is needed, and returns that fixed value
-        on every later call.
+        Returns this storage's Feed-out rate, computing it from the stored dry matter if it has been
+        reset (by `receive_crop`) or never computed.
 
         Returns
         -------
@@ -1096,11 +1141,12 @@ class Silage(Storage):
 
         Notes
         -----
-        Matches IFSM's own ``FDRTE`` (``Silostg.for:233,242``, total stored mass for the year divided
-        by 365) — a static per-storage average, not derived from `FeedManager`'s daily withdrawal
-        (design spec Section 5.3.3, supersedes an earlier `FeedManager`-integration proposal).
-        Computed once, on first activation, and held fixed thereafter — the closest behavioral match
-        to IFSM's own once-per-cycle semantics. ``[FS.SIL.17]``.
+        Follows IFSM's ``FDRTE`` (``Silostg.for:233,242``, dry matter for the year divided by 365),
+        which IFSM recalculates for each yearly cycle. RuFaS has no planned-mass-for-the-year figure
+        when a crop arrives, so the total dry matter currently stored is used instead. The rate is
+        reset in `receive_crop` and recomputed here on the next call, and is held between receipts, so
+        a small first batch does not fix a small rate for the rest of the simulation.
+        ``[FS.SIL.17]``.
 
         """
         if self._feed_out_rate_kg_dm_per_day is None:
@@ -1175,7 +1221,9 @@ class Silage(Storage):
             infiltration_loss_kg = self._process_infiltration(crop, elapsed_days)
             self._apply_infiltration_loss(crop, infiltration_loss_kg)
 
-        self._process_feed_out()
+        # Feed-out is storage-level: the oldest crop (front of the stack) has the longest gap, which is
+        # the time since the last call. A crop received since then has a shorter or zero gap.
+        self._process_feed_out(max(infiltration_elapsed_days, default=0.0))
 
     def project_degradations(
         self, crops: list[HarvestedCrop], weather: Weather, time: RufasTime
@@ -1520,12 +1568,13 @@ class Bunker(Silage):
             crop, elapsed_days, self.__class__.__name__, self.width_m, self.height_m, self.dry_matter_density_kg_per_m3
         )
 
-    def _process_feed_out(self) -> None:
+    def _process_feed_out(self, elapsed_days: float) -> None:
         """See `Silage._process_feed_out`. Composites `self.stored` into vertical sections (design
-        spec Section 5.3.2), computes one Feed-out loss fraction per section, then applies that same
-        fraction to every crop in the section — achieving `Silostg.for:922-933`'s section-uniform-
-        quality semantics without discarding RuFaS's individual-crop tracking (Task 4's Open
-        Decision: sections are rebuilt fresh from `self.stored` every call, never cached).
+        spec Section 5.3.2), computes one Feed-out loss fraction per section, then applies it to the
+        dry matter fed out over `elapsed_days` (rate times days), front section first — achieving
+        `Silostg.for:922-933`'s section-uniform-quality semantics without discarding RuFaS's
+        individual-crop tracking (Task 4's Open Decision: sections are rebuilt fresh from
+        `self.stored` every call, never cached).
 
         **Known, cited simplification (design spec Section 7):** uses the flat, unscaled
         `width_m * height_m` for `CSAF`, not `Silostg.for:567-571`'s `width * settled_height`
@@ -1538,19 +1587,23 @@ class Bunker(Silage):
             return
         face_area_m2 = self.width_m * self.height_m
         feed_out_rate = self._get_or_compute_feed_out_rate_kg_dm_per_day()
-        for section in build_feed_out_sections(self.stored, feed_out_rate):
-            loss_fraction = calculate_feed_out_loss(
-                section.dry_matter_fraction,
-                section.ndf_fraction,
-                section.crude_protein_fraction,
-                section.ash_fraction,
-                section.is_alfalfa,
-                feed_out_rate,
-                self.dry_matter_density_kg_per_m3,
-                face_area_m2,
+        groups = [
+            (
+                section.crops,
+                calculate_feed_out_loss(
+                    section.dry_matter_fraction,
+                    section.ndf_fraction,
+                    section.crude_protein_fraction,
+                    section.ash_fraction,
+                    section.is_alfalfa,
+                    feed_out_rate,
+                    self.dry_matter_density_kg_per_m3,
+                    face_area_m2,
+                ),
             )
-            for crop in section.crops:
-                self._apply_feed_out_loss(crop, loss_fraction)
+            for section in build_feed_out_sections(self.stored, feed_out_rate)
+        ]
+        self._apply_feed_out_front_first(groups, feed_out_rate * elapsed_days)
 
 
 class Pile(Silage):
@@ -1622,12 +1675,13 @@ class Pile(Silage):
             crop, elapsed_days, self.__class__.__name__, self.width_m, self.height_m, self.dry_matter_density_kg_per_m3
         )
 
-    def _process_feed_out(self) -> None:
+    def _process_feed_out(self, elapsed_days: float) -> None:
         """See `Silage._process_feed_out`. Composites `self.stored` into vertical sections (design
-        spec Section 5.3.2), computes one Feed-out loss fraction per section, then applies that same
-        fraction to every crop in the section — achieving `Silostg.for:922-933`'s section-uniform-
-        quality semantics without discarding RuFaS's individual-crop tracking (Task 4's Open
-        Decision: sections are rebuilt fresh from `self.stored` every call, never cached).
+        spec Section 5.3.2), computes one Feed-out loss fraction per section, then applies it to the
+        dry matter fed out over `elapsed_days` (rate times days), front section first — achieving
+        `Silostg.for:922-933`'s section-uniform-quality semantics without discarding RuFaS's
+        individual-crop tracking (Task 4's Open Decision: sections are rebuilt fresh from
+        `self.stored` every call, never cached).
 
         **Known, cited simplification (design spec Section 7):** uses the flat, unscaled
         `width_m * height_m` for `CSAF`, not `Silostg.for:567-571`'s `width * settled_height`
@@ -1640,19 +1694,23 @@ class Pile(Silage):
             return
         face_area_m2 = self.width_m * self.height_m
         feed_out_rate = self._get_or_compute_feed_out_rate_kg_dm_per_day()
-        for section in build_feed_out_sections(self.stored, feed_out_rate):
-            loss_fraction = calculate_feed_out_loss(
-                section.dry_matter_fraction,
-                section.ndf_fraction,
-                section.crude_protein_fraction,
-                section.ash_fraction,
-                section.is_alfalfa,
-                feed_out_rate,
-                self.dry_matter_density_kg_per_m3,
-                face_area_m2,
+        groups = [
+            (
+                section.crops,
+                calculate_feed_out_loss(
+                    section.dry_matter_fraction,
+                    section.ndf_fraction,
+                    section.crude_protein_fraction,
+                    section.ash_fraction,
+                    section.is_alfalfa,
+                    feed_out_rate,
+                    self.dry_matter_density_kg_per_m3,
+                    face_area_m2,
+                ),
             )
-            for crop in section.crops:
-                self._apply_feed_out_loss(crop, loss_fraction)
+            for section in build_feed_out_sections(self.stored, feed_out_rate)
+        ]
+        self._apply_feed_out_front_first(groups, feed_out_rate * elapsed_days)
 
 
 class Bag(Silage):
@@ -1718,8 +1776,8 @@ class Bag(Silage):
             return 0.0
         return calculate_bag_infiltration_loss(crop, elapsed_days, self.diameter_m, self.dry_matter_density_kg_per_m3)
 
-    def _process_feed_out(self) -> None:
-        """See `Silage._process_feed_out`. Applies Feed-out per crop directly — a `Bag` has no
+    def _process_feed_out(self, elapsed_days: float) -> None:
+        """See `Silage._process_feed_out`. Applies Feed-out per crop directly, oldest crop first — a `Bag` has no
         vertical stack, so it needs no section compositing (design spec Section 5.2/5.3.2). Reuses
         `_preseal_exposed_area_m2` for the feedout face area — both are the bag's circular
         cross-section, `pi * radius**2` (Silostg.for:310-313, `CSAF = CSA` for the tower branch bags
@@ -1730,16 +1788,20 @@ class Bag(Silage):
         if face_area_m2 is None:
             return
         feed_out_rate = self._get_or_compute_feed_out_rate_kg_dm_per_day()
-        for crop in self.stored:
-            dry_matter_fraction = crop.dry_matter_percentage * GeneralConstants.PERCENTAGE_TO_FRACTION
-            loss_fraction = calculate_feed_out_loss(
-                dry_matter_fraction,
-                crop.ndf * GeneralConstants.PERCENTAGE_TO_FRACTION,
-                crop.crude_protein_percent * GeneralConstants.PERCENTAGE_TO_FRACTION,
-                crop.ash * GeneralConstants.PERCENTAGE_TO_FRACTION,
-                crop.is_alfalfa,
-                feed_out_rate,
-                self.dry_matter_density_kg_per_m3,
-                face_area_m2,
+        groups = [
+            (
+                [crop],
+                calculate_feed_out_loss(
+                    crop.dry_matter_percentage * GeneralConstants.PERCENTAGE_TO_FRACTION,
+                    crop.ndf * GeneralConstants.PERCENTAGE_TO_FRACTION,
+                    crop.crude_protein_percent * GeneralConstants.PERCENTAGE_TO_FRACTION,
+                    crop.ash * GeneralConstants.PERCENTAGE_TO_FRACTION,
+                    crop.is_alfalfa,
+                    feed_out_rate,
+                    self.dry_matter_density_kg_per_m3,
+                    face_area_m2,
+                ),
             )
-            self._apply_feed_out_loss(crop, loss_fraction)
+            for crop in self.stored
+        ]
+        self._apply_feed_out_front_first(groups, feed_out_rate * elapsed_days)
