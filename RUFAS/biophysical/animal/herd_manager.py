@@ -144,8 +144,23 @@ class HerdManager:
         scenario : AnimalGroupingScenario
                 The scenario to set the animal grouping scenario to.
 
-        """
+        Raises
+        ------
+        NotImplementedError
+            If the scenario cannot drive a run. COW_CALF_STOCKER_FEEDLOT maps
+            its combinations correctly, but a run reaches a beef cow that pen
+            assignment cannot resolve, so it is rejected here rather than
+            part-way through.
 
+        """
+        if scenario is AnimalGroupingScenario.COW_CALF_STOCKER_FEEDLOT:
+            raise NotImplementedError(
+                "COW_CALF_STOCKER_FEEDLOT cannot be used for a simulation run. A replacement "
+                "heifer promoting to BEEF_COW on first calving reaches pen assignment, which "
+                "cannot resolve BEEF_COW to a combination without runtime dispatch on "
+                "reproduction state. Use BEEF_COW_CALF_HERD or BEEF_STOCKER_ONLY until that "
+                "dispatch exists."
+            )
         cls.ANIMAL_GROUPING_SCENARIO = scenario
 
     def __init__(
@@ -1232,6 +1247,10 @@ class HerdManager:
             Day of simulation.
 
         """
+        # No NotImplementedError handler here, deliberately: an animal that cannot be
+        # resolved has no correct pen, and skipping it would drop its ration and manure
+        # from farm totals — a wrong number rather than a missing one. Scenarios that
+        # can reach this state are rejected in set_animal_grouping_scenario instead.
         animal_combination = self.ANIMAL_GROUPING_SCENARIO.find_animal_combination(animal)
         pen_with_min_stocking_density = min(
             self.pens_by_animal_combination[animal_combination],

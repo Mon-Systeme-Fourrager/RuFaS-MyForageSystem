@@ -15,7 +15,7 @@ import math
 from dataclasses import dataclass, field
 
 from RUFAS.biophysical.animal.animal_module_constants import AnimalModuleConstants
-from RUFAS.biophysical.animal.data_types.animal_enums import Sex
+from RUFAS.biophysical.animal.data_types.animal_enums import Sex, StockerDietSystem
 from RUFAS.biophysical.animal.data_types.animal_types import AnimalType
 from RUFAS.biophysical.animal.data_types.nutrition_data_structures import NutritionRequirements
 from RUFAS.biophysical.animal.nutrients.beef_nrc_requirements_calculator import BeefNRCRequirementsCalculator
@@ -23,6 +23,7 @@ from RUFAS.biophysical.animal.nutrients.nutrition_requirements_calculator import
     NutritionRequirementsCalculator,
 )
 from RUFAS.biophysical.animal.ration.amino_acid import EssentialAminoAcidRequirements
+from RUFAS.general_constants import GeneralConstants
 
 
 @dataclass
@@ -51,6 +52,18 @@ class StockerRequirementsInputs:
         NEm concentration of the current ration (Mcal/kg DM). Drives Eq.10-5 DMI.
     mud_condition : str
         'none', 'mild', or 'severe'; drives NRC 2016 mud multiplier. Defaults to 'none'.
+    diet_system : StockerDietSystem
+        Active stocker diet system. LIMIT_FEED caps predicted DMI; PASTURE and
+        DRYLOT_FORAGE leave it at ad libitum. Defaults to PASTURE.
+    limit_feed_pct : float
+        DMI ceiling as a percentage of ad libitum intake, applied only when
+        diet_system is LIMIT_FEED. Must be in (0, 100] and math.isfinite.
+    relative_humidity_pct : float | None
+        Relative humidity (0-100%) for the THI heat stress modifiers. None
+        disables heat stress and leaves DMI and maintenance energy unchanged.
+    compensatory_gain_factor : float
+        ADG multiplier earned by prior nutritional restriction. 1.0 means no
+        compensatory gain. Clamped to CG_MAX_ADG_MULTIPLIER.
 
     """
 
@@ -63,6 +76,10 @@ class StockerRequirementsInputs:
     temperature_c: float
     ne_diet_concentration: float
     mud_condition: str = field(default=AnimalModuleConstants.BEEF_MUD_CONDITION_NONE)
+    diet_system: StockerDietSystem = field(default=StockerDietSystem.PASTURE)
+    limit_feed_pct: float = field(default=AnimalModuleConstants.STOCKER_DEFAULT_LIMIT_FEED_PCT)
+    relative_humidity_pct: float | None = field(default=None)
+    compensatory_gain_factor: float = field(default=1.0)
 
 
 class BeefStockerRequirementsCalculator(NutritionRequirementsCalculator):
@@ -97,19 +114,31 @@ class BeefStockerRequirementsCalculator(NutritionRequirementsCalculator):
         msbw: float = inputs.mature_body_weight * 0.96
         eqsbw: float = BeefNRCRequirementsCalculator._calculate_eqsbw(sbw, msbw)
         eqebw: float = BeefNRCRequirementsCalculator._calculate_eqebw(eqsbw)
-        ebg: float = inputs.target_adg * 0.956
+        effective_adg: float = BeefNRCRequirementsCalculator._apply_compensatory_gain(
+            inputs.target_adg, inputs.compensatory_gain_factor
+        )
+        ebg: float = effective_adg * 0.956
 
         ne_maintenance: float = BeefNRCRequirementsCalculator._calculate_maintenance_energy(
             sbw, inputs.breed, inputs.sex, "Open_Lot", inputs.mud_condition, inputs.temperature_c
         )
         ne_growth: float = BeefNRCRequirementsCalculator._calculate_growth_energy(eqebw, ebg)
-        np_growth: float = BeefNRCRequirementsCalculator._calculate_np_growth(inputs.target_adg, ne_growth)
+        np_growth: float = BeefNRCRequirementsCalculator._calculate_np_growth(effective_adg, ne_growth)
         mp: float = BeefNRCRequirementsCalculator._calculate_metabolizable_protein(inputs.body_weight, np_growth, eqsbw)
 
         calcium: float = BeefNRCRequirementsCalculator._calculate_calcium(sbw, np_growth)
         phosphorus: float = BeefNRCRequirementsCalculator._calculate_phosphorus(sbw, np_growth)
 
-        dmi: float = cls._calculate_dmi(inputs.body_weight, inputs.ne_diet_concentration)
+        dmi: float = cls._calculate_dmi(
+            inputs.body_weight,
+            inputs.ne_diet_concentration,
+            inputs.diet_system,
+            inputs.limit_feed_pct,
+        )
+
+        dmi, ne_maintenance = BeefNRCRequirementsCalculator._apply_heat_stress(
+            dmi, ne_maintenance, inputs.temperature_c, inputs.relative_humidity_pct
+        )
 
         empty_aa = EssentialAminoAcidRequirements(
             histidine=0.0,
@@ -166,9 +195,21 @@ class BeefStockerRequirementsCalculator(NutritionRequirementsCalculator):
         if inputs.sex not in AnimalModuleConstants.SEX_NEm_MULTIPLIER:
             valid_sexes = ", ".join(str(s) for s in AnimalModuleConstants.SEX_NEm_MULTIPLIER)
             raise ValueError(f"sex must be one of {valid_sexes}; got {inputs.sex}.")
+        if not isinstance(inputs.diet_system, StockerDietSystem):
+            raise ValueError(f"diet_system must be a StockerDietSystem member, got {inputs.diet_system!r}")
+        if not math.isfinite(inputs.limit_feed_pct) or not 0.0 < inputs.limit_feed_pct <= 100.0:
+            raise ValueError(f"limit_feed_pct must be in (0, 100] and finite, got {inputs.limit_feed_pct}")
+        BeefNRCRequirementsCalculator.validate_relative_humidity(inputs.relative_humidity_pct)
+        BeefNRCRequirementsCalculator.validate_compensatory_gain_factor(inputs.compensatory_gain_factor)
 
     @classmethod
-    def _calculate_dmi(cls, body_weight: float, ne_diet_concentration: float) -> float:
+    def _calculate_dmi(
+        cls,
+        body_weight: float,
+        ne_diet_concentration: float,
+        diet_system: StockerDietSystem = StockerDietSystem.PASTURE,
+        limit_feed_pct: float = AnimalModuleConstants.STOCKER_DEFAULT_LIMIT_FEED_PCT,
+    ) -> float:
         """
         Predicted dry matter intake for forage-based stocker cattle (kg/d).
 
@@ -178,11 +219,17 @@ class BeefStockerRequirementsCalculator(NutritionRequirementsCalculator):
             Live body weight (kg).
         ne_diet_concentration : float
             NEm concentration of the ration (Mcal/kg DM).
+        diet_system : StockerDietSystem
+            Active diet system. LIMIT_FEED applies the intake ceiling; all other
+            members return ad libitum intake unchanged.
+        limit_feed_pct : float
+            Intake ceiling as a percentage of ad libitum, used only under LIMIT_FEED.
 
         Returns
         -------
         float
-            Predicted DMI (kg/d). NRC 2016 Eq.10-5 (forage-based growing cattle).
+            Predicted DMI (kg/d). NRC 2016 Eq.10-5 (forage-based growing cattle),
+            scaled by the limit-feed ceiling when limit-feeding is active.
             No pregnancy intercept and no lactation term — stocker animals
             neither gestate nor lactate.
 
@@ -192,10 +239,21 @@ class BeefStockerRequirementsCalculator(NutritionRequirementsCalculator):
         BEEF_DMI_MIN_NE_CONCENTRATION before division. This is a numerical
         guard against a near-zero denominator, not an NRC 2016 threshold.
 
+        The limit-feed ceiling is a management lever, not an NRC 2016 equation:
+        it scales predicted ad libitum intake by a configured percentage.
+
         """
         ne_c: float = max(ne_diet_concentration, AnimalModuleConstants.BEEF_DMI_MIN_NE_CONCENTRATION)
         bw075: float = body_weight**0.75
         ne_m_intake: float = bw075 * (
             AnimalModuleConstants.BEEF_DMI_COW_NE_QUAD * ne_c**2 + AnimalModuleConstants.BEEF_DMI_COW_NE_LINEAR * ne_c
         )
-        return ne_m_intake / ne_c if ne_m_intake > 0.0 else 0.0
+        ad_libitum_dmi: float = ne_m_intake / ne_c if ne_m_intake > 0.0 else 0.0
+
+        # UPSTREAM-COLLISION: RuminantFarmSystems/RuFaS PR #3248 rewrites
+        # this area (IntakeOption enum, ~278 lines in ration_manager.py).
+        # Reconcile at sync: this cap should become a fourth IntakeOption
+        # member taking a percentage of predicted DMI.
+        if diet_system is StockerDietSystem.LIMIT_FEED:
+            return ad_libitum_dmi * limit_feed_pct * GeneralConstants.PERCENTAGE_TO_FRACTION
+        return ad_libitum_dmi

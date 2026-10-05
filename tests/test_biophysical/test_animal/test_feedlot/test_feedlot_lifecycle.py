@@ -44,6 +44,7 @@ def _make_feedlot_animal(
     animal.cumulative_dmi = 0.0
     animal.receiving_stress = days_on_feed <= AnimalModuleConstants.RECEIVING_PERIOD_DAYS
     animal.step_up_phase = ""
+    animal.compensatory_gain_factor = 1.0
     animal.events = AnimalEvents()
     animal.sold_at_day = None
     animal.cull_reason = ""
@@ -261,6 +262,7 @@ def test_calculate_nutrition_requirements_routes_to_beef_calculator(mocker: Mock
     animal.sex = Sex.STEER
     animal.days_on_feed = 30
     animal.previous_nutrition_supply = None
+    animal.compensatory_gain_factor = 1.0
 
     result = animal.calculate_nutrition_requirements(
         housing="Open_Lot",
