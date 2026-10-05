@@ -2,14 +2,15 @@
 
 Two source groups, each cited per-constant below:
 
-- DAFOSYM respiration/rain terms (Eq.7, 9, 10, 11) -- Rotz, Black, Mertens &
-  Buckmaster (1989), "DAFOSYM" (PDF in ``00-inbox/``).
-- Rotz & Chen (1985) drying-rate coefficients (Eq.2/Eq.5) -- "Alfalfa Drying
-  Model for the Field Environment," *Trans. ASAE* 28(5):1686-1691 (PDF in
-  ``00-inbox/``).
+- DAFOSYM respiration/rain terms (Eq.7, 9, 10, 11) -- Rotz, C.A., Black, J.R.,
+  Mertens, D.R. & Buckmaster, D.R. (1989), "DAFOSYM: A Model of the Dairy
+  Forage System," *J. Prod. Agric.* 2(1):83-91.
+- Rotz & Chen (1985) drying-rate coefficients (Eq.1/2/5) -- Rotz, C.A. & Chen,
+  Y. (1985), "Alfalfa Drying Model for the Field Environment," *Trans. ASAE*
+  28(5):1686-1691.
 
-Both are primary sources, verified 2026-09-16 (see
-``PLAN_add-preharvest-field-curing-phase.md``).
+Both are primary sources. Full entries are in
+``docs/scientific/resources/crop_and_soil.bib``.
 """
 
 CELSIUS_TO_FAHRENHEIT_SCALE: float = 9.0 / 5.0
@@ -91,20 +92,13 @@ DRYING_RATE_DRY_BULB_COEFFICIENT: float = 5.42
 DRYING_RATE_SOLAR_APPLICATION_COEFFICIENT above for the full equation and
 citation.
 
-**OPEN VERIFICATION ITEM (deliberately left open, not resolved by this
-change)**: DB's units in Rotz & Chen (1985)'s own Eq.5 are not
-independently confirmed here -- `dry_bulb_drying_rate` (field_curing.py)
-passes `dry_bulb_temp_c` through as Celsius, unconverted, pending this.
-`Curing_DRAFT_Rotz1985_1995.md`'s glossary
-(05-dev/msf/fourrager/04_Resources/) states "DB DRY BULB TEMPERATURE, DEG C"
-for this same equation, but that file is itself a secondary reconstruction,
-not the primary paper's own stated units (a prior OCR extraction of
-Rotz1985.pdf's own Table 2 was garbled and inconclusive on this point).
-Re-read `00-inbox/silage_pdfs/Rotz1985.pdf`'s Notation/Methods section
-directly for DB's stated units before treating this as resolved -- if it
-turns out to need Fahrenheit, convert at the call site using
-`CELSIUS_TO_FAHRENHEIT_SCALE`/`_OFFSET` above, alongside the confirmed
-DAFOSYM (Eq.7/9/10) conversions."""
+DB is dry-bulb air temperature in deg C. Rotz & Chen (1985), Trans. ASAE
+28(5):1686-1691, Table 2 (p.1690) lists "Dry bulb temperature" in deg C (10 to
+40, typical 30) for the Eq.5 sensitivity analysis, and the table's own values
+reproduce under Celsius: with DB = 30, SD = 450 g/m2, SM = 17 %db and DAY = 1,
+Eq.5 gives DR = 0.033/h at SI = 0 and 0.226/h at SI = 950 W/m2, the table's
+minimum and maximum solar-insolation rows. A Fahrenheit reading does not
+reproduce them."""
 
 DRYING_RATE_SOIL_MOISTURE_COEFFICIENT: float = 66.4
 """Soil-moisture (SM) coefficient of Eq.5's denominator -- see
@@ -142,16 +136,32 @@ dataclass's own docstring says only "Incoming light radiation energy
 (MJ/m^2)", not explicitly "daily total"; treating it as one is a reasonable
 but not literally-confirmed inference from context) into the average W/m2
 (instantaneous power flux) that Rotz & Chen (1985) states `SI` is measured in
-(confirmed directly in the paper's own parameter list, 'SI = solar
-insolation, W/m2'). Standard J/s <-> J/day identity (1e6 J/MJ / 86400 s/day),
-not an invented equation -- but note this yields a *daily-average* SI, and
-the paper's own field methodology for what SI value they used per data
-point was never independently verified. **OPEN VERIFICATION ITEM**: the
-methodological match between "daily average" and what Rotz & Chen actually
-measured remains open, lower-priority, same class as the DB-units item
-above."""
+(Rotz & Chen 1985, Trans. ASAE 28(5):1686-1691, p.1689, parameter list
+under Eq.3: 'SI = solar insolation, W/m2'). Standard J/s <-> J/day identity
+(1e6 J/MJ / 86400 s/day).
+
+This yields a daily-mean SI, which is consistent with the paper. Solar
+insolation was measured hourly (p.1687), and DR is linear in SI (Eq.5), so DR
+computed from the daily-mean SI equals the time-averaged DR. The paper states
+(p.1688, after Eq.1) that M(t) = M0*exp(-DR*T) predicts the same end-of-day
+moisture regardless of how the day is divided into periods, as long as the
+average DR over those periods is used. Limitation: the paper excluded
+early-morning (before 10:00) and dew-wetted cases (p.1687), so applying a
+daily-mean DR over 24 h also credits night-time hours (SI = 0) with the
+dry-bulb term's drying, which the paper did not calibrate."""
 
 SWATH_MOISTURE_EQUILIBRIUM_FRACTION: float = 0.0
-"""Equilibrium moisture content, set to zero per Rotz & Chen (1985)'s own
-finding that it provided the best fit in the 80-20% wb range (see paper
-text before Eq.2) -- M(t) = M0*exp(-DR*T) reduces to this when Me=0."""
+"""Equilibrium moisture content, dry basis (kg water/kg DM), in Eq.2:
+M = M0*exp(-DR*T) reduces to this when Me = 0. Rotz & Chen (1985), Trans.
+ASAE 28(5):1686-1691, p.1688: Me = 0 gave the best fit (R2 about 0.6, against
+about 0.4 for an equilibrium moisture from Savoie et al. 1982) in the
+80-20 % wet-basis range. Me is dry basis like M itself (Eq.1 notation)."""
+
+SWATH_MOISTURE_LOWER_BOUND_WET_BASIS_FRACTION: float = 0.20
+"""Wet-basis moisture fraction below which Eq.2 is not applied further: the
+swath stops drying at this value. Rotz & Chen (1985), Trans. ASAE
+28(5):1686-1691, p.1688: the model gave the best fit "in the range of 80 to
+20 % moisture content (wb)", and cases where the samples had dropped below
+20 % wb were excluded from model development (pp.1687, 1689), so Eq.2 is not
+validated below this value. A crop already drier than this at cutting is left
+unchanged."""

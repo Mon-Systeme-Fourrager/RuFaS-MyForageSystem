@@ -49,9 +49,8 @@ from RUFAS.general_constants import GeneralConstants
 _DRYING_RATE_DAY_TERM_MOWING_DAY: float = 1.0
 """DAY value (Eq.5's DAY term) on the day the crop is mowed. Rotz & Chen
 (1985) state this plainly in their own parameter list (Trans. ASAE
-28(5):1686-1691, p.1688): "DAY = 1 for first day, 0 otherwise" -- a boolean
-flag, not a running day count. Verified directly against the primary source
-2026-09-16 (00-inbox/silage_pdfs/Rotz1985.pdf)."""
+28(5):1686-1691, p.1689, under Eq.3): "DAY = 1 for first day, 0 otherwise" --
+a boolean flag, not a running day count."""
 
 _DRYING_RATE_DAY_TERM_SUBSEQUENT_DAY: float = 0.0
 """DAY value (Eq.5's DAY term) on every day after the mowing day -- see
@@ -117,12 +116,8 @@ class FieldCuring:
             ``field_curing_constants.MJ_PER_M2_DAY_TO_W_PER_M2`` -- this
             function does not accept the raw MJ/m2 value.
         dry_bulb_temp_c : float
-            Dry-bulb air temperature, deg C. Passed through as Celsius pending
-            an open verification item on Eq.5's stated units (see
-            ``field_curing_constants.DRYING_RATE_DRY_BULB_COEFFICIENT``'s
-            docstring) -- if that check finds Eq.5 needs Fahrenheit, convert at
-            the call site using ``CELSIUS_TO_FAHRENHEIT_SCALE``/``_OFFSET`` and
-            rename this parameter to ``dry_bulb_temp_f``.
+            Dry-bulb air temperature, deg C (Eq.5's DB is in deg C; see
+            ``field_curing_constants.DRYING_RATE_DRY_BULB_COEFFICIENT``).
         soil_moisture_at_mowing : float
             Soil moisture, % dry basis.
         swath_density : float
@@ -146,9 +141,9 @@ class FieldCuring:
         References
         ----------
         [SC.CRP.79] Rotz & Chen (1985), "Alfalfa Drying Model for the Field
-        Environment," Trans. ASAE 28(5):1686-1691, Eq.5 (dry-bulb-temperature
-        form, chosen over the paper's Eq.4 VPD form because RuFaS tracks no
-        humidity/VPD anywhere).
+        Environment," Trans. ASAE 28(5):1686-1691, Eq.5, p.1689
+        (dry-bulb-temperature form, chosen over the paper's Eq.4 VPD form
+        because RuFaS tracks no humidity/VPD anywhere).
 
         """
         day_term = _DRYING_RATE_DAY_TERM_MOWING_DAY if is_mowing_day else _DRYING_RATE_DAY_TERM_SUBSEQUENT_DAY
@@ -187,19 +182,39 @@ class FieldCuring:
         Returns
         -------
         float
-            Wet-basis moisture fraction (0-1) after ``elapsed_hours``.
+            Wet-basis moisture fraction (0-1) after ``elapsed_hours``. Never below
+            ``SWATH_MOISTURE_LOWER_BOUND_WET_BASIS_FRACTION`` (20 % wet basis), or below the initial moisture
+            if that was already drier.
 
         Notes
         -----
-        M = M0*exp(-DR*T), equilibrium moisture 0.
+        Eq.2 is written in dry-basis moisture, M = Me + (M0 - Me)*exp(-DR*T) with Me = 0, so the wet-basis
+        input is converted (M = Mwb/(1-Mwb)), dried, and converted back (Mwb = M/(1+M)). Applying Eq.2 to the
+        wet-basis fraction directly overstates drying: 80 % wet basis is 4.0 kg water/kg DM, not 0.8.
+
+        The result is floored at 20 % wet basis, the lower end of the range in which Rotz & Chen fitted and
+        validated Eq.2. Below it the equation is unvalidated and would otherwise dry the swath toward 0 %
+        moisture.
+
+        A swath at 100 % wet-basis moisture (0 % dry matter, which the input schema permits) has no dry-basis
+        value, so it is returned unchanged.
 
         References
         ----------
-        [SC.CRP.80] Rotz & Chen (1985), Trans. ASAE 28(5):1686-1691, Eq.2.
+        [SC.CRP.80] Rotz & Chen (1985), Trans. ASAE 28(5):1686-1691, Eq.1-2 and the moisture-basis notation,
+        p.1688.
 
         """
+        if initial_moisture_fraction >= 1.0:
+            return initial_moisture_fraction
         equilibrium = fcc.SWATH_MOISTURE_EQUILIBRIUM_FRACTION
-        return equilibrium + (initial_moisture_fraction - equilibrium) * math.exp(-drying_rate_per_hour * elapsed_hours)
+        initial_dry_basis = initial_moisture_fraction / (1.0 - initial_moisture_fraction)
+        dried_dry_basis = equilibrium + (initial_dry_basis - equilibrium) * math.exp(
+            -drying_rate_per_hour * elapsed_hours
+        )
+        dried_wet_basis = dried_dry_basis / (1.0 + dried_dry_basis)
+        floor = min(initial_moisture_fraction, fcc.SWATH_MOISTURE_LOWER_BOUND_WET_BASIS_FRACTION)
+        return max(dried_wet_basis, floor)
 
     @staticmethod
     def respiration_dm_loss_fraction(avg_moisture_wet_basis_fraction: float, avg_temp_f: float) -> float:
@@ -550,11 +565,8 @@ class FieldCuring:
         day's drying-rate DR from that day's weather;
         compute respiration ([SC.CRP.81], day-period + night-period) and rain
         losses ([SC.CRP.82]/[SC.CRP.83]) using the moisture at the START of the
-        day (before that day's drying is applied) -- this matches the primary
-        source's own convention (``RESPLOSS(TA, M, DT, DMLOSS)`` in
-        ``Curing_DRAFT_Rotz1985_1995.md`` takes ``M`` as an input separate from
-        ``DRYMOIST(MO, DR, DT, MC)``'s output ``MC``: the moisture going into a
-        period, not the moisture resulting from it). Using end-of-day moisture
+        day (before that day's drying is applied): the moisture going into a
+        period, not the moisture resulting from it. Using end-of-day moisture
         instead would zero out an entire day's respiration the instant the
         swath crosses the 0.27 threshold mid-day, even though it was wet for
         most of it. Moisture is then advanced to the end of the day (for use as

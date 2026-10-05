@@ -70,13 +70,36 @@ def test_dry_bulb_drying_rate_day_term_matches_primary_source() -> None:
 
 @pytest.mark.unit
 def test_swath_moisture_content_decay() -> None:
-    """M decreases monotonically with elapsed time and approaches the
-    (zero) equilibrium moisture as T grows large."""
+    """M decreases monotonically with elapsed time and stops at the 20 % wet-basis floor (Rotz & Chen 1985,
+    p.1688: the range in which Eq.2 was fitted) however long the drying period."""
     m_early = FieldCuring.swath_moisture_content(0.75, 0.05, 10.0)
     m_later = FieldCuring.swath_moisture_content(0.75, 0.05, 20.0)
     m_huge = FieldCuring.swath_moisture_content(0.75, 0.05, 10000.0)
     assert m_later < m_early
-    assert m_huge == pytest.approx(0.0, abs=1e-6)
+    assert m_huge == pytest.approx(fcc.SWATH_MOISTURE_LOWER_BOUND_WET_BASIS_FRACTION)
+
+
+@pytest.mark.unit
+def test_swath_moisture_content_is_dry_basis_exponential() -> None:
+    """Eq.2's M is dry basis (Rotz & Chen 1985, p.1688). 0.75 wet basis is 3.0 kg water/kg DM, which decays to
+    3.0*exp(-0.05*10) = 1.8196 dry basis, i.e. 1.8196/2.8196 = 0.6453 wet basis. Applying the exponential to
+    the wet-basis fraction directly would give 0.75*exp(-0.5) = 0.4549 instead."""
+    expected_dry_basis = 3.0 * math.exp(-0.5)
+    expected_wet_basis = expected_dry_basis / (1.0 + expected_dry_basis)
+    assert FieldCuring.swath_moisture_content(0.75, 0.05, 10.0) == pytest.approx(expected_wet_basis)
+    assert expected_wet_basis == pytest.approx(0.6453387556075566)
+
+
+@pytest.mark.unit
+def test_swath_moisture_content_already_below_floor_is_unchanged() -> None:
+    """A swath already drier than the validated range is not re-wetted up to the floor."""
+    assert FieldCuring.swath_moisture_content(0.15, 0.05, 24.0) == pytest.approx(0.15)
+
+
+@pytest.mark.unit
+def test_swath_moisture_content_zero_dry_matter_is_unchanged() -> None:
+    """100 % wet-basis moisture (0 % DM, allowed by the input schema) has no dry-basis value; no ZeroDivisionError."""
+    assert FieldCuring.swath_moisture_content(1.0, 0.05, 24.0) == pytest.approx(1.0)
 
 
 @pytest.mark.unit
@@ -220,7 +243,7 @@ def test_simulate_field_curing_multiplicative_compounding() -> None:
     # Additive (WRONG model) would give a materially different mass;
     # asserting against it (inverted) guards against a regression to
     # additive compounding.
-    l1, l2 = 0.4330811415042567, 0.19645676313801055
+    l1, l2 = 0.4330811415042567, 0.20497237319303424
     expected_multiplicative_mass = 100.0 * (1.0 - l1) * (1.0 - l2)
     expected_additive_mass = 100.0 * (1.0 - (l1 + l2))
     assert result.dry_matter_mass_kg == pytest.approx(expected_multiplicative_mass, rel=1e-9)
@@ -365,3 +388,32 @@ def test_simulate_field_curing_percentage_to_fraction_moisture_conversion() -> N
     initial_moisture_fraction = 1.0 - 30.0 * GeneralConstants.PERCENTAGE_TO_FRACTION
     assert initial_moisture_fraction > fcc.FIELD_CURING_RESPIRATION_MOISTURE_THRESHOLD
     assert result.total_loss_fraction > 0.0
+
+
+def _june_day() -> CurrentDayConditions:
+    """A typical dry June day: 25 MJ/m2, mean 20 C (max 27 / min 13)."""
+    return CurrentDayConditions(
+        incoming_light=25.0,
+        min_air_temperature=13.0,
+        mean_air_temperature=20.0,
+        max_air_temperature=27.0,
+        precipitation=0.0,
+    )
+
+
+@pytest.mark.unit
+def test_simulate_field_curing_one_dry_day_reaches_haylage_range() -> None:
+    """PR #51 review: alfalfa cut at 80 % moisture on a typical dry June day must not arrive at storage as hay.
+    Independently derived: DR = 0.0744/h on the mowing day, 3.0 kg water/kg DM is 4.0 dry basis, 4.0 *
+    exp(-24*0.0744) = 0.6746 dry basis, 40.3 % wet basis, 59.7 % DM."""
+    result = FieldCuring.simulate_field_curing(100.0, 20.0, 20.0, 40.0, [_june_day()], 700.0, 17.0)
+    assert result.dry_matter_percentage == pytest.approx(59.7, abs=0.2)
+
+
+@pytest.mark.unit
+def test_simulate_field_curing_long_wilt_never_exceeds_validated_dry_matter() -> None:
+    """PR #51 review: a 3-day wilt used to deliver a crop at 99.3 % DM. Drying stops at the 20 % wet-basis floor,
+    so DM% is capped at 80 % however many dry days follow."""
+    result = FieldCuring.simulate_field_curing(100.0, 20.0, 20.0, 40.0, [_june_day()] * 3, 700.0, 17.0)
+    max_dry_matter_percentage = (1.0 - fcc.SWATH_MOISTURE_LOWER_BOUND_WET_BASIS_FRACTION) * 100.0
+    assert result.dry_matter_percentage == pytest.approx(max_dry_matter_percentage)

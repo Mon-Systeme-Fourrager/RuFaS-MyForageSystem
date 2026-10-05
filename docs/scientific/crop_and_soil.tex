@@ -5497,16 +5497,19 @@ The drying-rate constant is computed daily from that day's weather (dry-bulb-tem
             {\raggedleft \textbf{[SC.CRP.79]}\par}
             \vspace{0.5cm}
 
-where $DAY=1$ on the mowing day and $0$ on every subsequent day \citep{rotzchen1985}. The swath moisture content after an elapsed time is then:
+where $DAY=1$ on the mowing day and $0$ on every subsequent day \citep{rotzchen1985}. The drying curve of \cite{rotzchen1985} is written in dry-basis moisture ($M_{db}=M_{wb}/(1-M_{wb})$) with a zero equilibrium moisture, so the wet-basis swath moisture content after an elapsed time is:
    \vspace{0.2cm}
 
     \begin{center}
-        \(swath\_moisture\_content= initial\_moisture\_fraction \cdot e^{-drying\_rate \cdot elapsed\_hours}\)
+        \(M_{db}= \frac{initial\_moisture\_fraction}{1-initial\_moisture\_fraction} \cdot e^{-drying\_rate \cdot elapsed\_hours}\)\
+        \(swath\_moisture\_content= \max\left(\frac{M_{db}}{1+M_{db}},\ \min(initial\_moisture\_fraction,\ 0.20)\right)\)
     \end{center}
         \vspace{0.5cm}
 
             {\raggedleft \textbf{[SC.CRP.80]}\par}
             \vspace{0.5cm}
+
+The 0.20 floor is the lower end of the 80--20\% wet-basis range in which \cite{rotzchen1985} fitted and validated the curve; drying is not extended below it. The drying rate is applied at its daily-mean solar insolation, which is consistent with the time-averaged drying rate the paper describes, but it also credits night-time hours with drying that the paper did not calibrate (its early-morning and dew-wetted cases were excluded).
 
 Respiration dry-matter loss for one 12-hour period is estimated from the DAFOSYM model, and is zero below a wet-basis moisture threshold of 0.27:
    \vspace{0.2cm}
