@@ -1,6 +1,6 @@
 ---
 name: rufas-e2e-testing
-description: Run, set up, or update RuFaS end-to-end (E2E) regression tests. Use when adding E2E coverage for a domain (Animal, Feed Storage, Crop & Soil, Manure, …), updating expected results after an intended output change, or diagnosing an E2E failure. Mirrors the RuFaS wiki "End-to-End Testing" guide.
+description: Run, set up, or update RuFaS end-to-end (E2E) regression tests. Use when adding E2E coverage for an input set or domain (Animal, Feed, Crop & Soil, Manure, …), updating expected results after an intended output change, or diagnosing an E2E failure. Mirrors the RuFaS wiki "End-to-End Testing" guide.
 ---
 
 # RuFaS End-to-End (E2E) testing
@@ -11,17 +11,32 @@ difference fails the domain's E2E test. This guards against unintended changes t
 numeric model output.
 
 Source of truth: the RuFaS wiki
-[End‐to‐End Testing](https://github.com/RuminantFarmSystems/RuFaS/wiki/End%E2%80%90to%E2%80%90End-Testing).
+[End‐to‐End Testing](https://github.com/RuminantFarmSystems/RuFaS/wiki/End%E2%80%90to%E2%80%90End-Testing)
+(also `docs/_src/_wiki/End‐to‐End-Testing.rst`).
 
-## Run E2E for all configured domains
+## Key terms
+
+- **Domain** — a model module (Animal, Feed, Crop & Soil, Manure).
+- **Filter file** (`e2e_json_{domain}_filter.json`) — filters + `expected_results`
+  + `expected_results_last_updated`.
+- **Comparison filter** (`e2e_comparison_{domain}_differences.json`) — collects the
+  actual-vs-expected differences.
+- **Results file** — per-domain output with a pass/fail boolean and the differences.
+
+## Run E2E for all configured input sets
 
 ```sh
 python main.py -p input/metadata/end_to_end_testing_tm_metadata.json
 ```
 
-Each domain (Feed Storage, Animal, Manure, Crop & Soil, …) is checked separately.
-Pass → logged normally; fail → logged as an error, with the differences written to
-`output/.../{domain}_e2e_results_<timestamp>.json`.
+Input sets live in `input/data/end_to_end_testing/`:
+
+- `freestall/` — Animal, Crop & Soil, Manure, Feed; one simulated year.
+- `open_lot/` — same domains; one simulated year.
+- `field_and_feed/` — no animals; Crop & Soil, Feed, Manure.
+
+Pass → logged normally; fail → logged as an error, differences written to
+`{output_prefix}_..._e2e_results_<timestamp>.json`.
 
 ## Update expected results (after an *intended* output change)
 
@@ -29,7 +44,7 @@ Pass → logged normally; fail → logged as an error, with the differences writ
 python main.py -p input/metadata/update_end_to_end_testing_tm_metadata.json -c
 ```
 
-This re-runs the simulation and, for each domain with differences, rewrites the
+This re-runs each input set and, for each domain with differences, rewrites
 `expected_results` in that domain's filter file and stamps
 `expected_results_last_updated`.
 
@@ -43,27 +58,37 @@ the plain E2E command to confirm it passes.
 > If unexpected domains show differences, **STOP and investigate** (compare actual
 > vs expected) — an output change you didn't intend is a red flag.
 
-## Add E2E coverage for a new domain
+## Add a new input set
 
-In `input/data/end_to_end_testing/`:
+Paths are under `input/`. Copy an existing set (`freestall`, `open_lot`) as the template.
 
-1. **Create two filter files** (prefixes are special — they pick the post-processing
-   pass; see `RUFAS/output_manager.py` for the supported `e2e_` prefixes):
-   - `e2e_json_{domain}_filter.json` — a normal JSON filter (`name`, `filters`)
-     **plus** an `expected_results` key (empty at setup — that's fine).
-   - `e2e_comparison_{domain}_differences.json` — a single-pattern filter that
-     collects the actual-vs-expected differences for the domain.
-2. **Register the domain** in
-   `input/data/end_to_end_testing/end_to_end_testing_result_paths.json`: add an
-   object with the domain `name`, the path to its expected-results filter file,
-   and the pattern that identifies the actual-results file. Use existing entries
-   as the template; **do not** create a new paths file.
-   - The `name` field must match the actual-results path, and the comparison
-     filter's domain must match the entry here — otherwise the comparison can't
-     line up actual and expected.
-3. Run the update command above to populate `expected_results`, then remove the
-   `// WARNING` line after human validation, then run the plain E2E command and
-   confirm the new domain passes.
+1. **Filter files**: create `data/end_to_end_testing/<set>/` with
+   `e2e_json_{domain}_filter.json` (`name`, `filters`, empty `expected_results`)
+   and `e2e_comparison_{domain}_differences.json` per domain.
+2. **Metadata**: create `metadata/end_to_end_testing/<set>_e2e_metadata.json`.
+3. **Test task**: add an object to `tasks` in `data/tasks/end_to_end_testing_task.json`:
+   `task_type: END_TO_END_TESTING`, `metadata_file_path`, `output_prefix`
+   (`<set>_e2e`), `filters_directory`, `log_verbosity: logs`,
+   `exclude_info_maps: true`, `random_seed: 42`. Note the prefix.
+4. **Update task**: add the matching object to
+   `data/tasks/update_end_to_end_expected_results.json` with
+   `task_type: UPDATE_E2E_TEST_RESULTS` and the same prefix and settings.
+5. **Result paths**: in `data/end_to_end_testing/end_to_end_testing_result_paths.json`,
+   add a key (the prefix) under `end_to_end_test_result_paths` holding a list of
+   `{domain, expected_results_path, actual_results_path, tolerance}`. Add to this
+   file; **do not** create a new one.
+6. **Properties**: in `metadata/properties/default.json`, in the
+   `end_to_end_test_result_paths` block, copy an existing entry (e.g. `freestall_e2e`)
+   and change the key to the prefix.
+7. Run the update command, review each updated filter file, remove the
+   `// WARNING` line.
+8. Run the plain E2E command and confirm every domain passes.
+
+## Add a domain to an existing input set
+
+1. Create the two filter files in that set's folder (step 1 above).
+2. Add the domain object to that set's list in `end_to_end_testing_result_paths.json`.
+3. Do steps 7–8 above.
 
 ## Example — Feed Storage filter files
 
@@ -86,10 +111,30 @@ In `input/data/end_to_end_testing/`:
 { "name": "feed_storage_e2e_results", "filters": ["FeedStorage.*"] }
 ```
 
+Result-paths entry:
+```json
+{
+  "domain": "FeedStorage",
+  "expected_results_path": "input/data/end_to_end_testing/freestall/e2e_json_feed_storage_filter.json",
+  "actual_results_path": "freestall_e2e_saved_variables_e2e_feed_storage_",
+  "tolerance": 0.1
+}
+```
+
 ## Gotchas
 
-- JSON filters (`e2e_json_`) run only in the **first** post-processing pass;
-  comparison filters (`e2e_comparison_`) only in the **second**.
-- A changed expected-result is a deliberate decision: it means the model output
-  moved. Confirm that's intended and note it in the PR (`[OutputChange]`).
-- Tolerances for float comparisons live in `RUFAS/e2e_test_results_handler.py`.
+- `actual_results_path` is a filename **prefix**: it starts with the task
+  `output_prefix` and ends with the filter file's `name` (the real file has a
+  timestamp). Clear old E2E outputs before re-running or a stale file may match.
+- The `domain` value must match the pattern in the comparison filter, or the
+  differences are not collected.
+- `e2e_json_` filters run only in the **first** post-processing pass;
+  `e2e_comparison_` filters only in the **second** (supported prefixes:
+  `RUFAS/output_manager.py`).
+- `tolerance` is a percent, set per domain in the result-paths file. The
+  comparison logic is in `RUFAS/e2e_test_results_handler.py`.
+- A changed expected result is a deliberate decision: the model output moved.
+  Confirm it is intended and note it in the PR (`[OutputChange]`).
+- The wiki is slightly behind the repo: it spells the paths file both
+  `..._results_paths.json` and `..._result_paths.json` (real name: `result_paths`)
+  and does not list `field_and_feed`.
