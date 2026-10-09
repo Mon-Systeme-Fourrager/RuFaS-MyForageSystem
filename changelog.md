@@ -130,6 +130,7 @@ v1.0.0
 - [3054](https://github.com/RuminantFarmSystems/RuFaS/pull/3054) - [minor change] [Animal] [Reproduction] [NoInputChange] [NoOutputChange] Adds early-exit guard in presynch and OvSynch hormone schedule setup to skip already-pregnant cows.
 - [3070](https://github.com/RuminantFarmSystems/RuFaS/pull/3070) - [minor change] [InputChange] [NoOutputChange] Removes `random_seed` field from all 6 config input files.
 - [3070](https://github.com/RuminantFarmSystems/RuFaS/pull/3070) - [minor change] [InputChange] [NoOutputChange] Removes the `random_seed` field from all 6 config input files and from 3 config input files in helpful_scripts.
+- [53](https://github.com/Mon-Systeme-Fourrager/RuFaS-MyForageSystem/pull/53) - [minor change] [Tooling] [NoInputChange] [NoOutputChange] Sync the `rufas-e2e-testing` skill with the E2E wiki: list the freestall, open_lot and field_and_feed input sets, add the full new-input-set steps and an add-a-domain section, fix the result-paths and update-task filenames, and note that tolerance is set per domain in the result-paths file.
 
 ### v1.0.0
 
