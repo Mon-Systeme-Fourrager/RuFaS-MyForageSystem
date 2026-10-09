@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import Dict, Any, List, Union, Optional, Type
 
@@ -1119,6 +1120,44 @@ def test_object_type_validator_key_removal(
 
     assert result
     assert dv.event_logs == expected_event_log
+
+
+def test_object_type_validator_preserves_field_curing_keys(mocker: MockerFixture) -> None:
+    """Regression for PR #51 review: wilt_days/swath_density/soil_moisture_at_mowing must be
+    declared in default.json's crop_configurations schema, or _object_type_validator strips
+    them as extraneous data before CropDataFactory ever sees them (crop_data_factory.py
+    declares them as NotRequired CropConfiguration fields, but the schema is the sole source
+    of truth for what survives validation)."""
+    input_path = Path("input/data/crop_configurations/default_crop_configs.json")
+    with open("input/metadata/properties/default.json") as f:
+        schema = json.load(f)
+    crop_configuration_properties = schema["crop_configuration_properties"]["crop_configurations"]["properties"]
+
+    data: dict[str | int, Any] = {
+        "name": "alfalfa_silage",
+        "wilt_days": 3,
+        "swath_density": 550.0,
+        "soil_moisture_at_mowing": 20.0,
+    }
+    mocker.patch.object(DataValidator, "_extract_data_by_key_list", return_value=data)
+    mocker.patch.object(DataValidator, "validate_data_by_type", return_value=True)
+    dv = DataValidator()
+
+    dv._object_type_validator(
+        ["crop_configurations", 0],
+        crop_configuration_properties,
+        {"dummy": "data"},
+        False,
+        "crop_configuration_properties",
+        mocker.MagicMock(),
+        True,
+        {"string", "number", "bool"},
+        input_path,
+    )
+
+    assert data.get("wilt_days") == 3
+    assert data.get("swath_density") == pytest.approx(550.0)
+    assert data.get("soil_moisture_at_mowing") == pytest.approx(20.0)
 
 
 @pytest.mark.parametrize(
