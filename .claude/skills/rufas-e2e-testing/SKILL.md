@@ -10,13 +10,15 @@ A run collects **actual** outputs and compares them to the expected values. Any
 difference fails the domain's E2E test. This guards against unintended changes to
 numeric model output.
 
-Source of truth: the RuFaS wiki
+Source of truth: this repo (the files under `input/`). The RuFaS wiki is the
+procedure reference
 [End‐to‐End Testing](https://github.com/RuminantFarmSystems/RuFaS/wiki/End%E2%80%90to%E2%80%90End-Testing)
 (also `docs/_src/_wiki/End‐to‐End-Testing.rst`).
 
 ## Key terms
 
-- **Domain** — a model module (Animal, Feed, Crop & Soil, Manure).
+- **Domain** — a model module, written in the result-paths file as `CropAndSoil`,
+  `Animal`, `Manure`, `Feed`.
 - **Filter file** (`e2e_json_{domain}_filter.json`) — filters + `expected_results`
   + `expected_results_last_updated`.
 - **Comparison filter** (`e2e_comparison_{domain}_differences.json`) — collects the
@@ -90,34 +92,37 @@ Paths are under `input/`. Copy an existing set (`freestall`, `open_lot`) as the 
 2. Add the domain object to that set's list in `end_to_end_testing_result_paths.json`.
 3. Do steps 7–8 above.
 
-## Example — Feed Storage filter files
+## Example — Feed filter files (freestall)
 
-`e2e_json_feed_storage_filter.json`:
+`freestall/e2e_json_feed_filter.json` (`expected_results` trimmed to one entry):
 ```json
 {
-  "name": "e2e_feed_storage",
-  "filters": ["Weather.*", "Time.*", "Baleage.*", "Bunker.*", "Pile.*", "Bag.*"],
-  "expected_results": {
-    "Weather.average_annual_temperature": {
-      "info_maps": [{ "prefix": "Weather", "units": "°C" }],
-      "values": [8.178051643192488]
+    "name": "e2e_feed",
+    "filters": ["Feed.*"],
+    "expected_results_last_updated": "03-Jun-2026_Wed_18-07-09",
+    "expected_results": {
+        "FeedManager.purchase_feed.ration_interval_202_cost": {
+            "values": [41.4, 44.85000000000001, 34.845, 27.03075, 27.5128875, 51.75, 67.275, 4.91625, 31.520062499999995, 56.925000000000004, 47.006249999999994, 56.925000000000004, 74.60624999999999]
+        }
     }
-  }
 }
 ```
 
-`e2e_comparison_feed_storage_differences.json`:
-```json
-{ "name": "feed_storage_e2e_results", "filters": ["FeedStorage.*"] }
-```
-
-Result-paths entry:
+`freestall/e2e_comparison_feed_differences.json`:
 ```json
 {
-  "domain": "FeedStorage",
-  "expected_results_path": "input/data/end_to_end_testing/freestall/e2e_json_feed_storage_filter.json",
-  "actual_results_path": "freestall_e2e_saved_variables_e2e_feed_storage_",
-  "tolerance": 0.1
+    "name": "feed_e2e_results",
+    "filters": ["Feed.*"]
+}
+```
+
+Entry in `end_to_end_testing_result_paths.json` under `freestall_e2e`:
+```json
+{
+    "domain": "Feed",
+    "expected_results_path": "input/data/end_to_end_testing/freestall/e2e_json_feed_filter.json",
+    "actual_results_path": "freestall_e2e_saved_variables_e2e_feed_",
+    "tolerance": 0.1
 }
 ```
 
