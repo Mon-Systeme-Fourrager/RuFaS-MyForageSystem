@@ -1,6 +1,6 @@
-# Slope and aspect API - McGill (Jeremie Durand)
+# Slope and aspect API - Université de Sherbrooke (Jérémie Durand)
 
-Provided by Jeremie Durand, McGill, 2026-07-24. Development server; report
+Provided by Jérémie Durand, Université de Sherbrooke, 2026-07-24. Development server; report
 bugs to him.
 
 Source data: MRNF Quebec LiDAR. Slope is a native product of that dataset at

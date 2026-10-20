@@ -103,8 +103,8 @@ approach.
   `soilphysics` v5.0 (GPL-2), which attributes them to Schjonning & Lamande
   (2018) and Stettler et al. (2014) respectively. See "Verified sources"
   for exact file references and SHA-256 hashes.
-- **Slope and aspect:** not currently used. An API from Jeremie Durand
-  (McGill) returns both per field polygon from MRNF Quebec LiDAR - see
+- **Slope and aspect:** not currently used. An API from Jérémie Durand
+  (Université de Sherbrooke) returns both per field polygon from MRNF Quebec LiDAR - see
   `slope_aspect_api.md`.
 
 ## References
@@ -125,7 +125,7 @@ approach.
 | Schjonning & Lamande (2018) | Not read. This is why `compaction_model.py` was removed — see Removed modules. |
 | Stettler et al. (2014) | Not read. Same reason. |
 | Compaction module | **Removed** 2026-08-20, not merely paused — see Removed modules. Slava Adamchuk had already advised against assembling a model from separate published components and has one coming. |
-| Slope and aspect | Not integrated. An API from Jeremie Durand (McGill, MRNF LiDAR) provides both per field polygon — see `slope_aspect_api.md`. |
+| Slope and aspect | Not integrated. An API from Jérémie Durand (Université de Sherbrooke, MRNF LiDAR) provides both per field polygon — see `slope_aspect_api.md`. |
 
 ## Removed modules
 
