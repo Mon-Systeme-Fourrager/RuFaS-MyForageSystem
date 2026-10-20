@@ -75,7 +75,7 @@ the boundary changes.
 
 ## Latency
 
-The documentation Jeremie provided says the first call per field takes a few
+The documentation Jérémie provided says the first call per field takes a few
 seconds for slope and a few minutes for aspect, with subsequent calls served
 from cache.
 
@@ -91,7 +91,7 @@ Measured, MSF fields in Saint-Zotique, 2026-07-25:
 Aspect was far faster than documented. Two possible reasons, neither
 confirmed: the DTM tile may already have been cached server-side, or the
 geometry was indexed by the preceding slope call and aspect reused it.
-Worth raising with Jeremie.
+Worth raising with Jérémie.
 
 ## Why both matter
 
