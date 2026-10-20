@@ -187,7 +187,7 @@ before production use.
 
 ## References
 
-- Jérémie Durand, McGill — LiDAR MRNF Quebec API (personal
+- Jérémie Durand, Université de Sherbrooke — LiDAR MRNF Quebec API (personal
   communication, 2026)
 - MRNF Quebec — LiDAR provincial data source (public)
 - Kevin Panke-Buisse, USDA — RUFAS module stability confirmed
