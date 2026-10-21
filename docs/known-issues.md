@@ -67,8 +67,9 @@ density of about 0.001 kg/m³; it should gain 9 970 kg.
   (`RUFAS/simulation_engine.py:84-88`) returns that type alone in this fork;
   upstream the same set also contains `MANURE_ONLY`. `simulate_manure` gates
   every manure code path.
-- **Not affected: `FIELD_ONLY`, `FIELD_AND_FEED`, `ANIMALS_ONLY`,
-  `FEED_ONLY`.** They never instantiate `ManureManager`, and when a field
+- **Not affected: `FIELD_ONLY`, `FIELD_AND_FEED`, `ANIMALS_ONLY`** — the
+  three other types this fork defines (`simulation_engine.py:51-54`).
+  They never instantiate `ManureManager`, and when a field
   requests manure nutrients the engine routes to
   `FieldManureSupplier.request_nutrients`, which does not read this constant.
 - **Not affected: feed storage / silage.** Grepping the tree for
