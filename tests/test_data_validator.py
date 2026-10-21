@@ -1186,6 +1186,8 @@ def test_default_crop_configs_pass_schema_validation_without_field_curing_keys()
     assert is_valid
     for crop_configuration in input_data["crop_configurations"]:
         assert crop_configuration["wilt_days"] == 0
+        assert crop_configuration["swath_density"] == pytest.approx(700.0)
+        assert crop_configuration["soil_moisture_at_mowing"] == pytest.approx(17.0)
 
 
 @pytest.mark.parametrize(
