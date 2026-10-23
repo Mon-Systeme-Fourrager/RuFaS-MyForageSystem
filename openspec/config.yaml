@@ -1,20 +1,44 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+# Project context — shown to AI when creating OpenSpec artifacts (proposals, specs, tasks).
+context: |
+  RuFaS (Ruminant Farm Systems) — whole-dairy-farm biophysical simulation model in Python
+  (animal, field/soil/crop, manure, feed-storage subsystems + an Economics/Energy/Emissions
+  layer). Entry point main.py -> TaskManager.start(...), driven by input JSON.
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+  This is the MyForageSystem (MSF) FORK. It integrates on branch `dev-msf` and is NEVER
+  merged back into upstream RuminantFarmSystems/RuFaS. Minimize divergence from upstream:
+  isolate fork-only changes in their own files and avoid reformatting or editing large
+  upstream-shared files, so re-syncing `dev-msf` with `RuFaS/dev` does not produce recurrent
+  merge conflicts.
+
+  Tooling — read every setting FROM its config file, never hard-code it (Python version,
+  line length, ignore lists, etc.): Black (pyproject [tool.black]); flake8 (.flake8);
+  mypy --strict (pyproject [tool.mypy]; CI ratchets the error count vs dev); pytest +
+  coverage (.github/.coveragerc); the supported Python version is pyproject requires-python.
+  Exact local commands: `black .`, `flake8 .`, `python -m mypy .`,
+  `coverage run --rcfile=.github/.coveragerc && coverage report --rcfile=.github/.coveragerc`.
+
+  Conventions (source of truth: CLAUDE.md and .claude/rules/style.md): full type hints;
+  NumPy-style docstrings + a unit test on every added/modified function; enums over string
+  literals for domain values; named constants (in *_constants.py, with NRC reference) over
+  magic numbers; None-safe config parsing (`is None`, not `or`). Do NOT "fix" accepted
+  legacy style (scientific sigils, published coefficients, dict[str, Any] at JSON
+  boundaries, god-object calculators).
+
+  Protected input fixtures under input/ (see .claude/rules/protected-inputs.md) must not be
+  edited. changelog.md is mandatory on every PR (CI enforces it); for tooling- or docs-only
+  PRs a brief one-line entry is enough.
+
+# Per-artifact rules.
+rules:
+  proposal:
+    - Follow what / why / how; link the GitHub issue; keep it concise.
+    - State the fork constraint: prefer changes that will not cause upstream-sync merge conflicts.
+    - Large work (~1 engineer-month or more) needs a design doc first (rufas-design-doc skill).
+  design:
+    - Cover data structures, subsystem connection objects, and unit / mass-balance integrity.
+  tasks:
+    - Break work into small, TDD-able tasks (RED -> GREEN -> REFACTOR).
+    - Each task keeps mypy strict clean and adds a NumPy docstring + test.
+    - Never edit protected input fixtures.

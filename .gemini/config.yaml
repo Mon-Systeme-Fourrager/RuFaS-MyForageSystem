@@ -1,0 +1,25 @@
+# Gemini Code Assist configuration — MyForageSystem fork of RuFaS.
+# Schema: https://developers.google.com/gemini-code-assist/docs/customize-gemini-behavior-github
+#
+# NOTE: the consumer version of Gemini Code Assist on GitHub is being sunset
+# (new org installs blocked 2026-06-18; reviews cease 2026-07-17). This config is kept so
+# that, while it runs, Gemini follows the same conventions as CodeRabbit and pre-commit.
+# The conventions themselves live in .gemini/styleguide.md (which points to CLAUDE.md).
+
+have_fun: false
+
+code_review:
+  disable: false
+  # Only surface findings that matter; the mechanical nits are handled by flake8 and mypy.
+  comment_severity_threshold: MEDIUM
+  max_review_comments: -1
+  pull_request_opened:
+    help: false
+    summary: true
+    code_review: true
+
+# Never review generated / non-model assets.
+ignore_patterns:
+  - "DataCollectionApp/**"
+  - "docs/_build/**"
+  - "**/__pycache__/**"
