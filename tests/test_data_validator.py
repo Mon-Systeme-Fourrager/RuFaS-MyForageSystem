@@ -1160,6 +1160,36 @@ def test_object_type_validator_preserves_field_curing_keys(mocker: MockerFixture
     assert data.get("soil_moisture_at_mowing") == pytest.approx(20.0)
 
 
+@pytest.mark.component
+def test_default_crop_configs_pass_schema_validation_without_field_curing_keys() -> None:
+    """Regression: wilt_days/swath_density/soil_moisture_at_mowing are opt-in, so default_crop_configs.json
+    (which omits them) must validate by falling back to the schema defaults, not fail as 'missing required value'."""
+    input_path = Path("input/data/crop_configurations/default_crop_configs.json")
+    with open(input_path) as f:
+        input_data = json.load(f)
+    with open("input/metadata/properties/default.json") as f:
+        crop_configuration_properties = json.load(f)["crop_configuration_properties"]
+
+    dv = DataValidator()
+    is_valid = dv.validate_data_by_type(
+        variable_path=["crop_configurations"],
+        variable_properties=crop_configuration_properties["crop_configurations"],
+        data=input_data,
+        eager_termination=False,
+        properties_blob_key="crop_configuration_properties",
+        elements_counter=ElementsCounter(),
+        called_during_initialization=True,
+        fixable_data_types={"string", "number", "bool"},
+        input_path=input_path,
+    )
+
+    assert is_valid
+    for crop_configuration in input_data["crop_configurations"]:
+        assert crop_configuration["wilt_days"] == 0
+        assert crop_configuration["swath_density"] == pytest.approx(700.0)
+        assert crop_configuration["soil_moisture_at_mowing"] == pytest.approx(17.0)
+
+
 @pytest.mark.parametrize(
     "variable_path, variable_properties, input_data, properties_blob_key," "expected_result, expected_warning",
     [
