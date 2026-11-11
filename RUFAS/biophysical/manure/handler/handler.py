@@ -175,6 +175,7 @@ class Handler(Processor):
         total_solids = self.manure_stream.total_solids
         methane_production_potential = self.manure_stream.methane_production_potential
         bedding_non_degradable_volatile_solids = self.manure_stream.bedding_non_degradable_volatile_solids
+        lignin = self.manure_stream.lignin
 
         self.manure_stream = None
         self._report_processor_output(
@@ -198,6 +199,7 @@ class Handler(Processor):
             methane_production_potential=methane_production_potential,
             pen_manure_data=None,
             bedding_non_degradable_volatile_solids=bedding_non_degradable_volatile_solids,
+            lignin=lignin,
         )
         self._report_manure_stream(output_stream, "", time.simulation_day)
 
@@ -208,7 +210,7 @@ class Handler(Processor):
     ) -> float:
         """
         Calculates the volume of fresh (non-recycled) cleaning water used for, and ultimately added to, a single manure
-         stream on a single simulation day by the manure handler.
+        stream on a single simulation day by the manure handler.
 
         Parameters
         ----------
@@ -226,9 +228,9 @@ class Handler(Processor):
 
         Notes
         -----
-        For parlor cleaning handlers, this water volume
-          represents an optional parlor flush (separate from fresh water only cleaning water). For all other handler
-           types, this water volume represents water use by handlers in the pen, such as a barn floor flush system.
+        For parlor cleaning handlers, this water volume represents an optional parlor flush (separate from fresh water
+        only cleaning water). For all other handler types, this water volume represents water use by handlers in the
+        pen, such as a barn floor flush system.
 
         """
         if self.handler_type in ["ManualScraper", "AlleyScraper", "FlushSystem"]:
@@ -283,14 +285,16 @@ class Handler(Processor):
     def determine_fresh_water_volume_used_for_milking(num_animals: int) -> float:
         """
         Calculates the volume of fresh water used for milking.
+
         Parameters
         ----------
         num_animals : int
             Number of animals.
+
         Returns
         -------
         float
-        The volume of fresh water used for milking (L).
+            The volume of fresh water used for milking (L).
 
         """
         return num_animals * ManureConstants.MILKING_FRESH_WATER_USE_RATE
@@ -331,7 +335,8 @@ class Handler(Processor):
 
         Returns
         -------
-        The amount of manure water (KG).
+        float
+            The amount of manure water (KG).
 
         """
         return manure_stream_water + (total_cleaning_water_volume * UserConstants.WATER_DENSITY_KG_PER_M3)

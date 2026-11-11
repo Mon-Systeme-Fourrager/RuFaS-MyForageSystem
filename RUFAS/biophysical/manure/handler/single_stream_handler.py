@@ -161,6 +161,7 @@ class SingleStreamHandler(Handler):
         )
         methane_production_potential = self.manure_stream.methane_production_potential
         bedding_non_degradable_solid = self.manure_stream.bedding_non_degradable_volatile_solids
+        lignin = self.manure_stream.lignin
 
         self.manure_stream = None
         self._report_processor_output(
@@ -184,6 +185,7 @@ class SingleStreamHandler(Handler):
             methane_production_potential=methane_production_potential,
             pen_manure_data=None,
             bedding_non_degradable_volatile_solids=bedding_non_degradable_solid,
+            lignin=lignin,
         )
         self._report_manure_stream(output_stream, "", time.simulation_day)
 
@@ -203,10 +205,6 @@ class SingleStreamHandler(Handler):
             The amount of housing methane emissions (kg).
         simulation_day : int
             The day of simulation.
-
-        Returns
-        -------
-        None
 
         """
         self._report_processor_output(
@@ -236,9 +234,9 @@ class SingleStreamHandler(Handler):
         Returns
         -------
         tuple[float, float, float]
-            The updated amount of degradable volatile solids (kg).
-            The updated amount of non-degradable volatile solids (kg).
-            The updated amount of total solids (kg).
+            - The updated amount of degradable volatile solids (kg).
+            - The updated amount of non-degradable volatile solids (kg).
+            - The updated amount of total solids (kg).
 
         """
         if self.manure_stream:

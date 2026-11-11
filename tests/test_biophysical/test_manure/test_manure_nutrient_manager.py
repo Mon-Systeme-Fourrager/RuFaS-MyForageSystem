@@ -10,6 +10,7 @@ from RUFAS.biophysical.manure.manure_nutrient_manager import ManureNutrientManag
 from RUFAS.data_structures.manure_nutrients import ManureNutrients
 from RUFAS.data_structures.manure_to_crop_soil_connection import NutrientRequest, NutrientRequestResults
 from RUFAS.data_structures.manure_types import ManureType
+from RUFAS.output_manager import OutputManager
 
 
 @pytest.mark.parametrize(
@@ -282,6 +283,7 @@ def test_calculate_projected_manure_mass_exceptions(
     nutrient_composition: float,
     expected_exception: type[Exception],
     expected_error_msg: str,
+    mocker: MockerFixture,
 ) -> None:
     """
     Unit test for the method _calculate_projected_manure_mass() of the ManureNutrientManager class in the
@@ -292,8 +294,10 @@ def test_calculate_projected_manure_mass_exceptions(
 
     """
     # Act & Assert
+    mock_add_error = mocker.patch.object(OutputManager, "add_error")
     with pytest.raises(expected_exception, match=re.escape(expected_error_msg)):
         ManureNutrientManager.calculate_projected_manure_mass(request_nutrient, nutrient_composition)
+    mock_add_error.assert_called_once()
 
 
 @pytest.mark.parametrize(
@@ -338,6 +342,7 @@ def test_select_projected_manure_mass_exceptions(
     projected_manure_masses: list[float],
     expected_exception: type[Exception],
     expected_error_msg: str,
+    mocker: MockerFixture,
 ) -> None:
     """
     Unit test for the method _select_projected_manure_mass() of the ManureNutrientManager class in the
@@ -348,8 +353,10 @@ def test_select_projected_manure_mass_exceptions(
 
     """
     # Act & Assert
+    mock_add_error = mocker.patch.object(OutputManager, "add_error")
     with pytest.raises(expected_exception, match=expected_error_msg):
         ManureNutrientManager._select_projected_manure_mass(projected_manure_masses)
+    mock_add_error.assert_called_once()
 
 
 @pytest.mark.parametrize(
@@ -470,6 +477,7 @@ def test_create_nutrient_request_results_exceptions(
     projected_manure_mass: float,
     expected_exception: type[Exception],
     expected_error_msg: str,
+    mocker: MockerFixture,
 ) -> None:
     """
     Test the _create_nutrient_request_results() method of the ManureNutrientManager class for expected
@@ -483,8 +491,10 @@ def test_create_nutrient_request_results_exceptions(
     manager = ManureNutrientManager()
 
     # Act & Assert
+    mock_add_error = mocker.patch.object(OutputManager, "add_error")
     with pytest.raises(expected_exception, match=expected_error_msg):
         manager._create_nutrient_request_results(projected_manure_mass, manure_type=ManureType.LIQUID)
+    mock_add_error.assert_called_once()
 
 
 @pytest.mark.parametrize(
@@ -534,3 +544,51 @@ def test_remove_nutrients(removal_details: dict[str, Any]) -> None:
         dry_matter=5.0,
         total_manure_mass=1.0,
     )
+
+
+@pytest.mark.parametrize(
+    "volatile_solids, nitrogen, expected_carbon",
+    [
+        # C:N within the allowable range: carbon is 45% of volatile solids.
+        (100.0, 10.0, 45.0),
+        # C:N above the maximum of 19.6: carbon is capped at 19.6 * nitrogen.
+        (100.0, 1.0, 19.6),
+        # C:N below the minimum of 4.24: carbon is raised to 4.24 * nitrogen.
+        (10.0, 10.0, 42.4),
+        # No nitrogen: no carbon estimate can be made.
+        (100.0, 0.0, 0.0),
+        # No volatile solids: C:N of zero is raised to the minimum of 4.24.
+        (0.0, 10.0, 42.4),
+    ],
+)
+def test_calculate_manure_carbon(volatile_solids: float, nitrogen: float, expected_carbon: float) -> None:
+    """Tests that manure carbon is estimated from volatile solids and bounded by the allowable C:N range."""
+    carbon = ManureNutrientManager.calculate_manure_carbon(volatile_solids, nitrogen)
+
+    assert pytest.approx(carbon) == expected_carbon
+
+
+def test_create_nutrient_request_results_includes_carbon_and_lignin() -> None:
+    """Tests that nutrient request results carry the carbon and lignin of the supplied manure."""
+    manager = ManureNutrientManager()
+    manager.add_nutrients(
+        ManureNutrients(
+            manure_type=ManureType.LIQUID,
+            nitrogen=10.0,
+            phosphorus=5.0,
+            potassium=2.0,
+            dry_matter=100.0,
+            total_manure_mass=1000.0,
+            volatile_solids=80.0,
+            lignin=12.0,
+        )
+    )
+
+    results = manager._create_nutrient_request_results(500.0, ManureType.LIQUID)
+
+    # Half the pool is supplied, so half of its nitrogen, volatile solids, and lignin are supplied.
+    assert pytest.approx(results.nitrogen) == 5.0
+    assert pytest.approx(results.lignin) == 6.0
+    # Raw carbon is 40 kg VS * 0.45 = 18 kg, but the C:N ratio of 3.6 is below the minimum of
+    # 4.24, so carbon is raised to 4.24 * 5 kg N.
+    assert pytest.approx(results.carbon) == 4.24 * 5.0

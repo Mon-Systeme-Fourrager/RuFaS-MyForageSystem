@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 from typing import Any
 
+from RUFAS.biophysical.manure.manure_constants import ManureConstants
 from RUFAS.output_manager import OutputManager
 from RUFAS.data_structures.manure_nutrients import ManureNutrients
 from RUFAS.data_structures.manure_to_crop_soil_connection import NutrientRequest, NutrientRequestResults
@@ -10,6 +11,8 @@ from RUFAS.data_structures.manure_types import ManureType
 
 
 class ManureNutrientManager:
+    """Manages the nutrients in the manure pool."""
+
     def __init__(self) -> None:
         """Initialize the manure nutrient manager."""
         self.om = OutputManager()
@@ -35,6 +38,7 @@ class ManureNutrientManager:
 
         """
         current_nutrients = self.nutrients_by_manure_category.get(nutrients.manure_type)
+        assert current_nutrients is not None
 
         updated_categorical_nutrients = ManureNutrients(
             nitrogen=current_nutrients.nitrogen + nutrients.nitrogen,
@@ -42,6 +46,8 @@ class ManureNutrientManager:
             potassium=current_nutrients.potassium + nutrients.potassium,
             dry_matter=current_nutrients.dry_matter + nutrients.dry_matter,
             total_manure_mass=current_nutrients.total_manure_mass + nutrients.total_manure_mass,
+            volatile_solids=current_nutrients.volatile_solids + nutrients.volatile_solids,
+            lignin=current_nutrients.lignin + nutrients.lignin,
             manure_type=nutrients.manure_type,
         )
 
@@ -68,6 +74,13 @@ class ManureNutrientManager:
             - removal_details.get("total_solids", 0.0)
         )
         dry_matter_after_renewal = current_pool_by_category.dry_matter - removal_details.get("total_solids", 0.0)
+        volatile_solids_after_renewal = (
+            current_pool_by_category.volatile_solids
+            - removal_details.get("degradable_volatile_solids", 0.0)
+            - removal_details.get("non_degradable_volatile_solids", 0.0)
+            - removal_details.get("bedding_non_degradable_volatile_solids", 0.0)
+        )
+        lignin_after_renewal = current_pool_by_category.lignin - removal_details.get("lignin", 0.0)
         category_amount_after_renewal = ManureNutrients(
             manure_type=current_pool_by_category.manure_type,
             nitrogen=nitrogen_amount_after_renewal if nitrogen_amount_after_renewal > 1e-3 else 0.0,
@@ -75,6 +88,8 @@ class ManureNutrientManager:
             potassium=potassium_amount_after_renewal if potassium_amount_after_renewal > 1e-3 else 0.0,
             total_manure_mass=total_manure_mass_after_renewal if total_manure_mass_after_renewal > 1e-3 else 0.0,
             dry_matter=dry_matter_after_renewal if dry_matter_after_renewal > 1e-3 else 0.0,
+            volatile_solids=volatile_solids_after_renewal if volatile_solids_after_renewal > 1e-3 else 0.0,
+            lignin=lignin_after_renewal if lignin_after_renewal > 1e-3 else 0.0,
         )
 
         self.nutrients_by_manure_category[current_pool_by_category.manure_type] = category_amount_after_renewal
@@ -82,9 +97,6 @@ class ManureNutrientManager:
     def handle_nutrient_request(self, request: NutrientRequest) -> tuple[NutrientRequestResults | None, bool]:
         """
         Attempts to fulfill a nutrient request using available manure in the manager.
-        This method evaluates the given nutrient request (including nitrogen, phosphorus, and manure type)
-        and checks if the available nutrient pool can satisfy it. If the request can be met fully or partially,
-        the corresponding nutrients are removed from the manager and a result is returned.
 
         Parameters
         ----------
@@ -94,9 +106,14 @@ class ManureNutrientManager:
         Returns
         -------
         tuple[NutrientRequestResults | None, bool]
-            A tuple containing the results of the nutrient request and a boolean indicating whether additional
-            manure would be needed to fulfill the request. If the request cannot be fulfilled at all, the first
-            element of the tuple will be None.
+            - The results of the nutrient request; will be None if the request cannot be fulfilled at all.
+            - A boolean indicating whether additional manure would be needed to fulfill the request.
+
+        Notes
+        -----
+        This method evaluates the given nutrient request (including nitrogen, phosphorus, and manure type)
+        and checks if the available nutrient pool can satisfy it. If the request can be met fully or partially,
+        the corresponding nutrients are removed from the manager and a result is returned.
 
         """
         eval_results, is_nutrient_request_fulfilled = self._evaluate_nutrient_request(request)
@@ -104,7 +121,7 @@ class ManureNutrientManager:
 
     def _evaluate_nutrient_request(self, request: NutrientRequest) -> tuple[NutrientRequestResults | None, bool]:
         """
-        The method calculates the projected manure mass.
+        Calculates the projected manure mass.
 
         Parameters
         ----------
@@ -114,9 +131,9 @@ class ManureNutrientManager:
         Returns
         -------
         tuple[NutrientRequestResults | None, bool]
-            A tuple containing the results of the nutrient request and a boolean indicating whether additional
-            manure would be needed to fulfill the request. If the request cannot be fulfilled at all, the first
-            element of the tuple will be None.
+            - The results of the nutrient request. Will be None if the request cannot be fulfilled at all.
+            - A boolean indicating whether additional manure would be needed to fulfill the request.
+
         """
         is_nutrient_request_fulfilled = False
         nitrogen_derived_manure_mass = self.calculate_projected_manure_mass(
@@ -164,9 +181,6 @@ class ManureNutrientManager:
         Calculate the projected manure mass based on the nutrient requested and the nutrient's composition
         in the manure.
 
-        The projected manure mass is calculated by dividing the nutrient request by the nutrient composition.
-        This represents the total manure mass needed to fulfill the nutrient request.
-
         Parameters
         ----------
         request_nutrient : float
@@ -185,6 +199,11 @@ class ManureNutrientManager:
         ValueError
             If the request for nutrient is negative.
             If the nutrient composition is not in the range [0, 1].
+
+        Notes
+        -----
+        The projected manure mass is calculated by dividing the nutrient request by the nutrient composition.
+        This represents the total manure mass needed to fulfill the nutrient request.
 
         """
         if request_nutrient < 0.0:
@@ -218,10 +237,6 @@ class ManureNutrientManager:
         """
         Select the smallest positive projected manure mass from the given list of projected manure masses.
 
-        This method works by first checking if any of the projected manure masses are negative and raises
-        a ValueError if this is the case. However, if all values are zero, it returns zero. Otherwise,
-        it returns the smallest positive value.
-
         Parameters
         ----------
         projected_manure_masses : list[float]
@@ -236,6 +251,12 @@ class ManureNutrientManager:
         ------
         ValueError
             If any of the projected manure masses is negative.
+
+        Notes
+        -----
+        This method works by first checking if any of the projected manure masses are negative and raises
+        a ValueError if this is the case. However, if all values are zero, it returns zero. Otherwise,
+        it returns the smallest positive value.
 
         """
         min_positive = math.inf
@@ -261,11 +282,6 @@ class ManureNutrientManager:
         """
         Create a NutrientRequestResults object based on the given projected manure mass and manure type.
 
-        Note that this method does not check if what is currently available in the manager is enough
-        to fulfill the projected manure mass. It simply creates a NutrientRequestResults object
-        based on the projected manure mass by multiplying the projected manure mass with the
-        nutrient compositions.
-
         Parameters
         ----------
         projected_manure_mass : float
@@ -281,6 +297,13 @@ class ManureNutrientManager:
         ValueError
             If the projected manure mass is negative.
 
+        Notes
+        -----
+        This method does not check if what is currently available in the manager is enough
+        to fulfill the projected manure mass. It simply creates a NutrientRequestResults object
+        based on the projected manure mass by multiplying the projected manure mass with the
+        nutrient compositions.
+
         """
         if projected_manure_mass < 0.0:
             OutputManager().add_error(
@@ -293,10 +316,56 @@ class ManureNutrientManager:
             )
             raise ValueError(f"Projected manure mass cannot be negative: {projected_manure_mass}")
 
+        nitrogen = projected_manure_mass * self.nutrients_by_manure_category[manure_type].nitrogen_composition
+        volatile_solids = (
+            projected_manure_mass * self.nutrients_by_manure_category[manure_type].volatile_solids_composition
+        )
         return NutrientRequestResults(
-            nitrogen=projected_manure_mass * self.nutrients_by_manure_category[manure_type].nitrogen_composition,
+            nitrogen=nitrogen,
             phosphorus=projected_manure_mass * self.nutrients_by_manure_category[manure_type].phosphorus_composition,
             total_manure_mass=projected_manure_mass,
             dry_matter=projected_manure_mass * self.nutrients_by_manure_category[manure_type].dry_matter_fraction,
             dry_matter_fraction=self.nutrients_by_manure_category[manure_type].dry_matter_fraction,
+            carbon=self.calculate_manure_carbon(volatile_solids, nitrogen),
+            lignin=projected_manure_mass * self.nutrients_by_manure_category[manure_type].lignin_composition,
         )
+
+    @staticmethod
+    def calculate_manure_carbon(volatile_solids: float, nitrogen: float) -> float:
+        """
+        Estimate the organic carbon content of a quantity of manure from its volatile solids.
+
+        Parameters
+        ----------
+        volatile_solids : float
+            Mass of volatile solids in the manure (kg).
+        nitrogen : float
+            Mass of nitrogen in the manure (kg).
+
+        Returns
+        -------
+        float
+            The estimated mass of organic carbon in the manure (kg). Zero when the manure contains no nitrogen.
+
+        References
+        ----------
+        Peterson et al. (2024) for the volatile solids carbon fraction; Appuhamy et al. (2014) for the
+        allowable manure C:N ratio range.
+
+        Notes
+        -----
+        Manure volatile solids are assumed to be 45% carbon. The resulting carbon to nitrogen ratio is clamped
+        to the allowable range of 4.24 to 19.6, and the final carbon mass is calculated from the manure
+        nitrogen and the clamped C:N ratio. As the nitrogen mass approaches zero the clamped estimate also
+        approaches zero, so manure without nitrogen is treated as carrying no carbon.
+
+        """
+        if nitrogen <= 0.0:
+            return 0.0
+        carbon = volatile_solids * ManureConstants.VOLATILE_SOLIDS_CARBON_FRACTION
+        carbon_to_nitrogen_ratio = carbon / nitrogen
+        clamped_carbon_to_nitrogen_ratio = min(
+            max(carbon_to_nitrogen_ratio, ManureConstants.MINIMUM_MANURE_CARBON_TO_NITROGEN_RATIO),
+            ManureConstants.MAXIMUM_MANURE_CARBON_TO_NITROGEN_RATIO,
+        )
+        return clamped_carbon_to_nitrogen_ratio * nitrogen
