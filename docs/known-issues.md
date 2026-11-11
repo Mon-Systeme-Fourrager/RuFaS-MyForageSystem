@@ -22,7 +22,7 @@ the error out. Field-only and silage runs never touch the constant.
 
 ### What is wrong
 
-`RUFAS/user_constants.py:36-37`:
+`RUFAS/user_constants.py:37-38`:
 
 ```python
 WATER_DENSITY_KG_PER_LITER = 0.997
@@ -40,7 +40,7 @@ not a density at all:
 ```
 
 The file records the intended unit right next to the value that contradicts
-it: `user_constants.py:55` maps `"WATER_DENSITY_KG_PER_M3"` to
+it: `user_constants.py:56` maps `"WATER_DENSITY_KG_PER_M3"` to
 `MeasurementUnits.KILOGRAMS_PER_CUBIC_METER`.
 
 ### Where it is read
@@ -50,9 +50,9 @@ m³, so all three are wrong by a factor of 10⁶.
 
 | file:line | what it computes |
 |---|---|
-| `RUFAS/biophysical/manure/handler/handler.py:337` | `determine_manure_water` — the water mass (kg) added to a manure stream by parlour cleaning and milking water. Its caller (`:165`) passes the m³ value returned by `determine_total_cleaning_water_volume` (`:299`) |
-| `RUFAS/biophysical/manure/storage/slurry_storage_outdoor.py:60` | the water mass (kg) added to an uncovered or crusted outdoor slurry store by precipitation — `precipitation (mm) × MM_TO_M × surface_area (m²)` |
-| `RUFAS/biophysical/manure/storage/anaerobic_lagoon.py:76` | the same, for an anaerobic lagoon |
+| `RUFAS/biophysical/manure/handler/handler.py:342` | `determine_manure_water` — the water mass (kg) added to a manure stream by parlour cleaning and milking water. Its caller (`:165`) passes the m³ value returned by `determine_total_cleaning_water_volume` (`:303`) |
+| `RUFAS/biophysical/manure/storage/slurry_storage_outdoor.py:76` | the water mass (kg) added to an uncovered or crusted outdoor slurry store by precipitation — `precipitation (mm) × MM_TO_M × surface_area (m²)` |
+| `RUFAS/biophysical/manure/storage/anaerobic_lagoon.py:77` | the same, for an anaerobic lagoon |
 
 The two precipitation sites are unambiguous: the same `precipitation_volume`
 is added to `_received_manure.volume` as m³ on the line above and to
@@ -63,12 +63,11 @@ density of about 0.001 kg/m³; it should gain 9 970 kg.
 
 ### Which simulations are affected
 
-- **Affected: `FULL_FARM`.** `SimulationType._manure_simulation_types`
-  (`RUFAS/simulation_engine.py:84-88`) returns that type alone in this fork;
-  upstream the same set also contains `MANURE_ONLY`. `simulate_manure` gates
-  every manure code path.
-- **Not affected: `FIELD_ONLY`, `FIELD_AND_FEED`, `ANIMALS_ONLY`** — the
-  three other types this fork defines (`simulation_engine.py:51-54`).
+- **Affected: `FULL_FARM` and `MANURE_ONLY`.**
+  `SimulationType._manure_simulation_types` (`RUFAS/simulation_engine.py:88-92`)
+  returns these two types. `simulate_manure` gates every manure code path.
+- **Not affected: `FIELD_ONLY`, `FIELD_AND_FEED`, `ANIMALS_ONLY`, `FEED_ONLY`** —
+  the four other types this fork defines (`simulation_engine.py:52-57`).
   They never instantiate `ManureManager`, and when a field
   requests manure nutrients the engine routes to
   `FieldManureSupplier.request_nutrients`, which does not read this constant.
@@ -94,7 +93,7 @@ which quantities are wrong and why, not by how much any reported output moves.
 
 ### Two places that agree with the wrong value
 
-- `handler.py:330` — the docstring of `determine_manure_water` declares
+- `handler.py:334` — the docstring of `determine_manure_water` declares
   `total_cleaning_water_volume` as `(L)`, but the only caller (`:165`) passes
   m³, and `determine_total_cleaning_water_volume`'s own docstring says m³. The
   parameter is m³; the docstring is wrong, and it is what makes the
@@ -121,6 +120,6 @@ file only reformatted it.
 Not fixed here, and no code or test has been changed. The fix is one line —
 divide instead of multiply, and `0.997 / 0.001` is exactly `997.0` in
 IEEE-754 double, so it needs no literal — but it cannot land alone:
-`test_handler.py:325` and the `handler.py:330` docstring have to change with
+`test_handler.py:325` and the `handler.py:334` docstring have to change with
 it. An upstream issue is drafted and **not posted**; this entry records the
 defect in the fork in the meantime.
