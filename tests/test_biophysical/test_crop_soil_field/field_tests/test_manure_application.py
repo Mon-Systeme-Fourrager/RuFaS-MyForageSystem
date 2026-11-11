@@ -3,10 +3,12 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 from pytest import approx
+from pytest_mock import MockerFixture
 
 from RUFAS.biophysical.field.field.manure_application import ManureApplication
 from RUFAS.biophysical.field.soil.manure_pool import ManurePool
 from RUFAS.biophysical.field.soil.soil_data import SoilData
+from RUFAS.output_manager import OutputManager
 
 
 # ---- Static method tests
@@ -46,18 +48,20 @@ def test_determine_moisture_factor(dry_fraction: float) -> None:
 
 
 @pytest.mark.parametrize(
-    "mass,dry_fraction",
+    "dry_fraction",
     [
-        (500, 0),
-        (400, -0.5),
-        (600, 1.1),
+        0,
+        -0.5,
+        1.1,
     ],
 )
-def test_error_determine_moisture_factor(mass: float, dry_fraction: float) -> None:
+def test_error_determine_moisture_factor(dry_fraction: float, mocker: MockerFixture) -> None:
     """Tests that correct error is raised when invalid argument is passed."""
+    mock_add_error = mocker.patch.object(OutputManager, "add_error")
     with pytest.raises(ValueError) as e:
         ManureApplication._determine_moisture_factor(dry_fraction)
     assert str(e.value) == f"Dry matter content must be in the range (0.0, 1.0], received: '{dry_fraction}'."
+    mock_add_error.assert_called_once()
 
 
 @pytest.mark.parametrize(
@@ -113,12 +117,14 @@ def test_determine_water_extractable_inorganic_phosphorus_fraction_by_animal(ani
 
 @pytest.mark.parametrize("animal_type", ["CaTTLE", "PORK", "fish"])
 def test_error_determine_water_extractable_inorganic_phosphorus_fraction_by_animal(
-    animal_type: str,
+    animal_type: str, mocker: MockerFixture
 ) -> None:
     """Tests that errors caused by unsupported animal types are handled appropriately."""
+    mock_add_error = mocker.patch.object(OutputManager, "add_error")
     with pytest.raises(ValueError) as e:
         ManureApplication._determine_water_extractable_inorganic_phosphorus_fraction_by_animal(animal_type)
     assert str(e.value) == f'Expected "CATTLE", "SWINE", or "POULTRY", received \'{animal_type}\'.'
+    mock_add_error.assert_called_once()
 
 
 # ---- Helper function tests
@@ -213,6 +219,7 @@ def test_apply_solid_machine_manure(
             depth,
             expected_subsurface_frac,
             1.1,
+            0.0,
         )
     else:
         incorp._apply_subsurface_manure.assert_not_called()
@@ -332,6 +339,7 @@ def test_apply_liquid_machine_manure(
             depth,
             expected_subsurface_frac,
             area,
+            0.0,
         )
     else:
         incorp._apply_subsurface_manure.assert_not_called()
@@ -421,11 +429,20 @@ def test_apply_subsurface_manure(
 ) -> None:
     """Tests that nutrients from injection manure applications are correctly distributed between soil layers."""
     manure_app = ManureApplication(field_size=area)
+
+    top_depths = [0.0, 20.0, 50.0, 200.0]
+    bottom_depths = [20.0, 50.0, 200.0, 400.0]
+
+    def get_layer_attribute(attribute: str) -> list[float]:
+        if attribute == "top_depth":
+            return top_depths
+        return bottom_depths
+
     with (
         patch(
             "RUFAS.biophysical.field.soil.soil_data.SoilData.get_vectorized_layer_attribute",
             new_callable=MagicMock,
-            return_value=[20.0, 50.0, 200.0, 400.0],
+            side_effect=get_layer_attribute,
         ) as layer,
         patch(
             "RUFAS.biophysical.field.field.fertilizer_application.FertilizerApplication.generate_depth_factors",
@@ -460,8 +477,20 @@ def test_apply_subsurface_manure(
             area,
         )
 
-        layer.assert_called_once_with("bottom_depth")
-        depth_factors.assert_called_once_with(depth, [20.0, 50.0, 200.0, 400.0])
+        layer.assert_has_calls(
+            [
+                call("top_depth"),
+                call("bottom_depth"),
+            ]
+        )
+        assert layer.call_count == 2
+
+        depth_factors.assert_called_once_with(
+            depth,
+            top_depths,
+            bottom_depths,
+        )
+
         labile.assert_has_calls(expected_labile_calls)
         active.assert_has_calls(expected_active_calls)
         nitrogen.assert_has_calls(expected_nitrogen_calls)
@@ -588,11 +617,12 @@ def test_apply_machine_manure(
     weiP_frac: float | None,
     source_animal: str,
     should_fail: bool,
+    mocker: MockerFixture,
 ) -> None:
     """Tests that the machine-applied manure is correctly added into existing manure on the field."""
     data = SoilData(field_size=area)
     incorp = ManureApplication(data)
-
+    mock_add_error = mocker.patch.object(OutputManager, "add_error")
     if should_fail:
         with pytest.raises(ValueError) as e:
             incorp.apply_machine_manure(
@@ -613,6 +643,7 @@ def test_apply_machine_manure(
             str(e.value) == f"Water extractable inorganic phosphorus fraction must be in the range [0.0, 0.95],"
             f" received '{weiP_frac}'."
         )
+        mock_add_error.assert_called_once()
     else:
         incorp._determine_water_extractable_inorganic_phosphorus_fraction_by_animal = MagicMock(return_value=0.25)
         incorp.apply_machine_manure(
@@ -641,3 +672,101 @@ def test_apply_machine_manure(
         assert incorp.data.machine_manure.water_extractable_organic_phosphorus > 0
         assert incorp.data.machine_manure.stable_inorganic_phosphorus > 0
         assert incorp.data.machine_manure.stable_organic_phosphorus > 0
+        mock_add_error.assert_not_called()
+
+
+# ---- Manure carbon tests
+def test_apply_machine_manure_adds_surface_carbon_to_top_layer() -> None:
+    """Tests that a solid surface application puts all manure carbon in the top layer's manure carbon residue
+    pool and accumulates the lignin and nitrogen awaiting partitioning."""
+    field_size = 2.0
+    manure_app = ManureApplication(field_size=field_size)
+
+    manure_app.apply_machine_manure(
+        dry_matter_mass=1000.0,
+        dry_matter_fraction=0.5,
+        total_phosphorus_mass=0.0,
+        field_coverage=1.0,
+        application_depth=0.0,
+        surface_remainder_fraction=1.0,
+        field_size=field_size,
+        inorganic_nitrogen_fraction=0.01,
+        ammonium_fraction=0.5,
+        organic_nitrogen_fraction=0.02,
+        water_extractable_inorganic_phosphorus_fraction=0.5,
+        carbon_mass=100.0,
+        lignin_mass=12.0,
+        total_nitrogen_mass=40.0,
+    )
+
+    manure_carbon_residue = manure_app.data.get_vectorized_layer_attribute("manure_carbon_residue")
+    assert manure_carbon_residue[0] == approx(100.0 / field_size)
+    assert all(residue == 0.0 for residue in manure_carbon_residue[1:])
+    assert manure_app.data.manure_residue_lignin == approx(12.0 / field_size)
+    assert manure_app.data.manure_residue_nitrogen == approx(40.0 / field_size)
+    assert manure_app.data.annual_manure_carbon_applied_total == approx(100.0 / field_size)
+
+
+def test_apply_machine_manure_splits_liquid_carbon_between_top_layers() -> None:
+    """Tests that a liquid surface application splits manure carbon between the top two layers following the
+    liquid manure infiltration split used for nitrogen."""
+    field_size = 1.0
+    manure_app = ManureApplication(field_size=field_size)
+
+    manure_app.apply_machine_manure(
+        dry_matter_mass=1000.0,
+        dry_matter_fraction=0.1,
+        total_phosphorus_mass=0.0,
+        field_coverage=1.0,
+        application_depth=0.0,
+        surface_remainder_fraction=1.0,
+        field_size=field_size,
+        inorganic_nitrogen_fraction=0.01,
+        ammonium_fraction=0.5,
+        organic_nitrogen_fraction=0.02,
+        water_extractable_inorganic_phosphorus_fraction=0.5,
+        carbon_mass=100.0,
+        lignin_mass=12.0,
+        total_nitrogen_mass=40.0,
+    )
+
+    manure_carbon_residue = manure_app.data.get_vectorized_layer_attribute("manure_carbon_residue")
+    # 40% of the carbon is retained at the surface and 60% infiltrates to the second layer.
+    assert manure_carbon_residue[0] == approx(40.0)
+    assert manure_carbon_residue[1] == approx(60.0)
+    assert all(residue == 0.0 for residue in manure_carbon_residue[2:])
+
+
+def test_apply_machine_manure_distributes_subsurface_carbon_by_depth_factors() -> None:
+    """Tests that the injected portion of manure carbon is distributed among layers by the depth factors."""
+    field_size = 1.0
+    manure_app = ManureApplication(field_size=field_size)
+
+    with patch(
+        "RUFAS.biophysical.field.field.fertilizer_application.FertilizerApplication.generate_depth_factors",
+        new_callable=MagicMock,
+        return_value=[0.25, 0.75],
+    ):
+        manure_app.apply_machine_manure(
+            dry_matter_mass=1000.0,
+            dry_matter_fraction=0.5,
+            total_phosphorus_mass=0.0,
+            field_coverage=1.0,
+            application_depth=50.0,
+            surface_remainder_fraction=0.2,
+            field_size=field_size,
+            inorganic_nitrogen_fraction=0.01,
+            ammonium_fraction=0.5,
+            organic_nitrogen_fraction=0.02,
+            water_extractable_inorganic_phosphorus_fraction=0.5,
+            carbon_mass=100.0,
+            lignin_mass=12.0,
+            total_nitrogen_mass=40.0,
+        )
+
+    manure_carbon_residue = manure_app.data.get_vectorized_layer_attribute("manure_carbon_residue")
+    surface_carbon = 100.0 * 0.2
+    subsurface_carbon = 100.0 * 0.8
+    assert manure_carbon_residue[0] == approx(surface_carbon + subsurface_carbon * 0.25)
+    assert manure_carbon_residue[1] == approx(subsurface_carbon * 0.75)
+    assert sum(manure_carbon_residue) == approx(100.0)

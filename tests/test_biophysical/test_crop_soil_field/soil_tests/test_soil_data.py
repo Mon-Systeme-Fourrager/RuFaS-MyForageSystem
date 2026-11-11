@@ -136,8 +136,9 @@ def test_manual_soil_data_configuration() -> None:
     assert mollisols.vadose_zone_layer == expected_vadose_zone_layer
 
 
-def test_error_manual_soil_data_configuration() -> None:
+def test_error_manual_soil_data_configuration(mocker: MockerFixture) -> None:
     """Test that an error is correctly raised when an invalid input is used to create SoilData object."""
+    mock_add_error = mocker.patch.object(OutputManager, "add_error")
     with pytest.raises(TypeError) as e:
         SoilData(
             field_size=1.8,
@@ -156,6 +157,7 @@ def test_error_manual_soil_data_configuration() -> None:
             ],
         )
     assert str(e.value) == "'field_size' attribute is NoneType, must be given value when LayerData is initialized."
+    mock_add_error.assert_called_once()
     with pytest.raises(ValueError) as e:
         SoilData(
             field_size=1.8,
@@ -181,6 +183,7 @@ def test_error_manual_soil_data_configuration() -> None:
             ],
         )
     assert str(e.value) == "Expected field_size to be greater than 0, received '-1.8'."
+    assert mock_add_error.call_count == 2
     with pytest.raises(ValueError) as e:
         SoilData(
             field_size=1.8,
@@ -206,6 +209,7 @@ def test_error_manual_soil_data_configuration() -> None:
             ],
         )
     assert str(e.value) == "Expected bottom depth of top soil layer must be 20 mm or greater, received '19'."
+    assert mock_add_error.call_count == 3
 
 
 def test_annual_reset() -> None:
@@ -229,6 +233,7 @@ def test_annual_reset() -> None:
     soil_data.annual_eroded_fresh_organic_nitrogen_total = 13
     soil_data.annual_eroded_stable_organic_nitrogen_total = 14
     soil_data.annual_eroded_active_organic_nitrogen_total = 15
+    soil_data.annual_manure_carbon_applied_total = 16
 
     with patch.multiple(
         "RUFAS.biophysical.field.soil.soil_data.SoilData",
@@ -254,6 +259,7 @@ def test_annual_reset() -> None:
         assert soil_data.annual_eroded_fresh_organic_nitrogen_total == 0
         assert soil_data.annual_eroded_stable_organic_nitrogen_total == 0
         assert soil_data.annual_eroded_active_organic_nitrogen_total == 0
+        assert soil_data.annual_manure_carbon_applied_total == 0
 
 
 def test_profile_soil_water_content() -> None:
@@ -435,21 +441,24 @@ def test_total_residue(mocker: MockerFixture, residues: list[float], expected: f
     get_vec_attr.assert_called_once_with("plant_residue")
 
 
-def test_soil_data_post_init_error() -> None:
+def test_soil_data_post_init_error(mocker: MockerFixture) -> None:
     """Test that the correct errors were thrown when incorrect values were used in post init"""
+    mock_add_error = mocker.patch.object(OutputManager, "add_error")
     with pytest.raises(TypeError) as e:
         soil_data = SoilData(field_size=0.98)
         soil_data.__post_init__(None)
         assert str(e) == "'field_size' attribute is NoneType, must be given value when SoilData is initialized."
+    mock_add_error.assert_called_once()
 
     with pytest.raises(ValueError) as e2:
         soil_data = SoilData(field_size=0.98)
         soil_data.__post_init__(-20)
         assert str(e2) == "Expected field_size to be greater than 0, received -20."
+    assert mock_add_error.call_count == 2
 
 
 @pytest.mark.parametrize("cover_type", ["BARE", "RESIDUE_COVER", "GRASSED", "SOU"])
-def test_cover_factor(cover_type: str) -> None:
+def test_cover_factor(cover_type: str, mocker: MockerFixture) -> None:
     """Test that the cover factor method returns the correct value for each time or else gives the right error"""
     soil_data = SoilData(field_size=0.98, cover_type=cover_type)
     if cover_type == "BARE":
@@ -459,12 +468,14 @@ def test_cover_factor(cover_type: str) -> None:
     elif cover_type == "GRASSED":
         assert soil_data.cover_factor == 0.8
     else:
+        mock_add_error = mocker.patch.object(OutputManager, "add_error")
         with pytest.raises(ValueError) as e:
             soil_data.cover_factor
             assert (
                 str(e) == f"Expected cover type to be 'BARE', 'RESIDUE_COVER', or 'GRASSED', "
                 f"received: '{cover_type}'."
             )
+        mock_add_error.assert_called_once()
 
 
 def test_zero_silt_clay_warning(mocker: MockerFixture) -> None:

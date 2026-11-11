@@ -26,14 +26,6 @@ class AnimalManureExcretions:
         Amount of degradable volatile solids (kg).
     non_degradable_volatile_solids: float
         Amount of non-degradable volatile solids (kg).
-    inorganic_phosphorus_fraction: float
-        Fraction of water extractable inorganic phosphorus (unitless).
-    organic_phosphorus_fraction: float
-        Fraction of water extractable organic phosphorus (unitless).
-    non_water_inorganic_phosphorus_fraction: float
-        Fraction of non-water extractable inorganic phosphorus (unitless).
-    non_water_organic_phosphorus_fraction: float
-        Fraction of non-water extractable organic phosphorus (unitless).
     phosphorus: float
         Amount of phosphorus excreted in manure (g).
     phosphorus_fraction: float
@@ -42,6 +34,9 @@ class AnimalManureExcretions:
         Amount of potassium in manure (g).
     enteric_methane_g: float
         The amount of enteric methane (g).
+    manure_lignin: float
+        Amount of lignin excreted in manure (kg). Lignin is assumed to be indigestible, so the amount excreted
+        equals the amount of lignin ingested in the ration.
 
     """
 
@@ -54,13 +49,10 @@ class AnimalManureExcretions:
     total_solids: float = 0.0
     degradable_volatile_solids: float = 0.0
     non_degradable_volatile_solids: float = 0.0
-    inorganic_phosphorus_fraction: float = 0.0
-    organic_phosphorus_fraction: float = 0.0
-    non_water_inorganic_phosphorus_fraction: float = 0.0
-    non_water_organic_phosphorus_fraction: float = 0.0
     phosphorus: float = 0.0
     phosphorus_fraction: float = 0.0
     potassium: float = 0.0
+    manure_lignin: float = 0.0
 
     def __add__(self, other: "AnimalManureExcretions") -> "AnimalManureExcretions":
         return AnimalManureExcretions(
@@ -73,11 +65,8 @@ class AnimalManureExcretions:
             self.total_solids + other.total_solids,
             self.degradable_volatile_solids + other.degradable_volatile_solids,
             self.non_degradable_volatile_solids + other.non_degradable_volatile_solids,
-            self.inorganic_phosphorus_fraction + other.inorganic_phosphorus_fraction,  # fraction addition?
-            self.organic_phosphorus_fraction + other.organic_phosphorus_fraction,
-            self.non_water_inorganic_phosphorus_fraction + other.non_water_inorganic_phosphorus_fraction,
-            self.non_water_organic_phosphorus_fraction + other.non_water_organic_phosphorus_fraction,
             self.phosphorus + other.phosphorus + other.phosphorus_fraction,
             self.phosphorus_fraction + other.phosphorus_fraction,  # how to handle fraction for addition
             self.potassium + other.potassium,
+            self.manure_lignin + other.manure_lignin,
         )
