@@ -23,7 +23,7 @@ them yields and the response to nitrogen.
 
 ### What is wrong
 
-`RUFAS/biophysical/field/field/field.py:1522-1523` passes the day's incoming
+`RUFAS/biophysical/field/field/field.py:1611-1612` passes the day's incoming
 light as the first argument:
 
 ```python
@@ -32,8 +32,8 @@ full_evapotranspirative_demand = self._determine_potential_evapotranspiration(
 ```
 
 That parameter is named and used as extraterrestrial radiation
-(`field.py:1734`, documented at `:1744` as "Radiation from sunlight (MJ per
-square meter per day)"; reference `SWAT Reference: 2:2.2.24` at `:1759`):
+(`field.py:1823`, documented at `:1833` as "Radiation from sunlight (MJ per
+square meter per day)"; reference `SWAT Reference: 2:2.2.24` at `:1848`):
 
 ```python
 avg_air_temp = avg_air_temp if avg_air_temp else (max_air_temp + min_air_temp) / 2
@@ -44,9 +44,9 @@ potential_evapotranspiration: float = (
 return max(0.0, potential_evapotranspiration)
 ```
 
-(`field.py:1770-1775`; latent heat `2.501 - 0.002361 * avg_air_temp` MJ/kg at
-`:1796`.) `incoming_light` is the weather file's `Hday` column
-(`RUFAS/weather.py:74`), the daily **surface** shortwave radiation. No code in
+(`field.py:1859-1864`; latent heat `2.501 - 0.002361 * avg_air_temp` MJ/kg at
+`:1885`.) `incoming_light` is the weather file's `Hday` column
+(`RUFAS/weather.py:68`), the daily **surface** shortwave radiation. No code in
 `RUFAS/` computes extraterrestrial radiation, and latitude does not enter
 potential ET. The coefficient (0.0023), the constant (17.8), the exponent
 (0.5) and the temperatures match the published equation; only the radiation
@@ -73,9 +73,9 @@ Reduced-Set Methods for Calculating Evapotranspiration", in *Evapotranspiration
 
 ### Upstream and origin
 
-Present upstream: `RuminantFarmSystems/RuFaS` `dev` makes the same call at
-`field.py:1582-1583` (`current_conditions.incoming_light,`) and has the same
-formula at `:1833`.
+Present upstream: `RuminantFarmSystems/RuFaS` `dev` (`9af6eca23`) makes the same call at
+`field.py:1597-1598` (`current_conditions.incoming_light,`) and has the same
+formula at `:1848`.
 
 Unchanged since the call was added at this path, in commit `162aa7b89`
 (2023-08-03, as `current_weather.incoming_light`). Later commits renamed the
@@ -94,12 +94,12 @@ Daily weather from the Open-Meteo archive, the same file for every row.
 | Open-Meteo `et0_fao_evapotranspiration` (FAO-56 Penman-Monteith) | 465.4 |
 
 Summed over those days, `Hday` is 0.485 of Ra (2,448.6 against 5,045.9
-MJ/m²). A reimplementation of `field.py:1770-1775` reproduces RuFaS's daily
+MJ/m²). A reimplementation of `field.py:1859-1864` reproduces RuFaS's daily
 output exactly.
 
 ### Effect on results (sensitivity test, not upstream code)
 
-A throwaway copy of RuFaS with `field.py:1523` passing FAO-56 Ra (Eq. 21, 23,
+A throwaway copy of RuFaS with `field.py:1523` (at `bb3d412c0`; now `:1612`) passing FAO-56 Ra (Eq. 21, 23,
 24, 25; latitude from the field, day of year from the simulation) instead of
 `incoming_light`. Everything else is identical between the two runs:
 `FIELD_ONLY`, corn silage 2013 at the site above, sown day 130, harvested day
