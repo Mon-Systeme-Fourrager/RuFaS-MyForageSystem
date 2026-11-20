@@ -78,7 +78,7 @@ The subagent must:
    - Unit mishandling — raw numbers where `units.py` conversions belong
    - Non-compliant tests: not mirroring `RUFAS/` under `tests/`, not using
      `pytest-mock` / fixtures, not `freezegun` for time-dependent logic
-   - No `changelog.md` entry planned (CI requires one on every PR)
+   - No `changelog_WIP.md` entry planned (CI requires one on every PR)
 
    🟡 MINOR
    - Naming inconsistent with the module

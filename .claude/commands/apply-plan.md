@@ -78,7 +78,7 @@ carries no `EDITS`/`READS`/`PARALLEL_GROUP` fields.
    pivot file inside a tagged task (`RUFAS/general_constants.py`,
    `RUFAS/input_manager.py`, `RUFAS/output_manager.py`,
    `RUFAS/data_validator.py`, `RUFAS/simulation_engine.py`,
-   `RUFAS/task_manager.py`, any `__init__.py`, `pyproject.toml`, `changelog.md`).
+   `RUFAS/task_manager.py`, any `__init__.py`, `pyproject.toml`, `changelog_WIP.md`).
    On violation, strip the `PARALLEL_GROUP` tag (log one line) and process
    individually. Group of N < 2 after stripping dissolves to individual tasks.
 3. For each valid group of N ≥ 2, dispatch **N read-only investigator subagents
@@ -163,7 +163,7 @@ wait $PID_TC || TC=$?; wait $PID_LINT || LINT=$?; wait $PID_PT || PT=$?
 [ $TC -eq 0 ] && [ $LINT -eq 0 ] && [ $PT -eq 0 ]
 ```
 
-3. **`changelog.md` — mandatory.** Add an entry under `### Next Version Updates`
+3. **`changelog_WIP.md` — mandatory.** Add an entry under `### Next Version Updates`
    (`- [PR#](url) - [minor change/Major change] [Area] [In/NoInputChange]
    [In/NoOutputChange] description`). CI fails the PR without it. Use `TBD` for
    the PR number, fill it after the PR is created.
@@ -240,7 +240,7 @@ Print exactly:
 - **Protected inputs** — never edit the `example_*.json` / `no_*.json` input
   files under `input/` (`.claude/rules/protected-inputs.md`). Input JSON only,
   never `tests/`.
-- **`changelog.md` mandatory** on the PR.
+- **`changelog_WIP.md` mandatory** on the PR.
 - **Pre-commit hooks respected** — never `--no-verify`. Fix the root cause.
 - **Commit hygiene** — never `git add .`/`git add -A`. Stage by explicit name.
   `PLAN_<slug>.md` stays untracked during the run; §4.4 deletes it before the PR.
