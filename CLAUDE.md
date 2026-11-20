@@ -143,7 +143,8 @@ Tag every test with the appropriate marker (defined in `pyproject.toml`):
 ### Changelog entry format
 
 Every PR must add one entry per logical change under `### Next Version Updates`
-in `changelog.md`. Format (see `changelog.md` README for full guidance):
+in `changelog_WIP.md` (CI checks this file, not `changelog.md`). Format (see the
+`changelog_WIP.md` Readme for full guidance):
 
 ```
 - [<PR#>](<link>) - [Major change / minor change] [Impact Area] [InputChange / NoInputChange] [OutputChange / NoOutputChange] Short description — say "update X to Y", not "update X".
@@ -159,10 +160,12 @@ Upstream flow: feature branch → `dev` → `test` → `main`. **This fork integ
   GitHub issue; no temp/unused files; rebase before review.
 - **Two reviews** required (ideally one SME + one software engineer) + all CI green
   before merge; the author merges and deletes the branch.
+- **Before requesting review**, run `/pre-pr-review` in a Claude Code session
+  opened at the repo root (from a parent folder the command is not loaded).
 
 ## Gotchas
 
-- **`changelog.md` is mandatory on every PR** — CI fails the PR if it is not
+- **`changelog_WIP.md` is mandatory on every PR** — CI fails the PR if it is not
   updated. Add an entry describing the change.
 - **Protected input files** — a set of `input/.../example_*.json` (and
   `no_*.json`) **input JSON files** are CI-protected; changing them fails the

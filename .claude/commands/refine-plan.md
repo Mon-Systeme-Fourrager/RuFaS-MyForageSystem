@@ -90,7 +90,7 @@ untouched sections or add a "summary of changes" block.
   pairwise disjoint; no tagged task touches a pivot (`general_constants.py`,
   `input_manager.py`, `output_manager.py`, `data_validator.py`,
   `simulation_engine.py`, `task_manager.py`, any `__init__.py`, `pyproject.toml`,
-  `changelog.md`). Strip the tag if violated.
+  `changelog_WIP.md`). Strip the tag if violated.
 
 ## Chat output
 

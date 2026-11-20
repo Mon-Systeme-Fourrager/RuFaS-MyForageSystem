@@ -69,7 +69,7 @@ block's `**File**:` line:
     `RUFAS/data_validator.py`, `RUFAS/simulation_engine.py`,
     `RUFAS/task_manager.py`
   - any `__init__.py`
-  - `pyproject.toml`, `changelog.md`
+  - `pyproject.toml`, `changelog_WIP.md`
     Untagged tasks always run individually.
 
 ### Slug derivation
