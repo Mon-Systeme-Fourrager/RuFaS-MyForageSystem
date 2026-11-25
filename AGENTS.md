@@ -34,7 +34,7 @@ compression can drop nuance that matters:
 - **Commits**: Conventional-Commits-style subject ≤ 50 chars. Claude Code with
   the `caveman@caveman` plugin: `/caveman-commit`. Otherwise apply the rule
   manually.
-- **`changelog.md` is mandatory on every PR** — CI fails the PR otherwise. Add
+- **`changelog_WIP.md` is mandatory on every PR** — CI fails the PR otherwise. Add
   an entry in the `### Next Version Updates` list (format: `- [PR#](url) -
   [minor change/Major change] [Area] [In/NoInputChange] [In/NoOutputChange]
   description`). See existing entries.

@@ -31,7 +31,7 @@ Review for:
 7. **Protected inputs**: no edit to the protected `example_*.json` / `no_*.json`
    input files under `input/` (`.claude/rules/protected-inputs.md`). This applies
    to input JSON only, never to `tests/`.
-8. **PR hygiene**: a `changelog.md` entry is present (CI requires it).
+8. **PR hygiene**: a `changelog_WIP.md` entry is present (CI requires it).
 
 Every finding: severity (BLOCKER/MAJOR/MINOR) + file:line + concrete fix.
 Be terse. One line per finding. If the code is good, say so plainly.

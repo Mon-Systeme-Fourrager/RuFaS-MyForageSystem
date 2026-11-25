@@ -61,7 +61,7 @@ implement it from the doc alone?).
   apply **DRY** and **SOLID**.
 - **Comments are discouraged** — clean code should explain *what* it does; only a
   comment explaining *why* an approach was chosen is acceptable.
-- **`changelog.md`**: add exactly one entry under `### Next Version Updates`
+- **`changelog_WIP.md`**: add exactly one entry under `### Next Version Updates`
   (`[PR#](url) - [Major/minor change] [ImpactArea] description`); verify the
   "Files changed" diff shows *only* that addition.
 
